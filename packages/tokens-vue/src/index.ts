@@ -1,5 +1,5 @@
-import type { App, Plugin } from 'vue';
-import { ref, provide, inject, watchEffect, onUnmounted } from 'vue';
+import type { App, Plugin, InjectionKey, Ref } from 'vue';
+import { ref, provide, inject } from 'vue';
 
 export type ColorMode = 'light' | 'dark';
 
@@ -8,12 +8,12 @@ export interface TokenPluginOptions {
   mode?: ColorMode;
 }
 
-const TOKEN_INJECTION_KEY = Symbol('ds-tokens');
-
 interface TokenState {
   tenant: string;
   mode: ColorMode;
 }
+
+const TOKEN_INJECTION_KEY: InjectionKey<Ref<TokenState>> = Symbol('ds-tokens');
 
 /**
  * Vue 3 plugin that activates tenant theming.
@@ -28,13 +28,8 @@ export const tokenPlugin: Plugin = {
 
     const state = ref<TokenState>({ tenant, mode });
 
-    // Apply to DOM
-    const apply = (s: TokenState) => {
-      document.documentElement.setAttribute('data-tenant', s.tenant);
-      document.documentElement.setAttribute('data-mode', s.mode);
-    };
-
-    apply(state.value);
+    document.documentElement.setAttribute('data-tenant', tenant);
+    document.documentElement.setAttribute('data-mode', mode);
 
     app.provide(TOKEN_INJECTION_KEY, state);
 
@@ -51,9 +46,11 @@ export const tokenPlugin: Plugin = {
  * Must be used inside a component tree where tokenPlugin is installed.
  */
 export function useToken(): TokenState {
-  const state = inject<ReturnType<typeof ref<TokenState>>>(TOKEN_INJECTION_KEY);
+  const state = inject(TOKEN_INJECTION_KEY);
   if (!state) {
-    throw new Error('useToken requires tokenPlugin to be installed via app.use(tokenPlugin, { ... })');
+    throw new Error(
+      'useToken requires tokenPlugin to be installed via app.use(tokenPlugin, { ... })'
+    );
   }
   return state.value;
 }

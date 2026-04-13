@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import * as React from 'react';
+import { createContext, useContext, useEffect } from 'react';
 
 export type ColorMode = 'light' | 'dark';
 
