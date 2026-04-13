@@ -9,6 +9,6 @@
 /// ```
 library ds_tokens;
 
-export 'src/tokens.dart';
+export 'src/generated.dart'; // AUTO-GENERATED — run `pnpm generate` to refresh
 export 'src/theme.dart';
 export 'src/tenant.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'generated.dart';
 import 'tenant.dart';
-import 'tokens.dart';
 
 /// ThemeExtension that carries tenant tokens into the widget tree.
 /// Access via: Theme.of(context).extension<DsTokenExtension>()!
@@ -16,7 +16,6 @@ class DsTokenExtension extends ThemeExtension<DsTokenExtension> {
 
   @override
   DsTokenExtension lerp(DsTokenExtension? other, double t) {
-    // Tokens are discrete values — no interpolation needed.
     return t < 0.5 ? this : (other ?? this);
   }
 }
@@ -31,26 +30,25 @@ class DsTokenExtension extends ThemeExtension<DsTokenExtension> {
 /// )
 /// ```
 abstract class DsTheme {
-  /// Returns a [ThemeData] configured for the given tenant and brightness.
   static ThemeData forTenant(String tenantId, Brightness brightness) {
     final t = DsTenantTokens.forTenant(tenantId);
 
     final colorScheme = ColorScheme(
-      brightness: brightness,
-      primary:          t.primaryBg,
-      onPrimary:        t.primaryFg,
-      secondary:        t.secondaryBg,
-      onSecondary:      t.secondaryFg,
-      error:            t.dangerBg,
-      onError:          t.dangerFg,
-      surface:          t.surfaceDefault,
-      onSurface:        t.textDefault,
+      brightness:  brightness,
+      primary:     t.primaryBg,
+      onPrimary:   t.primaryFg,
+      secondary:   t.secondaryBg,
+      onSecondary: t.secondaryFg,
+      error:       t.dangerBg,
+      onError:     t.dangerFg,
+      surface:     t.surfaceDefault,
+      onSurface:   t.textDefault,
     );
 
     return ThemeData(
-      colorScheme: colorScheme,
-      useMaterial3: true,
-      fontFamily: t.fontFamilySans,
+      colorScheme:            colorScheme,
+      useMaterial3:           true,
+      fontFamily:             t.fontFamilySans,
       scaffoldBackgroundColor: t.surfaceDefault,
 
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -74,7 +72,7 @@ abstract class DsTheme {
       ),
 
       cardTheme: CardTheme(
-        color: t.surfaceRaised,
+        color:     t.surfaceRaised,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(t.radiusCard),
@@ -83,7 +81,7 @@ abstract class DsTheme {
       ),
 
       inputDecorationTheme: InputDecorationTheme(
-        filled: true,
+        filled:    true,
         fillColor: t.surfaceSubtle,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(t.radiusInteractive),
@@ -102,25 +100,25 @@ abstract class DsTheme {
       textTheme: TextTheme(
         bodyMedium: TextStyle(
           fontFamily: t.fontFamilySans,
-          fontSize: DsPrimitiveTypography.fontSizeBase,
-          color: t.textDefault,
+          fontSize:   DsPrimitiveDimensions.typographyFontSizeBase,
+          color:      t.textDefault,
         ),
         bodySmall: TextStyle(
           fontFamily: t.fontFamilySans,
-          fontSize: DsPrimitiveTypography.fontSizeSm,
-          color: t.textSubtle,
+          fontSize:   DsPrimitiveDimensions.typographyFontSizeSm,
+          color:      t.textSubtle,
         ),
         labelMedium: TextStyle(
-          fontFamily: t.fontFamilySans,
-          fontSize: DsPrimitiveTypography.fontSizeSm,
-          fontWeight: DsPrimitiveTypography.fontWeightMedium,
-          color: t.textDefault,
+          fontFamily:  t.fontFamilySans,
+          fontSize:    DsPrimitiveDimensions.typographyFontSizeSm,
+          fontWeight:  DsPrimitiveFontWeights.typographyFontWeightMedium,
+          color:       t.textDefault,
         ),
         titleLarge: TextStyle(
-          fontFamily: t.fontFamilySans,
-          fontSize: DsPrimitiveTypography.fontSizeXl,
-          fontWeight: DsPrimitiveTypography.fontWeightBold,
-          color: t.textDefault,
+          fontFamily:  t.fontFamilySans,
+          fontSize:    DsPrimitiveDimensions.typographyFontSizeXl,
+          fontWeight:  DsPrimitiveFontWeights.typographyFontWeightBold,
+          color:       t.textDefault,
         ),
       ),
 

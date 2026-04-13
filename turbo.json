@@ -3,7 +3,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "src/generated.ts"]
+      "inputs": ["src/**", "!src/generated.ts", "!src/generated.dart"],
+      "outputs": ["dist/**"]
     },
     "validate": {
       "cache": false
