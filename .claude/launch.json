@@ -36,6 +36,18 @@
       "runtimeExecutable": "flutter",
       "runtimeArgs": ["run"],
       "port": 0
+    },
+    {
+      "name": "demo-react",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "/Users/p-rama.msugiyanto/Documents/btech/btech-ds", "--filter", "demo-react", "run", "dev"],
+      "port": 5176
+    },
+    {
+      "name": "demo-vue",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "/Users/p-rama.msugiyanto/Documents/btech/btech-ds", "--filter", "demo-vue", "run", "dev"],
+      "port": 5177
     }
   ]
 }
