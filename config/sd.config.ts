@@ -611,10 +611,20 @@ const sd = new StyleDictionary({
 
   appendTenantCSS(resolvedBaseMap);
 
-  console.log('\n✅ Style Dictionary build complete.\n');
-  console.log('   tokens/  →  packages/tokens-web/dist/styles.css  (CSS + tenant overrides)');
-  console.log('   tokens/  →  packages/tokens-react/src/generated.ts');
-  console.log('   tokens/  →  packages/tokens-vue/src/generated.ts');
-  console.log('   tokens/  →  packages/tokens-dart/lib/src/generated.dart');
-  console.log('   tokens/tenants/  →  packages/tokens-dart/lib/src/tenant.dart  ✨ auto-generated\n');
+  console.log('\n✅  pnpm generate — all frameworks updated from tokens/\n');
+  console.log('  📱 Flutter');
+  console.log('     tokens/core/ + tokens/semantic/  →  generated.dart   (BTechColor, BTechSpacing, BTechRadius…)');
+  console.log('     tokens/tenants/*/overrides.json  →  tenant.dart      (BTechTenantTokens per tenant)');
+  console.log('');
+  console.log('  🌐 Web CSS');
+  console.log('     tokens/core/ + tokens/semantic/  →  styles.css       (:root variables)');
+  console.log('     tokens/tenants/*/overrides.json  →  styles.css       ([data-tenant="*"] appended)');
+  console.log('');
+  console.log('  ⚛️  React');
+  console.log('     tokens/core/ + tokens/semantic/  →  generated.ts     (JS token object)');
+  console.log('');
+  console.log('  💚 Vue');
+  console.log('     tokens/core/ + tokens/semantic/  →  generated.ts     (JS token object)');
+  console.log('');
+  console.log('  ℹ️  To add a tenant: create tokens/tenants/{id}/overrides.json → re-run pnpm generate\n');
 })();
