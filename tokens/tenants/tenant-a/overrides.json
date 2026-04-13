@@ -1,0 +1,14 @@
+{
+  "$description": "Tenant A — blue primary brand, tighter radius",
+  "color": {
+    "primary": {
+      "bg":       { "$value": "{color.blue.500}", "$type": "color" },
+      "bg-hover": { "$value": "{color.blue.600}", "$type": "color" },
+      "border":   { "$value": "{color.blue.700}", "$type": "color" }
+    }
+  },
+  "radius": {
+    "interactive": { "$value": "4px", "$type": "dimension" },
+    "card":        { "$value": "6px", "$type": "dimension" }
+  }
+}

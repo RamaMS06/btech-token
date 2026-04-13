@@ -1,0 +1,41 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "playground-react",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "/Users/p-rama.msugiyanto/Documents/btech/btech-ui", "--filter", "playground-react", "run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "playground-vue",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "/Users/p-rama.msugiyanto/Documents/btech/btech-ui", "--filter", "playground-vue", "run", "dev"],
+      "port": 5174
+    },
+    {
+      "name": "storybook-react",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "/Users/p-rama.msugiyanto/Documents/btech/btech-ui", "--filter", "storybook-react", "run", "storybook"],
+      "port": 6007
+    },
+    {
+      "name": "storybook-vue",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "/Users/p-rama.msugiyanto/Documents/btech/btech-ui", "--filter", "storybook-vue", "run", "storybook"],
+      "port": 6006
+    },
+    {
+      "name": "vue-external-example",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "/Users/p-rama.msugiyanto/Documents/btech/btech-ui/examples/vue-external", "run", "dev"],
+      "port": 5175
+    },
+    {
+      "name": "playground-flutter",
+      "runtimeExecutable": "flutter",
+      "runtimeArgs": ["run"],
+      "port": 0
+    }
+  ]
+}

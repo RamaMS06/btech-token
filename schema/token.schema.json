@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/RamaMS06/design-tokens/schema/token.schema.json",
+  "title": "Design Token (DTCG-compatible)",
+  "description": "Schema for W3C Design Token Community Group format tokens used in @ramams06/design-tokens",
+  "type": "object",
+  "definitions": {
+    "tokenValue": {
+      "type": "object",
+      "required": ["$value", "$type"],
+      "properties": {
+        "$value": {
+          "description": "The token value. Can be a raw value or a reference in {path.to.token} format.",
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" }
+          ]
+        },
+        "$type": {
+          "description": "The token type as defined by DTCG.",
+          "type": "string",
+          "enum": [
+            "color",
+            "dimension",
+            "fontFamily",
+            "fontWeight",
+            "duration",
+            "cubicBezier",
+            "number",
+            "shadow",
+            "strokeStyle",
+            "border",
+            "transition",
+            "gradient",
+            "typography"
+          ]
+        },
+        "$description": {
+          "description": "Human-readable description of what this token represents.",
+          "type": "string"
+        },
+        "$deprecated": {
+          "description": "Whether this token is deprecated.",
+          "type": "boolean"
+        },
+        "$deprecatedSince": {
+          "description": "Version in which this token was deprecated.",
+          "type": "string"
+        },
+        "$replacement": {
+          "description": "Token path that replaces this deprecated token.",
+          "type": "string"
+        },
+        "$removalTarget": {
+          "description": "Version in which this deprecated token will be removed.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "tokenGroup": {
+      "type": "object",
+      "description": "A group of tokens or nested token groups",
+      "additionalProperties": {
+        "oneOf": [
+          { "$ref": "#/definitions/tokenValue" },
+          { "$ref": "#/definitions/tokenGroup" }
+        ]
+      }
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/definitions/tokenValue" },
+    { "$ref": "#/definitions/tokenGroup" }
+  ]
+}
