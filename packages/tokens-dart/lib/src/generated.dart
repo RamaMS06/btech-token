@@ -172,8 +172,8 @@ class _BTechColorStroke {
   final Color danger = const Color(0xFFB91C1C);
 }
 
-/// Semantic color tokens — BTech design system.
-/// Usage: BTechColor.text.primary, BTechColor.background.primary
+/// Semantic color tokens — use context.btechColor for tenant-aware access.
+/// BTechColor.background.primary is always the DEFAULT tenant value.
 abstract class BTechColor {
   static const text = _BTechColorText();
   static const background = _BTechColorBackground();

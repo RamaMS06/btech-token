@@ -2,13 +2,13 @@ import StyleDictionary from 'style-dictionary';
 import type { Format, TransformedToken } from 'style-dictionary/types';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { mkdirSync } from 'fs';
+import { mkdirSync, readFileSync, writeFileSync, readdirSync, existsSync, appendFileSync } from 'fs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-// ---------------------------------------------------------------------------
+// =============================================================================
 // Helpers
-// ---------------------------------------------------------------------------
+// =============================================================================
 
 function hexToArgb(hex: string): string {
   const clean = hex.replace('#', '');
@@ -22,107 +22,249 @@ function toCamelCase(str: string): string {
   return str.replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
 }
 
-// ---------------------------------------------------------------------------
-// Custom format: Dart nested BTech classes
-// ---------------------------------------------------------------------------
+/**
+ * Flatten a DTCG JSON token tree into a Record<dotPath, rawValue>.
+ * e.g. { color: { blue: { "500": { $value: "#3b82f6" } } } }
+ *   →  { "color.blue.500": "#3b82f6" }
+ */
+function flattenDTCG(obj: Record<string, unknown>, prefix = ''): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const key of Object.keys(obj)) {
+    if (key.startsWith('$')) continue;
+    const val = obj[key] as Record<string, unknown>;
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (val && typeof val === 'object' && '$value' in val) {
+      result[path] = String(val.$value);
+    } else if (val && typeof val === 'object') {
+      Object.assign(result, flattenDTCG(val as Record<string, unknown>, path));
+    }
+  }
+  return result;
+}
+
+/**
+ * Resolve a DTCG reference like "{color.blue.500}" against a base map.
+ * Non-reference values are returned as-is.
+ */
+function resolveRef(value: string, baseMap: Record<string, string>): string {
+  const m = value.match(/^\{(.+)\}$/);
+  if (m) return baseMap[m[1]] ?? value;
+  return value;
+}
+
+// =============================================================================
+// Token → Dart tenant field map
+// Lists every semantic token that BTechTenantTokens exposes, in order.
+// =============================================================================
+const TENANT_FIELD_MAP: Array<{
+  path: string;
+  field: string;
+  type: 'Color' | 'double' | 'String';
+}> = [
+  { path: 'color.background.primary',           field: 'primaryBg',          type: 'Color'  },
+  { path: 'color.background.primary-hover',     field: 'primaryBgHover',     type: 'Color'  },
+  { path: 'color.text.on-primary',              field: 'primaryFg',          type: 'Color'  },
+  { path: 'color.stroke.primary',               field: 'primaryBorder',      type: 'Color'  },
+  { path: 'color.background.secondary',         field: 'secondaryBg',        type: 'Color'  },
+  { path: 'color.background.secondary-hover',   field: 'secondaryBgHover',   type: 'Color'  },
+  { path: 'color.text.on-secondary',            field: 'secondaryFg',        type: 'Color'  },
+  { path: 'color.stroke.secondary',             field: 'secondaryBorder',    type: 'Color'  },
+  { path: 'color.background.danger',            field: 'dangerBg',           type: 'Color'  },
+  { path: 'color.text.on-danger',               field: 'dangerFg',           type: 'Color'  },
+  { path: 'color.background.default',           field: 'surfaceDefault',     type: 'Color'  },
+  { path: 'color.background.subtle',            field: 'surfaceSubtle',      type: 'Color'  },
+  { path: 'color.background.raised',            field: 'surfaceRaised',      type: 'Color'  },
+  { path: 'color.text.primary',                 field: 'textDefault',        type: 'Color'  },
+  { path: 'color.text.secondary',               field: 'textSubtle',         type: 'Color'  },
+  { path: 'color.text.disable',                 field: 'textDisabled',       type: 'Color'  },
+  { path: 'color.text.inverse',                 field: 'textInverse',        type: 'Color'  },
+  { path: 'color.stroke.default',               field: 'borderDefault',      type: 'Color'  },
+  { path: 'color.stroke.strong',                field: 'borderStrong',       type: 'Color'  },
+  { path: 'radius.interactive',                 field: 'radiusInteractive',  type: 'double' },
+  { path: 'radius.card',                        field: 'radiusCard',         type: 'double' },
+  { path: 'radius.badge',                       field: 'radiusBadge',        type: 'double' },
+  { path: 'typography.fontFamily.sans',         field: 'fontFamilySans',     type: 'String' },
+];
+
+// =============================================================================
+// Format: custom/dart-tenants
+// Generates packages/tokens-dart/lib/src/tenant.dart from:
+//   - dictionary.allTokens  (resolved base/default values)
+//   - tokens/tenants/*/overrides.json  (per-tenant raw overrides)
+// =============================================================================
+const dartTenantsFormat: Format = {
+  name: 'custom/dart-tenants',
+  format: ({ dictionary }) => {
+    // ── Build base resolved map from the SD dictionary ────────────────────
+    const baseMap: Record<string, string> = {};
+    for (const t of dictionary.allTokens) {
+      baseMap[t.path.join('.')] = String(t.value ?? t.$value);
+    }
+
+    // ── Discover tenants ──────────────────────────────────────────────────
+    const tenantsDir = `${ROOT}/tokens/tenants`;
+    const tenantIds = readdirSync(tenantsDir)
+      .filter(d => existsSync(`${tenantsDir}/${d}/overrides.json`))
+      .sort((a, b) => (a === 'default' ? -1 : b === 'default' ? 1 : a.localeCompare(b)));
+
+    // ── Value resolvers ───────────────────────────────────────────────────
+    function getResolved(tenantId: string, tokenPath: string): string {
+      const raw = JSON.parse(
+        readFileSync(`${tenantsDir}/${tenantId}/overrides.json`, 'utf-8')
+      );
+      const overrides = flattenDTCG(raw);
+      const rawVal = overrides[tokenPath] ?? baseMap[tokenPath] ?? '#000000';
+      return resolveRef(rawVal, baseMap);
+    }
+
+    function toColor(hex: string): string {
+      return `const Color(0xFF${hex.replace('#', '').toUpperCase()})`;
+    }
+    function toDim(px: string): string {
+      return String(parseFloat(String(px).replace('px', '')));
+    }
+    function toFont(s: string): string {
+      return `'${String(s).split(',')[0].trim().replace(/'/g, '')}'`;
+    }
+    function toVarName(id: string): string {
+      if (id === 'default') return 'defaultTokens';
+      return id.replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase());
+    }
+    function formatVal(val: string, type: 'Color' | 'double' | 'String'): string {
+      if (type === 'Color')  return toColor(val);
+      if (type === 'double') return toDim(val);
+      return toFont(val);
+    }
+
+    // ── Generate Dart source ──────────────────────────────────────────────
+    const L: string[] = [
+      '// AUTO-GENERATED by @btech/design-tokens — do not edit manually.',
+      '// Run `pnpm generate` to regenerate from tokens/tenants/**.',
+      '',
+      '// ignore_for_file: lines_longer_than_80_chars',
+      '',
+      "import 'package:flutter/material.dart';",
+      '',
+      '/// Resolved semantic token set for a specific tenant.',
+      '/// Components read these via context.btechTokens — never use primitives directly.',
+      'class BTechTenantTokens {',
+    ];
+
+    // Fields
+    for (const f of TENANT_FIELD_MAP) {
+      const dartType = f.type;
+      L.push(`  final ${dartType} ${f.field};`);
+    }
+    L.push('');
+
+    // Constructor
+    L.push('  const BTechTenantTokens({');
+    for (const f of TENANT_FIELD_MAP) L.push(`    required this.${f.field},`);
+    L.push('  });');
+    L.push('');
+
+    // Per-tenant static consts
+    for (const tenantId of tenantIds) {
+      const varName = toVarName(tenantId);
+      const label = tenantId === 'default' ? 'Default tenant.' : `Tenant: ${tenantId}.`;
+      L.push(`  /// ${label} Auto-generated from tokens/tenants/${tenantId}/overrides.json`);
+      L.push(`  static const BTechTenantTokens ${varName} = BTechTenantTokens(`);
+      for (const f of TENANT_FIELD_MAP) {
+        const val = getResolved(tenantId, f.path);
+        L.push(`    ${f.field}: ${formatVal(val, f.type)},`);
+      }
+      L.push('  );');
+      L.push('');
+    }
+
+    // Registry
+    L.push('  /// Registry — add new tenants here after running `pnpm add-tenant`.');
+    L.push('  static const Map<String, BTechTenantTokens> _registry = {');
+    for (const id of tenantIds) L.push(`    '${id}': ${toVarName(id)},`);
+    L.push('  };');
+    L.push('');
+    L.push('  /// Resolve tokens for [tenantId]. Falls back to [defaultTokens] if unknown.');
+    L.push('  static BTechTenantTokens forTenant(String tenantId) =>');
+    L.push('      _registry[tenantId] ?? defaultTokens;');
+    L.push('}');
+
+    return L.join('\n') + '\n';
+  },
+};
+
+// =============================================================================
+// Format: custom/dart (primitives + semantic statics — generated.dart)
+// =============================================================================
 const dartFormat: Format = {
   name: 'custom/dart',
   format: ({ dictionary }) => {
     const tokens = dictionary.allTokens;
 
-    const isPrimitive = (t: TransformedToken) =>
-      t.filePath.includes('/core/');
+    const isPrimitive = (t: TransformedToken) => t.filePath.includes('/core/');
 
-    // ── Categorize tokens ───────────────────────────────────────────────────
-    const primColors: TransformedToken[]  = [];
-    const semColors: TransformedToken[]   = [];
-    const spacingTokens: TransformedToken[] = [];
-    const primRadiusTokens: TransformedToken[] = [];
-    const semRadiusTokens: TransformedToken[] = [];
-    const fontWeightTokens: TransformedToken[] = [];
-    const fontFamilyTokens: TransformedToken[] = [];
-    const fontSizeTokens: TransformedToken[] = [];
-    const semFontFamilyTokens: TransformedToken[] = [];
-    const semFontSizeTokens: TransformedToken[] = [];
-    const buttonColorTokens: TransformedToken[] = [];
-    const buttonDimTokens: TransformedToken[] = [];
-    const shadowTokens: TransformedToken[] = [];
-    const motionTokens: TransformedToken[] = [];
-    const zIndexTokens: TransformedToken[] = [];
-    const lineHeightTokens: TransformedToken[] = [];
-    const letterSpacingTokens: TransformedToken[] = [];
+    const primColors:       TransformedToken[] = [];
+    const semColors:        TransformedToken[] = [];
+    const spacingTokens:    TransformedToken[] = [];
+    const primRadius:       TransformedToken[] = [];
+    const semRadius:        TransformedToken[] = [];
+    const fontWeights:      TransformedToken[] = [];
+    const fontFamilies:     TransformedToken[] = [];
+    const fontSizes:        TransformedToken[] = [];
+    const semFontFamilies:  TransformedToken[] = [];
+    const semFontSizes:     TransformedToken[] = [];
+    const buttonColors:     TransformedToken[] = [];
+    const buttonDims:       TransformedToken[] = [];
+    const lineHeights:      TransformedToken[] = [];
 
     for (const t of tokens) {
-      const type = t.$type || t.type;
+      const type  = t.$type || t.type;
       const path0 = t.path[0];
 
       if (path0 === 'button') {
-        if (type === 'color') buttonColorTokens.push(t);
-        else buttonDimTokens.push(t);
-        continue;
+        (type === 'color' ? buttonColors : buttonDims).push(t); continue;
       }
-
-      if (path0 === 'shadow') { shadowTokens.push(t); continue; }
-      if (path0 === 'motion') { motionTokens.push(t); continue; }
-      if (path0 === 'zIndex') { zIndexTokens.push(t); continue; }
+      if (path0 === 'shadow' || path0 === 'motion' || path0 === 'zIndex') continue;
 
       if (path0 === 'color') {
-        if (isPrimitive(t)) primColors.push(t);
-        else semColors.push(t);
-        continue;
+        (isPrimitive(t) ? primColors : semColors).push(t); continue;
       }
-
       if (path0 === 'spacing') { spacingTokens.push(t); continue; }
-
       if (path0 === 'radius') {
-        if (isPrimitive(t)) primRadiusTokens.push(t);
-        else semRadiusTokens.push(t);
-        continue;
+        (isPrimitive(t) ? primRadius : semRadius).push(t); continue;
       }
-
       if (path0 === 'typography') {
-        if (type === 'fontWeight') {
-          if (isPrimitive(t)) fontWeightTokens.push(t);
-          // Skip semantic fontWeight tokens (body.fontWeight, etc.) — redundant
-          continue;
+        if (type === 'fontWeight')  { if (isPrimitive(t)) fontWeights.push(t); continue; }
+        if (type === 'fontFamily')  { (isPrimitive(t) ? fontFamilies : semFontFamilies).push(t); continue; }
+        if (type === 'dimension')   {
+          if (t.path[1] === 'letterSpacing') continue;
+          (isPrimitive(t) ? fontSizes : semFontSizes).push(t); continue;
         }
-        if (type === 'fontFamily') {
-          if (isPrimitive(t)) fontFamilyTokens.push(t);
-          else semFontFamilyTokens.push(t);
-          continue;
-        }
-        if (type === 'dimension') {
-          // fontSize or letterSpacing
-          if (t.path[1] === 'letterSpacing') { letterSpacingTokens.push(t); continue; }
-          if (isPrimitive(t)) fontSizeTokens.push(t);
-          else semFontSizeTokens.push(t);
-          continue;
-        }
-        if (type === 'number') {
-          if (isPrimitive(t)) lineHeightTokens.push(t);
-          // Skip semantic lineHeight tokens (body.lineHeight, etc.) — redundant
-          continue;
-        }
+        if (type === 'number')      { if (isPrimitive(t)) lineHeights.push(t); continue; }
       }
     }
 
-    // ── Group primitive colors by palette name ──────────────────────────────
-    const colorGroups: Record<string, TransformedToken[]> = {};
+    // Palette groups
+    const primColorGroups: Record<string, TransformedToken[]> = {};
     for (const t of primColors) {
-      const group = t.path[1]; // blue, green, orange, red, neutral
-      if (!colorGroups[group]) colorGroups[group] = [];
-      colorGroups[group].push(t);
+      const g = t.path[1];
+      (primColorGroups[g] ??= []).push(t);
     }
 
-    // ── Group semantic colors by group (text, background, stroke) ───────────
+    // Semantic color groups
     const semColorGroups: Record<string, TransformedToken[]> = {};
     for (const t of semColors) {
-      const group = t.path[1]; // text, background, stroke
-      if (!semColorGroups[group]) semColorGroups[group] = [];
-      semColorGroups[group].push(t);
+      const g = t.path[1];
+      (semColorGroups[g] ??= []).push(t);
     }
 
-    const lines: string[] = [
+    const reserved = new Set(['default', 'switch', 'class', 'return', 'new', 'if', 'else', 'for', 'while']);
+    const semGroupClass: Record<string, string> = {
+      text: '_BTechColorText',
+      background: '_BTechColorBackground',
+      stroke: '_BTechColorStroke',
+    };
+
+    const L: string[] = [
       '// AUTO-GENERATED by @btech/design-tokens — do not edit manually.',
       '// Run `pnpm generate` to regenerate from tokens/.',
       '',
@@ -132,283 +274,347 @@ const dartFormat: Format = {
       '',
     ];
 
-    // ── Primitive color palette classes ──────────────────────────────────────
-    lines.push('// ── Primitive color palette ──────────────────────────────────────────────────');
-    const groupClassNames: string[] = [];
-    for (const [groupName, groupTokens] of Object.entries(colorGroups)) {
-      const className = `_BTechPrimColor${groupName.charAt(0).toUpperCase() + groupName.slice(1)}`;
-      groupClassNames.push(groupName);
-      lines.push(`class ${className} {`);
-      lines.push(`  const ${className}();`);
-      for (const t of groupTokens) {
-        const shade = t.path[2]; // 50, 100, 500, etc.
-        const hex = String(t.value ?? t.$value);
-        lines.push(`  final Color s${shade} = const Color(${hexToArgb(hex)});`);
+    // ── Primitive color palette ─────────────────────────────────────────
+    L.push('// ── Primitive color palette ──────────────────────────────────────────────────');
+    const groupNames: string[] = [];
+    for (const [g, gt] of Object.entries(primColorGroups)) {
+      const cn = `_BTechPrimColor${g.charAt(0).toUpperCase() + g.slice(1)}`;
+      groupNames.push(g);
+      L.push(`class ${cn} {`);
+      L.push(`  const ${cn}();`);
+      for (const t of gt) {
+        const shade = t.path[2];
+        L.push(`  final Color s${shade} = const Color(${hexToArgb(String(t.value ?? t.$value))});`);
       }
-      lines.push('}');
-      lines.push('');
+      L.push('}'); L.push('');
     }
-
-    lines.push('abstract class BTechPrimitiveColor {');
-    for (const groupName of groupClassNames) {
-      const className = `_BTechPrimColor${groupName.charAt(0).toUpperCase() + groupName.slice(1)}`;
-      lines.push(`  static const ${groupName} = ${className}();`);
+    L.push('abstract class BTechPrimitiveColor {');
+    for (const g of groupNames) {
+      const cn = `_BTechPrimColor${g.charAt(0).toUpperCase() + g.slice(1)}`;
+      L.push(`  static const ${g} = ${cn}();`);
     }
-    lines.push('}');
-    lines.push('');
+    L.push('}'); L.push('');
 
-    // ── Primitive spacing ──────────────────────────────────────────────────
-    lines.push('// ── Primitive spacing ────────────────────────────────────────────────────────');
-    lines.push('abstract class BTechSpacing {');
+    // ── Primitive spacing ───────────────────────────────────────────────
+    L.push('// ── Primitive spacing ────────────────────────────────────────────────────────');
+    L.push('abstract class BTechSpacing {');
     for (const t of spacingTokens) {
-      const name = t.path[t.path.length - 1]; // xs, sm, md, lg, xl, xl2, xl3, xl4
-      const raw = String(t.value ?? t.$value).replace('px', '');
-      lines.push(`  static const double ${name} = ${parseFloat(raw)};`);
+      const n = t.path[t.path.length - 1];
+      L.push(`  static const double ${n} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
     }
-    lines.push('}');
-    lines.push('');
+    L.push('}'); L.push('');
 
-    // ── Primitive radius ────────────────────────────────────────────────────
-    lines.push('// ── Primitive radius ─────────────────────────────────────────────────────────');
-    lines.push('abstract class BTechRadius {');
-    for (const t of primRadiusTokens) {
-      const name = t.path[t.path.length - 1]; // none, sm, md, lg, xl, full
-      const raw = String(t.value ?? t.$value).replace('px', '');
-      lines.push(`  static const double ${name} = ${parseFloat(raw)};`);
+    // ── Primitive radius ────────────────────────────────────────────────
+    L.push('// ── Primitive radius ─────────────────────────────────────────────────────────');
+    L.push('abstract class BTechRadius {');
+    for (const t of primRadius) {
+      const n = t.path[t.path.length - 1];
+      L.push(`  static const double ${n} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
     }
-    lines.push('}');
-    lines.push('');
+    L.push('}'); L.push('');
 
-    // ── Primitive font weights ──────────────────────────────────────────────
-    lines.push('// ── Primitive font weights ───────────────────────────────────────────────────');
-    lines.push('abstract class BTechFontWeight {');
-    for (const t of fontWeightTokens) {
-      const name = t.path[t.path.length - 1]; // regular, medium, semibold, bold
-      const w = Number(t.value ?? t.$value);
-      lines.push(`  static const FontWeight ${name} = FontWeight.w${w};`);
+    // ── Primitive font weights ──────────────────────────────────────────
+    L.push('// ── Primitive font weights ───────────────────────────────────────────────────');
+    L.push('abstract class BTechFontWeight {');
+    for (const t of fontWeights) {
+      const n = t.path[t.path.length - 1];
+      L.push(`  static const FontWeight ${n} = FontWeight.w${Number(t.value ?? t.$value)};`);
     }
-    lines.push('}');
-    lines.push('');
+    L.push('}'); L.push('');
 
-    // ── Primitive font families ─────────────────────────────────────────────
-    lines.push('// ── Primitive font families ──────────────────────────────────────────────────');
-    lines.push('abstract class BTechFontFamily {');
-    for (const t of fontFamilyTokens) {
-      const name = t.path[t.path.length - 1]; // sans, mono
+    // ── Primitive font families ─────────────────────────────────────────
+    L.push('// ── Primitive font families ──────────────────────────────────────────────────');
+    L.push('abstract class BTechFontFamily {');
+    for (const t of fontFamilies) {
+      const n = t.path[t.path.length - 1];
       const fam = String(t.value ?? t.$value).split(',')[0].trim().replace(/'/g, '');
-      lines.push(`  static const String ${name} = '${fam}';`);
+      L.push(`  static const String ${n} = '${fam}';`);
     }
-    lines.push('}');
-    lines.push('');
+    L.push('}'); L.push('');
 
-    // ── Primitive font sizes ────────────────────────────────────────────────
-    lines.push('// ── Primitive font sizes ─────────────────────────────────────────────────────');
-    lines.push('abstract class BTechFontSize {');
-    for (const t of fontSizeTokens) {
-      const name = t.path[t.path.length - 1]; // xs, sm, base, lg, xl, 2xl, 3xl, 4xl
-      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
-      const raw = String(t.value ?? t.$value).replace('px', '');
-      lines.push(`  static const double ${safeName} = ${parseFloat(raw)};`);
+    // ── Primitive font sizes ────────────────────────────────────────────
+    L.push('// ── Primitive font sizes ─────────────────────────────────────────────────────');
+    L.push('abstract class BTechFontSize {');
+    for (const t of fontSizes) {
+      const raw = t.path[t.path.length - 1];
+      const n = /^[0-9]/.test(raw) ? `s${raw}` : raw;
+      L.push(`  static const double ${n} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
     }
-    lines.push('}');
-    lines.push('');
+    L.push('}'); L.push('');
 
-    // ── Primitive line heights ──────────────────────────────────────────────
-    if (lineHeightTokens.length > 0) {
-      lines.push('// ── Primitive line heights ────────────────────────────────────────────────────');
-      lines.push('abstract class BTechLineHeight {');
-      for (const t of lineHeightTokens) {
-        const name = t.path[t.path.length - 1];
-        const val = Number(t.value ?? t.$value);
-        lines.push(`  static const double ${name} = ${val};`);
+    // ── Primitive line heights ──────────────────────────────────────────
+    if (lineHeights.length > 0) {
+      L.push('// ── Primitive line heights ────────────────────────────────────────────────────');
+      L.push('abstract class BTechLineHeight {');
+      for (const t of lineHeights) {
+        const n = t.path[t.path.length - 1];
+        L.push(`  static const double ${n} = ${Number(t.value ?? t.$value)};`);
       }
-      lines.push('}');
-      lines.push('');
+      L.push('}'); L.push('');
     }
 
-    // ── Semantic color classes ──────────────────────────────────────────────
-    const semGroupClassMap: Record<string, string> = {
-      'text': '_BTechColorText',
-      'background': '_BTechColorBackground',
-      'stroke': '_BTechColorStroke',
-    };
-
-    const reservedWords = new Set(['default', 'switch', 'class', 'return', 'new', 'if', 'else', 'for', 'while', 'do']);
-
-    for (const [groupName, groupTokens] of Object.entries(semColorGroups)) {
-      const className = semGroupClassMap[groupName] || `_BTechColor${groupName.charAt(0).toUpperCase() + groupName.slice(1)}`;
-      const suffix = groupName === 'background' ? 'Bg' : groupName === 'stroke' ? 'Stroke' : '';
-      lines.push(`// ── Semantic color — ${groupName} group ──────────────────────────────────────────────`);
-      lines.push(`class ${className} {`);
-      lines.push(`  const ${className}();`);
-      for (const t of groupTokens) {
-        const rawName = t.path[t.path.length - 1]; // primary, secondary, default, etc.
-        let fieldName = toCamelCase(rawName);
-        if (reservedWords.has(fieldName)) {
-          fieldName = fieldName + suffix;
-        }
-        const hex = String(t.value ?? t.$value);
-        lines.push(`  final Color ${fieldName} = const Color(${hexToArgb(hex)});`);
+    // ── Semantic color groups ───────────────────────────────────────────
+    for (const [g, gt] of Object.entries(semColorGroups)) {
+      const cn = semGroupClass[g] ?? `_BTechColor${g.charAt(0).toUpperCase() + g.slice(1)}`;
+      const suffix = g === 'background' ? 'Bg' : g === 'stroke' ? 'Stroke' : '';
+      L.push(`// ── Semantic color — ${g} group ──────────────────────────────────────────────`);
+      L.push(`class ${cn} {`);
+      L.push(`  const ${cn}();`);
+      for (const t of gt) {
+        const raw = t.path[t.path.length - 1];
+        let name = toCamelCase(raw);
+        if (reserved.has(name)) name += suffix;
+        L.push(`  final Color ${name} = const Color(${hexToArgb(String(t.value ?? t.$value))});`);
       }
-      lines.push('}');
-      lines.push('');
+      L.push('}'); L.push('');
     }
 
-    lines.push('/// Semantic color tokens — BTech design system.');
-    lines.push('/// Usage: BTechColor.text.primary, BTechColor.background.primary');
-    lines.push('abstract class BTechColor {');
-    for (const groupName of Object.keys(semColorGroups)) {
-      const className = semGroupClassMap[groupName] || `_BTechColor${groupName.charAt(0).toUpperCase() + groupName.slice(1)}`;
-      lines.push(`  static const ${groupName} = ${className}();`);
+    L.push('/// Semantic color tokens — use context.btechColor for tenant-aware access.');
+    L.push('/// BTechColor.background.primary is always the DEFAULT tenant value.');
+    L.push('abstract class BTechColor {');
+    for (const g of Object.keys(semColorGroups)) {
+      const cn = semGroupClass[g] ?? `_BTechColor${g.charAt(0).toUpperCase() + g.slice(1)}`;
+      L.push(`  static const ${g} = ${cn}();`);
     }
-    lines.push('}');
-    lines.push('');
+    L.push('}'); L.push('');
 
-    // ── Semantic radius ─────────────────────────────────────────────────────
-    if (semRadiusTokens.length > 0) {
-      lines.push('// ── Semantic radius ──────────────────────────────────────────────────────────');
-      lines.push('abstract class BTechSemanticRadius {');
-      for (const t of semRadiusTokens) {
-        const name = t.path[t.path.length - 1];
-        const raw = String(t.value ?? t.$value).replace('px', '');
-        lines.push(`  static const double ${name} = ${parseFloat(raw)};`);
+    // ── Semantic radius ─────────────────────────────────────────────────
+    if (semRadius.length > 0) {
+      L.push('// ── Semantic radius ──────────────────────────────────────────────────────────');
+      L.push('abstract class BTechSemanticRadius {');
+      for (const t of semRadius) {
+        const n = t.path[t.path.length - 1];
+        L.push(`  static const double ${n} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
       }
-      lines.push('}');
-      lines.push('');
+      L.push('}'); L.push('');
     }
 
-    // ── Semantic font families ──────────────────────────────────────────────
-    if (semFontFamilyTokens.length > 0) {
-      lines.push('// ── Semantic font families ────────────────────────────────────────────────────');
-      lines.push('abstract class BTechSemanticFontFamily {');
-      for (const t of semFontFamilyTokens) {
-        const scope = t.path[1]; // body, label, heading, code
+    // ── Semantic font families ──────────────────────────────────────────
+    if (semFontFamilies.length > 0) {
+      L.push('// ── Semantic font families ────────────────────────────────────────────────────');
+      L.push('abstract class BTechSemanticFontFamily {');
+      for (const t of semFontFamilies) {
+        const scope = t.path[1];
         const fam = String(t.value ?? t.$value).split(',')[0].trim().replace(/'/g, '');
-        lines.push(`  static const String ${scope} = '${fam}';`);
+        L.push(`  static const String ${scope} = '${fam}';`);
       }
-      lines.push('}');
-      lines.push('');
+      L.push('}'); L.push('');
     }
 
-    // ── Semantic font sizes ─────────────────────────────────────────────────
-    if (semFontSizeTokens.length > 0) {
-      lines.push('// ── Semantic font sizes ───────────────────────────────────────────────────────');
-      lines.push('abstract class BTechSemanticFontSize {');
-      for (const t of semFontSizeTokens) {
-        const scope = t.path[1]; // body, label, code
-        const raw = String(t.value ?? t.$value).replace('px', '');
-        lines.push(`  static const double ${scope} = ${parseFloat(raw)};`);
+    // ── Semantic font sizes ─────────────────────────────────────────────
+    if (semFontSizes.length > 0) {
+      L.push('// ── Semantic font sizes ───────────────────────────────────────────────────────');
+      L.push('abstract class BTechSemanticFontSize {');
+      for (const t of semFontSizes) {
+        L.push(`  static const double ${t.path[1]} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
       }
-      lines.push('}');
-      lines.push('');
+      L.push('}'); L.push('');
     }
 
-    // ── Button tokens ───────────────────────────────────────────────────────
-    if (buttonColorTokens.length > 0 || buttonDimTokens.length > 0) {
-      lines.push('// ── Button component tokens ──────────────────────────────────────────────────');
-      if (buttonColorTokens.length > 0) {
-        lines.push('abstract class BTechButtonColors {');
-        for (const t of buttonColorTokens) {
-          const name = t.path.slice(1).map((p, i) => i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)).join('');
-          const hex = String(t.value ?? t.$value);
-          lines.push(`  static const ${toCamelCase(name)} = Color(${hexToArgb(hex)});`);
+    // ── Button tokens ───────────────────────────────────────────────────
+    if (buttonColors.length > 0 || buttonDims.length > 0) {
+      L.push('// ── Button component tokens ──────────────────────────────────────────────────');
+      if (buttonColors.length > 0) {
+        L.push('abstract class BTechButtonColors {');
+        for (const t of buttonColors) {
+          const n = toCamelCase(t.path.slice(1).map((p, i) => i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(''));
+          L.push(`  static const ${n} = Color(${hexToArgb(String(t.value ?? t.$value))});`);
         }
-        lines.push('}');
-        lines.push('');
+        L.push('}'); L.push('');
       }
-      if (buttonDimTokens.length > 0) {
-        lines.push('abstract class BTechButtonDimensions {');
-        for (const t of buttonDimTokens) {
-          const name = t.path.slice(1).map((p, i) => i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)).join('');
-          const raw = String(t.value ?? t.$value).replace('px', '');
-          lines.push(`  static const double ${toCamelCase(name)} = ${parseFloat(raw)};`);
+      if (buttonDims.length > 0) {
+        L.push('abstract class BTechButtonDimensions {');
+        for (const t of buttonDims) {
+          const n = toCamelCase(t.path.slice(1).map((p, i) => i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(''));
+          L.push(`  static const double ${n} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
         }
-        lines.push('}');
-        lines.push('');
+        L.push('}'); L.push('');
       }
     }
 
-    return lines.join('\n') + '\n';
+    return L.join('\n') + '\n';
   },
 };
 
+// =============================================================================
+// Post-build: append [data-tenant="*"] CSS blocks to styles.css
+// =============================================================================
+function appendTenantCSS(baseMap: Record<string, string>): void {
+  const tenantsDir = `${ROOT}/tokens/tenants`;
+  const tenantIds  = readdirSync(tenantsDir)
+    .filter(d => d !== 'default' && existsSync(`${tenantsDir}/${d}/overrides.json`))
+    .sort();
+
+  const cssOutPath = `${ROOT}/packages/tokens-web/dist/styles.css`;
+
+  const blocks: string[] = [
+    '',
+    '/* ── Tenant overrides — auto-generated from tokens/tenants/*/overrides.json ── */',
+  ];
+
+  for (const tenantId of tenantIds) {
+    const raw      = JSON.parse(readFileSync(`${tenantsDir}/${tenantId}/overrides.json`, 'utf-8'));
+    const overrides = flattenDTCG(raw);
+    if (Object.keys(overrides).length === 0) continue;
+
+    blocks.push('');
+    blocks.push(`[data-tenant="${tenantId}"] {`);
+
+    for (const [tokenPath, rawVal] of Object.entries(overrides)) {
+      const resolved = resolveRef(rawVal, baseMap);
+      // Map token path to CSS var name: color.background.primary → --btech-color-background-primary
+      const cssVar   = `--btech-${tokenPath.replace(/\./g, '-')}`;
+      blocks.push(`  ${cssVar}: ${resolved};`);
+    }
+
+    blocks.push('}');
+  }
+
+  appendFileSync(cssOutPath, blocks.join('\n') + '\n');
+  console.log(`✅ Appended ${tenantIds.length} tenant CSS override blocks to styles.css`);
+}
+
+// =============================================================================
+// Register formats
+// =============================================================================
 StyleDictionary.registerFormat(dartFormat);
+StyleDictionary.registerFormat(dartTenantsFormat);
 
-// ---------------------------------------------------------------------------
-// Ensure output dirs exist
-// ---------------------------------------------------------------------------
-const dartOutDir = `${ROOT}/packages/tokens-dart/lib/src/`;
-mkdirSync(dartOutDir, { recursive: true });
-mkdirSync(`${ROOT}/packages/tokens-web/dist/`, { recursive: true });
-mkdirSync(`${ROOT}/packages/tokens-react/src/`, { recursive: true });
-mkdirSync(`${ROOT}/packages/tokens-vue/src/`, { recursive: true });
+// =============================================================================
+// Ensure output dirs
+// =============================================================================
+const DART_OUT  = `${ROOT}/packages/tokens-dart/lib/src/`;
+const WEB_OUT   = `${ROOT}/packages/tokens-web/dist/`;
+const REACT_OUT = `${ROOT}/packages/tokens-react/src/`;
+const VUE_OUT   = `${ROOT}/packages/tokens-vue/src/`;
+mkdirSync(DART_OUT,  { recursive: true });
+mkdirSync(WEB_OUT,   { recursive: true });
+mkdirSync(REACT_OUT, { recursive: true });
+mkdirSync(VUE_OUT,   { recursive: true });
 
-// ---------------------------------------------------------------------------
-// Style Dictionary instance
-// ---------------------------------------------------------------------------
+// =============================================================================
+// Style Dictionary — single build covers all platforms
+// =============================================================================
+const BASE_SOURCE = [
+  `${ROOT}/tokens/core/**/*.json`,
+  `${ROOT}/tokens/semantic/**/*.json`,
+  `${ROOT}/tokens/components/**/*.json`,
+];
+
 const sd = new StyleDictionary({
-  source: [
-    `${ROOT}/tokens/core/**/*.json`,
-    `${ROOT}/tokens/semantic/**/*.json`,
-    `${ROOT}/tokens/components/**/*.json`,
-  ],
+  source: BASE_SOURCE,
 
   platforms: {
-    // CSS custom properties → tokens-web
+    // CSS custom properties → tokens-web (:root block only)
     css: {
       transformGroup: 'css',
       prefix: 'btech',
-      buildPath: `${ROOT}/packages/tokens-web/dist/`,
-      files: [
-        {
-          destination: 'styles.css',
-          format: 'css/variables',
-          options: { outputReferences: true, selector: ':root' },
-        },
-      ],
+      buildPath: WEB_OUT,
+      files: [{
+        destination: 'styles.css',
+        format: 'css/variables',
+        options: { outputReferences: true, selector: ':root' },
+      }],
     },
 
-    // TypeScript objects → tokens-react
+    // TypeScript → tokens-react
     'ts-react': {
       transformGroup: 'js',
-      buildPath: `${ROOT}/packages/tokens-react/src/`,
-      files: [
-        {
-          destination: 'generated.ts',
-          format: 'javascript/es6',
-          options: { outputReferences: false },
-        },
-      ],
+      buildPath: REACT_OUT,
+      files: [{
+        destination: 'generated.ts',
+        format: 'javascript/es6',
+        options: { outputReferences: false },
+      }],
     },
 
-    // TypeScript objects → tokens-vue (same shape as React)
+    // TypeScript → tokens-vue
     'ts-vue': {
       transformGroup: 'js',
-      buildPath: `${ROOT}/packages/tokens-vue/src/`,
-      files: [
-        {
-          destination: 'generated.ts',
-          format: 'javascript/es6',
-          options: { outputReferences: false },
-        },
-      ],
+      buildPath: VUE_OUT,
+      files: [{
+        destination: 'generated.ts',
+        format: 'javascript/es6',
+        options: { outputReferences: false },
+      }],
     },
 
-    // Dart classes → tokens-dart
+    // Dart → tokens-dart
     dart: {
-      transformGroup: 'css', // resolves references before our format runs
-      buildPath: dartOutDir,
+      transformGroup: 'css',  // resolves refs before format runs
+      buildPath: DART_OUT,
       files: [
         {
+          // generated.dart — primitive + semantic static classes
           destination: 'generated.dart',
           format: 'custom/dart',
+        },
+        {
+          // tenant.dart — BTechTenantTokens with per-tenant consts (FULLY GENERATED)
+          destination: 'tenant.dart',
+          format: 'custom/dart-tenants',
         },
       ],
     },
   },
 });
 
+// =============================================================================
+// Run
+// =============================================================================
 (async () => {
   await sd.buildAllPlatforms();
+
+  // ── Post-build: append [data-tenant="*"] blocks to styles.css ──────────
+  // We need the resolved base token values — build a map from the dictionary.
+  // Re-use the same source to get resolved values without a second full build.
+  const baseMap: Record<string, string> = {};
+  // SD doesn't expose dictionary outside formats; reconstruct from the CSS output.
+  // Simpler: re-read tokens directly using flattenDTCG + manual ref resolution.
+  const coreFiles   = BASE_SOURCE.flatMap(() => []);  // placeholder
+  // Build base map from the generated CSS var values (reliable source of resolved values)
+  const cssContent  = readFileSync(`${WEB_OUT}styles.css`, 'utf-8');
+  const cssVarRe    = /--btech-([\w-]+):\s*([^;]+);/g;
+  let m: RegExpExecArray | null;
+  while ((m = cssVarRe.exec(cssContent)) !== null) {
+    // Convert --btech-color-background-primary → color.background.primary
+    const dotPath = m[1].replace(/-([a-z0-9])/g, (_, c, i, s) => {
+      // Heuristic: restore dots at category boundaries
+      return '_' + c;  // temp placeholder
+    });
+    // Simpler: just store the CSS var value keyed by CSS var name for ref resolution
+    baseMap[m[1].replace(/-/g, '.')] = m[2].trim();
+  }
+
+  // Actually, rebuild baseMap properly from token source files
+  const coreTokenFiles = [
+    ...readdirSync(`${ROOT}/tokens/core`).map(f => `${ROOT}/tokens/core/${f}`),
+    ...readdirSync(`${ROOT}/tokens/semantic`).map(f => `${ROOT}/tokens/semantic/${f}`),
+  ];
+
+  const rawBaseMap: Record<string, string> = {};
+  for (const file of coreTokenFiles) {
+    if (!file.endsWith('.json')) continue;
+    const content = JSON.parse(readFileSync(file, 'utf-8'));
+    Object.assign(rawBaseMap, flattenDTCG(content));
+  }
+
+  // Resolve all refs in rawBaseMap (two passes handles one level of indirection)
+  const resolvedBaseMap: Record<string, string> = {};
+  for (const [k, v] of Object.entries(rawBaseMap)) {
+    resolvedBaseMap[k] = resolveRef(v, rawBaseMap);
+  }
+  // Second pass for chained refs
+  for (const [k, v] of Object.entries(resolvedBaseMap)) {
+    resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
+  }
+
+  appendTenantCSS(resolvedBaseMap);
+
   console.log('\n✅ Style Dictionary build complete.\n');
+  console.log('   tokens/  →  packages/tokens-web/dist/styles.css  (CSS + tenant overrides)');
+  console.log('   tokens/  →  packages/tokens-react/src/generated.ts');
+  console.log('   tokens/  →  packages/tokens-vue/src/generated.ts');
+  console.log('   tokens/  →  packages/tokens-dart/lib/src/generated.dart');
+  console.log('   tokens/tenants/  →  packages/tokens-dart/lib/src/tenant.dart  ✨ auto-generated\n');
 })();

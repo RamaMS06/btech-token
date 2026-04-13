@@ -5,7 +5,7 @@
   "packageManager": "pnpm@9.15.9",
   "description": "Multi-tenant design token source of truth — React, Vue, Flutter",
   "scripts": {
-    "generate": "tsx config/sd.config.ts && melos run generate",
+    "generate": "tsx config/sd.config.ts",
     "build": "pnpm generate && turbo run build",
     "validate": "tsx tools/validators/contrast.ts && tsx tools/validators/boundary.ts && melos run analyze",
     "add-tenant": "tsx scripts/add-tenant.ts",
