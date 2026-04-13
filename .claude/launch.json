@@ -48,6 +48,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--dir", "/Users/p-rama.msugiyanto/Documents/btech/btech-ds", "--filter", "demo-vue", "run", "dev"],
       "port": 5177
+    },
+    {
+      "name": "demo-flutter",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "5178", "/Users/p-rama.msugiyanto/Documents/btech/btech-ds/apps/demo-flutter/build/web"],
+      "port": 5178
     }
   ]
 }
