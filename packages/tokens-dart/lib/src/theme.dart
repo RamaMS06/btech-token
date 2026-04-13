@@ -3,19 +3,19 @@ import 'generated.dart';
 import 'tenant.dart';
 
 /// ThemeExtension that carries tenant tokens into the widget tree.
-/// Access via: Theme.of(context).extension<DsTokenExtension>()!
-class DsTokenExtension extends ThemeExtension<DsTokenExtension> {
-  final DsTenantTokens tokens;
+/// Access via: Theme.of(context).extension<BTechTokenExtension>()!
+class BTechTokenExtension extends ThemeExtension<BTechTokenExtension> {
+  final BTechTenantTokens tokens;
 
-  const DsTokenExtension({required this.tokens});
+  const BTechTokenExtension({required this.tokens});
 
   @override
-  DsTokenExtension copyWith({DsTenantTokens? tokens}) {
-    return DsTokenExtension(tokens: tokens ?? this.tokens);
+  BTechTokenExtension copyWith({BTechTenantTokens? tokens}) {
+    return BTechTokenExtension(tokens: tokens ?? this.tokens);
   }
 
   @override
-  DsTokenExtension lerp(DsTokenExtension? other, double t) {
+  BTechTokenExtension lerp(BTechTokenExtension? other, double t) {
     return t < 0.5 ? this : (other ?? this);
   }
 }
@@ -25,13 +25,13 @@ class DsTokenExtension extends ThemeExtension<DsTokenExtension> {
 /// Usage:
 /// ```dart
 /// MaterialApp(
-///   theme: DsTheme.forTenant('tenant-a', Brightness.light),
+///   theme: BTechTheme.forTenant('tenant-a', Brightness.light),
 ///   home: MyApp(),
 /// )
 /// ```
-abstract class DsTheme {
+abstract class BTechTheme {
   static ThemeData forTenant(String tenantId, Brightness brightness) {
-    final t = DsTenantTokens.forTenant(tenantId);
+    final t = BTechTenantTokens.forTenant(tenantId);
 
     final colorScheme = ColorScheme(
       brightness:  brightness,
@@ -100,30 +100,30 @@ abstract class DsTheme {
       textTheme: TextTheme(
         bodyMedium: TextStyle(
           fontFamily: t.fontFamilySans,
-          fontSize:   DsPrimitiveDimensions.typographyFontSizeBase,
+          fontSize:   BTechFontSize.base,
           color:      t.textDefault,
         ),
         bodySmall: TextStyle(
           fontFamily: t.fontFamilySans,
-          fontSize:   DsPrimitiveDimensions.typographyFontSizeSm,
+          fontSize:   BTechFontSize.sm,
           color:      t.textSubtle,
         ),
         labelMedium: TextStyle(
           fontFamily:  t.fontFamilySans,
-          fontSize:    DsPrimitiveDimensions.typographyFontSizeSm,
-          fontWeight:  DsPrimitiveFontWeights.typographyFontWeightMedium,
+          fontSize:    BTechFontSize.sm,
+          fontWeight:  BTechFontWeight.medium,
           color:       t.textDefault,
         ),
         titleLarge: TextStyle(
           fontFamily:  t.fontFamilySans,
-          fontSize:    DsPrimitiveDimensions.typographyFontSizeXl,
-          fontWeight:  DsPrimitiveFontWeights.typographyFontWeightBold,
+          fontSize:    BTechFontSize.xl,
+          fontWeight:  BTechFontWeight.bold,
           color:       t.textDefault,
         ),
       ),
 
       extensions: [
-        DsTokenExtension(tokens: t),
+        BTechTokenExtension(tokens: t),
       ],
     );
   }

@@ -1,5 +1,5 @@
 {
-  "name": "@ramams06/tokens-web",
+  "name": "@btech/tokens-web",
   "version": "0.0.1",
   "description": "Multi-tenant CSS custom property tokens for vanilla JS and Web Components",
   "main": "./dist/index.js",

@@ -56,16 +56,16 @@ function loadJson(path: string): TokenNode {
   return JSON.parse(readFileSync(resolve(ROOT, path), 'utf-8'));
 }
 
-const baseColor = loadJson('tokens/base/color.json');
+const baseColor = loadJson('tokens/core/color.primitive.json');
 const semanticColor = loadJson('tokens/semantic/color.json') as TokenNode;
 
 // Pairs to check: [fg token path, bg token path, context]
 const pairs: Array<[string[], string[], string]> = [
-  [['color', 'primary', 'fg'],   ['color', 'primary', 'bg'],   'primary button'],
-  [['color', 'secondary', 'fg'], ['color', 'secondary', 'bg'], 'secondary button'],
-  [['color', 'danger', 'fg'],    ['color', 'danger', 'bg'],    'danger button'],
-  [['color', 'text', 'default'], ['color', 'surface', 'default'], 'body text on surface'],
-  [['color', 'text', 'subtle'],  ['color', 'surface', 'default'], 'subtle text on surface'],
+  [['color', 'text', 'on-primary'],   ['color', 'background', 'primary'],   'primary button'],
+  [['color', 'text', 'on-secondary'], ['color', 'background', 'secondary'], 'secondary button'],
+  [['color', 'text', 'on-danger'],    ['color', 'background', 'danger'],    'danger button'],
+  [['color', 'text', 'primary'],      ['color', 'background', 'default'],   'body text on surface'],
+  [['color', 'text', 'secondary'],    ['color', 'background', 'default'],   'subtle text on surface'],
 ];
 
 function getTokenValue(path: string[], tokens: TokenNode): string | null {

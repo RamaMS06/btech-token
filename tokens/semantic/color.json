@@ -1,45 +1,33 @@
 {
   "color": {
-    "primary": {
-      "bg":     { "$value": "{color.green.700}", "$type": "color", "$description": "Main brand background — overridable per tenant. Uses .700 to ensure WCAG AA with white text." },
-      "bg-hover": { "$value": "{color.green.800}", "$type": "color" },
-      "fg":     { "$value": "{color.neutral.0}",   "$type": "color" },
-      "border": { "$value": "{color.green.800}", "$type": "color" }
-    },
-    "secondary": {
-      "bg":     { "$value": "{color.neutral.100}", "$type": "color" },
-      "bg-hover": { "$value": "{color.neutral.200}", "$type": "color" },
-      "fg":     { "$value": "{color.neutral.800}", "$type": "color" },
-      "border": { "$value": "{color.neutral.300}", "$type": "color" }
-    },
-    "danger": {
-      "bg":     { "$value": "{color.red.700}", "$type": "color" },
-      "bg-hover": { "$value": "{color.red.700}", "$type": "color" },
-      "fg":     { "$value": "{color.neutral.0}", "$type": "color" },
-      "border": { "$value": "{color.red.700}", "$type": "color" }
-    },
-    "success": {
-      "bg":     { "$value": "{color.green.500}", "$type": "color" },
-      "fg":     { "$value": "{color.neutral.0}", "$type": "color" }
-    },
-    "warning": {
-      "bg":     { "$value": "{color.orange.500}", "$type": "color" },
-      "fg":     { "$value": "{color.neutral.0}", "$type": "color" }
-    },
-    "surface": {
-      "default": { "$value": "{color.neutral.0}",   "$type": "color" },
-      "subtle":  { "$value": "{color.neutral.50}",  "$type": "color" },
-      "raised":  { "$value": "{color.neutral.100}", "$type": "color" }
-    },
     "text": {
-      "default":  { "$value": "{color.neutral.900}", "$type": "color" },
-      "subtle":   { "$value": "{color.neutral.500}", "$type": "color" },
-      "disabled": { "$value": "{color.neutral.400}", "$type": "color" },
-      "inverse":  { "$value": "{color.neutral.0}",   "$type": "color" }
+      "primary":   { "$value": "{color.neutral.900}", "$type": "color" },
+      "secondary": { "$value": "{color.neutral.500}", "$type": "color" },
+      "disable":   { "$value": "{color.neutral.400}", "$type": "color" },
+      "inverse":   { "$value": "{color.neutral.0}",   "$type": "color" },
+      "on-primary": { "$value": "{color.neutral.0}",  "$type": "color" },
+      "on-secondary": { "$value": "{color.neutral.800}", "$type": "color" },
+      "on-danger":  { "$value": "{color.neutral.0}",  "$type": "color" }
     },
-    "border": {
-      "default": { "$value": "{color.neutral.200}", "$type": "color" },
-      "strong":  { "$value": "{color.neutral.400}", "$type": "color" }
+    "background": {
+      "default":          { "$value": "{color.neutral.0}",   "$type": "color" },
+      "subtle":           { "$value": "{color.neutral.50}",  "$type": "color" },
+      "raised":           { "$value": "{color.neutral.100}", "$type": "color" },
+      "primary":          { "$value": "{color.green.700}",   "$type": "color", "$description": "Main brand bg — WCAG AA with white text (5.02:1)" },
+      "primary-hover":    { "$value": "{color.green.800}",   "$type": "color" },
+      "secondary":        { "$value": "{color.neutral.100}", "$type": "color" },
+      "secondary-hover":  { "$value": "{color.neutral.200}", "$type": "color" },
+      "danger":           { "$value": "{color.red.700}",     "$type": "color" },
+      "danger-hover":     { "$value": "{color.red.700}",     "$type": "color" },
+      "success":          { "$value": "{color.green.500}",   "$type": "color" },
+      "warning":          { "$value": "{color.orange.500}",  "$type": "color" }
+    },
+    "stroke": {
+      "default":   { "$value": "{color.neutral.200}", "$type": "color" },
+      "strong":    { "$value": "{color.neutral.400}", "$type": "color" },
+      "primary":   { "$value": "{color.green.800}",   "$type": "color" },
+      "secondary": { "$value": "{color.neutral.300}", "$type": "color" },
+      "danger":    { "$value": "{color.red.700}",     "$type": "color" }
     }
   }
 }

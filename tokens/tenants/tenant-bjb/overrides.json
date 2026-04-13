@@ -1,10 +1,12 @@
 {
   "$description": "Tenant BJB — deeper blue brand, custom font, tight radius",
   "color": {
-    "primary": {
-      "bg":       { "$value": "{color.blue.600}", "$type": "color" },
-      "bg-hover": { "$value": "{color.blue.700}", "$type": "color" },
-      "border":   { "$value": "{color.blue.800}", "$type": "color" }
+    "background": {
+      "primary":       { "$value": "{color.blue.600}", "$type": "color" },
+      "primary-hover": { "$value": "{color.blue.700}", "$type": "color" }
+    },
+    "stroke": {
+      "primary":       { "$value": "{color.blue.800}", "$type": "color" }
     }
   },
   "typography": {

@@ -6,3 +6,11 @@ dist/
 !.changeset/*.js
 *.d.ts
 .DS_Store
+
+# Demo apps — not part of the publishable package set
+apps/
+
+# Dart tooling
+.dart_tool/
+build/
+pubspec.lock

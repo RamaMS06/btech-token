@@ -12,11 +12,14 @@ const TENANTS_DIR = resolve(ROOT, 'tokens/tenants');
 
 // Paths prefixes tenants ARE allowed to override
 const ALLOWED_PREFIXES: string[] = [
-  'color.primary',
-  'color.secondary',
-  'color.danger',
-  'color.success',
-  'color.warning',
+  'color.background.primary',
+  'color.background.secondary',
+  'color.background.danger',
+  'color.background.success',
+  'color.background.warning',
+  'color.stroke.primary',
+  'color.stroke.secondary',
+  'color.stroke.danger',
   'radius.interactive',
   'radius.card',
   'radius.badge',

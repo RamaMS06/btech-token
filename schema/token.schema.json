@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/RamaMS06/design-tokens/schema/token.schema.json",
+  "$id": "https://github.com/AlfaBTech/design-tokens/schema/token.schema.json",
   "title": "Design Token (DTCG-compatible)",
-  "description": "Schema for W3C Design Token Community Group format tokens used in @ramams06/design-tokens",
+  "description": "Schema for W3C Design Token Community Group format tokens used in @btech/design-tokens",
   "type": "object",
   "definitions": {
     "tokenValue": {

@@ -7,122 +7,325 @@ import { mkdirSync } from 'fs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 // ---------------------------------------------------------------------------
-// Custom format: Dart primitives + tenant tokens
+// Helpers
+// ---------------------------------------------------------------------------
+
+function hexToArgb(hex: string): string {
+  const clean = hex.replace('#', '');
+  const padded = clean.length === 3
+    ? clean.split('').map(c => c + c).join('')
+    : clean;
+  return `0xFF${padded.toUpperCase()}`;
+}
+
+function toCamelCase(str: string): string {
+  return str.replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
+}
+
+// ---------------------------------------------------------------------------
+// Custom format: Dart nested BTech classes
 // ---------------------------------------------------------------------------
 const dartFormat: Format = {
   name: 'custom/dart',
   format: ({ dictionary }) => {
     const tokens = dictionary.allTokens;
 
-    function dartColor(hex: string): string {
-      // #RRGGBB → Color(0xFFRRGGBB)
-      const clean = hex.replace('#', '');
-      const padded = clean.length === 3
-        ? clean.split('').map(c => c + c).join('')
-        : clean;
-      return `Color(0xFF${padded.toUpperCase()})`;
-    }
-
-    function dartDouble(val: string | number): string {
-      const n = typeof val === 'string' ? parseFloat(val) : val;
-      return Number.isInteger(n) ? `${n}` : `${n}`;
-    }
-
-    function group(type: string): TransformedToken[] {
-      return tokens.filter(t => t.$type === type || t.type === type);
-    }
-
-    const colors  = group('color');
-    const dims    = group('dimension');
-    const weights = group('fontWeight');
-    const families= group('fontFamily');
-
-    // Helper: token path → Dart const name (camelCase)
-    function constName(t: TransformedToken): string {
-      return t.path.map((p, i) =>
-        i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)
-      ).join('').replace(/[^a-zA-Z0-9_]/g, '_');
-    }
-
-    // Split into primitive (base) vs semantic tokens by path depth / parent
     const isPrimitive = (t: TransformedToken) =>
-      t.filePath.includes('/base/');
+      t.filePath.includes('/core/');
 
-    const primColors   = colors.filter(isPrimitive);
-    const primDims     = dims.filter(isPrimitive);
-    const primWeights  = weights.filter(isPrimitive);
-    const primFamilies = families.filter(isPrimitive);
+    // ── Categorize tokens ───────────────────────────────────────────────────
+    const primColors: TransformedToken[]  = [];
+    const semColors: TransformedToken[]   = [];
+    const spacingTokens: TransformedToken[] = [];
+    const primRadiusTokens: TransformedToken[] = [];
+    const semRadiusTokens: TransformedToken[] = [];
+    const fontWeightTokens: TransformedToken[] = [];
+    const fontFamilyTokens: TransformedToken[] = [];
+    const fontSizeTokens: TransformedToken[] = [];
+    const semFontFamilyTokens: TransformedToken[] = [];
+    const semFontSizeTokens: TransformedToken[] = [];
+    const buttonColorTokens: TransformedToken[] = [];
+    const buttonDimTokens: TransformedToken[] = [];
+    const shadowTokens: TransformedToken[] = [];
+    const motionTokens: TransformedToken[] = [];
+    const zIndexTokens: TransformedToken[] = [];
+    const lineHeightTokens: TransformedToken[] = [];
+    const letterSpacingTokens: TransformedToken[] = [];
 
-    const semColors    = colors.filter(t => !isPrimitive(t));
-    const semDims      = dims.filter(t => !isPrimitive(t));
-    const semFamilies  = families.filter(t => !isPrimitive(t));
+    for (const t of tokens) {
+      const type = t.$type || t.type;
+      const path0 = t.path[0];
+
+      if (path0 === 'button') {
+        if (type === 'color') buttonColorTokens.push(t);
+        else buttonDimTokens.push(t);
+        continue;
+      }
+
+      if (path0 === 'shadow') { shadowTokens.push(t); continue; }
+      if (path0 === 'motion') { motionTokens.push(t); continue; }
+      if (path0 === 'zIndex') { zIndexTokens.push(t); continue; }
+
+      if (path0 === 'color') {
+        if (isPrimitive(t)) primColors.push(t);
+        else semColors.push(t);
+        continue;
+      }
+
+      if (path0 === 'spacing') { spacingTokens.push(t); continue; }
+
+      if (path0 === 'radius') {
+        if (isPrimitive(t)) primRadiusTokens.push(t);
+        else semRadiusTokens.push(t);
+        continue;
+      }
+
+      if (path0 === 'typography') {
+        if (type === 'fontWeight') {
+          if (isPrimitive(t)) fontWeightTokens.push(t);
+          // Skip semantic fontWeight tokens (body.fontWeight, etc.) — redundant
+          continue;
+        }
+        if (type === 'fontFamily') {
+          if (isPrimitive(t)) fontFamilyTokens.push(t);
+          else semFontFamilyTokens.push(t);
+          continue;
+        }
+        if (type === 'dimension') {
+          // fontSize or letterSpacing
+          if (t.path[1] === 'letterSpacing') { letterSpacingTokens.push(t); continue; }
+          if (isPrimitive(t)) fontSizeTokens.push(t);
+          else semFontSizeTokens.push(t);
+          continue;
+        }
+        if (type === 'number') {
+          if (isPrimitive(t)) lineHeightTokens.push(t);
+          // Skip semantic lineHeight tokens (body.lineHeight, etc.) — redundant
+          continue;
+        }
+      }
+    }
+
+    // ── Group primitive colors by palette name ──────────────────────────────
+    const colorGroups: Record<string, TransformedToken[]> = {};
+    for (const t of primColors) {
+      const group = t.path[1]; // blue, green, orange, red, neutral
+      if (!colorGroups[group]) colorGroups[group] = [];
+      colorGroups[group].push(t);
+    }
+
+    // ── Group semantic colors by group (text, background, stroke) ───────────
+    const semColorGroups: Record<string, TransformedToken[]> = {};
+    for (const t of semColors) {
+      const group = t.path[1]; // text, background, stroke
+      if (!semColorGroups[group]) semColorGroups[group] = [];
+      semColorGroups[group].push(t);
+    }
 
     const lines: string[] = [
-      '// AUTO-GENERATED by @ramams06/design-tokens — do not edit manually.',
+      '// AUTO-GENERATED by @btech/design-tokens — do not edit manually.',
       '// Run `pnpm generate` to regenerate from tokens/.',
       '',
       '// ignore_for_file: lines_longer_than_80_chars',
       '',
       "import 'package:flutter/material.dart';",
       '',
-      '/// Primitive color tokens (Tier 1) — never consume in components directly.',
-      'abstract class DsPrimitiveColors {',
     ];
 
-    for (const t of primColors) {
-      const hex = String(t.value ?? t.$value);
-      lines.push(`  static const ${constName(t)} = ${dartColor(hex)};`);
-    }
-    lines.push('}', '');
-
-    lines.push('/// Primitive spacing / dimension tokens (Tier 1).');
-    lines.push('abstract class DsPrimitiveDimensions {');
-    for (const t of primDims) {
-      const raw = String(t.value ?? t.$value).replace('px', '');
-      lines.push(`  static const double ${constName(t)} = ${dartDouble(raw)};`);
-    }
-    lines.push('}', '');
-
-    lines.push('/// Primitive font-weight tokens (Tier 1).');
-    lines.push('abstract class DsPrimitiveFontWeights {');
-    for (const t of primWeights) {
-      const w = Number(t.value ?? t.$value);
-      lines.push(`  static const FontWeight ${constName(t)} = FontWeight.w${w};`);
-    }
-    lines.push('}', '');
-
-    lines.push('/// Primitive font-family tokens (Tier 1).');
-    lines.push('abstract class DsPrimitiveFontFamilies {');
-    for (const t of primFamilies) {
-      const fam = String(t.value ?? t.$value).split(',')[0].trim().replace(/'/g, '');
-      lines.push(`  static const String ${constName(t)} = '${fam}';`);
-    }
-    lines.push('}', '');
-
-    lines.push('/// Semantic color tokens (Tier 2) — default tenant values.');
-    lines.push('abstract class DsSemanticColors {');
-    for (const t of semColors) {
-      const hex = String(t.value ?? t.$value);
-      lines.push(`  static const ${constName(t)} = ${dartColor(hex)};`);
-    }
-    lines.push('}', '');
-
-    lines.push('/// Semantic radius tokens (Tier 2).');
-    lines.push('abstract class DsSemanticRadius {');
-    for (const t of semDims) {
-      const raw = String(t.value ?? t.$value).replace('px', '');
-      lines.push(`  static const double ${constName(t)} = ${dartDouble(raw)};`);
-    }
-    lines.push('}', '');
-
-    if (semFamilies.length > 0) {
-      lines.push('/// Semantic font-family tokens (Tier 2).');
-      lines.push('abstract class DsSemanticFontFamilies {');
-      for (const t of semFamilies) {
-        const fam = String(t.value ?? t.$value).split(',')[0].trim().replace(/'/g, '');
-        lines.push(`  static const String ${constName(t)} = '${fam}';`);
+    // ── Primitive color palette classes ──────────────────────────────────────
+    lines.push('// ── Primitive color palette ──────────────────────────────────────────────────');
+    const groupClassNames: string[] = [];
+    for (const [groupName, groupTokens] of Object.entries(colorGroups)) {
+      const className = `_BTechPrimColor${groupName.charAt(0).toUpperCase() + groupName.slice(1)}`;
+      groupClassNames.push(groupName);
+      lines.push(`class ${className} {`);
+      lines.push(`  const ${className}();`);
+      for (const t of groupTokens) {
+        const shade = t.path[2]; // 50, 100, 500, etc.
+        const hex = String(t.value ?? t.$value);
+        lines.push(`  final Color s${shade} = const Color(${hexToArgb(hex)});`);
       }
-      lines.push('}', '');
+      lines.push('}');
+      lines.push('');
+    }
+
+    lines.push('abstract class BTechPrimitiveColor {');
+    for (const groupName of groupClassNames) {
+      const className = `_BTechPrimColor${groupName.charAt(0).toUpperCase() + groupName.slice(1)}`;
+      lines.push(`  static const ${groupName} = ${className}();`);
+    }
+    lines.push('}');
+    lines.push('');
+
+    // ── Primitive spacing ──────────────────────────────────────────────────
+    lines.push('// ── Primitive spacing ────────────────────────────────────────────────────────');
+    lines.push('abstract class BTechSpacing {');
+    for (const t of spacingTokens) {
+      const name = t.path[t.path.length - 1]; // xs, sm, md, lg, xl, xl2, xl3, xl4
+      const raw = String(t.value ?? t.$value).replace('px', '');
+      lines.push(`  static const double ${name} = ${parseFloat(raw)};`);
+    }
+    lines.push('}');
+    lines.push('');
+
+    // ── Primitive radius ────────────────────────────────────────────────────
+    lines.push('// ── Primitive radius ─────────────────────────────────────────────────────────');
+    lines.push('abstract class BTechRadius {');
+    for (const t of primRadiusTokens) {
+      const name = t.path[t.path.length - 1]; // none, sm, md, lg, xl, full
+      const raw = String(t.value ?? t.$value).replace('px', '');
+      lines.push(`  static const double ${name} = ${parseFloat(raw)};`);
+    }
+    lines.push('}');
+    lines.push('');
+
+    // ── Primitive font weights ──────────────────────────────────────────────
+    lines.push('// ── Primitive font weights ───────────────────────────────────────────────────');
+    lines.push('abstract class BTechFontWeight {');
+    for (const t of fontWeightTokens) {
+      const name = t.path[t.path.length - 1]; // regular, medium, semibold, bold
+      const w = Number(t.value ?? t.$value);
+      lines.push(`  static const FontWeight ${name} = FontWeight.w${w};`);
+    }
+    lines.push('}');
+    lines.push('');
+
+    // ── Primitive font families ─────────────────────────────────────────────
+    lines.push('// ── Primitive font families ──────────────────────────────────────────────────');
+    lines.push('abstract class BTechFontFamily {');
+    for (const t of fontFamilyTokens) {
+      const name = t.path[t.path.length - 1]; // sans, mono
+      const fam = String(t.value ?? t.$value).split(',')[0].trim().replace(/'/g, '');
+      lines.push(`  static const String ${name} = '${fam}';`);
+    }
+    lines.push('}');
+    lines.push('');
+
+    // ── Primitive font sizes ────────────────────────────────────────────────
+    lines.push('// ── Primitive font sizes ─────────────────────────────────────────────────────');
+    lines.push('abstract class BTechFontSize {');
+    for (const t of fontSizeTokens) {
+      const name = t.path[t.path.length - 1]; // xs, sm, base, lg, xl, 2xl, 3xl, 4xl
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      const raw = String(t.value ?? t.$value).replace('px', '');
+      lines.push(`  static const double ${safeName} = ${parseFloat(raw)};`);
+    }
+    lines.push('}');
+    lines.push('');
+
+    // ── Primitive line heights ──────────────────────────────────────────────
+    if (lineHeightTokens.length > 0) {
+      lines.push('// ── Primitive line heights ────────────────────────────────────────────────────');
+      lines.push('abstract class BTechLineHeight {');
+      for (const t of lineHeightTokens) {
+        const name = t.path[t.path.length - 1];
+        const val = Number(t.value ?? t.$value);
+        lines.push(`  static const double ${name} = ${val};`);
+      }
+      lines.push('}');
+      lines.push('');
+    }
+
+    // ── Semantic color classes ──────────────────────────────────────────────
+    const semGroupClassMap: Record<string, string> = {
+      'text': '_BTechColorText',
+      'background': '_BTechColorBackground',
+      'stroke': '_BTechColorStroke',
+    };
+
+    const reservedWords = new Set(['default', 'switch', 'class', 'return', 'new', 'if', 'else', 'for', 'while', 'do']);
+
+    for (const [groupName, groupTokens] of Object.entries(semColorGroups)) {
+      const className = semGroupClassMap[groupName] || `_BTechColor${groupName.charAt(0).toUpperCase() + groupName.slice(1)}`;
+      const suffix = groupName === 'background' ? 'Bg' : groupName === 'stroke' ? 'Stroke' : '';
+      lines.push(`// ── Semantic color — ${groupName} group ──────────────────────────────────────────────`);
+      lines.push(`class ${className} {`);
+      lines.push(`  const ${className}();`);
+      for (const t of groupTokens) {
+        const rawName = t.path[t.path.length - 1]; // primary, secondary, default, etc.
+        let fieldName = toCamelCase(rawName);
+        if (reservedWords.has(fieldName)) {
+          fieldName = fieldName + suffix;
+        }
+        const hex = String(t.value ?? t.$value);
+        lines.push(`  final Color ${fieldName} = const Color(${hexToArgb(hex)});`);
+      }
+      lines.push('}');
+      lines.push('');
+    }
+
+    lines.push('/// Semantic color tokens — BTech design system.');
+    lines.push('/// Usage: BTechColor.text.primary, BTechColor.background.primary');
+    lines.push('abstract class BTechColor {');
+    for (const groupName of Object.keys(semColorGroups)) {
+      const className = semGroupClassMap[groupName] || `_BTechColor${groupName.charAt(0).toUpperCase() + groupName.slice(1)}`;
+      lines.push(`  static const ${groupName} = ${className}();`);
+    }
+    lines.push('}');
+    lines.push('');
+
+    // ── Semantic radius ─────────────────────────────────────────────────────
+    if (semRadiusTokens.length > 0) {
+      lines.push('// ── Semantic radius ──────────────────────────────────────────────────────────');
+      lines.push('abstract class BTechSemanticRadius {');
+      for (const t of semRadiusTokens) {
+        const name = t.path[t.path.length - 1];
+        const raw = String(t.value ?? t.$value).replace('px', '');
+        lines.push(`  static const double ${name} = ${parseFloat(raw)};`);
+      }
+      lines.push('}');
+      lines.push('');
+    }
+
+    // ── Semantic font families ──────────────────────────────────────────────
+    if (semFontFamilyTokens.length > 0) {
+      lines.push('// ── Semantic font families ────────────────────────────────────────────────────');
+      lines.push('abstract class BTechSemanticFontFamily {');
+      for (const t of semFontFamilyTokens) {
+        const scope = t.path[1]; // body, label, heading, code
+        const fam = String(t.value ?? t.$value).split(',')[0].trim().replace(/'/g, '');
+        lines.push(`  static const String ${scope} = '${fam}';`);
+      }
+      lines.push('}');
+      lines.push('');
+    }
+
+    // ── Semantic font sizes ─────────────────────────────────────────────────
+    if (semFontSizeTokens.length > 0) {
+      lines.push('// ── Semantic font sizes ───────────────────────────────────────────────────────');
+      lines.push('abstract class BTechSemanticFontSize {');
+      for (const t of semFontSizeTokens) {
+        const scope = t.path[1]; // body, label, code
+        const raw = String(t.value ?? t.$value).replace('px', '');
+        lines.push(`  static const double ${scope} = ${parseFloat(raw)};`);
+      }
+      lines.push('}');
+      lines.push('');
+    }
+
+    // ── Button tokens ───────────────────────────────────────────────────────
+    if (buttonColorTokens.length > 0 || buttonDimTokens.length > 0) {
+      lines.push('// ── Button component tokens ──────────────────────────────────────────────────');
+      if (buttonColorTokens.length > 0) {
+        lines.push('abstract class BTechButtonColors {');
+        for (const t of buttonColorTokens) {
+          const name = t.path.slice(1).map((p, i) => i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)).join('');
+          const hex = String(t.value ?? t.$value);
+          lines.push(`  static const ${toCamelCase(name)} = Color(${hexToArgb(hex)});`);
+        }
+        lines.push('}');
+        lines.push('');
+      }
+      if (buttonDimTokens.length > 0) {
+        lines.push('abstract class BTechButtonDimensions {');
+        for (const t of buttonDimTokens) {
+          const name = t.path.slice(1).map((p, i) => i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)).join('');
+          const raw = String(t.value ?? t.$value).replace('px', '');
+          lines.push(`  static const double ${toCamelCase(name)} = ${parseFloat(raw)};`);
+        }
+        lines.push('}');
+        lines.push('');
+      }
     }
 
     return lines.join('\n') + '\n';
@@ -145,7 +348,7 @@ mkdirSync(`${ROOT}/packages/tokens-vue/src/`, { recursive: true });
 // ---------------------------------------------------------------------------
 const sd = new StyleDictionary({
   source: [
-    `${ROOT}/tokens/base/**/*.json`,
+    `${ROOT}/tokens/core/**/*.json`,
     `${ROOT}/tokens/semantic/**/*.json`,
     `${ROOT}/tokens/components/**/*.json`,
   ],
@@ -154,7 +357,7 @@ const sd = new StyleDictionary({
     // CSS custom properties → tokens-web
     css: {
       transformGroup: 'css',
-      prefix: 'ds',
+      prefix: 'btech',
       buildPath: `${ROOT}/packages/tokens-web/dist/`,
       files: [
         {

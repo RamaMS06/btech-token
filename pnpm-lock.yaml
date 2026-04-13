@@ -29,10 +29,10 @@ importers:
 
   apps/demo-react:
     dependencies:
-      '@ramams06/tokens-react':
+      '@btech/tokens-react':
         specifier: workspace:*
         version: link:../../packages/tokens-react
-      '@ramams06/tokens-web':
+      '@btech/tokens-web':
         specifier: workspace:*
         version: link:../../packages/tokens-web
       react:
@@ -57,10 +57,10 @@ importers:
 
   apps/demo-vue:
     dependencies:
-      '@ramams06/tokens-vue':
+      '@btech/tokens-vue':
         specifier: workspace:*
         version: link:../../packages/tokens-vue
-      '@ramams06/tokens-web':
+      '@btech/tokens-web':
         specifier: workspace:*
         version: link:../../packages/tokens-web
       vue:

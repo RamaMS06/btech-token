@@ -13,7 +13,7 @@ interface TokenState {
   mode: ColorMode;
 }
 
-const TOKEN_INJECTION_KEY: InjectionKey<Ref<TokenState>> = Symbol('ds-tokens');
+const TOKEN_INJECTION_KEY: InjectionKey<Ref<TokenState>> = Symbol('btech-tokens');
 
 /**
  * Vue 3 plugin that activates tenant theming.
