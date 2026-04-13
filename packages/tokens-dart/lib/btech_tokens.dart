@@ -12,3 +12,4 @@ library btech_tokens;
 export 'src/generated.dart'; // AUTO-GENERATED — run `pnpm generate` to refresh
 export 'src/theme.dart';
 export 'src/tenant.dart';
+export 'src/context.dart'; // context.btechTokens extension
