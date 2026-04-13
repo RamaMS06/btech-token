@@ -3,9 +3,10 @@
  * Checks all foreground/background token pairs in semantic/color.json
  */
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const ROOT = resolve(import.meta.dirname, '../..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 function hexToRgb(hex: string): [number, number, number] {
   const clean = hex.replace('#', '');

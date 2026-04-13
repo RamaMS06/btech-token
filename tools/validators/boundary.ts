@@ -4,9 +4,10 @@
  * Fails CI if a tenant override touches a forbidden token path.
  */
 import { readFileSync, readdirSync, existsSync } from 'fs';
-import { resolve, join } from 'path';
+import { resolve, join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const ROOT = resolve(import.meta.dirname, '../..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const TENANTS_DIR = resolve(ROOT, 'tokens/tenants');
 
 // Paths prefixes tenants ARE allowed to override

@@ -1,7 +1,8 @@
 import StyleDictionary from 'style-dictionary';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const ROOT = resolve(import.meta.dirname, '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 /**
  * Style Dictionary v4 config.

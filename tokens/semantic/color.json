@@ -1,10 +1,10 @@
 {
   "color": {
     "primary": {
-      "bg":     { "$value": "{color.green.500}", "$type": "color", "$description": "Main brand background — overridable per tenant" },
-      "bg-hover": { "$value": "{color.green.600}", "$type": "color" },
+      "bg":     { "$value": "{color.green.700}", "$type": "color", "$description": "Main brand background — overridable per tenant. Uses .700 to ensure WCAG AA with white text." },
+      "bg-hover": { "$value": "{color.green.800}", "$type": "color" },
       "fg":     { "$value": "{color.neutral.0}",   "$type": "color" },
-      "border": { "$value": "{color.green.600}", "$type": "color" }
+      "border": { "$value": "{color.green.800}", "$type": "color" }
     },
     "secondary": {
       "bg":     { "$value": "{color.neutral.100}", "$type": "color" },
@@ -13,8 +13,8 @@
       "border": { "$value": "{color.neutral.300}", "$type": "color" }
     },
     "danger": {
-      "bg":     { "$value": "{color.red.500}", "$type": "color" },
-      "bg-hover": { "$value": "{color.red.600}", "$type": "color" },
+      "bg":     { "$value": "{color.red.700}", "$type": "color" },
+      "bg-hover": { "$value": "{color.red.700}", "$type": "color" },
       "fg":     { "$value": "{color.neutral.0}", "$type": "color" },
       "border": { "$value": "{color.red.700}", "$type": "color" }
     },
