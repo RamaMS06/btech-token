@@ -280,11 +280,22 @@ const dartFormat: Format = {
     for (const [g, gt] of Object.entries(primColorGroups)) {
       const cn = `_BTechPrimColor${g.charAt(0).toUpperCase() + g.slice(1)}`;
       groupNames.push(g);
+      // Collect shades first so we can emit initializer list (required for const constructor)
+      const shades = gt.map(t => ({
+        shade: t.path[2],
+        argb: hexToArgb(String(t.value ?? t.$value)),
+      }));
       L.push(`class ${cn} {`);
-      L.push(`  const ${cn}();`);
-      for (const t of gt) {
-        const shade = t.path[2];
-        L.push(`  final Color s${shade} = const Color(${hexToArgb(String(t.value ?? t.$value))});`);
+      // Constructor initializer list — Dart requires this for const constructors
+      // (field initializers `final x = expr` are NOT allowed on const constructors)
+      L.push(`  const ${cn}()`);
+      const initLines = shades.map((s, i) =>
+        `    ${i === 0 ? ': ' : '  '}s${s.shade} = const Color(${s.argb})`
+      );
+      L.push(initLines.join(',\n') + ';');
+      // Field declarations (no initializer)
+      for (const s of shades) {
+        L.push(`  final Color s${s.shade};`);
       }
       L.push('}'); L.push('');
     }

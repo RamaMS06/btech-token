@@ -7,68 +7,113 @@ import 'package:flutter/material.dart';
 
 // ── Primitive color palette ──────────────────────────────────────────────────
 class _BTechPrimColorBlue {
-  const _BTechPrimColorBlue();
-  final Color s50 = const Color(0xFFEFF6FF);
-  final Color s100 = const Color(0xFFDBEAFE);
-  final Color s200 = const Color(0xFFBFDBFE);
-  final Color s300 = const Color(0xFF93C5FD);
-  final Color s400 = const Color(0xFF60A5FA);
-  final Color s500 = const Color(0xFF3B82F6);
-  final Color s600 = const Color(0xFF2563EB);
-  final Color s700 = const Color(0xFF1D4ED8);
-  final Color s800 = const Color(0xFF1E40AF);
-  final Color s900 = const Color(0xFF1E3A8A);
+  const _BTechPrimColorBlue()
+    : s50 = const Color(0xFFEFF6FF),
+      s100 = const Color(0xFFDBEAFE),
+      s200 = const Color(0xFFBFDBFE),
+      s300 = const Color(0xFF93C5FD),
+      s400 = const Color(0xFF60A5FA),
+      s500 = const Color(0xFF3B82F6),
+      s600 = const Color(0xFF2563EB),
+      s700 = const Color(0xFF1D4ED8),
+      s800 = const Color(0xFF1E40AF),
+      s900 = const Color(0xFF1E3A8A);
+  final Color s50;
+  final Color s100;
+  final Color s200;
+  final Color s300;
+  final Color s400;
+  final Color s500;
+  final Color s600;
+  final Color s700;
+  final Color s800;
+  final Color s900;
 }
 
 class _BTechPrimColorGreen {
-  const _BTechPrimColorGreen();
-  final Color s50 = const Color(0xFFF0FDF4);
-  final Color s100 = const Color(0xFFDCFCE7);
-  final Color s200 = const Color(0xFFBBF7D0);
-  final Color s300 = const Color(0xFF86EFAC);
-  final Color s400 = const Color(0xFF4ADE80);
-  final Color s500 = const Color(0xFF22C55E);
-  final Color s600 = const Color(0xFF16A34A);
-  final Color s700 = const Color(0xFF15803D);
-  final Color s800 = const Color(0xFF166534);
-  final Color s900 = const Color(0xFF14532D);
+  const _BTechPrimColorGreen()
+    : s50 = const Color(0xFFF0FDF4),
+      s100 = const Color(0xFFDCFCE7),
+      s200 = const Color(0xFFBBF7D0),
+      s300 = const Color(0xFF86EFAC),
+      s400 = const Color(0xFF4ADE80),
+      s500 = const Color(0xFF22C55E),
+      s600 = const Color(0xFF16A34A),
+      s700 = const Color(0xFF15803D),
+      s800 = const Color(0xFF166534),
+      s900 = const Color(0xFF14532D);
+  final Color s50;
+  final Color s100;
+  final Color s200;
+  final Color s300;
+  final Color s400;
+  final Color s500;
+  final Color s600;
+  final Color s700;
+  final Color s800;
+  final Color s900;
 }
 
 class _BTechPrimColorOrange {
-  const _BTechPrimColorOrange();
-  final Color s50 = const Color(0xFFFFF7ED);
-  final Color s100 = const Color(0xFFFFEDD5);
-  final Color s200 = const Color(0xFFFED7AA);
-  final Color s300 = const Color(0xFFFDBA74);
-  final Color s400 = const Color(0xFFFB923C);
-  final Color s500 = const Color(0xFFF97316);
-  final Color s600 = const Color(0xFFEA580C);
-  final Color s700 = const Color(0xFFC2410C);
-  final Color s800 = const Color(0xFF9A3412);
-  final Color s900 = const Color(0xFF7C2D12);
+  const _BTechPrimColorOrange()
+    : s50 = const Color(0xFFFFF7ED),
+      s100 = const Color(0xFFFFEDD5),
+      s200 = const Color(0xFFFED7AA),
+      s300 = const Color(0xFFFDBA74),
+      s400 = const Color(0xFFFB923C),
+      s500 = const Color(0xFFF97316),
+      s600 = const Color(0xFFEA580C),
+      s700 = const Color(0xFFC2410C),
+      s800 = const Color(0xFF9A3412),
+      s900 = const Color(0xFF7C2D12);
+  final Color s50;
+  final Color s100;
+  final Color s200;
+  final Color s300;
+  final Color s400;
+  final Color s500;
+  final Color s600;
+  final Color s700;
+  final Color s800;
+  final Color s900;
 }
 
 class _BTechPrimColorRed {
-  const _BTechPrimColorRed();
-  final Color s500 = const Color(0xFFEF4444);
-  final Color s600 = const Color(0xFFDC2626);
-  final Color s700 = const Color(0xFFB91C1C);
+  const _BTechPrimColorRed()
+    : s500 = const Color(0xFFEF4444),
+      s600 = const Color(0xFFDC2626),
+      s700 = const Color(0xFFB91C1C);
+  final Color s500;
+  final Color s600;
+  final Color s700;
 }
 
 class _BTechPrimColorNeutral {
-  const _BTechPrimColorNeutral();
-  final Color s0 = const Color(0xFFFFFFFF);
-  final Color s50 = const Color(0xFFF9FAFB);
-  final Color s100 = const Color(0xFFF3F4F6);
-  final Color s200 = const Color(0xFFE5E7EB);
-  final Color s300 = const Color(0xFFD1D5DB);
-  final Color s400 = const Color(0xFF9CA3AF);
-  final Color s500 = const Color(0xFF6B7280);
-  final Color s600 = const Color(0xFF4B5563);
-  final Color s700 = const Color(0xFF374151);
-  final Color s800 = const Color(0xFF1F2937);
-  final Color s900 = const Color(0xFF111827);
-  final Color s1000 = const Color(0xFF000000);
+  const _BTechPrimColorNeutral()
+    : s0 = const Color(0xFFFFFFFF),
+      s50 = const Color(0xFFF9FAFB),
+      s100 = const Color(0xFFF3F4F6),
+      s200 = const Color(0xFFE5E7EB),
+      s300 = const Color(0xFFD1D5DB),
+      s400 = const Color(0xFF9CA3AF),
+      s500 = const Color(0xFF6B7280),
+      s600 = const Color(0xFF4B5563),
+      s700 = const Color(0xFF374151),
+      s800 = const Color(0xFF1F2937),
+      s900 = const Color(0xFF111827),
+      s1000 = const Color(0xFF000000);
+  final Color s0;
+  final Color s50;
+  final Color s100;
+  final Color s200;
+  final Color s300;
+  final Color s400;
+  final Color s500;
+  final Color s600;
+  final Color s700;
+  final Color s800;
+  final Color s900;
+  final Color s1000;
 }
 
 abstract class BTechPrimitiveColor {

@@ -114,7 +114,7 @@ class BTechTenantTokens {
 
   /// Tenant: tenant-bjb. Auto-generated from tokens/tenants/tenant-bjb/overrides.json
   static const BTechTenantTokens tenantBjb = BTechTenantTokens(
-    primaryBg: const Color(0xFF2563EB),
+    primaryBg: const Color(0xFFDC2626),
     primaryBgHover: const Color(0xFF1D4ED8),
     primaryFg: const Color(0xFFFFFFFF),
     primaryBorder: const Color(0xFF1E40AF),

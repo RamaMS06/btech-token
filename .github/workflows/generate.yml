@@ -53,6 +53,11 @@ jobs:
       - name: Run pnpm generate
         run: pnpm generate
 
+      # ── Flutter pub get (required before analyze can resolve imports) ────
+      - name: Flutter pub get
+        run: flutter pub get
+        working-directory: packages/tokens-dart
+
       # ── Flutter analyze (generated.dart + tenant.dart must be valid) ────
       - name: Flutter analyze
         run: flutter analyze packages/tokens-dart
