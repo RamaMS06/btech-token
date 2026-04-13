@@ -14,3 +14,5 @@ apps/
 .dart_tool/
 build/
 pubspec.lock
+
+.npmrc
