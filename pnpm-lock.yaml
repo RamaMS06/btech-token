@@ -11,6 +11,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.27.1
         version: 2.30.0(@types/node@20.19.39)
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.39
       style-dictionary:
         specifier: ^4.3.0
         version: 4.4.0(tslib@2.8.1)
