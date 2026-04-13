@@ -5,10 +5,14 @@
   "packageManager": "pnpm@9.15.9",
   "description": "Multi-tenant design token source of truth — React, Vue, Flutter",
   "scripts": {
-    "generate": "tsx config/sd.config.ts",
+    "generate": "tsx config/sd.config.ts && melos run generate",
     "build": "pnpm generate && turbo run build",
-    "validate": "tsx tools/validators/contrast.ts && tsx tools/validators/boundary.ts",
+    "validate": "tsx tools/validators/contrast.ts && tsx tools/validators/boundary.ts && melos run analyze",
     "add-tenant": "tsx scripts/add-tenant.ts",
+    "bootstrap": "pnpm install && melos bootstrap",
+    "flutter:get": "melos run get",
+    "flutter:analyze": "melos run analyze",
+    "flutter:test": "melos run test",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "turbo run build && changeset publish"

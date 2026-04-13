@@ -8,13 +8,14 @@ on:
 
 jobs:
   validate:
-    name: Schema + Contrast + Boundary
+    name: Schema + Contrast + Boundary + Flutter Analyze
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ── Node / pnpm ───────────────────────────────────────────────────────
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
@@ -26,8 +27,29 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run validators
-        run: pnpm validate
+      # ── Flutter / Melos ───────────────────────────────────────────────────
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Melos
+        run: dart pub global activate melos
+
+      - name: Melos bootstrap (Flutter deps)
+        run: melos bootstrap
+
+      # ── Generate + Validate ───────────────────────────────────────────────
+      - name: Generate tokens (Style Dictionary)
+        run: tsx config/sd.config.ts
+
+      - name: Run JS validators (contrast + boundary)
+        run: tsx tools/validators/contrast.ts && tsx tools/validators/boundary.ts
+
+      - name: Run Flutter analysis
+        run: melos run analyze
