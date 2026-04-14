@@ -23,7 +23,6 @@ class TenantCard extends StatelessWidget {
       child: Builder(
         builder: (ctx) {
           final tokens = Theme.of(ctx).extension<BTechTokenExtension>()!.tokens;
-
           return Container(
             decoration: BoxDecoration(
               color: BTechColor.background.danger,
