@@ -4,6 +4,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { mkdirSync, readFileSync, writeFileSync, readdirSync, existsSync, appendFileSync } from 'fs';
 
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 // =============================================================================
@@ -22,10 +23,13 @@ function toCamelCase(str: string): string {
   return str.replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
 }
 
+function toPascalCase(str: string): string {
+  const camel = toCamelCase(str);
+  return camel.charAt(0).toUpperCase() + camel.slice(1);
+}
+
 /**
  * Flatten a DTCG JSON token tree into a Record<dotPath, rawValue>.
- * e.g. { color: { blue: { "500": { $value: "#3b82f6" } } } }
- *   →  { "color.blue.500": "#3b82f6" }
  */
 function flattenDTCG(obj: Record<string, unknown>, prefix = ''): Record<string, string> {
   const result: Record<string, string> = {};
@@ -44,7 +48,6 @@ function flattenDTCG(obj: Record<string, unknown>, prefix = ''): Record<string, 
 
 /**
  * Resolve a DTCG reference like "{color.blue.500}" against a base map.
- * Non-reference values are returned as-is.
  */
 function resolveRef(value: string, baseMap: Record<string, string>): string {
   const m = value.match(/^\{(.+)\}$/);
@@ -52,62 +55,907 @@ function resolveRef(value: string, baseMap: Record<string, string>): string {
   return value;
 }
 
+/** Simple YAML serializer (avoids external dependency) */
+function toYaml(obj: unknown, indent = 0): string {
+  const pad = '  '.repeat(indent);
+  if (obj === null || obj === undefined) return 'null';
+  if (typeof obj === 'string') return JSON.stringify(obj);
+  if (typeof obj === 'number' || typeof obj === 'boolean') return String(obj);
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) return '[]';
+    return obj.map(item => {
+      if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+        const entries = Object.entries(item);
+        const first = entries[0];
+        const rest = entries.slice(1);
+        let line = `${pad}- ${first[0]}: ${toYaml(first[1], indent + 2).trim()}`;
+        for (const [k, v] of rest) {
+          line += `\n${pad}  ${k}: ${toYaml(v, indent + 2).trim()}`;
+        }
+        return line;
+      }
+      return `${pad}- ${toYaml(item, indent + 1).trim()}`;
+    }).join('\n');
+  }
+  if (typeof obj === 'object') {
+    const entries = Object.entries(obj as Record<string, unknown>);
+    if (entries.length === 0) return '{}';
+    return entries.map(([k, v]) => {
+      const val = toYaml(v, indent + 1);
+      if (typeof v === 'object' && v !== null) {
+        return `${pad}${k}:\n${val}`;
+      }
+      return `${pad}${k}: ${val}`;
+    }).join('\n');
+  }
+  return String(obj);
+}
+
+/** Dart reserved words that need a trailing underscore */
+const DART_RESERVED = new Set(['default', 'switch', 'class', 'return', 'new', 'if', 'else', 'for', 'while', 'in', 'is', 'super', 'this']);
+
+function dartSafeName(name: string): string {
+  const camel = toCamelCase(name);
+  return DART_RESERVED.has(camel) ? `${camel}_` : camel;
+}
+
 // =============================================================================
-// Token → Dart tenant field map
-// Lists every semantic token that BTechTenantTokens exposes, in order.
+// Token source data — read once, used across all generators
+// =============================================================================
+
+interface ResolvedTokenMap {
+  baseMap: Record<string, string>;          // all resolved core+semantic tokens
+  coreColors: Record<string, Record<string, string>>;  // e.g. { blue: { '50': '#eff6ff', ... } }
+  semanticColors: Record<string, Record<string, Record<string, string>>>; // { text: { neutral: { default: '#...' } } }
+  spacing: Record<string, string>;          // { xs: '4px', ... }
+  radius: { core: Record<string, string>; semantic: Record<string, string> };
+  typography: {
+    fontFamilies: Record<string, string>;
+    fontSizes: Record<string, string>;
+    fontWeights: Record<string, string>;
+    lineHeights: Record<string, string>;
+    semantic: Record<string, Record<string, string>>;   // { body: { fontFamily: ..., fontSize: ... }, heading: { ... } }
+  };
+}
+
+function loadTokenData(): ResolvedTokenMap {
+  // Load all core files
+  const coreDir = `${ROOT}/tokens/core`;
+  const semanticDir = `${ROOT}/tokens/semantic`;
+
+  const rawBaseMap: Record<string, string> = {};
+  for (const dir of [coreDir, semanticDir]) {
+    for (const f of readdirSync(dir).filter(f => f.endsWith('.json'))) {
+      const content = JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'));
+      Object.assign(rawBaseMap, flattenDTCG(content));
+    }
+  }
+
+  // Resolve refs (two passes for chained refs)
+  const resolvedBaseMap: Record<string, string> = {};
+  for (const [k, v] of Object.entries(rawBaseMap)) resolvedBaseMap[k] = resolveRef(v, rawBaseMap);
+  for (const [k, v] of Object.entries(resolvedBaseMap)) resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
+
+  // Parse core colors
+  const corePrimitive = JSON.parse(readFileSync(`${coreDir}/color.primitive.json`, 'utf-8'));
+  const coreColors: Record<string, Record<string, string>> = {};
+  for (const [group, shades] of Object.entries(corePrimitive.color as Record<string, Record<string, unknown>>)) {
+    coreColors[group] = {};
+    for (const [shade, token] of Object.entries(shades)) {
+      if (shade.startsWith('$')) continue;
+      coreColors[group][shade] = (token as any).$value;
+    }
+  }
+
+  // Parse semantic colors (3-level)
+  const semanticColorJson = JSON.parse(readFileSync(`${semanticDir}/color.json`, 'utf-8'));
+  const semanticColors: Record<string, Record<string, Record<string, string>>> = {};
+  for (const [group, categories] of Object.entries(semanticColorJson.color as Record<string, unknown>)) {
+    semanticColors[group] = {};
+    for (const [category, tokens] of Object.entries(categories as Record<string, unknown>)) {
+      if (category.startsWith('$')) continue;
+      semanticColors[group][category] = {};
+      for (const [tokenName, tokenDef] of Object.entries(tokens as Record<string, unknown>)) {
+        if (tokenName.startsWith('$')) continue;
+        const rawVal = (tokenDef as any).$value as string;
+        semanticColors[group][category][tokenName] = resolveRef(rawVal, resolvedBaseMap);
+      }
+    }
+  }
+
+  // Parse spacing
+  const sizePrimitive = JSON.parse(readFileSync(`${coreDir}/size.primitive.json`, 'utf-8'));
+  const spacing: Record<string, string> = {};
+  for (const [k, v] of Object.entries(sizePrimitive.spacing as Record<string, unknown>)) {
+    if (k.startsWith('$')) continue;
+    spacing[k] = (v as any).$value;
+  }
+
+  // Parse radius
+  const radiusPrimitive = JSON.parse(readFileSync(`${coreDir}/radius.primitive.json`, 'utf-8'));
+  const coreRadius: Record<string, string> = {};
+  for (const [k, v] of Object.entries(radiusPrimitive.radius as Record<string, unknown>)) {
+    if (k.startsWith('$')) continue;
+    coreRadius[k] = (v as any).$value;
+  }
+  const radiusSemantic = JSON.parse(readFileSync(`${semanticDir}/radius.json`, 'utf-8'));
+  const semRadius: Record<string, string> = {};
+  for (const [k, v] of Object.entries(radiusSemantic.radius as Record<string, unknown>)) {
+    if (k.startsWith('$')) continue;
+    semRadius[k] = resolveRef((v as any).$value, resolvedBaseMap);
+  }
+
+  // Parse typography
+  const fontPrimitive = JSON.parse(readFileSync(`${coreDir}/font.primitive.json`, 'utf-8'));
+  const fontFamilies: Record<string, string> = {};
+  const fontSizes: Record<string, string> = {};
+  const fontWeights: Record<string, string> = {};
+  const lineHeights: Record<string, string> = {};
+  for (const [k, v] of Object.entries(fontPrimitive.typography.fontFamily as Record<string, unknown>)) {
+    if (k.startsWith('$')) continue;
+    fontFamilies[k] = (v as any).$value;
+  }
+  for (const [k, v] of Object.entries(fontPrimitive.typography.fontSize as Record<string, unknown>)) {
+    if (k.startsWith('$')) continue;
+    fontSizes[k] = (v as any).$value;
+  }
+  for (const [k, v] of Object.entries(fontPrimitive.typography.fontWeight as Record<string, unknown>)) {
+    if (k.startsWith('$')) continue;
+    fontWeights[k] = String((v as any).$value);
+  }
+  for (const [k, v] of Object.entries(fontPrimitive.typography.lineHeight as Record<string, unknown>)) {
+    if (k.startsWith('$')) continue;
+    lineHeights[k] = String((v as any).$value);
+  }
+
+  // Semantic typography groups
+  const typoSemantic = JSON.parse(readFileSync(`${semanticDir}/typography.json`, 'utf-8'));
+  const semanticTypo: Record<string, Record<string, string>> = {};
+  for (const [group, props] of Object.entries(typoSemantic.typography as Record<string, unknown>)) {
+    if (group.startsWith('$')) continue;
+    semanticTypo[group] = {};
+    for (const [prop, tokenDef] of Object.entries(props as Record<string, unknown>)) {
+      if (prop.startsWith('$')) continue;
+      semanticTypo[group][prop] = resolveRef((tokenDef as any).$value, resolvedBaseMap);
+    }
+  }
+
+  return {
+    baseMap: resolvedBaseMap,
+    coreColors,
+    semanticColors,
+    spacing,
+    radius: { core: coreRadius, semantic: semRadius },
+    typography: { fontFamilies, fontSizes, fontWeights, lineHeights, semantic: semanticTypo },
+  };
+}
+
+// =============================================================================
+// DART GENERATORS — multi-file output
+// =============================================================================
+
+function generateDartFiles(data: ResolvedTokenMap): void {
+  const DART_SRC = `${ROOT}/packages/tokens-dart/lib/src`;
+  const DART_LIB = `${ROOT}/packages/tokens-dart/lib`;
+  const HEADER = '// AUTO-GENERATED by @btech/design-tokens — do not edit manually.\n// Run `pnpm generate` to regenerate from tokens/.\n\n// ignore_for_file: lines_longer_than_80_chars\n';
+
+  // ── src/color/ ────────────────────────────────────────────────────────────
+  const colorDir = `${DART_SRC}/color`;
+  mkdirSync(colorDir, { recursive: true });
+
+  // 1. shades.color.dart — BTechShadesColor (primitive palette access)
+  {
+    const L = [HEADER, "import 'package:flutter/material.dart';\n"];
+
+    // Per-group shade classes
+    const groupNames: string[] = [];
+    for (const [group, shades] of Object.entries(data.coreColors)) {
+      const className = `BTechShades${toPascalCase(group)}Color`;
+      groupNames.push(group);
+
+      const entries = Object.entries(shades).sort((a, b) => Number(a[0]) - Number(b[0]));
+      L.push(`class ${className} {`);
+      L.push(`  const ${className}()`);
+      const initLines = entries.map(([shade, hex], i) =>
+        `    ${i === 0 ? ': ' : '  '}s${shade} = const Color(${hexToArgb(hex)})`
+      );
+      L.push(initLines.join(',\n') + ';');
+      for (const [shade] of entries) {
+        L.push(`  final Color s${shade};`);
+      }
+      L.push('}\n');
+    }
+
+    // Namespace class
+    L.push('/// Primitive color palette. Access: BTechShadesColor.blue.s500');
+    L.push('class BTechShadesColor {');
+    L.push('  const BTechShadesColor();');
+    for (const group of groupNames) {
+      const className = `BTechShades${toPascalCase(group)}Color`;
+      L.push(`  final ${className} ${group} = const ${className}();`);
+    }
+    L.push('}\n');
+
+    writeFileSync(`${colorDir}/shades.color.dart`, L.join('\n') + '\n');
+  }
+
+  // 2. text.color.dart — BTechTextColor with nested variant classes
+  generateDartSemanticColorGroup(colorDir, 'text', data.semanticColors.text, HEADER);
+
+  // 3. background.color.dart
+  generateDartSemanticColorGroup(colorDir, 'background', data.semanticColors.background, HEADER);
+
+  // 4. stroke.color.dart
+  generateDartSemanticColorGroup(colorDir, 'stroke', data.semanticColors.stroke, HEADER);
+
+  // 5. color.token.dart — BTechColor namespace
+  {
+    const L = [HEADER];
+    L.push("import 'text.color.dart';");
+    L.push("import 'background.color.dart';");
+    L.push("import 'stroke.color.dart';");
+    L.push("import 'shades.color.dart';\n");
+    L.push('/// Semantic color tokens — use context.btechColor for tenant-aware access.');
+    L.push('/// BTechColor.text.danger.bolder returns the DEFAULT tenant value.');
+    L.push('abstract class BTechColor {');
+    L.push('  static const BTechTextColor text = BTechTextColor();');
+    L.push('  static const BTechBackgroundColor background = BTechBackgroundColor();');
+    L.push('  static const BTechStrokeColor stroke = BTechStrokeColor();');
+    L.push('  static const BTechShadesColor shades = BTechShadesColor();');
+    L.push('}\n');
+    writeFileSync(`${colorDir}/color.token.dart`, L.join('\n') + '\n');
+  }
+
+  // 6. color.dart — barrel
+  {
+    const L = [
+      "export 'shades.color.dart';",
+      "export 'text.color.dart';",
+      "export 'background.color.dart';",
+      "export 'stroke.color.dart';",
+      "export 'color.token.dart';",
+      '',
+    ];
+    writeFileSync(`${colorDir}/color.dart`, L.join('\n'));
+  }
+
+  // 7. tokens.meta.yaml — auto-generated metadata
+  generateTokensMeta(colorDir, 'color', data.semanticColors);
+
+  // ── src/spacing/ ──────────────────────────────────────────────────────────
+  const spacingDir = `${DART_SRC}/spacing`;
+  mkdirSync(spacingDir, { recursive: true });
+
+  // 8. spacing.token.dart
+  {
+    const L = [HEADER];
+    L.push('/// Spacing tokens. Access: BTechSpacing.md');
+    L.push('abstract class BTechSpacing {');
+    for (const [name, value] of Object.entries(data.spacing)) {
+      L.push(`  static const double ${name} = ${parseFloat(String(value).replace('px', ''))};`);
+    }
+    L.push('}\n');
+    writeFileSync(`${spacingDir}/spacing.token.dart`, L.join('\n') + '\n');
+  }
+
+  // 9. spacing.dart — barrel
+  writeFileSync(`${spacingDir}/spacing.dart`, "export 'spacing.token.dart';\n");
+
+  // 10. tokens.meta.yaml
+  {
+    const meta = {
+      category: 'spacing',
+      figma: {
+        collection: 'BTech/Spacing',
+        tokens: Object.keys(data.spacing).map(name => ({
+          path: `spacing.${name}`,
+          figmaVariable: `Spacing/${toPascalCase(name)}`,
+        })),
+      },
+    };
+    writeFileSync(`${spacingDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
+  }
+
+  // ── src/radius/ ───────────────────────────────────────────────────────────
+  const radiusDir = `${DART_SRC}/radius`;
+  mkdirSync(radiusDir, { recursive: true });
+
+  // 11. radius.token.dart — combines primitive + semantic radius
+  {
+    const L = [HEADER];
+    L.push('/// Radius tokens. Access: BTechRadius.interactive');
+    L.push('abstract class BTechRadius {');
+    // Primitive radius
+    for (const [name, value] of Object.entries(data.radius.core)) {
+      L.push(`  static const double ${name} = ${parseFloat(String(value).replace('px', ''))};`);
+    }
+    L.push('');
+    L.push('  // Semantic radius aliases');
+    for (const [name, value] of Object.entries(data.radius.semantic)) {
+      L.push(`  static const double ${name} = ${parseFloat(String(value).replace('px', ''))};`);
+    }
+    L.push('}\n');
+    writeFileSync(`${radiusDir}/radius.token.dart`, L.join('\n') + '\n');
+  }
+
+  // 12. radius.dart — barrel
+  writeFileSync(`${radiusDir}/radius.dart`, "export 'radius.token.dart';\n");
+
+  // 13. tokens.meta.yaml
+  {
+    const allKeys = [...Object.keys(data.radius.core), ...Object.keys(data.radius.semantic)];
+    const meta = {
+      category: 'radius',
+      figma: {
+        collection: 'BTech/Radius',
+        tokens: allKeys.map(name => ({
+          path: `radius.${name}`,
+          figmaVariable: `Radius/${toPascalCase(name)}`,
+        })),
+      },
+    };
+    writeFileSync(`${radiusDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
+  }
+
+  // ── src/typography/ ───────────────────────────────────────────────────────
+  const typoDir = `${DART_SRC}/typography`;
+  mkdirSync(typoDir, { recursive: true });
+
+  // 14. heading.dart — BTechHeadingFont
+  {
+    const heading = data.typography.semantic.heading;
+    const L = [HEADER, "import 'package:flutter/material.dart';\n"];
+    L.push('/// Heading typography tokens.');
+    L.push('class BTechHeadingFont {');
+    L.push('  const BTechHeadingFont();');
+    L.push(`  final String fontFamily = '${String(heading?.fontFamily ?? data.typography.fontFamilies.sans).split(',')[0].trim().replace(/'/g, '')}';`);
+    L.push(`  final FontWeight fontWeight = FontWeight.w${heading?.fontWeight ?? '700'};`);
+    L.push(`  final double lineHeight = ${heading?.lineHeight ?? '1.25'};`);
+    L.push('}\n');
+    writeFileSync(`${typoDir}/heading.dart`, L.join('\n') + '\n');
+  }
+
+  // 15. body.dart — BTechBodyFont
+  {
+    const body = data.typography.semantic.body;
+    const L = [HEADER, "import 'package:flutter/material.dart';\n"];
+    L.push('/// Body typography tokens.');
+    L.push('class BTechBodyFont {');
+    L.push('  const BTechBodyFont();');
+    L.push(`  final String fontFamily = '${String(body?.fontFamily ?? data.typography.fontFamilies.sans).split(',')[0].trim().replace(/'/g, '')}';`);
+    L.push(`  final double fontSize = ${parseFloat(String(body?.fontSize ?? '16').replace('px', ''))};`);
+    L.push(`  final FontWeight fontWeight = FontWeight.w${body?.fontWeight ?? '400'};`);
+    L.push(`  final double lineHeight = ${body?.lineHeight ?? '1.5'};`);
+    L.push('}\n');
+    writeFileSync(`${typoDir}/body.dart`, L.join('\n') + '\n');
+  }
+
+  // 16. font.token.dart — BTechFont namespace + primitives
+  {
+    const L = [HEADER, "import 'package:flutter/material.dart';"];
+    L.push("import 'heading.dart';");
+    L.push("import 'body.dart';\n");
+
+    // Primitive font families
+    L.push('/// Primitive font family tokens.');
+    L.push('abstract class BTechFontFamily {');
+    for (const [name, value] of Object.entries(data.typography.fontFamilies)) {
+      const fam = String(value).split(',')[0].trim().replace(/'/g, '');
+      L.push(`  static const String ${name} = '${fam}';`);
+    }
+    L.push('}\n');
+
+    // Primitive font sizes
+    L.push('/// Primitive font size tokens.');
+    L.push('abstract class BTechFontSize {');
+    for (const [name, value] of Object.entries(data.typography.fontSizes)) {
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  static const double ${safeName} = ${parseFloat(String(value).replace('px', ''))};`);
+    }
+    L.push('}\n');
+
+    // Primitive font weights
+    L.push('/// Primitive font weight tokens.');
+    L.push('abstract class BTechFontWeight {');
+    for (const [name, value] of Object.entries(data.typography.fontWeights)) {
+      L.push(`  static const FontWeight ${name} = FontWeight.w${Number(value)};`);
+    }
+    L.push('}\n');
+
+    // Primitive line heights
+    L.push('/// Primitive line height tokens.');
+    L.push('abstract class BTechLineHeight {');
+    for (const [name, value] of Object.entries(data.typography.lineHeights)) {
+      L.push(`  static const double ${name} = ${Number(value)};`);
+    }
+    L.push('}\n');
+
+    // BTechFont namespace
+    L.push('/// Typography namespace. Access: BTechFont.heading.fontFamily');
+    L.push('abstract class BTechFont {');
+    L.push('  static const BTechHeadingFont heading = BTechHeadingFont();');
+    L.push('  static const BTechBodyFont body = BTechBodyFont();');
+    L.push('}\n');
+
+    writeFileSync(`${typoDir}/font.token.dart`, L.join('\n') + '\n');
+  }
+
+  // 17. typography.dart — barrel
+  {
+    const L = [
+      "export 'heading.dart';",
+      "export 'body.dart';",
+      "export 'font.token.dart';",
+      '',
+    ];
+    writeFileSync(`${typoDir}/typography.dart`, L.join('\n'));
+  }
+
+  // 18. tokens.meta.yaml
+  {
+    const tokens: Array<{ path: string; figmaVariable: string }> = [];
+    for (const [group, props] of Object.entries(data.typography.semantic)) {
+      for (const prop of Object.keys(props)) {
+        tokens.push({
+          path: `typography.${group}.${prop}`,
+          figmaVariable: `Typography/${toPascalCase(group)}/${toPascalCase(prop)}`,
+        });
+      }
+    }
+    const meta = {
+      category: 'typography',
+      figma: { collection: 'BTech/Typography', tokens },
+    };
+    writeFileSync(`${typoDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
+  }
+
+  // 19. btech_tokens.dart — root barrel
+  {
+    const L = [
+      "/// btech_tokens — Multi-tenant design tokens for Flutter (BTech Design System).",
+      '///',
+      '/// Usage:',
+      '/// ```dart',
+      "/// MaterialApp(",
+      "///   theme: BTechTheme.forTenant('tenant-a', Brightness.light),",
+      '///   home: MyApp(),',
+      '/// )',
+      '/// ```',
+      'library btech_tokens;',
+      '',
+      "export 'src/color/color.dart';",
+      "export 'src/spacing/spacing.dart';",
+      "export 'src/radius/radius.dart';",
+      "export 'src/typography/typography.dart';",
+      "export 'src/theme.dart';",
+      "export 'src/tenant.dart';",
+      "export 'src/context.dart';",
+      '',
+    ];
+    writeFileSync(`${DART_LIB}/btech_tokens.dart`, L.join('\n'));
+  }
+}
+
+/**
+ * Generate a semantic color group file using the `extends Color` pattern.
+ *
+ * Each leaf class IS a Color (the default/base value) via `extends Color`.
+ * Variant keys (hover, subtle, bolder, …) become final fields on the same class.
+ *
+ * This means:
+ *   BTechColor.background.primary          → Color directly (no .default_ suffix)
+ *   BTechColor.background.primary.hover    → Color (hover variant)
+ *   BTechColor.text.neutral                → Color directly
+ *   BTechColor.text.neutral.subtle         → Color
+ *
+ * Rules:
+ *   - Key named "default" or "base" → becomes super() (the Color value itself)
+ *   - If neither exists → first key becomes super()
+ *   - All other keys → final Color fields
+ *   - super() MUST be last in Dart initializer list
+ */
+function generateDartSemanticColorGroup(
+  dir: string,
+  groupName: string,
+  categories: Record<string, Record<string, string>>,
+  header: string,
+): void {
+  const groupPascal = toPascalCase(groupName);
+  const L = [header, "import 'package:flutter/material.dart';\n"];
+
+  for (const [category, tokens] of Object.entries(categories)) {
+    const className = `BTech${groupPascal}${toPascalCase(category)}Color`;
+    const entries = Object.entries(tokens);
+
+    // Identify which key is the "default" → becomes super() value
+    const defaultKey =
+      entries.find(([k]) => k === 'default' || k === 'base')?.[0] ?? entries[0][0];
+    const defaultHex = tokens[defaultKey];
+    const variantEntries = entries.filter(([k]) => k !== defaultKey);
+
+    L.push(`class ${className} extends Color {`);
+
+    if (variantEntries.length === 0) {
+      // Single default value — simple one-liner constructor
+      L.push(`  const ${className}() : super(${hexToArgb(defaultHex)});`);
+    } else {
+      // Has variants — initializer list; super() MUST be last per Dart spec
+      L.push(`  const ${className}()`);
+      const initLines = variantEntries.map(([name, hex], i) =>
+        `    ${i === 0 ? ': ' : '  '}${dartSafeName(name)} = const Color(${hexToArgb(hex)})`
+      );
+      initLines.push(`      super(${hexToArgb(defaultHex)})`);
+      L.push(initLines.join(',\n') + ';');
+      for (const [name] of variantEntries) {
+        L.push(`  final Color ${dartSafeName(name)};`);
+      }
+    }
+    L.push('}\n');
+  }
+
+  // Group class — unchanged, holds one const instance per category
+  const groupClassName = `BTech${groupPascal}Color`;
+  const catEntries = Object.entries(categories);
+  L.push(`/// Semantic ${groupName} color tokens.`);
+  L.push(`/// Each property IS a [Color] directly; variants are sub-fields.`);
+  L.push(`/// Example: BTech${groupPascal}Color.${dartSafeName(catEntries[0]?.[0] ?? 'item')} → Color`);
+  L.push(`class ${groupClassName} {`);
+  L.push(`  const ${groupClassName}()`);
+  const initLines = catEntries.map(([category], i) => {
+    const catClassName = `BTech${groupPascal}${toPascalCase(category)}Color`;
+    return `    ${i === 0 ? ': ' : '  '}${dartSafeName(category)} = const ${catClassName}()`;
+  });
+  L.push(initLines.join(',\n') + ';');
+  for (const [category] of catEntries) {
+    const catClassName = `BTech${groupPascal}${toPascalCase(category)}Color`;
+    L.push(`  final ${catClassName} ${dartSafeName(category)};`);
+  }
+  L.push('}\n');
+
+  writeFileSync(`${dir}/${groupName}.color.dart`, L.join('\n') + '\n');
+}
+
+/** Generate tokens.meta.yaml for a semantic color group */
+function generateTokensMeta(
+  dir: string,
+  category: string,
+  semanticColors: Record<string, Record<string, Record<string, string>>>,
+): void {
+  const tokens: Array<{ path: string; figmaVariable: string }> = [];
+  for (const [group, categories] of Object.entries(semanticColors)) {
+    for (const [cat, toks] of Object.entries(categories)) {
+      for (const name of Object.keys(toks)) {
+        tokens.push({
+          path: `color.${group}.${cat}.${name}`,
+          figmaVariable: `${toPascalCase(group)}/${toPascalCase(cat)}/${toPascalCase(name)}`,
+        });
+      }
+    }
+  }
+  const meta = { category, figma: { collection: `BTech/${toPascalCase(category)}`, tokens } };
+  writeFileSync(`${dir}/tokens.meta.yaml`, toYaml(meta) + '\n');
+}
+
+// =============================================================================
+// TypeScript GENERATORS — multi-file output
+// =============================================================================
+
+function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
+  const HEADER = '// AUTO-GENERATED by @btech/design-tokens — do not edit manually.\n// Run `pnpm generate` to regenerate from tokens/.\n';
+
+  // ── color/ ────────────────────────────────────────────────────────────────
+  const colorDir = `${outDir}/color`;
+  mkdirSync(colorDir, { recursive: true });
+
+  // shades.color.ts
+  {
+    const L = [HEADER];
+    for (const [group, shades] of Object.entries(data.coreColors)) {
+      const className = `BTechShades${toPascalCase(group)}Color`;
+      const entries = Object.entries(shades).sort((a, b) => Number(a[0]) - Number(b[0]));
+      L.push(`export class ${className} {`);
+      for (const [shade, hex] of entries) {
+        L.push(`  readonly s${shade} = '${hex}' as const;`);
+      }
+      L.push('}\n');
+    }
+    L.push('export class BTechShadesColor {');
+    for (const group of Object.keys(data.coreColors)) {
+      const className = `BTechShades${toPascalCase(group)}Color`;
+      L.push(`  readonly ${group} = new ${className}();`);
+    }
+    L.push('}\n');
+    writeFileSync(`${colorDir}/shades.color.ts`, L.join('\n') + '\n');
+  }
+
+  // text.color.ts, background.color.ts, stroke.color.ts
+  for (const groupName of ['text', 'background', 'stroke'] as const) {
+    generateTsSemanticColorGroup(colorDir, groupName, data.semanticColors[groupName], HEADER);
+  }
+
+  // color.token.ts
+  {
+    const L = [HEADER];
+    L.push("import { BTechTextColor } from './text.color';");
+    L.push("import { BTechBackgroundColor } from './background.color';");
+    L.push("import { BTechStrokeColor } from './stroke.color';");
+    L.push("import { BTechShadesColor } from './shades.color';\n");
+    L.push('export const BTechColor = {');
+    L.push('  text: new BTechTextColor(),');
+    L.push('  background: new BTechBackgroundColor(),');
+    L.push('  stroke: new BTechStrokeColor(),');
+    L.push('  shades: new BTechShadesColor(),');
+    L.push('} as const;\n');
+    writeFileSync(`${colorDir}/color.token.ts`, L.join('\n') + '\n');
+  }
+
+  // index.ts (barrel)
+  {
+    const L = [
+      "export * from './shades.color';",
+      "export * from './text.color';",
+      "export * from './background.color';",
+      "export * from './stroke.color';",
+      "export { BTechColor } from './color.token';",
+      '',
+    ];
+    writeFileSync(`${colorDir}/index.ts`, L.join('\n'));
+  }
+
+  // tokens.meta.yaml
+  generateTokensMeta(colorDir, 'color', data.semanticColors);
+
+  // ── spacing/ ──────────────────────────────────────────────────────────────
+  const spacingDir = `${outDir}/spacing`;
+  mkdirSync(spacingDir, { recursive: true });
+
+  {
+    const L = [HEADER];
+    L.push('export const BTechSpacing = {');
+    for (const [name, value] of Object.entries(data.spacing)) {
+      L.push(`  ${name}: ${parseFloat(String(value).replace('px', ''))},`);
+    }
+    L.push('} as const;\n');
+    writeFileSync(`${spacingDir}/spacing.token.ts`, L.join('\n') + '\n');
+  }
+  writeFileSync(`${spacingDir}/index.ts`, "export { BTechSpacing } from './spacing.token';\n");
+  {
+    const meta = {
+      category: 'spacing',
+      figma: {
+        collection: 'BTech/Spacing',
+        tokens: Object.keys(data.spacing).map(name => ({
+          path: `spacing.${name}`,
+          figmaVariable: `Spacing/${toPascalCase(name)}`,
+        })),
+      },
+    };
+    writeFileSync(`${spacingDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
+  }
+
+  // ── radius/ ───────────────────────────────────────────────────────────────
+  const radiusDir = `${outDir}/radius`;
+  mkdirSync(radiusDir, { recursive: true });
+
+  {
+    const L = [HEADER];
+    L.push('export const BTechRadius = {');
+    for (const [name, value] of Object.entries(data.radius.core)) {
+      L.push(`  ${name}: ${parseFloat(String(value).replace('px', ''))},`);
+    }
+    for (const [name, value] of Object.entries(data.radius.semantic)) {
+      L.push(`  ${name}: ${parseFloat(String(value).replace('px', ''))},`);
+    }
+    L.push('} as const;\n');
+    writeFileSync(`${radiusDir}/radius.token.ts`, L.join('\n') + '\n');
+  }
+  writeFileSync(`${radiusDir}/index.ts`, "export { BTechRadius } from './radius.token';\n");
+  {
+    const allKeys = [...Object.keys(data.radius.core), ...Object.keys(data.radius.semantic)];
+    const meta = {
+      category: 'radius',
+      figma: {
+        collection: 'BTech/Radius',
+        tokens: allKeys.map(name => ({
+          path: `radius.${name}`,
+          figmaVariable: `Radius/${toPascalCase(name)}`,
+        })),
+      },
+    };
+    writeFileSync(`${radiusDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
+  }
+
+  // ── typography/ ───────────────────────────────────────────────────────────
+  const typoDir = `${outDir}/typography`;
+  mkdirSync(typoDir, { recursive: true });
+
+  {
+    const L = [HEADER];
+    // Primitive font data
+    L.push('export const BTechFontFamily = {');
+    for (const [name, value] of Object.entries(data.typography.fontFamilies)) {
+      const fam = String(value).split(',')[0].trim().replace(/'/g, '');
+      L.push(`  ${name}: '${fam}',`);
+    }
+    L.push('} as const;\n');
+
+    L.push('export const BTechFontSize = {');
+    for (const [name, value] of Object.entries(data.typography.fontSizes)) {
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
+    }
+    L.push('} as const;\n');
+
+    L.push('export const BTechFontWeight = {');
+    for (const [name, value] of Object.entries(data.typography.fontWeights)) {
+      L.push(`  ${name}: ${Number(value)},`);
+    }
+    L.push('} as const;\n');
+
+    L.push('export const BTechLineHeight = {');
+    for (const [name, value] of Object.entries(data.typography.lineHeights)) {
+      L.push(`  ${name}: ${Number(value)},`);
+    }
+    L.push('} as const;\n');
+
+    // BTechFont namespace
+    L.push('export const BTechFont = {');
+    L.push('  heading: {');
+    const heading = data.typography.semantic.heading;
+    if (heading) {
+      if (heading.fontFamily) L.push(`    fontFamily: '${String(heading.fontFamily).split(',')[0].trim().replace(/'/g, '')}',`);
+      if (heading.fontWeight) L.push(`    fontWeight: ${Number(heading.fontWeight)},`);
+      if (heading.lineHeight) L.push(`    lineHeight: ${Number(heading.lineHeight)},`);
+    }
+    L.push('  },');
+    L.push('  body: {');
+    const body = data.typography.semantic.body;
+    if (body) {
+      if (body.fontFamily) L.push(`    fontFamily: '${String(body.fontFamily).split(',')[0].trim().replace(/'/g, '')}',`);
+      if (body.fontSize) L.push(`    fontSize: ${parseFloat(String(body.fontSize).replace('px', ''))},`);
+      if (body.fontWeight) L.push(`    fontWeight: ${Number(body.fontWeight)},`);
+      if (body.lineHeight) L.push(`    lineHeight: ${Number(body.lineHeight)},`);
+    }
+    L.push('  },');
+    L.push('} as const;\n');
+
+    writeFileSync(`${typoDir}/font.token.ts`, L.join('\n') + '\n');
+  }
+  writeFileSync(`${typoDir}/index.ts`, "export * from './font.token';\n");
+  {
+    const tokens: Array<{ path: string; figmaVariable: string }> = [];
+    for (const [group, props] of Object.entries(data.typography.semantic)) {
+      for (const prop of Object.keys(props)) {
+        tokens.push({
+          path: `typography.${group}.${prop}`,
+          figmaVariable: `Typography/${toPascalCase(group)}/${toPascalCase(prop)}`,
+        });
+      }
+    }
+    const meta = {
+      category: 'typography',
+      figma: { collection: 'BTech/Typography', tokens },
+    };
+    writeFileSync(`${typoDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
+  }
+
+  // ── Root index.ts — barrel ────────────────────────────────────────────────
+  // Preserve existing index.ts (TokenProvider/tokenPlugin) and append exports
+  const existingIndex = existsSync(`${outDir}/index.ts`)
+    ? readFileSync(`${outDir}/index.ts`, 'utf-8')
+    : '';
+
+  // Only append if not already there
+  const newExports = [
+    "export * from './color/index';",
+    "export * from './spacing/index';",
+    "export * from './radius/index';",
+    "export * from './typography/index';",
+  ];
+
+  const missingExports = newExports.filter(e => !existingIndex.includes(e));
+  if (missingExports.length > 0) {
+    const updatedIndex = existingIndex.trimEnd() + '\n\n// Token exports (auto-generated)\n' + missingExports.join('\n') + '\n';
+    writeFileSync(`${outDir}/index.ts`, updatedIndex);
+  }
+}
+
+/**
+ * Generate a semantic color group file for TypeScript.
+ *
+ * The "default" / "base" key is flattened to the parent group class directly
+ * so that BTechColor.background.primary returns the hex string with no suffix.
+ * Variant keys (hover, subtle, bolder, …) are appended with PascalCase suffix.
+ *
+ * Example output:
+ *   BTechColor.background.primary       // '#15803D'
+ *   BTechColor.background.primaryHover  // '#166534'
+ *   BTechColor.text.neutral             // '#111827'
+ *   BTechColor.text.neutralSubtle       // '#6B7280'
+ */
+function generateTsSemanticColorGroup(
+  dir: string,
+  groupName: string,
+  categories: Record<string, Record<string, string>>,
+  header: string,
+): void {
+  const groupPascal = toPascalCase(groupName);
+  const L = [header];
+
+  const groupClassName = `BTech${groupPascal}Color`;
+  L.push(`export class ${groupClassName} {`);
+
+  for (const [category, tokens] of Object.entries(categories)) {
+    const entries = Object.entries(tokens);
+    const defaultKey =
+      entries.find(([k]) => k === 'default' || k === 'base')?.[0] ?? entries[0][0];
+
+    for (const [name, hex] of entries) {
+      if (name === defaultKey) {
+        // Default → property named after the category (no suffix)
+        L.push(`  readonly ${dartSafeName(category)} = '${hex}' as const;`);
+      } else {
+        // Variant → category + PascalCase variant name
+        L.push(`  readonly ${dartSafeName(category)}${toPascalCase(name)} = '${hex}' as const;`);
+      }
+    }
+  }
+
+  L.push('}\n');
+
+  writeFileSync(`${dir}/${groupName}.color.ts`, L.join('\n') + '\n');
+}
+
+// =============================================================================
+// Token → Dart tenant field map (UPDATED for 3-level paths)
 // =============================================================================
 const TENANT_FIELD_MAP: Array<{
   path: string;
   field: string;
   type: 'Color' | 'double' | 'String';
 }> = [
-  { path: 'color.background.primary',           field: 'primaryBg',          type: 'Color'  },
-  { path: 'color.background.primary-hover',     field: 'primaryBgHover',     type: 'Color'  },
-  { path: 'color.text.on-primary',              field: 'primaryFg',          type: 'Color'  },
-  { path: 'color.stroke.primary',               field: 'primaryBorder',      type: 'Color'  },
-  { path: 'color.background.secondary',         field: 'secondaryBg',        type: 'Color'  },
-  { path: 'color.background.secondary-hover',   field: 'secondaryBgHover',   type: 'Color'  },
-  { path: 'color.text.on-secondary',            field: 'secondaryFg',        type: 'Color'  },
-  { path: 'color.stroke.secondary',             field: 'secondaryBorder',    type: 'Color'  },
-  { path: 'color.background.danger',            field: 'dangerBg',           type: 'Color'  },
-  { path: 'color.text.on-danger',               field: 'dangerFg',           type: 'Color'  },
-  { path: 'color.background.default',           field: 'surfaceDefault',     type: 'Color'  },
-  { path: 'color.background.subtle',            field: 'surfaceSubtle',      type: 'Color'  },
-  { path: 'color.background.raised',            field: 'surfaceRaised',      type: 'Color'  },
-  { path: 'color.text.primary',                 field: 'textDefault',        type: 'Color'  },
-  { path: 'color.text.secondary',               field: 'textSubtle',         type: 'Color'  },
-  { path: 'color.text.disable',                 field: 'textDisabled',       type: 'Color'  },
-  { path: 'color.text.inverse',                 field: 'textInverse',        type: 'Color'  },
-  { path: 'color.stroke.default',               field: 'borderDefault',      type: 'Color'  },
-  { path: 'color.stroke.strong',                field: 'borderStrong',       type: 'Color'  },
-  { path: 'radius.interactive',                 field: 'radiusInteractive',  type: 'double' },
-  { path: 'radius.card',                        field: 'radiusCard',         type: 'double' },
-  { path: 'radius.badge',                       field: 'radiusBadge',        type: 'double' },
-  { path: 'typography.fontFamily.sans',         field: 'fontFamilySans',     type: 'String' },
+  // background
+  { path: 'color.background.primary.default',      field: 'primaryBg',          type: 'Color'  },
+  { path: 'color.background.primary.hover',         field: 'primaryBgHover',     type: 'Color'  },
+  { path: 'color.text.on.primary',                  field: 'primaryFg',          type: 'Color'  },
+  { path: 'color.stroke.primary.default',            field: 'primaryBorder',      type: 'Color'  },
+  { path: 'color.background.secondary.default',     field: 'secondaryBg',        type: 'Color'  },
+  { path: 'color.background.secondary.hover',        field: 'secondaryBgHover',   type: 'Color'  },
+  { path: 'color.text.on.secondary',                field: 'secondaryFg',        type: 'Color'  },
+  { path: 'color.stroke.neutral.default',            field: 'secondaryBorder',    type: 'Color'  },
+  { path: 'color.background.danger.default',         field: 'dangerBg',           type: 'Color'  },
+  { path: 'color.text.on.danger',                    field: 'dangerFg',           type: 'Color'  },
+  { path: 'color.background.surface.default',        field: 'surfaceDefault',     type: 'Color'  },
+  { path: 'color.background.surface.subtle',         field: 'surfaceSubtle',      type: 'Color'  },
+  { path: 'color.background.surface.raised',         field: 'surfaceRaised',      type: 'Color'  },
+  { path: 'color.text.neutral.default',              field: 'textDefault',        type: 'Color'  },
+  { path: 'color.text.neutral.subtle',               field: 'textSubtle',         type: 'Color'  },
+  { path: 'color.text.neutral.disabled',             field: 'textDisabled',       type: 'Color'  },
+  { path: 'color.text.neutral.inverse',              field: 'textInverse',        type: 'Color'  },
+  { path: 'color.stroke.neutral.default',            field: 'borderDefault',      type: 'Color'  },
+  { path: 'color.stroke.neutral.strong',             field: 'borderStrong',       type: 'Color'  },
+  { path: 'radius.interactive',                      field: 'radiusInteractive',  type: 'double' },
+  { path: 'radius.card',                             field: 'radiusCard',         type: 'double' },
+  { path: 'radius.badge',                            field: 'radiusBadge',        type: 'double' },
+  { path: 'typography.fontFamily.sans',              field: 'fontFamilySans',     type: 'String' },
 ];
 
 // =============================================================================
 // Format: custom/dart-tenants
-// Generates packages/tokens-dart/lib/src/tenant.dart from:
-//   - dictionary.allTokens  (resolved base/default values)
-//   - tokens/tenants/*/overrides.json  (per-tenant raw overrides)
 // =============================================================================
 const dartTenantsFormat: Format = {
   name: 'custom/dart-tenants',
   format: ({ dictionary }) => {
-    // ── Build base resolved map from the SD dictionary ────────────────────
     const baseMap: Record<string, string> = {};
     for (const t of dictionary.allTokens) {
       baseMap[t.path.join('.')] = String(t.value ?? t.$value);
     }
 
-    // ── Discover tenants ──────────────────────────────────────────────────
     const tenantsDir = `${ROOT}/tokens/tenants`;
     const tenantIds = readdirSync(tenantsDir)
       .filter(d => existsSync(`${tenantsDir}/${d}/overrides.json`))
       .sort((a, b) => (a === 'default' ? -1 : b === 'default' ? 1 : a.localeCompare(b)));
 
-    // ── Value resolvers ───────────────────────────────────────────────────
     function getResolved(tenantId: string, tokenPath: string): string {
       const raw = JSON.parse(
         readFileSync(`${tenantsDir}/${tenantId}/overrides.json`, 'utf-8')
@@ -136,7 +984,6 @@ const dartTenantsFormat: Format = {
       return toFont(val);
     }
 
-    // ── Generate Dart source ──────────────────────────────────────────────
     const L: string[] = [
       '// AUTO-GENERATED by @btech/design-tokens — do not edit manually.',
       '// Run `pnpm generate` to regenerate from tokens/tenants/**.',
@@ -150,20 +997,16 @@ const dartTenantsFormat: Format = {
       'class BTechTenantTokens {',
     ];
 
-    // Fields
     for (const f of TENANT_FIELD_MAP) {
-      const dartType = f.type;
-      L.push(`  final ${dartType} ${f.field};`);
+      L.push(`  final ${f.type} ${f.field};`);
     }
     L.push('');
 
-    // Constructor
     L.push('  const BTechTenantTokens({');
     for (const f of TENANT_FIELD_MAP) L.push(`    required this.${f.field},`);
     L.push('  });');
     L.push('');
 
-    // Per-tenant static consts
     for (const tenantId of tenantIds) {
       const varName = toVarName(tenantId);
       const label = tenantId === 'default' ? 'Default tenant.' : `Tenant: ${tenantId}.`;
@@ -177,7 +1020,6 @@ const dartTenantsFormat: Format = {
       L.push('');
     }
 
-    // Registry
     L.push('  /// Registry — add new tenants here after running `pnpm add-tenant`.');
     L.push('  static const Map<String, BTechTenantTokens> _registry = {');
     for (const id of tenantIds) L.push(`    '${id}': ${toVarName(id)},`);
@@ -187,261 +1029,6 @@ const dartTenantsFormat: Format = {
     L.push('  static BTechTenantTokens forTenant(String tenantId) =>');
     L.push('      _registry[tenantId] ?? defaultTokens;');
     L.push('}');
-
-    return L.join('\n') + '\n';
-  },
-};
-
-// =============================================================================
-// Format: custom/dart (primitives + semantic statics — generated.dart)
-// =============================================================================
-const dartFormat: Format = {
-  name: 'custom/dart',
-  format: ({ dictionary }) => {
-    const tokens = dictionary.allTokens;
-
-    const isPrimitive = (t: TransformedToken) => t.filePath.includes('/core/');
-
-    const primColors:       TransformedToken[] = [];
-    const semColors:        TransformedToken[] = [];
-    const spacingTokens:    TransformedToken[] = [];
-    const primRadius:       TransformedToken[] = [];
-    const semRadius:        TransformedToken[] = [];
-    const fontWeights:      TransformedToken[] = [];
-    const fontFamilies:     TransformedToken[] = [];
-    const fontSizes:        TransformedToken[] = [];
-    const semFontFamilies:  TransformedToken[] = [];
-    const semFontSizes:     TransformedToken[] = [];
-    const buttonColors:     TransformedToken[] = [];
-    const buttonDims:       TransformedToken[] = [];
-    const lineHeights:      TransformedToken[] = [];
-
-    for (const t of tokens) {
-      const type  = t.$type || t.type;
-      const path0 = t.path[0];
-
-      if (path0 === 'button') {
-        (type === 'color' ? buttonColors : buttonDims).push(t); continue;
-      }
-      if (path0 === 'shadow' || path0 === 'motion' || path0 === 'zIndex') continue;
-
-      if (path0 === 'color') {
-        (isPrimitive(t) ? primColors : semColors).push(t); continue;
-      }
-      if (path0 === 'spacing') { spacingTokens.push(t); continue; }
-      if (path0 === 'radius') {
-        (isPrimitive(t) ? primRadius : semRadius).push(t); continue;
-      }
-      if (path0 === 'typography') {
-        if (type === 'fontWeight')  { if (isPrimitive(t)) fontWeights.push(t); continue; }
-        if (type === 'fontFamily')  { (isPrimitive(t) ? fontFamilies : semFontFamilies).push(t); continue; }
-        if (type === 'dimension')   {
-          if (t.path[1] === 'letterSpacing') continue;
-          (isPrimitive(t) ? fontSizes : semFontSizes).push(t); continue;
-        }
-        if (type === 'number')      { if (isPrimitive(t)) lineHeights.push(t); continue; }
-      }
-    }
-
-    // Palette groups
-    const primColorGroups: Record<string, TransformedToken[]> = {};
-    for (const t of primColors) {
-      const g = t.path[1];
-      (primColorGroups[g] ??= []).push(t);
-    }
-
-    // Semantic color groups
-    const semColorGroups: Record<string, TransformedToken[]> = {};
-    for (const t of semColors) {
-      const g = t.path[1];
-      (semColorGroups[g] ??= []).push(t);
-    }
-
-    const reserved = new Set(['default', 'switch', 'class', 'return', 'new', 'if', 'else', 'for', 'while']);
-    const semGroupClass: Record<string, string> = {
-      text: '_BTechColorText',
-      background: '_BTechColorBackground',
-      stroke: '_BTechColorStroke',
-    };
-
-    const L: string[] = [
-      '// AUTO-GENERATED by @btech/design-tokens — do not edit manually.',
-      '// Run `pnpm generate` to regenerate from tokens/.',
-      '',
-      '// ignore_for_file: lines_longer_than_80_chars',
-      '',
-      "import 'package:flutter/material.dart';",
-      '',
-    ];
-
-    // ── Primitive color palette ─────────────────────────────────────────
-    L.push('// ── Primitive color palette ──────────────────────────────────────────────────');
-    const groupNames: string[] = [];
-    for (const [g, gt] of Object.entries(primColorGroups)) {
-      const cn = `_BTechPrimColor${g.charAt(0).toUpperCase() + g.slice(1)}`;
-      groupNames.push(g);
-      // Collect shades first so we can emit initializer list (required for const constructor)
-      const shades = gt.map(t => ({
-        shade: t.path[2],
-        argb: hexToArgb(String(t.value ?? t.$value)),
-      }));
-      L.push(`class ${cn} {`);
-      // Constructor initializer list — Dart requires this for const constructors
-      // (field initializers `final x = expr` are NOT allowed on const constructors)
-      L.push(`  const ${cn}()`);
-      const initLines = shades.map((s, i) =>
-        `    ${i === 0 ? ': ' : '  '}s${s.shade} = const Color(${s.argb})`
-      );
-      L.push(initLines.join(',\n') + ';');
-      // Field declarations (no initializer)
-      for (const s of shades) {
-        L.push(`  final Color s${s.shade};`);
-      }
-      L.push('}'); L.push('');
-    }
-    L.push('abstract class BTechPrimitiveColor {');
-    for (const g of groupNames) {
-      const cn = `_BTechPrimColor${g.charAt(0).toUpperCase() + g.slice(1)}`;
-      L.push(`  static const ${g} = ${cn}();`);
-    }
-    L.push('}'); L.push('');
-
-    // ── Primitive spacing ───────────────────────────────────────────────
-    L.push('// ── Primitive spacing ────────────────────────────────────────────────────────');
-    L.push('abstract class BTechSpacing {');
-    for (const t of spacingTokens) {
-      const n = t.path[t.path.length - 1];
-      L.push(`  static const double ${n} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
-    }
-    L.push('}'); L.push('');
-
-    // ── Primitive radius ────────────────────────────────────────────────
-    L.push('// ── Primitive radius ─────────────────────────────────────────────────────────');
-    L.push('abstract class BTechRadius {');
-    for (const t of primRadius) {
-      const n = t.path[t.path.length - 1];
-      L.push(`  static const double ${n} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
-    }
-    L.push('}'); L.push('');
-
-    // ── Primitive font weights ──────────────────────────────────────────
-    L.push('// ── Primitive font weights ───────────────────────────────────────────────────');
-    L.push('abstract class BTechFontWeight {');
-    for (const t of fontWeights) {
-      const n = t.path[t.path.length - 1];
-      L.push(`  static const FontWeight ${n} = FontWeight.w${Number(t.value ?? t.$value)};`);
-    }
-    L.push('}'); L.push('');
-
-    // ── Primitive font families ─────────────────────────────────────────
-    L.push('// ── Primitive font families ──────────────────────────────────────────────────');
-    L.push('abstract class BTechFontFamily {');
-    for (const t of fontFamilies) {
-      const n = t.path[t.path.length - 1];
-      const fam = String(t.value ?? t.$value).split(',')[0].trim().replace(/'/g, '');
-      L.push(`  static const String ${n} = '${fam}';`);
-    }
-    L.push('}'); L.push('');
-
-    // ── Primitive font sizes ────────────────────────────────────────────
-    L.push('// ── Primitive font sizes ─────────────────────────────────────────────────────');
-    L.push('abstract class BTechFontSize {');
-    for (const t of fontSizes) {
-      const raw = t.path[t.path.length - 1];
-      const n = /^[0-9]/.test(raw) ? `s${raw}` : raw;
-      L.push(`  static const double ${n} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
-    }
-    L.push('}'); L.push('');
-
-    // ── Primitive line heights ──────────────────────────────────────────
-    if (lineHeights.length > 0) {
-      L.push('// ── Primitive line heights ────────────────────────────────────────────────────');
-      L.push('abstract class BTechLineHeight {');
-      for (const t of lineHeights) {
-        const n = t.path[t.path.length - 1];
-        L.push(`  static const double ${n} = ${Number(t.value ?? t.$value)};`);
-      }
-      L.push('}'); L.push('');
-    }
-
-    // ── Semantic color groups ───────────────────────────────────────────
-    for (const [g, gt] of Object.entries(semColorGroups)) {
-      const cn = semGroupClass[g] ?? `_BTechColor${g.charAt(0).toUpperCase() + g.slice(1)}`;
-      const suffix = g === 'background' ? 'Bg' : g === 'stroke' ? 'Stroke' : '';
-      L.push(`// ── Semantic color — ${g} group ──────────────────────────────────────────────`);
-      L.push(`class ${cn} {`);
-      L.push(`  const ${cn}();`);
-      for (const t of gt) {
-        const raw = t.path[t.path.length - 1];
-        let name = toCamelCase(raw);
-        if (reserved.has(name)) name += suffix;
-        L.push(`  final Color ${name} = const Color(${hexToArgb(String(t.value ?? t.$value))});`);
-      }
-      L.push('}'); L.push('');
-    }
-
-    L.push('/// Semantic color tokens — use context.btechColor for tenant-aware access.');
-    L.push('/// BTechColor.background.primary is always the DEFAULT tenant value.');
-    L.push('abstract class BTechColor {');
-    for (const g of Object.keys(semColorGroups)) {
-      const cn = semGroupClass[g] ?? `_BTechColor${g.charAt(0).toUpperCase() + g.slice(1)}`;
-      L.push(`  static const ${g} = ${cn}();`);
-    }
-    L.push('}'); L.push('');
-
-    // ── Semantic radius ─────────────────────────────────────────────────
-    if (semRadius.length > 0) {
-      L.push('// ── Semantic radius ──────────────────────────────────────────────────────────');
-      L.push('abstract class BTechSemanticRadius {');
-      for (const t of semRadius) {
-        const n = t.path[t.path.length - 1];
-        L.push(`  static const double ${n} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
-      }
-      L.push('}'); L.push('');
-    }
-
-    // ── Semantic font families ──────────────────────────────────────────
-    if (semFontFamilies.length > 0) {
-      L.push('// ── Semantic font families ────────────────────────────────────────────────────');
-      L.push('abstract class BTechSemanticFontFamily {');
-      for (const t of semFontFamilies) {
-        const scope = t.path[1];
-        const fam = String(t.value ?? t.$value).split(',')[0].trim().replace(/'/g, '');
-        L.push(`  static const String ${scope} = '${fam}';`);
-      }
-      L.push('}'); L.push('');
-    }
-
-    // ── Semantic font sizes ─────────────────────────────────────────────
-    if (semFontSizes.length > 0) {
-      L.push('// ── Semantic font sizes ───────────────────────────────────────────────────────');
-      L.push('abstract class BTechSemanticFontSize {');
-      for (const t of semFontSizes) {
-        L.push(`  static const double ${t.path[1]} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
-      }
-      L.push('}'); L.push('');
-    }
-
-    // ── Button tokens ───────────────────────────────────────────────────
-    if (buttonColors.length > 0 || buttonDims.length > 0) {
-      L.push('// ── Button component tokens ──────────────────────────────────────────────────');
-      if (buttonColors.length > 0) {
-        L.push('abstract class BTechButtonColors {');
-        for (const t of buttonColors) {
-          const n = toCamelCase(t.path.slice(1).map((p, i) => i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(''));
-          L.push(`  static const ${n} = Color(${hexToArgb(String(t.value ?? t.$value))});`);
-        }
-        L.push('}'); L.push('');
-      }
-      if (buttonDims.length > 0) {
-        L.push('abstract class BTechButtonDimensions {');
-        for (const t of buttonDims) {
-          const n = toCamelCase(t.path.slice(1).map((p, i) => i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)).join(''));
-          L.push(`  static const double ${n} = ${parseFloat(String(t.value ?? t.$value).replace('px', ''))};`);
-        }
-        L.push('}'); L.push('');
-      }
-    }
 
     return L.join('\n') + '\n';
   },
@@ -473,7 +1060,6 @@ function appendTenantCSS(baseMap: Record<string, string>): void {
 
     for (const [tokenPath, rawVal] of Object.entries(overrides)) {
       const resolved = resolveRef(rawVal, baseMap);
-      // Map token path to CSS var name: color.background.primary → --btech-color-background-primary
       const cssVar   = `--btech-${tokenPath.replace(/\./g, '-')}`;
       blocks.push(`  ${cssVar}: ${resolved};`);
     }
@@ -482,13 +1068,12 @@ function appendTenantCSS(baseMap: Record<string, string>): void {
   }
 
   appendFileSync(cssOutPath, blocks.join('\n') + '\n');
-  console.log(`✅ Appended ${tenantIds.length} tenant CSS override blocks to styles.css`);
+  console.log(`  Appended ${tenantIds.length} tenant CSS override blocks to styles.css`);
 }
 
 // =============================================================================
 // Register formats
 // =============================================================================
-StyleDictionary.registerFormat(dartFormat);
 StyleDictionary.registerFormat(dartTenantsFormat);
 
 // =============================================================================
@@ -504,7 +1089,7 @@ mkdirSync(REACT_OUT, { recursive: true });
 mkdirSync(VUE_OUT,   { recursive: true });
 
 // =============================================================================
-// Style Dictionary — single build covers all platforms
+// Style Dictionary — CSS + tenant.dart only (multi-file generators handle rest)
 // =============================================================================
 const BASE_SOURCE = [
   `${ROOT}/tokens/core/**/*.json`,
@@ -514,7 +1099,6 @@ const BASE_SOURCE = [
 
 const sd = new StyleDictionary({
   source: BASE_SOURCE,
-
   platforms: {
     // CSS custom properties → tokens-web (:root block only)
     css: {
@@ -528,40 +1112,12 @@ const sd = new StyleDictionary({
       }],
     },
 
-    // TypeScript → tokens-react
-    'ts-react': {
-      transformGroup: 'js',
-      buildPath: REACT_OUT,
-      files: [{
-        destination: 'generated.ts',
-        format: 'javascript/es6',
-        options: { outputReferences: false },
-      }],
-    },
-
-    // TypeScript → tokens-vue
-    'ts-vue': {
-      transformGroup: 'js',
-      buildPath: VUE_OUT,
-      files: [{
-        destination: 'generated.ts',
-        format: 'javascript/es6',
-        options: { outputReferences: false },
-      }],
-    },
-
-    // Dart → tokens-dart
+    // Dart tenant.dart only — category files generated by our multi-file generator
     dart: {
-      transformGroup: 'css',  // resolves refs before format runs
+      transformGroup: 'css',
       buildPath: DART_OUT,
       files: [
         {
-          // generated.dart — primitive + semantic static classes
-          destination: 'generated.dart',
-          format: 'custom/dart',
-        },
-        {
-          // tenant.dart — BTechTenantTokens with per-tenant consts (FULLY GENERATED)
           destination: 'tenant.dart',
           format: 'custom/dart-tenants',
         },
@@ -574,30 +1130,25 @@ const sd = new StyleDictionary({
 // Run
 // =============================================================================
 (async () => {
+  // Load token data once for multi-file generators
+  const data = loadTokenData();
+
+  // Generate multi-file Dart output
+  generateDartFiles(data);
+  console.log('  Flutter — multi-file token output generated');
+
+  // Generate multi-file TypeScript output for React
+  generateTsFiles(data, REACT_OUT);
+  console.log('  React — multi-file token output generated');
+
+  // Generate multi-file TypeScript output for Vue
+  generateTsFiles(data, VUE_OUT);
+  console.log('  Vue — multi-file token output generated');
+
+  // Build SD platforms (CSS + tenant.dart)
   await sd.buildAllPlatforms();
 
-  // ── Post-build: append [data-tenant="*"] blocks to styles.css ──────────
-  // We need the resolved base token values — build a map from the dictionary.
-  // Re-use the same source to get resolved values without a second full build.
-  const baseMap: Record<string, string> = {};
-  // SD doesn't expose dictionary outside formats; reconstruct from the CSS output.
-  // Simpler: re-read tokens directly using flattenDTCG + manual ref resolution.
-  const coreFiles   = BASE_SOURCE.flatMap(() => []);  // placeholder
-  // Build base map from the generated CSS var values (reliable source of resolved values)
-  const cssContent  = readFileSync(`${WEB_OUT}styles.css`, 'utf-8');
-  const cssVarRe    = /--btech-([\w-]+):\s*([^;]+);/g;
-  let m: RegExpExecArray | null;
-  while ((m = cssVarRe.exec(cssContent)) !== null) {
-    // Convert --btech-color-background-primary → color.background.primary
-    const dotPath = m[1].replace(/-([a-z0-9])/g, (_, c, i, s) => {
-      // Heuristic: restore dots at category boundaries
-      return '_' + c;  // temp placeholder
-    });
-    // Simpler: just store the CSS var value keyed by CSS var name for ref resolution
-    baseMap[m[1].replace(/-/g, '.')] = m[2].trim();
-  }
-
-  // Actually, rebuild baseMap properly from token source files
+  // Post-build: append tenant CSS overrides
   const coreTokenFiles = [
     ...readdirSync(`${ROOT}/tokens/core`).map(f => `${ROOT}/tokens/core/${f}`),
     ...readdirSync(`${ROOT}/tokens/semantic`).map(f => `${ROOT}/tokens/semantic/${f}`),
@@ -610,32 +1161,27 @@ const sd = new StyleDictionary({
     Object.assign(rawBaseMap, flattenDTCG(content));
   }
 
-  // Resolve all refs in rawBaseMap (two passes handles one level of indirection)
   const resolvedBaseMap: Record<string, string> = {};
-  for (const [k, v] of Object.entries(rawBaseMap)) {
-    resolvedBaseMap[k] = resolveRef(v, rawBaseMap);
-  }
-  // Second pass for chained refs
-  for (const [k, v] of Object.entries(resolvedBaseMap)) {
-    resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
-  }
+  for (const [k, v] of Object.entries(rawBaseMap)) resolvedBaseMap[k] = resolveRef(v, rawBaseMap);
+  for (const [k, v] of Object.entries(resolvedBaseMap)) resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
 
   appendTenantCSS(resolvedBaseMap);
 
-  console.log('\n✅  pnpm generate — all frameworks updated from tokens/\n');
-  console.log('  📱 Flutter');
-  console.log('     tokens/core/ + tokens/semantic/  →  generated.dart   (BTechColor, BTechSpacing, BTechRadius…)');
-  console.log('     tokens/tenants/*/overrides.json  →  tenant.dart      (BTechTenantTokens per tenant)');
+  console.log('\n  pnpm generate — all frameworks updated from tokens/\n');
+  console.log('  Flutter (multi-file)');
+  console.log('     src/color/   — BTechColor.text.danger.bolder');
+  console.log('     src/spacing/ — BTechSpacing.md');
+  console.log('     src/radius/  — BTechRadius.interactive');
+  console.log('     src/typography/ — BTechFont.heading.fontFamily');
+  console.log('     tenant.dart  — BTechTenantTokens per tenant');
   console.log('');
-  console.log('  🌐 Web CSS');
-  console.log('     tokens/core/ + tokens/semantic/  →  styles.css       (:root variables)');
-  console.log('     tokens/tenants/*/overrides.json  →  styles.css       ([data-tenant="*"] appended)');
+  console.log('  Web CSS');
+  console.log('     styles.css   — :root variables + [data-tenant] overrides');
   console.log('');
-  console.log('  ⚛️  React');
-  console.log('     tokens/core/ + tokens/semantic/  →  generated.ts     (JS token object)');
+  console.log('  React (multi-file)');
+  console.log('     color/ spacing/ radius/ typography/ — BTechColor, BTechSpacing, etc.');
   console.log('');
-  console.log('  💚 Vue');
-  console.log('     tokens/core/ + tokens/semantic/  →  generated.ts     (JS token object)');
+  console.log('  Vue (multi-file)');
+  console.log('     color/ spacing/ radius/ typography/ — BTechColor, BTechSpacing, etc.');
   console.log('');
-  console.log('  ℹ️  To add a tenant: create tokens/tenants/{id}/overrides.json → re-run pnpm generate\n');
 })();

@@ -65,3 +65,9 @@ export function useToken(): TokenContextValue {
 }
 
 export type { TokenContextValue };
+
+// Token exports (auto-generated)
+export * from './color/index';
+export * from './spacing/index';
+export * from './radius/index';
+export * from './typography/index';
