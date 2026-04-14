@@ -82,7 +82,7 @@ jobs:
 
       # ── Token validators ─────────────────────────────────────────────────
       - name: Run JS validators (contrast + boundary)
-        run: tsx tools/validators/contrast.ts && tsx tools/validators/boundary.ts
+        run: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
 
       # ── Flutter pub get + analyze ────────────────────────────────────────
       - name: Flutter pub get
