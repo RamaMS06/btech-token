@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
-  "changelog": ["@changesets/github-changelog", { "repo": "RamaMS06/btech-token" }],
+  "changelog": ["@changesets/changelog-github", { "repo": "RamaMS06/btech-token" }],
   "commit": false,
   "fixed": [],
   "linked": [],

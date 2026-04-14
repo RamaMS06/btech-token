@@ -40,12 +40,6 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install Melos (local, required by Melos 3.0+)
-        run: dart pub get
-
-      - name: Melos bootstrap (Flutter deps)
-        run: dart pub run melos bootstrap
-
       # ── Generate + sync check ────────────────────────────────────────────
       # Re-run generate from the committed tokens source.
       # If any generated file differs from what's in the branch, the PR is stale
@@ -62,8 +56,10 @@ jobs:
             packages/tokens-dart/lib/src/radius/ \
             packages/tokens-dart/lib/src/typography/ \
             packages/tokens-dart/lib/src/tenant.dart \
-            packages/tokens-react/src/ \
-            packages/tokens-vue/src/)
+            packages/tokens-web/src/color/ \
+            packages/tokens-web/src/spacing/ \
+            packages/tokens-web/src/radius/ \
+            packages/tokens-web/src/typography/)
 
           if [ -n "$CHANGED" ]; then
             echo ""
@@ -80,11 +76,13 @@ jobs:
 
       # ── Token validators ─────────────────────────────────────────────────
       - name: Run JS validators (contrast + boundary)
-        run: tsx tools/validators/contrast.ts && tsx tools/validators/boundary.ts
+        run: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
 
       # ── Flutter pub get + analyze ────────────────────────────────────────
       - name: Flutter pub get
-        run: dart pub run melos run get
+        run: flutter pub get
+        working-directory: packages/tokens-dart
 
       - name: Flutter analyze
-        run: dart pub run melos run analyze
+        run: flutter analyze --no-fatal-infos
+        working-directory: packages/tokens-dart
