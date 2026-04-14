@@ -49,19 +49,18 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install Melos (local, required by Melos 3.0+)
-        run: dart pub get
-
       # ── Generate ────────────────────────────────────────────────────────
       - name: Run pnpm generate
         run: pnpm generate
 
       # ── Flutter pub get + analyze ────────────────────────────────────────
       - name: Flutter pub get
-        run: dart pub run melos run get
+        run: flutter pub get
+        working-directory: packages/tokens-dart
 
       - name: Flutter analyze
-        run: dart pub run melos run analyze
+        run: flutter analyze --no-fatal-infos
+        working-directory: packages/tokens-dart
 
       # ── Commit back generated files if anything changed ──────────────────
       - name: Commit generated outputs

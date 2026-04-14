@@ -34,7 +34,7 @@ jobs:
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
 
-      # ── Flutter / Melos ───────────────────────────────────────────────────
+      # ── Flutter ───────────────────────────────────────────────────────────
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -42,21 +42,20 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install Melos (local)
-        run: dart pub get
-
-      - name: Melos bootstrap (Flutter deps)
-        run: dart pub run melos bootstrap
+      - name: Flutter pub get
+        run: flutter pub get
+        working-directory: packages/tokens-dart
 
       # ── Validate → Build → Publish ────────────────────────────────────────
-      - name: Validate tokens (JS + Flutter)
-        run: pnpm validate
+      - name: Validate tokens (JS)
+        run: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
 
       - name: Build all packages
         run: pnpm build
 
       - name: Flutter analyze
-        run: dart pub run melos run analyze
+        run: flutter analyze --no-fatal-infos
+        working-directory: packages/tokens-dart
 
       - name: Publish JS packages via Changesets
         run: pnpm release

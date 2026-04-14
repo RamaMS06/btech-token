@@ -7,7 +7,7 @@
   "scripts": {
     "generate": "pnpm exec tsx config/sd.config.ts",
     "build": "pnpm generate && turbo run build",
-    "validate": "pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts && dart pub run melos run analyze",
+    "validate": "pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts",
     "add-tenant": "pnpm exec tsx scripts/add-tenant.ts",
     "bootstrap": "pnpm install && melos bootstrap",
     "flutter:get": "melos run get",
