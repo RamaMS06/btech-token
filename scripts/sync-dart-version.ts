@@ -8,7 +8,7 @@
  * or manually: pnpm exec tsx scripts/sync-dart-version.ts
  *
  * Mirror versioning rule:
- *   @btech/tokens-web@X.Y.Z  ←→  btech_tokens X.Y.Z (pubspec)
+ *   @ramaMS06/tokens-web@X.Y.Z  ←→  btech_tokens X.Y.Z (pubspec)
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -42,4 +42,4 @@ if (updated === pubspec) {
 }
 
 writeFileSync(pubspecPath, updated, 'utf8');
-console.log(`✅  Synced btech_tokens → ${version} (mirrors @btech/tokens-web@${version})`);
+console.log(`✅  Synced btech_tokens → ${version} (mirrors @ramaMS06/tokens-web@${version})`);

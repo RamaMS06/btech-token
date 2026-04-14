@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import '@btech/tokens-web/styles.css';
+import '@ramaMS06/tokens-web/styles.css';
 import TenantDemo from './TenantDemo.vue';
 </script>
 
