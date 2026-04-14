@@ -1,7 +1,7 @@
 # Changelog — btech_tokens
 
 All notable changes to this package are documented here.
-Versioning mirrors `@btech/tokens-web` — both packages always share the same version number.
+Versioning mirrors `@ramaMS06/tokens-web` — both packages always share the same version number.
 
 ## 1.0.0
 

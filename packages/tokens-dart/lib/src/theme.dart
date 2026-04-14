@@ -25,7 +25,7 @@ class BTechTokenExtension extends ThemeExtension<BTechTokenExtension> {
 /// Usage:
 /// ```dart
 /// MaterialApp(
-///   theme: BTechTheme.forTenant('tenant-a', Brightness.light),
+///   theme: BTechTheme.forTenant('tenant-bjb', Brightness.light),
 ///   home: MyApp(),
 /// )
 /// ```
@@ -35,26 +35,26 @@ abstract class BTechTheme {
 
     final colorScheme = ColorScheme(
       brightness:  brightness,
-      primary:     t.primaryBg,
-      onPrimary:   t.primaryFg,
-      secondary:   t.secondaryBg,
-      onSecondary: t.secondaryFg,
-      error:       t.dangerBg,
-      onError:     t.dangerFg,
-      surface:     t.surfaceDefault,
-      onSurface:   t.textDefault,
+      primary:     t.colorBackgroundPrimary,
+      onPrimary:   t.colorTextOnPrimary,
+      secondary:   t.colorBackgroundSecondary,
+      onSecondary: t.colorTextOnSecondary,
+      error:       t.colorBackgroundDanger,
+      onError:     t.colorTextOnDanger,
+      surface:     t.colorBackgroundSurface,
+      onSurface:   t.colorTextNeutral,
     );
 
     return ThemeData(
-      colorScheme:            colorScheme,
-      useMaterial3:           true,
-      fontFamily:             t.fontFamilySans,
-      scaffoldBackgroundColor: t.surfaceDefault,
+      colorScheme:             colorScheme,
+      useMaterial3:            true,
+      fontFamily:              t.typographyFontFamilySans,
+      scaffoldBackgroundColor: t.colorBackgroundSurface,
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: t.primaryBg,
-          foregroundColor: t.primaryFg,
+          backgroundColor: t.colorBackgroundPrimary,
+          foregroundColor: t.colorTextOnPrimary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(t.radiusInteractive),
           ),
@@ -63,8 +63,8 @@ abstract class BTechTheme {
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: t.primaryBg,
-          side: BorderSide(color: t.primaryBorder),
+          foregroundColor: t.colorBackgroundPrimary,
+          side: BorderSide(color: t.colorStrokePrimary),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(t.radiusInteractive),
           ),
@@ -72,53 +72,53 @@ abstract class BTechTheme {
       ),
 
       cardTheme: CardTheme(
-        color:     t.surfaceRaised,
+        color:     t.colorBackgroundSurfaceRaised,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(t.radiusCard),
-          side: BorderSide(color: t.borderDefault),
+          side: BorderSide(color: t.colorStrokeNeutral),
         ),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled:    true,
-        fillColor: t.surfaceSubtle,
+        fillColor: t.colorBackgroundSurfaceSubtle,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(t.radiusInteractive),
-          borderSide: BorderSide(color: t.borderDefault),
+          borderSide: BorderSide(color: t.colorStrokeNeutral),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(t.radiusInteractive),
-          borderSide: BorderSide(color: t.borderDefault),
+          borderSide: BorderSide(color: t.colorStrokeNeutral),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(t.radiusInteractive),
-          borderSide: BorderSide(color: t.primaryBg, width: 2),
+          borderSide: BorderSide(color: t.colorBackgroundPrimary, width: 2),
         ),
       ),
 
       textTheme: TextTheme(
         bodyMedium: TextStyle(
-          fontFamily: t.fontFamilySans,
+          fontFamily: t.typographyFontFamilySans,
           fontSize:   BTechFontSize.base,
-          color:      t.textDefault,
+          color:      t.colorTextNeutral,
         ),
         bodySmall: TextStyle(
-          fontFamily: t.fontFamilySans,
+          fontFamily: t.typographyFontFamilySans,
           fontSize:   BTechFontSize.sm,
-          color:      t.textSubtle,
+          color:      t.colorTextNeutralSubtle,
         ),
         labelMedium: TextStyle(
-          fontFamily:  t.fontFamilySans,
+          fontFamily:  t.typographyFontFamilySans,
           fontSize:    BTechFontSize.sm,
           fontWeight:  BTechFontWeight.medium,
-          color:       t.textDefault,
+          color:       t.colorTextNeutral,
         ),
         titleLarge: TextStyle(
-          fontFamily:  t.fontFamilySans,
+          fontFamily:  t.typographyFontFamilySans,
           fontSize:    BTechFontSize.xl,
           fontWeight:  BTechFontWeight.bold,
-          color:       t.textDefault,
+          color:       t.colorTextNeutral,
         ),
       ),
 

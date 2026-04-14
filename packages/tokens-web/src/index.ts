@@ -24,8 +24,8 @@ export interface ActivateOptions {
  * CSS custom properties defined in styles.css target these attributes.
  *
  * @example
- * import { activateTenant } from '@btech/tokens-web';
- * import '@btech/tokens-web/styles.css';
+ * import { activateTenant } from '@ramaMS06/tokens-web';
+ * import '@ramaMS06/tokens-web/styles.css';
  *
  * activateTenant({ tenant: 'tenant-a', mode: 'light' });
  */

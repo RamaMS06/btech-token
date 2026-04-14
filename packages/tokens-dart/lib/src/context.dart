@@ -15,91 +15,46 @@ import 'theme.dart';
 //   Text('x', style: TextStyle(color: context.btechColor.text.neutral.subtle))
 // =============================================================================
 
-// ── Text / neutral ───────────────────────────────────────────────────────────
-
-class _BTechContextColorTextNeutral extends Color {
-  _BTechContextColorTextNeutral(BTechTenantTokens t)
-    : _subtle   = t.textSubtle,
-      _disabled = t.textDisabled,
-      _inverse  = t.textInverse,
-      // ignore: deprecated_member_use
-      super(t.textDefault.value);
-
-  final Color _subtle;
-  final Color _disabled;
-  final Color _inverse;
-
-  Color get subtle   => _subtle;
-  Color get disabled => _disabled;
-  Color get inverse  => _inverse;
-}
-
-// ── Text / on ────────────────────────────────────────────────────────────────
-
-class _BTechContextColorTextOn {
-  final BTechTenantTokens _t;
-  const _BTechContextColorTextOn(this._t);
-
-  Color get primary   => _t.primaryFg;
-  Color get secondary => _t.secondaryFg;
-  Color get danger    => _t.dangerFg;
-}
-
-// ── Text group ───────────────────────────────────────────────────────────────
-
-class _BTechContextColorText {
-  final BTechTenantTokens _t;
-  const _BTechContextColorText(this._t);
-
-  _BTechContextColorTextNeutral get neutral => _BTechContextColorTextNeutral(_t);
-  _BTechContextColorTextOn      get on      => _BTechContextColorTextOn(_t);
-}
-
 // ── Background / surface ─────────────────────────────────────────────────────
 
 class _BTechContextColorBackgroundSurface extends Color {
   _BTechContextColorBackgroundSurface(BTechTenantTokens t)
-    : _subtle = t.surfaceSubtle,
-      _raised = t.surfaceRaised,
+    : subtle = t.colorBackgroundSurfaceSubtle,
+      raised = t.colorBackgroundSurfaceRaised,
       // ignore: deprecated_member_use
-      super(t.surfaceDefault.value);
+      super(t.colorBackgroundSurface.value);
 
-  final Color _subtle;
-  final Color _raised;
-
-  Color get subtle => _subtle;
-  Color get raised => _raised;
+  final Color subtle;
+  final Color raised;
 }
 
 // ── Background / primary ─────────────────────────────────────────────────────
 
 class _BTechContextColorBackgroundPrimary extends Color {
   _BTechContextColorBackgroundPrimary(BTechTenantTokens t)
-    : _hover = t.primaryBgHover,
+    : hover = t.colorBackgroundPrimaryHover,
       // ignore: deprecated_member_use
-      super(t.primaryBg.value);
+      super(t.colorBackgroundPrimary.value);
 
-  final Color _hover;
-  Color get hover => _hover;
+  final Color hover;
 }
 
 // ── Background / secondary ───────────────────────────────────────────────────
 
 class _BTechContextColorBackgroundSecondary extends Color {
   _BTechContextColorBackgroundSecondary(BTechTenantTokens t)
-    : _hover = t.secondaryBgHover,
+    : hover = t.colorBackgroundSecondaryHover,
       // ignore: deprecated_member_use
-      super(t.secondaryBg.value);
+      super(t.colorBackgroundSecondary.value);
 
-  final Color _hover;
-  Color get hover => _hover;
+  final Color hover;
 }
 
 // ── Background / danger ──────────────────────────────────────────────────────
 
 class _BTechContextColorBackgroundDanger extends Color {
   // ignore: deprecated_member_use
-  _BTechContextColorBackgroundDanger(BTechTenantTokens t) : super(t.dangerBg.value);
+  _BTechContextColorBackgroundDanger(BTechTenantTokens t) : super(t.colorBackgroundDanger.value);
 }
 
 // ── Background group ─────────────────────────────────────────────────────────
@@ -114,23 +69,58 @@ class _BTechContextColorBackground {
   _BTechContextColorBackgroundDanger    get danger    => _BTechContextColorBackgroundDanger(_t);
 }
 
+// ── Text / neutral ───────────────────────────────────────────────────────────
+
+class _BTechContextColorTextNeutral extends Color {
+  _BTechContextColorTextNeutral(BTechTenantTokens t)
+    : subtle   = t.colorTextNeutralSubtle,
+      disabled = t.colorTextNeutralDisabled,
+      inverse  = t.colorTextNeutralInverse,
+      // ignore: deprecated_member_use
+      super(t.colorTextNeutral.value);
+
+  final Color subtle;
+  final Color disabled;
+  final Color inverse;
+}
+
+// ── Text / on ────────────────────────────────────────────────────────────────
+
+class _BTechContextColorTextOn {
+  final BTechTenantTokens _t;
+  const _BTechContextColorTextOn(this._t);
+
+  Color get primary   => _t.colorTextOnPrimary;
+  Color get secondary => _t.colorTextOnSecondary;
+  Color get danger    => _t.colorTextOnDanger;
+}
+
+// ── Text group ───────────────────────────────────────────────────────────────
+
+class _BTechContextColorText {
+  final BTechTenantTokens _t;
+  const _BTechContextColorText(this._t);
+
+  _BTechContextColorTextNeutral get neutral => _BTechContextColorTextNeutral(_t);
+  _BTechContextColorTextOn      get on      => _BTechContextColorTextOn(_t);
+}
+
 // ── Stroke / neutral ─────────────────────────────────────────────────────────
 
 class _BTechContextColorStrokeNeutral extends Color {
   _BTechContextColorStrokeNeutral(BTechTenantTokens t)
-    : _strong = t.borderStrong,
+    : strong = t.colorStrokeNeutralStrong,
       // ignore: deprecated_member_use
-      super(t.borderDefault.value);
+      super(t.colorStrokeNeutral.value);
 
-  final Color _strong;
-  Color get strong => _strong;
+  final Color strong;
 }
 
 // ── Stroke / primary ─────────────────────────────────────────────────────────
 
 class _BTechContextColorStrokePrimary extends Color {
   // ignore: deprecated_member_use
-  _BTechContextColorStrokePrimary(BTechTenantTokens t) : super(t.primaryBorder.value);
+  _BTechContextColorStrokePrimary(BTechTenantTokens t) : super(t.colorStrokePrimary.value);
 }
 
 // ── Stroke group ─────────────────────────────────────────────────────────────
@@ -216,7 +206,7 @@ extension BTechTokensContext on BuildContext {
     return ext!.tokens;
   }
 
-  /// Full tenant token bag — all 23 fields directly.
+  /// Full resolved tenant token bag.
   BTechTenantTokens get btechTokens => _tokens();
 
   /// Returns null when no BTechTheme is active (graceful fallback).
@@ -239,5 +229,5 @@ extension BTechTokensContext on BuildContext {
   BTechContextRadius get btechRadius => BTechContextRadius(_tokens());
 
   /// Active tenant's font family string.
-  String get btechFontFamily => _tokens().fontFamilySans;
+  String get btechFontFamily => _tokens().typographyFontFamilySans;
 }

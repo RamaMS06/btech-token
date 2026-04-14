@@ -1,4 +1,4 @@
-import '@btech/tokens-web/styles.css';
+import '@ramaMS06/tokens-web/styles.css';
 import './app.css';
 
 // ─── Button — reads CSS vars from nearest [data-tenant] ancestor ──────────────
@@ -36,7 +36,7 @@ export default function App() {
   return (
     <div className="ds-page">
       <header className="ds-header">
-        <h1>@btech/tokens-web · Multi-Tenant Demo</h1>
+        <h1>@ramaMS06/tokens-web · Multi-Tenant Demo</h1>
         <p>One <code>&lt;Button&gt;</code> component · Three brand identities</p>
       </header>
 
