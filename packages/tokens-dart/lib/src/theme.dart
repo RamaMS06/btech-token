@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'generated.dart';
+import 'typography/font.token.dart';
 import 'tenant.dart';
 
 /// ThemeExtension that carries tenant tokens into the widget tree.

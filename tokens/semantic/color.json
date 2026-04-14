@@ -1,33 +1,68 @@
 {
   "color": {
     "text": {
-      "primary":   { "$value": "{color.neutral.900}", "$type": "color" },
-      "secondary": { "$value": "{color.neutral.500}", "$type": "color" },
-      "disable":   { "$value": "{color.neutral.400}", "$type": "color" },
-      "inverse":   { "$value": "{color.neutral.0}",   "$type": "color" },
-      "on-primary": { "$value": "{color.neutral.0}",  "$type": "color" },
-      "on-secondary": { "$value": "{color.neutral.800}", "$type": "color" },
-      "on-danger":  { "$value": "{color.neutral.0}",  "$type": "color" }
+      "neutral": {
+        "default":  { "$value": "{color.neutral.900}", "$type": "color" },
+        "subtle":   { "$value": "{color.neutral.500}", "$type": "color" },
+        "disabled": { "$value": "{color.neutral.300}", "$type": "color" },
+        "inverse":  { "$value": "{color.neutral.50}",  "$type": "color" }
+      },
+      "danger": {
+        "base":   { "$value": "{color.red.600}",  "$type": "color" },
+        "bolder": { "$value": "{color.red.800}",  "$type": "color" }
+      },
+      "success": {
+        "base":   { "$value": "{color.green.600}", "$type": "color" },
+        "bolder": { "$value": "{color.green.800}", "$type": "color" }
+      },
+      "warning": {
+        "base":   { "$value": "{color.orange.600}", "$type": "color" },
+        "bolder": { "$value": "{color.orange.800}", "$type": "color" }
+      },
+      "on": {
+        "primary":   { "$value": "{color.neutral.50}",  "$type": "color" },
+        "secondary": { "$value": "{color.green.800}",   "$type": "color" },
+        "danger":    { "$value": "{color.neutral.50}",  "$type": "color" }
+      }
     },
     "background": {
-      "default":          { "$value": "{color.neutral.0}",   "$type": "color" },
-      "subtle":           { "$value": "{color.neutral.50}",  "$type": "color" },
-      "raised":           { "$value": "{color.neutral.100}", "$type": "color" },
-      "primary":          { "$value": "{color.green.700}",   "$type": "color", "$description": "Main brand bg — WCAG AA with white text (5.02:1)" },
-      "primary-hover":    { "$value": "{color.green.800}",   "$type": "color" },
-      "secondary":        { "$value": "{color.neutral.100}", "$type": "color" },
-      "secondary-hover":  { "$value": "{color.neutral.200}", "$type": "color" },
-      "danger":           { "$value": "{color.red.700}",     "$type": "color" },
-      "danger-hover":     { "$value": "{color.red.700}",     "$type": "color" },
-      "success":          { "$value": "{color.green.500}",   "$type": "color" },
-      "warning":          { "$value": "{color.orange.500}",  "$type": "color" }
+      "surface": {
+        "default": { "$value": "{color.neutral.50}",  "$type": "color" },
+        "subtle":  { "$value": "{color.neutral.100}", "$type": "color" },
+        "raised":  { "$value": "{color.neutral.0}",   "$type": "color" }
+      },
+      "primary": {
+        "default": { "$value": "{color.green.700}", "$type": "color" },
+        "hover":   { "$value": "{color.green.800}", "$type": "color" }
+      },
+      "secondary": {
+        "default": { "$value": "{color.green.50}",  "$type": "color" },
+        "hover":   { "$value": "{color.green.100}", "$type": "color" }
+      },
+      "danger": {
+        "default": { "$value": "{color.red.600}",   "$type": "color" },
+        "hover":   { "$value": "{color.red.700}",   "$type": "color" }
+      },
+      "success": {
+        "default": { "$value": "{color.green.500}", "$type": "color" },
+        "hover":   { "$value": "{color.green.600}", "$type": "color" }
+      },
+      "warning": {
+        "default": { "$value": "{color.orange.400}", "$type": "color" },
+        "hover":   { "$value": "{color.orange.500}", "$type": "color" }
+      }
     },
     "stroke": {
-      "default":   { "$value": "{color.neutral.200}", "$type": "color" },
-      "strong":    { "$value": "{color.neutral.400}", "$type": "color" },
-      "primary":   { "$value": "{color.green.800}",   "$type": "color" },
-      "secondary": { "$value": "{color.neutral.300}", "$type": "color" },
-      "danger":    { "$value": "{color.red.700}",     "$type": "color" }
+      "neutral": {
+        "default": { "$value": "{color.neutral.200}", "$type": "color" },
+        "strong":  { "$value": "{color.neutral.400}", "$type": "color" }
+      },
+      "primary": {
+        "default": { "$value": "{color.green.700}", "$type": "color" }
+      },
+      "danger": {
+        "default": { "$value": "{color.red.600}", "$type": "color" }
+      }
     }
   }
 }
