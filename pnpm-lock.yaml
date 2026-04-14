@@ -76,6 +76,9 @@ importers:
 
   packages/tokens-react:
     dependencies:
+      '@btech/tokens-web':
+        specifier: workspace:*
+        version: link:../tokens-web
       react:
         specifier: '>=18'
         version: 19.2.5
@@ -94,6 +97,10 @@ importers:
         version: 5.9.3
 
   packages/tokens-vue:
+    dependencies:
+      '@btech/tokens-web':
+        specifier: workspace:*
+        version: link:../tokens-web
     devDependencies:
       '@types/node':
         specifier: ^20.0.0

@@ -15,6 +15,9 @@
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts"
   },
+  "dependencies": {
+    "@btech/tokens-web": "workspace:*"
+  },
   "peerDependencies": {
     "react": ">=18"
   },

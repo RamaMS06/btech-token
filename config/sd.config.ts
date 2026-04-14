@@ -1081,12 +1081,11 @@ StyleDictionary.registerFormat(dartTenantsFormat);
 // =============================================================================
 const DART_OUT  = `${ROOT}/packages/tokens-dart/lib/src/`;
 const WEB_OUT   = `${ROOT}/packages/tokens-web/dist/`;
-const REACT_OUT = `${ROOT}/packages/tokens-react/src/`;
-const VUE_OUT   = `${ROOT}/packages/tokens-vue/src/`;
-mkdirSync(DART_OUT,  { recursive: true });
-mkdirSync(WEB_OUT,   { recursive: true });
-mkdirSync(REACT_OUT, { recursive: true });
-mkdirSync(VUE_OUT,   { recursive: true });
+// Framework-agnostic TS tokens live in tokens-web/src — React/Vue import from @btech/tokens-web
+const WEB_SRC   = `${ROOT}/packages/tokens-web/src/`;
+mkdirSync(DART_OUT, { recursive: true });
+mkdirSync(WEB_OUT,  { recursive: true });
+mkdirSync(WEB_SRC,  { recursive: true });
 
 // =============================================================================
 // Style Dictionary — CSS + tenant.dart only (multi-file generators handle rest)
@@ -1137,13 +1136,10 @@ const sd = new StyleDictionary({
   generateDartFiles(data);
   console.log('  Flutter — multi-file token output generated');
 
-  // Generate multi-file TypeScript output for React
-  generateTsFiles(data, REACT_OUT);
-  console.log('  React — multi-file token output generated');
-
-  // Generate multi-file TypeScript output for Vue
-  generateTsFiles(data, VUE_OUT);
-  console.log('  Vue — multi-file token output generated');
+  // Generate multi-file TypeScript output — framework-agnostic, lives in tokens-web/src/
+  // React and Vue consume these via `import { BTechColor } from '@btech/tokens-web'`
+  generateTsFiles(data, WEB_SRC);
+  console.log('  Web (shared) — multi-file token output generated');
 
   // Build SD platforms (CSS + tenant.dart)
   await sd.buildAllPlatforms();

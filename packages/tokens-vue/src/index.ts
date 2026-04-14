@@ -55,8 +55,6 @@ export function useToken(): TokenState {
   return state.value;
 }
 
-// Token exports (auto-generated)
-export * from './color/index';
-export * from './spacing/index';
-export * from './radius/index';
-export * from './typography/index';
+// Re-export all framework-agnostic tokens from @btech/tokens-web
+// BTechColor, BTechSpacing, BTechRadius, BTechFont — single source of truth
+export * from '@btech/tokens-web';
