@@ -79,7 +79,9 @@ jobs:
             packages/tokens-dart/lib/src/radius/
             packages/tokens-dart/lib/src/typography/
             packages/tokens-dart/lib/src/tenant.dart
-            packages/tokens-react/src/
-            packages/tokens-vue/src/
+            packages/tokens-web/src/color/
+            packages/tokens-web/src/spacing/
+            packages/tokens-web/src/radius/
+            packages/tokens-web/src/typography/
           commit_user_name: github-actions[bot]
           commit_user_email: github-actions[bot]@users.noreply.github.com

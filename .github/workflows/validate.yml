@@ -62,8 +62,10 @@ jobs:
             packages/tokens-dart/lib/src/radius/ \
             packages/tokens-dart/lib/src/typography/ \
             packages/tokens-dart/lib/src/tenant.dart \
-            packages/tokens-react/src/ \
-            packages/tokens-vue/src/)
+            packages/tokens-web/src/color/ \
+            packages/tokens-web/src/spacing/ \
+            packages/tokens-web/src/radius/ \
+            packages/tokens-web/src/typography/)
 
           if [ -n "$CHANGED" ]; then
             echo ""

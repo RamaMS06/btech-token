@@ -1163,21 +1163,12 @@ const sd = new StyleDictionary({
 
   appendTenantCSS(resolvedBaseMap);
 
-  console.log('\n  pnpm generate — all frameworks updated from tokens/\n');
-  console.log('  Flutter (multi-file)');
-  console.log('     src/color/   — BTechColor.text.danger.bolder');
-  console.log('     src/spacing/ — BTechSpacing.md');
-  console.log('     src/radius/  — BTechRadius.interactive');
-  console.log('     src/typography/ — BTechFont.heading.fontFamily');
-  console.log('     tenant.dart  — BTechTenantTokens per tenant');
-  console.log('');
-  console.log('  Web CSS');
-  console.log('     styles.css   — :root variables + [data-tenant] overrides');
-  console.log('');
-  console.log('  React (multi-file)');
-  console.log('     color/ spacing/ radius/ typography/ — BTechColor, BTechSpacing, etc.');
-  console.log('');
-  console.log('  Vue (multi-file)');
-  console.log('     color/ spacing/ radius/ typography/ — BTechColor, BTechSpacing, etc.');
+  console.log('\n✅  pnpm generate complete\n');
+  console.log('  📱 Flutter   → packages/tokens-dart/lib/src/{color,spacing,radius,typography}/');
+  console.log('                 packages/tokens-dart/lib/src/tenant.dart');
+  console.log('  🌐 Web       → packages/tokens-web/src/{color,spacing,radius,typography}/');
+  console.log('                 packages/tokens-web/dist/styles.css');
+  console.log('  ⚛️  React     → re-exports from @btech/tokens-web (no separate generation)');
+  console.log('  💚 Vue       → re-exports from @btech/tokens-web (no separate generation)');
   console.log('');
 })();
