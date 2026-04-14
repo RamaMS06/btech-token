@@ -1060,7 +1060,9 @@ function appendTenantCSS(baseMap: Record<string, string>): void {
 
     for (const [tokenPath, rawVal] of Object.entries(overrides)) {
       const resolved = resolveRef(rawVal, baseMap);
-      const cssVar   = `--btech-${tokenPath.replace(/\./g, '-')}`;
+      // Strip `.default` suffix — `color.background.primary.default` → `--btech-color-background-primary`
+      const cleanPath = tokenPath.replace(/\.default$/, '');
+      const cssVar   = `--btech-${cleanPath.replace(/\./g, '-')}`;
       blocks.push(`  ${cssVar}: ${resolved};`);
     }
 
@@ -1143,6 +1145,16 @@ const sd = new StyleDictionary({
 
   // Build SD platforms (CSS + tenant.dart)
   await sd.buildAllPlatforms();
+
+  // Post-build: strip `-default` suffix from all CSS variable names and references.
+  // SD converts token path `color.background.primary.default` → `--btech-...-default`
+  // but we want clean names: `--btech-color-background-primary`.
+  const cssPath = `${WEB_OUT}styles.css`;
+  const rawCss = readFileSync(cssPath, 'utf8');
+  const cleanedCss = rawCss
+    .replace(/--btech-([a-z0-9-]+)-default([\s:);,])/g, '--btech-$1$2')
+    .replace(/--btech-([a-z0-9-]+)-default([\s:);,])/g, '--btech-$1$2'); // run twice for chained refs
+  writeFileSync(cssPath, cleanedCss, 'utf8');
 
   // Post-build: append tenant CSS overrides
   const coreTokenFiles = [
