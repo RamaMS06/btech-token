@@ -914,30 +914,33 @@ const TENANT_FIELD_MAP: Array<{
   field: string;
   type: 'Color' | 'double' | 'String';
 }> = [
-  // background
-  { path: 'color.background.primary.default',      field: 'primaryBg',          type: 'Color'  },
-  { path: 'color.background.primary.hover',         field: 'primaryBgHover',     type: 'Color'  },
-  { path: 'color.text.on.primary',                  field: 'primaryFg',          type: 'Color'  },
-  { path: 'color.stroke.primary.default',            field: 'primaryBorder',      type: 'Color'  },
-  { path: 'color.background.secondary.default',     field: 'secondaryBg',        type: 'Color'  },
-  { path: 'color.background.secondary.hover',        field: 'secondaryBgHover',   type: 'Color'  },
-  { path: 'color.text.on.secondary',                field: 'secondaryFg',        type: 'Color'  },
-  { path: 'color.stroke.neutral.default',            field: 'secondaryBorder',    type: 'Color'  },
-  { path: 'color.background.danger.default',         field: 'dangerBg',           type: 'Color'  },
-  { path: 'color.text.on.danger',                    field: 'dangerFg',           type: 'Color'  },
-  { path: 'color.background.surface.default',        field: 'surfaceDefault',     type: 'Color'  },
-  { path: 'color.background.surface.subtle',         field: 'surfaceSubtle',      type: 'Color'  },
-  { path: 'color.background.surface.raised',         field: 'surfaceRaised',      type: 'Color'  },
-  { path: 'color.text.neutral.default',              field: 'textDefault',        type: 'Color'  },
-  { path: 'color.text.neutral.subtle',               field: 'textSubtle',         type: 'Color'  },
-  { path: 'color.text.neutral.disabled',             field: 'textDisabled',       type: 'Color'  },
-  { path: 'color.text.neutral.inverse',              field: 'textInverse',        type: 'Color'  },
-  { path: 'color.stroke.neutral.default',            field: 'borderDefault',      type: 'Color'  },
-  { path: 'color.stroke.neutral.strong',             field: 'borderStrong',       type: 'Color'  },
-  { path: 'radius.interactive',                      field: 'radiusInteractive',  type: 'double' },
-  { path: 'radius.card',                             field: 'radiusCard',         type: 'double' },
-  { path: 'radius.badge',                            field: 'radiusBadge',        type: 'double' },
-  { path: 'typography.fontFamily.sans',              field: 'fontFamilySans',     type: 'String' },
+  // color.background
+  { path: 'color.background.primary.default',    field: 'colorBackgroundPrimary',         type: 'Color'  },
+  { path: 'color.background.primary.hover',      field: 'colorBackgroundPrimaryHover',    type: 'Color'  },
+  { path: 'color.background.secondary.default',  field: 'colorBackgroundSecondary',       type: 'Color'  },
+  { path: 'color.background.secondary.hover',    field: 'colorBackgroundSecondaryHover',  type: 'Color'  },
+  { path: 'color.background.danger.default',     field: 'colorBackgroundDanger',          type: 'Color'  },
+  { path: 'color.background.surface.default',    field: 'colorBackgroundSurface',         type: 'Color'  },
+  { path: 'color.background.surface.subtle',     field: 'colorBackgroundSurfaceSubtle',   type: 'Color'  },
+  { path: 'color.background.surface.raised',     field: 'colorBackgroundSurfaceRaised',   type: 'Color'  },
+  // color.text
+  { path: 'color.text.neutral.default',          field: 'colorTextNeutral',               type: 'Color'  },
+  { path: 'color.text.neutral.subtle',           field: 'colorTextNeutralSubtle',         type: 'Color'  },
+  { path: 'color.text.neutral.disabled',         field: 'colorTextNeutralDisabled',       type: 'Color'  },
+  { path: 'color.text.neutral.inverse',          field: 'colorTextNeutralInverse',        type: 'Color'  },
+  { path: 'color.text.on.primary',               field: 'colorTextOnPrimary',             type: 'Color'  },
+  { path: 'color.text.on.secondary',             field: 'colorTextOnSecondary',           type: 'Color'  },
+  { path: 'color.text.on.danger',                field: 'colorTextOnDanger',              type: 'Color'  },
+  // color.stroke
+  { path: 'color.stroke.primary.default',        field: 'colorStrokePrimary',             type: 'Color'  },
+  { path: 'color.stroke.neutral.default',        field: 'colorStrokeNeutral',             type: 'Color'  },
+  { path: 'color.stroke.neutral.strong',         field: 'colorStrokeNeutralStrong',       type: 'Color'  },
+  // radius
+  { path: 'radius.interactive',                  field: 'radiusInteractive',              type: 'double' },
+  { path: 'radius.card',                         field: 'radiusCard',                     type: 'double' },
+  { path: 'radius.badge',                        field: 'radiusBadge',                    type: 'double' },
+  // typography
+  { path: 'typography.fontFamily.sans',          field: 'typographyFontFamilySans',       type: 'String' },
 ];
 
 // =============================================================================
