@@ -42,11 +42,11 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install Melos
-        run: dart pub global activate melos
+      - name: Install Melos (local)
+        run: dart pub get
 
       - name: Melos bootstrap (Flutter deps)
-        run: melos bootstrap
+        run: dart pub run melos bootstrap
 
       # ── Validate → Build → Publish ────────────────────────────────────────
       - name: Validate tokens (JS + Flutter)
@@ -56,7 +56,7 @@ jobs:
         run: pnpm build
 
       - name: Flutter analyze
-        run: melos run analyze
+        run: dart pub run melos run analyze
 
       - name: Publish JS packages via Changesets
         run: pnpm release
