@@ -7,34 +7,26 @@ packages:
 ide:
   intellij: false
 
-command:
-  bootstrap:
-    hooks:
-      post: melos exec -- flutter pub get
-
 scripts:
   # ── Dependency management ─────────────────────────────────────────────────
+  # melos bootstrap already runs flutter pub get for all packages.
+  # This script is a manual convenience for re-running after code changes.
   get:
-    run: melos exec -- flutter pub get
+    exec: flutter pub get
     description: Install Flutter dependencies for all Dart packages.
-
-  # ── Code generation ───────────────────────────────────────────────────────
-  # Note: the primary generator is pnpm generate (Style Dictionary).
-  # This re-runs pub get so generated.dart is picked up cleanly.
-  generate:
-    run: melos exec -- flutter pub get
-    description: Refresh pub after pnpm generate writes generated.dart.
 
   # ── Quality ───────────────────────────────────────────────────────────────
   analyze:
-    run: melos exec -- flutter analyze --no-fatal-infos
+    exec: flutter analyze --no-fatal-infos
     description: Static analysis for all Dart packages.
 
   test:
-    run: melos exec -- flutter test
+    exec: flutter test
     description: Run Flutter tests for all Dart packages.
 
   # ── CI convenience ────────────────────────────────────────────────────────
   ci:
-    run: melos run get && melos run analyze
+    steps:
+      - get
+      - analyze
     description: Full CI check for Flutter packages (get + analyze).
