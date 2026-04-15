@@ -1065,7 +1065,7 @@ function appendTenantCSS(baseMap: Record<string, string>): void {
       const resolved = resolveRef(rawVal, baseMap);
       // Strip `.default` suffix — `color.background.primary.default` → `--btech-color-background-primary`
       const cleanPath = tokenPath.replace(/\.default$/, '');
-      const cssVar   = `--btech-${cleanPath.replace(/\./g, '-')}`;
+      const cssVar   = `--btech-${cleanPath.replace(/\./g, '-').replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}`;
       blocks.push(`  ${cssVar}: ${resolved};`);
     }
 
