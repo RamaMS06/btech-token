@@ -197,7 +197,7 @@ export type TokenPath =
  * // CSS-in-JS / inline style / Vue :style
  * const styles = {
  *   background:   token('color.background.primary'),
- *   color:        token('color.text.on-primary'),
+ *   color:        token('color.text.on.primary'),
  *   padding:      token('spacing.md'),
  *   borderRadius: token('radius.interactive'),
  * }
@@ -211,7 +211,7 @@ export type TokenPath =
  * @returns CSS var() string ready for use in style objects or CSS-in-JS
  */
 export function token(path: TokenPath, fallback?: string): string {
-  const cssVar = `--btech-${path.replace(/\./g, '-')}`;
+  const cssVar = `--btech-${path.replace(/\./g, '-').replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}`;
   return fallback ? `var(${cssVar}, ${fallback})` : `var(${cssVar})`;
 }
 
@@ -227,5 +227,5 @@ export function token(path: TokenPath, fallback?: string): string {
  * @param path - A valid BTech token path
  */
 export function cssVar(path: TokenPath): string {
-  return `--btech-${path.replace(/\./g, '-')}`;
+  return `--btech-${path.replace(/\./g, '-').replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}`;
 }
