@@ -9,6 +9,10 @@ export * from './spacing/index';
 export * from './radius/index';
 export * from './typography/index';
 
+// ── Type-safe token() helper — analogous to Atlassian's @atlaskit/tokens ─────
+export { token, cssVar } from './token';
+export type { TokenPath } from './token';
+
 // ── Vanilla JS tenant API ─────────────────────────────────────────────────────
 
 export type ColorMode = 'light' | 'dark';
