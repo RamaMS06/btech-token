@@ -39,14 +39,14 @@
     },
     {
       "name": "demo-react",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--dir", "/Users/p-rama.msugiyanto/Documents/btech/btech-ds", "--filter", "demo-react", "run", "dev"],
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd /Users/p-rama.msugiyanto/Documents/btech/btech-ds/apps/demo-react && npm run dev"],
       "port": 5176
     },
     {
       "name": "demo-vue",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--dir", "/Users/p-rama.msugiyanto/Documents/btech/btech-ds", "--filter", "demo-vue", "run", "dev"],
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd /Users/p-rama.msugiyanto/Documents/btech/btech-ds/apps/demo-vue && npm run dev"],
       "port": 5177
     },
     {
