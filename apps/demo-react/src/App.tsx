@@ -38,7 +38,7 @@ function TenantSwitcher({ active, onChange }: { active: Tenant; onChange: (t: Te
             borderRadius: token('radius.interactive'),
             border: `1.5px solid ${active === t.id ? token('color.stroke.primary') : token('color.stroke.neutral')}`,
             background: active === t.id ? token('color.background.primary') : token('color.background.surface.raised'),
-            color: active === t.id ? token('color.text.on-primary') : token('color.text.neutral'),
+            color: active === t.id ? token('color.text.on.primary') : token('color.text.neutral'),
             fontFamily: token('typography.fontFamily.sans'),
             fontSize: token('typography.fontSize.sm'),
             fontWeight: active === t.id ? token('typography.fontWeight.semibold') : token('typography.fontWeight.regular'),
@@ -197,10 +197,10 @@ export default function App() {
         {/* Color — Background */}
         <Section title="Color · Background">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: token('spacing.sm') }}>
-            <Swatch label="primary"   bg={token('color.background.primary')}        fg={token('color.text.on-primary')} tokenPath="color.background.primary" />
+            <Swatch label="primary"   bg={token('color.background.primary')}        fg={token('color.text.on.primary')} tokenPath="color.background.primary" />
             <Swatch label="secondary" bg={token('color.background.secondary')}      fg={token('color.text.neutral')}    tokenPath="color.background.secondary" />
-            <Swatch label="danger"    bg={token('color.background.danger')}         fg={token('color.text.on-danger')}  tokenPath="color.background.danger" />
-            <Swatch label="success"   bg={token('color.background.success')}        fg={token('color.text.on-primary')} tokenPath="color.background.success" />
+            <Swatch label="danger"    bg={token('color.background.danger')}         fg={token('color.text.on.danger')}  tokenPath="color.background.danger" />
+            <Swatch label="success"   bg={token('color.background.success')}        fg={token('color.text.on.primary')} tokenPath="color.background.success" />
             <Swatch label="warning"   bg={token('color.background.warning')}        fg={token('color.text.neutral')}    tokenPath="color.background.warning" />
             <Swatch label="surface"   bg={token('color.background.surface')}        fg={token('color.text.neutral')}    tokenPath="color.background.surface" />
             <Swatch label="raised"    bg={token('color.background.surface.raised')} fg={token('color.text.neutral')}    tokenPath="color.background.surface.raised" />

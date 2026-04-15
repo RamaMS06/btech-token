@@ -21,10 +21,10 @@ onMounted(() => activateTenant({ tenant: 'default' }));
 // ── token() style objects — all categories ────────────────────────────────────
 // Color — background swatches
 const colorSwatches = [
-  { label: 'primary',         bg: token('color.background.primary'),        fg: token('color.text.on-primary'),  path: 'color.background.primary' },
+  { label: 'primary',         bg: token('color.background.primary'),        fg: token('color.text.on.primary'),  path: 'color.background.primary' },
   { label: 'secondary',       bg: token('color.background.secondary'),      fg: token('color.text.neutral'),     path: 'color.background.secondary' },
-  { label: 'danger',          bg: token('color.background.danger'),         fg: token('color.text.on-danger'),   path: 'color.background.danger' },
-  { label: 'success',         bg: token('color.background.success'),        fg: token('color.text.on-primary'),  path: 'color.background.success' },
+  { label: 'danger',          bg: token('color.background.danger'),         fg: token('color.text.on.danger'),   path: 'color.background.danger' },
+  { label: 'success',         bg: token('color.background.success'),        fg: token('color.text.on.primary'),  path: 'color.background.success' },
   { label: 'warning',         bg: token('color.background.warning'),        fg: token('color.text.neutral'),     path: 'color.background.warning' },
   { label: 'surface',         bg: token('color.background.surface'),        fg: token('color.text.neutral'),     path: 'color.background.surface' },
   { label: 'surface.raised',  bg: token('color.background.surface.raised'), fg: token('color.text.neutral'),     path: 'color.background.surface.raised' },
@@ -124,7 +124,7 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
           class="switcher-btn"
           :class="{ active: activeTenant === t.id }"
           :style="activeTenant === t.id
-            ? { background: token('color.background.primary'), color: token('color.text.on-primary'), borderColor: token('color.stroke.primary') }
+            ? { background: token('color.background.primary'), color: token('color.text.on.primary'), borderColor: token('color.stroke.primary') }
             : { background: token('color.background.surface.raised'), color: token('color.text.neutral'), borderColor: token('color.stroke.neutral') }"
           @click="switchTenant(t.id)"
         >{{ t.label }}</button>

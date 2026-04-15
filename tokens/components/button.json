@@ -1,25 +1,25 @@
 {
   "button": {
     "primary": {
-      "bg":        { "$value": "{color.background.primary.default}",   "$type": "color" },
-      "bg-hover":  { "$value": "{color.background.primary.hover}",     "$type": "color" },
-      "fg":        { "$value": "{color.text.on.primary}",              "$type": "color" },
-      "border":    { "$value": "{color.stroke.primary.default}",       "$type": "color" },
-      "radius":    { "$value": "{radius.interactive}",                 "$type": "dimension" }
+      "bg":       { "$value": "{color.background.primary.default}",   "$type": "color" },
+      "bgHover":  { "$value": "{color.background.primary.hover}",     "$type": "color" },
+      "fg":       { "$value": "{color.text.on.primary}",              "$type": "color" },
+      "border":   { "$value": "{color.stroke.primary.default}",       "$type": "color" },
+      "radius":   { "$value": "{radius.interactive}",                 "$type": "dimension" }
     },
     "secondary": {
-      "bg":        { "$value": "{color.background.secondary.default}", "$type": "color" },
-      "bg-hover":  { "$value": "{color.background.secondary.hover}",   "$type": "color" },
-      "fg":        { "$value": "{color.text.on.secondary}",            "$type": "color" },
-      "border":    { "$value": "{color.stroke.neutral.default}",       "$type": "color" },
-      "radius":    { "$value": "{radius.interactive}",                 "$type": "dimension" }
+      "bg":       { "$value": "{color.background.secondary.default}", "$type": "color" },
+      "bgHover":  { "$value": "{color.background.secondary.hover}",   "$type": "color" },
+      "fg":       { "$value": "{color.text.on.secondary}",            "$type": "color" },
+      "border":   { "$value": "{color.stroke.neutral.default}",       "$type": "color" },
+      "radius":   { "$value": "{radius.interactive}",                 "$type": "dimension" }
     },
     "danger": {
-      "bg":        { "$value": "{color.background.danger.default}",    "$type": "color" },
-      "bg-hover":  { "$value": "{color.background.danger.hover}",      "$type": "color" },
-      "fg":        { "$value": "{color.text.on.danger}",               "$type": "color" },
-      "border":    { "$value": "{color.stroke.danger.default}",        "$type": "color" },
-      "radius":    { "$value": "{radius.interactive}",                 "$type": "dimension" }
+      "bg":       { "$value": "{color.background.danger.default}",    "$type": "color" },
+      "bgHover":  { "$value": "{color.background.danger.hover}",      "$type": "color" },
+      "fg":       { "$value": "{color.text.on.danger}",               "$type": "color" },
+      "border":   { "$value": "{color.stroke.danger.default}",        "$type": "color" },
+      "radius":   { "$value": "{radius.interactive}",                 "$type": "dimension" }
     },
     "size": {
       "sm": {

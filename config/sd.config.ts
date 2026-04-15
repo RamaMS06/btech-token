@@ -1143,7 +1143,7 @@ function generateTokenTypes(webSrcPath: string): void {
     ` * // CSS-in-JS / inline style / Vue :style`,
     ` * const styles = {`,
     ` *   background:   token('color.background.primary'),`,
-    ` *   color:        token('color.text.on-primary'),`,
+    ` *   color:        token('color.text.on.primary'),`,
     ` *   padding:      token('spacing.md'),`,
     ` *   borderRadius: token('radius.interactive'),`,
     ` * }`,
