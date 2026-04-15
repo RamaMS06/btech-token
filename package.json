@@ -14,6 +14,9 @@
     "flutter:analyze": "melos run analyze",
     "flutter:test": "melos run test",
     "sync-dart-version": "pnpm exec tsx scripts/sync-dart-version.ts",
+    "bump": "pnpm exec tsx scripts/bump-version.ts",
+    "bump:minor": "pnpm exec tsx scripts/bump-version.ts minor",
+    "bump:major": "pnpm exec tsx scripts/bump-version.ts major",
     "changeset": "changeset",
     "version": "changeset version && pnpm sync-dart-version",
     "release": "turbo run build && changeset publish"

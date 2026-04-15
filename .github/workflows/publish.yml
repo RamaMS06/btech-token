@@ -1,4 +1,16 @@
-name: Publish Packages
+name: Publish Packages (Manual / Emergency)
+
+# This workflow is the MANUAL / EMERGENCY release path.
+# Normal releases are handled automatically by auto-version.yml on PR merge.
+#
+# Use this workflow when you need to:
+#   - Re-publish a version that failed mid-publish
+#   - Publish a hotfix tag manually
+#   - Release without going through a PR
+#
+# Trigger: push a v* tag manually
+#   git tag v1.2.3 -m "hotfix"
+#   git push origin v1.2.3
 
 on:
   push:
@@ -8,6 +20,10 @@ on:
 jobs:
   publish:
     name: Build & Publish to GitHub Packages
+    # Skip if this tag was pushed by auto-version.yml (it already published inline).
+    # auto-version.yml commit message contains "[skip ci]" but tags don't carry that.
+    # We use a job condition: only run if the tag was NOT created by the bot.
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,8 +73,7 @@ jobs:
         run: flutter analyze --no-fatal-infos
         working-directory: packages/tokens-dart
 
-      - name: Publish JS packages via Changesets
-        run: pnpm release
+      - name: Publish @ramaMS06/tokens-web
+        run: pnpm --filter @ramaMS06/tokens-web publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
