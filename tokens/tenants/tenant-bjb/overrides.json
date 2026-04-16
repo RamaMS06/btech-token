@@ -15,7 +15,7 @@
   },
   "typography": {
     "fontFamily": {
-      "sans": { "$value": "Poppins, system-ui, sans-serif", "$type": "fontFamily" }
+      "sans": { "$value": "Roboto Mono, system-ui, sans-serif", "$type": "fontFamily" }
     }
   },
   "radius": {
