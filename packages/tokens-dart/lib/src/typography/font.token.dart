@@ -43,12 +43,6 @@ abstract class BTechLineHeight {
 
 /// Root static font namespace — always uses the default sans font family.
 /// For tenant-aware fonts in widgets, prefer [context.btechFont].
-///
-/// ```dart
-/// BTechFont.heading.h1         // TextStyle — 35px bold
-/// BTechFont.subheading.h5      // TextStyle — 16px bold
-/// BTechFont.body.bold          // TextStyle — 12px bold
-/// ```
 abstract class BTechFont {
   static final BTechFontHeading    heading    = BTechFontHeading();
   static final BTechFontSubHeading subheading = BTechFontSubHeading();

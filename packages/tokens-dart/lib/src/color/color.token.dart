@@ -9,7 +9,6 @@ import 'stroke.color.dart';
 import 'shades.color.dart';
 
 /// Semantic color tokens — use context.btechColor for tenant-aware access.
-/// BTechColor.text.danger.bolder returns the DEFAULT tenant value.
 abstract class BTechColor {
   static const BTechTextColor text = BTechTextColor();
   static const BTechBackgroundColor background = BTechBackgroundColor();

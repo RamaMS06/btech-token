@@ -75,7 +75,7 @@ class ShowcasePage extends StatelessWidget {
               children: [
                 // ── Header ──────────────────────────────────────────────
                 Text(
-                  'BTechTenantTokens · Full Token Showcase · Flutter',
+                  'BTechTenantTokens · Whereas · Flutter',
                   textAlign: TextAlign.center,
                   style: f.heading.h4,
                 ),

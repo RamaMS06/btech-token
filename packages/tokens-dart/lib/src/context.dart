@@ -2,6 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'tenant.dart';
 import 'theme.dart';
+import 'typography/font_registry.dart';
+
+// =============================================================================
+// Registry-driven font helper
+//
+// Uses BTechFontRegistry (generated from tokens/core/font-registry.json) to
+// decide the correct loader for each font family:
+//
+//   google-fonts  → GoogleFonts.getFont()  (downloaded / cached on demand)
+//   system/asset  → TextStyle(fontFamily:) (OS or asset pipeline resolves it)
+//
+// This replaces a try/catch around GoogleFonts.getFont() with a static,
+// generated lookup — faster and fully predictable at compile time.
+// =============================================================================
+
+TextStyle _safeFont(
+  String family, {
+  double? fontSize,
+  FontWeight? fontWeight,
+  double? height,
+  Color? color,
+  FontStyle? fontStyle,
+  TextDecoration? decoration,
+}) {
+  if (BTechFontRegistry.isGoogleFont(family)) {
+    return GoogleFonts.getFont(
+      family,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      height: height,
+      color: color,
+      fontStyle: fontStyle,
+      decoration: decoration,
+    );
+  }
+  return TextStyle(
+    fontFamily: family,
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    height: height,
+    color: color,
+    fontStyle: fontStyle,
+    decoration: decoration,
+  );
+}
 
 // =============================================================================
 // Tenant-aware chained accessors
@@ -197,20 +242,20 @@ class _BTechContextFontHeading {
   const _BTechContextFontHeading(this._t);
 
   /// h1 — 35px · bold · lineHeight 40/35 = 1.143
-  TextStyle get h1 => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get h1 => _safeFont(_t.typographyFontFamilySans,
       fontSize: 35, fontWeight: FontWeight.w700, height: 40 / 35);
 
   /// h2 — 29px · w600 · lineHeight 32/29 = 1.103
-  TextStyle get h2 => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get h2 => _safeFont(_t.typographyFontFamilySans,
       fontSize: 29, fontWeight: FontWeight.w600, height: 32 / 29);
 
   /// h3 — 24px · bold · color: text.neutral · lineHeight 28/24 = 1.167
-  TextStyle get h3 => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get h3 => _safeFont(_t.typographyFontFamilySans,
       fontSize: 24, fontWeight: FontWeight.w700, height: 28 / 24,
       color: _t.colorTextNeutral);
 
   /// h4 — 20px · w500 · color: text.neutral · lineHeight 24/20 = 1.200
-  TextStyle get h4 => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get h4 => _safeFont(_t.typographyFontFamilySans,
       fontSize: 20, fontWeight: FontWeight.w500, height: 24 / 20,
       color: _t.colorTextNeutral);
 }
@@ -222,17 +267,17 @@ class _BTechContextFontSubHeading {
   const _BTechContextFontSubHeading(this._t);
 
   /// h5 — 16px · bold · color: text.neutral · lineHeight 20/16 = 1.250
-  TextStyle get h5 => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get h5 => _safeFont(_t.typographyFontFamilySans,
       fontSize: 16, fontWeight: FontWeight.w700, height: 20 / 16,
       color: _t.colorTextNeutral);
 
   /// h6 — 14px · w600 · color: text.neutral · lineHeight 16/14 = 1.143
-  TextStyle get h6 => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get h6 => _safeFont(_t.typographyFontFamilySans,
       fontSize: 14, fontWeight: FontWeight.w600, height: 16 / 14,
       color: _t.colorTextNeutral);
 
   /// h7 — 12px · w600 · color: text.neutral · lineHeight 16/12 = 1.333
-  TextStyle get h7 => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get h7 => _safeFont(_t.typographyFontFamilySans,
       fontSize: 12, fontWeight: FontWeight.w600, height: 16 / 12,
       color: _t.colorTextNeutral);
 }
@@ -244,42 +289,42 @@ class _BTechContextFontBody {
   const _BTechContextFontBody(this._t);
 
   /// Default body — 12px · w500 · lineHeight 16/12 = 1.333
-  TextStyle get base => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get base => _safeFont(_t.typographyFontFamilySans,
       fontSize: 12, fontWeight: FontWeight.w500, height: 16 / 12,
       color: _t.colorTextNeutral);
 
   /// Bold body — 12px · bold · lineHeight 16/12 = 1.333
-  TextStyle get bold => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get bold => _safeFont(_t.typographyFontFamilySans,
       fontSize: 12, fontWeight: FontWeight.w700, height: 16 / 12,
       color: _t.colorTextNeutral);
 
   /// Small body — 11px · w500 · lineHeight 16/11 = 1.455
-  TextStyle get small => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get small => _safeFont(_t.typographyFontFamilySans,
       fontSize: 11, fontWeight: FontWeight.w500, height: 16 / 11,
       color: _t.colorTextNeutral);
 
   /// Medium body — 14px · w500 · lineHeight 18/14 = 1.286
-  TextStyle get medium => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get medium => _safeFont(_t.typographyFontFamilySans,
       fontSize: 14, fontWeight: FontWeight.w500, height: 18 / 14,
       color: _t.colorTextNeutral);
 
   /// Extra small body — 8px · w500 · lineHeight 12/8 = 1.500
-  TextStyle get xstraSmall => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get xstraSmall => _safeFont(_t.typographyFontFamilySans,
       fontSize: 8, fontWeight: FontWeight.w500, height: 12 / 8,
       color: _t.colorTextNeutral);
 
   /// Italic body — 12px · w500 · italic · lineHeight 16/12 = 1.333
-  TextStyle get italic => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get italic => _safeFont(_t.typographyFontFamilySans,
       fontSize: 12, fontWeight: FontWeight.w500, height: 16 / 12,
       fontStyle: FontStyle.italic, color: _t.colorTextNeutral);
 
   /// Underline body — 12px · w600 · underline · lineHeight 16/12 = 1.333
-  TextStyle get underline => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get underline => _safeFont(_t.typographyFontFamilySans,
       fontSize: 12, fontWeight: FontWeight.w600, height: 16 / 12,
       decoration: TextDecoration.underline, color: _t.colorTextNeutral);
 
   /// Paragraph body — 12px · w500 · lineHeight 24/12 = 2.000 (relaxed)
-  TextStyle get paragraph => GoogleFonts.getFont(_t.typographyFontFamilySans,
+  TextStyle get paragraph => _safeFont(_t.typographyFontFamilySans,
       fontSize: 12, fontWeight: FontWeight.w500, height: 24 / 12,
       color: _t.colorTextNeutral);
 }

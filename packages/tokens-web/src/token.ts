@@ -3,14 +3,11 @@
 
 /**
  * All valid BTech design token paths.
- * Mirrors Atlassian's token naming approach — semantic, predictable, autocomplete-friendly.
- *
  * Grammar: [category].[property].[role].[emphasis].[state]
  *
  * @example
  * 'color.background.primary'        — primary brand background
  * 'color.text.neutral.subtle'       — secondary text color
- * 'color.stroke.neutral'            — default border/stroke
  * 'spacing.md'                      — medium spacing (16px)
  * 'radius.interactive'              — button/input border radius
  */
@@ -249,26 +246,13 @@ export type TokenPath =
 
 /**
  * Returns the CSS custom property reference for a design token.
- * Type-safe wrapper — analogous to Atlassian's `token()` from `@atlaskit/tokens`.
  *
  * @example
- * import { token } from '@ramaMS06/tokens-web'
+ * token('color.background.primary')
+ * // → "var(--btech-color-background-primary)"
  *
- * // CSS-in-JS / inline style / Vue :style
- * const styles = {
- *   background:   token('color.background.primary'),
- *   color:        token('color.text.on.primary'),
- *   padding:      token('spacing.md'),
- *   borderRadius: token('radius.interactive'),
- * }
- *
- * // With CSS fallback
  * token('color.background.primary', '#15803d')
  * // → "var(--btech-color-background-primary, #15803d)"
- *
- * @param path     - A valid BTech token path (fully type-checked, autocomplete available)
- * @param fallback - Optional CSS fallback value if the variable is not defined
- * @returns CSS var() string ready for use in style objects or CSS-in-JS
  */
 export function token(path: TokenPath, fallback?: string): string {
   const cssVar = `--btech-${path.replace(/\./g, '-').replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}`;
@@ -277,14 +261,10 @@ export function token(path: TokenPath, fallback?: string): string {
 
 /**
  * Returns the raw CSS variable name for a token (without var() wrapper).
- * Useful when composing CSS manually, in SCSS `#{}` interpolation,
- * or passing to third-party libraries that expect a variable name.
  *
  * @example
  * cssVar('color.background.primary')
  * // → '--btech-color-background-primary'
- *
- * @param path - A valid BTech token path
  */
 export function cssVar(path: TokenPath): string {
   return `--btech-${path.replace(/\./g, '-').replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}`;
