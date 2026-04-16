@@ -15,7 +15,7 @@
   },
   "typography": {
     "fontFamily": {
-      "sans": { "$value": "Roboto Mono, system-ui, sans-serif", "$type": "fontFamily" }
+      "sans": { "$value": "Bitcount Grid Double", "$type": "fontFamily" }
     }
   },
   "radius": {
