@@ -1429,13 +1429,13 @@ const sd = new StyleDictionary({
 
   appendTenantCSS(resolvedBaseMap);
 
-  console.log('\n✅  pnpm generate complete\n');
-  console.log('  📱 Flutter   → packages/tokens-dart/lib/src/{color,spacing,radius,typography}/');
+  console.log('\n pnpm generate complete\n');
+  console.log('  Flutter   → packages/tokens-dart/lib/src/{color,spacing,radius,typography}/');
   console.log('                 packages/tokens-dart/lib/src/tenant.dart');
-  console.log('  🌐 Web       → packages/tokens-web/src/{color,spacing,radius,typography}/');
+  console.log('  Web       → packages/tokens-web/src/{color,spacing,radius,typography}/');
   console.log('                 packages/tokens-web/src/token.ts (TokenPath + token())');
   console.log('                 packages/tokens-web/dist/styles.css');
-  console.log('  ⚛️  React     → re-exports from @ramaMS06/tokens-web (no separate generation)');
-  console.log('  💚 Vue       → re-exports from @ramaMS06/tokens-web (no separate generation)');
+  console.log('  React     → re-exports from @ramaMS06/tokens-web (no separate generation)');
+  console.log('  Vue       → re-exports from @ramaMS06/tokens-web (no separate generation)');
   console.log('');
 })();
