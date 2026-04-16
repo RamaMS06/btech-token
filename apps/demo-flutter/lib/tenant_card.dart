@@ -35,11 +35,7 @@ class TenantCard extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: ctx.btechColor.text.neutral,
-                      ),
+                      style: ctx.btechFont.subheading.h5,
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

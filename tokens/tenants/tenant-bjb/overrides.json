@@ -15,7 +15,7 @@
   },
   "typography": {
     "fontFamily": {
-      "sans": { "$value": "Bitcount Grid Double, system-ui", "$type": "fontFamily" }
+      "sans": { "$value": "BitcountGrid, system-ui", "$type": "fontFamily" }
     }
   },
   "radius": {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'typography/font.token.dart';
 import 'tenant.dart';
 
@@ -98,27 +99,25 @@ abstract class BTechTheme {
       ),
 
       textTheme: TextTheme(
-        bodyMedium: TextStyle(
-          fontFamily: t.typographyFontFamilySans,
+        bodyMedium: GoogleFonts.getFont(t.typographyFontFamilySans,
           fontSize:   BTechFontSize.base,
+          fontWeight: FontWeight.w500,
           color:      t.colorTextNeutral,
         ),
-        bodySmall: TextStyle(
-          fontFamily: t.typographyFontFamilySans,
+        bodySmall: GoogleFonts.getFont(t.typographyFontFamilySans,
           fontSize:   BTechFontSize.sm,
+          fontWeight: FontWeight.w500,
           color:      t.colorTextNeutralSubtle,
         ),
-        labelMedium: TextStyle(
-          fontFamily:  t.typographyFontFamilySans,
-          fontSize:    BTechFontSize.sm,
-          fontWeight:  BTechFontWeight.medium,
-          color:       t.colorTextNeutral,
+        labelMedium: GoogleFonts.getFont(t.typographyFontFamilySans,
+          fontSize:   BTechFontSize.sm,
+          fontWeight: FontWeight.w500,
+          color:      t.colorTextNeutral,
         ),
-        titleLarge: TextStyle(
-          fontFamily:  t.typographyFontFamilySans,
-          fontSize:    BTechFontSize.xl,
-          fontWeight:  BTechFontWeight.bold,
-          color:       t.colorTextNeutral,
+        titleLarge: GoogleFonts.getFont(t.typographyFontFamilySans,
+          fontSize:   BTechFontSize.xl,
+          fontWeight: FontWeight.w700,
+          color:      t.colorTextNeutral,
         ),
       ),
 

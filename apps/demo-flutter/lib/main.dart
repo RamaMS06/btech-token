@@ -77,7 +77,7 @@ class ShowcasePage extends StatelessWidget {
                 Text(
                   'BTechTenantTokens · Whereas · Flutter',
                   textAlign: TextAlign.center,
-                  style: f.heading.h4,
+                  style: f.heading.h4.copyWith(color: Colors.red),
                 ),
                 const SizedBox(height: BTechSpacing.sm),
                 Text(

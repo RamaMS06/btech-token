@@ -30,6 +30,7 @@ abstract class BTechFontRegistry {
     'Poppins',
     'Nunito',
     'Noto Sans',
+    'Bitcount Grid Double',
   };
 
   /// Font families pre-installed on the OS — no network fetch required.
@@ -46,6 +47,7 @@ abstract class BTechFontRegistry {
     'Poppins': 'sans-serif',
     'Nunito': 'sans-serif',
     'Noto Sans': 'sans-serif',
+    'Bitcount Grid Double': 'system-ui, sans-serif',
   };
 
   /// Returns true if [family] can be loaded via the google_fonts package.

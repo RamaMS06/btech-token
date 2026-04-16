@@ -37,6 +37,7 @@ export const fontRegistry: Record<string, FontMeta> = {
   'Poppins': { source: 'google-fonts', weights: [400, 500, 600, 700], styles: ['normal', 'italic'], fallback: 'sans-serif' },
   'Nunito': { source: 'google-fonts', weights: [400, 600, 700], styles: ['normal'], fallback: 'sans-serif' },
   'Noto Sans': { source: 'google-fonts', weights: [400, 500, 700], styles: ['normal'], fallback: 'sans-serif' },
+  'Bitcount Grid Double': { source: 'google-fonts', weights: [100, 200, 300, 400, 500, 600, 700, 800, 900], styles: ['normal'], fallback: 'system-ui, sans-serif' },
 };
 
 /** Returns true if [family] should be loaded from the Google Fonts CDN. */
