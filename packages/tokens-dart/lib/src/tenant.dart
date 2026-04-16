@@ -131,7 +131,7 @@ class BTechTenantTokens {
     radiusInteractive: 4,
     radiusCard: 4,
     radiusBadge: 9999,
-    typographyFontFamilySans: 'Bitcount Grid Double',
+    typographyFontFamilySans: 'Google Sans',
   );
 
   /// Registry — add new tenants here after running `pnpm add-tenant`.

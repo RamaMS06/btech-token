@@ -5,6 +5,8 @@
   "packageManager": "pnpm@9.15.9",
   "description": "Multi-tenant design token source of truth — React, Vue, Flutter",
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
+    "tokens:watch": "node scripts/watch-tokens.mjs",
     "generate": "pnpm exec tsx config/sd.config.ts && pnpm --filter @ramaMS06/tokens-web build",
     "build": "pnpm generate && turbo run build",
     "validate": "pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts",

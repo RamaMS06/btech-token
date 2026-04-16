@@ -15,7 +15,7 @@
   },
   "typography": {
     "fontFamily": {
-      "sans": { "$value": "Sekuya", "$type": "fontFamily" }
+      "sans": { "$value": "Google Sans", "$type": "fontFamily" }
     }
   },
   "radius": {
