@@ -15,7 +15,7 @@
   },
   "typography": {
     "fontFamily": {
-      "sans": { "$value": "Bitcount Grid Double", "$type": "fontFamily" }
+      "sans": { "$value": "Sekuya", "$type": "fontFamily" }
     }
   },
   "radius": {

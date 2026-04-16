@@ -110,7 +110,7 @@ class BTechTenantTokens {
 
   /// Tenant: tenant-bjb. Auto-generated from tokens/tenants/tenant-bjb/overrides.json
   static const BTechTenantTokens tenantBjb = BTechTenantTokens(
-    colorBackgroundPrimary: const Color(0xFFDC2626),
+    colorBackgroundPrimary: const Color(0xFF2563EB),
     colorBackgroundPrimaryHover: const Color(0xFF1D4ED8),
     colorBackgroundSecondary: const Color(0xFFF0FDF4),
     colorBackgroundSecondaryHover: const Color(0xFFDCFCE7),
@@ -131,7 +131,7 @@ class BTechTenantTokens {
     radiusInteractive: 4,
     radiusCard: 4,
     radiusBadge: 9999,
-    typographyFontFamilySans: 'Poppins',
+    typographyFontFamilySans: 'Bitcount Grid Double',
   );
 
   /// Registry — add new tenants here after running `pnpm add-tenant`.
