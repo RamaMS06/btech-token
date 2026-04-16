@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'heading.dart';
+import 'subheading.dart';
 import 'body.dart';
 
 /// Primitive font family tokens.
@@ -33,16 +34,24 @@ abstract class BTechFontWeight {
   static const FontWeight bold = FontWeight.w700;
 }
 
-/// Primitive line height tokens.
+/// Primitive line height tokens (ratio, not pixels).
 abstract class BTechLineHeight {
   static const double tight = 1.25;
   static const double normal = 1.5;
   static const double relaxed = 1.75;
 }
 
-/// Typography namespace. Access: BTechFont.heading.fontFamily
+/// Root static font namespace — always uses the default sans font family.
+/// For tenant-aware fonts in widgets, prefer [context.btechFont].
+///
+/// ```dart
+/// BTechFont.heading.h1         // TextStyle — 35px bold
+/// BTechFont.subheading.h5      // TextStyle — 16px bold
+/// BTechFont.body.bold          // TextStyle — 12px bold
+/// ```
 abstract class BTechFont {
-  static const BTechHeadingFont heading = BTechHeadingFont();
-  static const BTechBodyFont body = BTechBodyFont();
+  static final BTechFontHeading    heading    = BTechFontHeading();
+  static final BTechFontSubHeading subheading = BTechFontSubHeading();
+  static final BTechFontBody       body       = BTechFontBody();
 }
 

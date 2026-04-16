@@ -4,12 +4,42 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../color/color.token.dart';
 
-/// Heading typography tokens.
-class BTechHeadingFont {
-  const BTechHeadingFont();
-  final String fontFamily = 'Inter';
-  final FontWeight fontWeight = FontWeight.w700;
-  final double lineHeight = 1.25;
+/// Heading text styles (h1 – h4).
+/// For tenant-aware font switching, use context.btechFont.heading instead.
+///
+/// ```dart
+/// Text('Title',      style: BTechFont.heading.h1)
+/// Text('Card title', style: BTechFont.heading.h3)
+/// ```
+class BTechFontHeading extends TextStyle {
+  BTechFontHeading()
+      : super(
+          fontSize: 35,
+          height: 40 / 35,
+          fontFamily: GoogleFonts.getFont('Inter',
+            fontWeight: FontWeight.w700).fontFamily,
+        );
+
+  /// H1 — 35px · w700 · lineHeight: 40/35 = 1.143
+  final TextStyle h1 = GoogleFonts.getFont('Inter',
+      fontSize: 35, fontWeight: FontWeight.w700, height: 40 / 35);
+
+  /// H2 — 29px · w600 · lineHeight: 32/29 = 1.103
+  final TextStyle h2 = GoogleFonts.getFont('Inter',
+      fontSize: 29, fontWeight: FontWeight.w600, height: 32 / 29);
+
+  /// H3 — 24px · w700 · lineHeight: 28/24 = 1.167
+  final TextStyle h3 = GoogleFonts.getFont('Inter',
+      fontSize: 24, fontWeight: FontWeight.w700, height: 28 / 24,
+      color: BTechColor.text.neutral);
+
+  /// H4 — 20px · w500 · lineHeight: 24/20 = 1.200
+  final TextStyle h4 = GoogleFonts.getFont('Inter',
+      fontSize: 20, fontWeight: FontWeight.w500, height: 24 / 20,
+      color: BTechColor.text.neutral);
+
 }
 

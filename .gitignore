@@ -1,19 +1,49 @@
+# ── Node / pnpm ───────────────────────────────────────────────────────────────
 node_modules/
-dist/
-.turbo/
-*.js
-*.js.map
-!.changeset/*.js
-*.d.ts
-.DS_Store
+apps/**/node_modules/
 
-# Dart tooling
+# ── Build outputs ─────────────────────────────────────────────────────────────
+dist/
+**/dist/
+.turbo/
+
+# ── TypeScript compiled output (build artefacts only, not source) ─────────────
+packages/**/src/**/*.js
+packages/**/src/**/*.js.map
+packages/**/src/**/*.d.ts
+
+# ── Dart / Flutter — libraries (packages/) ────────────────────────────────────
+# pubspec.lock for libraries is intentionally ignored (pub resolves at consumer side)
+packages/**/pubspec.lock
+packages/**/.dart_tool/
+packages/**/build/
+packages/**/.flutter-plugins
+packages/**/.flutter-plugins-dependencies
+
+# ── Dart / Flutter — apps (apps/) ─────────────────────────────────────────────
+# pubspec.lock for apps IS committed (reproducible builds) — do NOT ignore it
+apps/**/.dart_tool/
+apps/**/build/
+apps/**/.flutter-plugins
+apps/**/.flutter-plugins-dependencies
+apps/**/.metadata
+
+# ── Root-level Dart tooling (if any) ──────────────────────────────────────────
 .dart_tool/
 build/
-pubspec.lock
 
-# Root .npmrc contains GITHUB_TOKEN — never commit
+# ── Secrets / env ─────────────────────────────────────────────────────────────
+# Root .npmrc may contain GITHUB_TOKEN — never commit
 /.npmrc
+.env
+.env.*
 
-# App-level node_modules
-apps/**/node_modules/
+# ── OS / editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/settings.json
+
+# ── Changesets ────────────────────────────────────────────────────────────────
+# Keep .changeset/*.md (changelog entries) but ignore compiled js if any
+.changeset/*.js

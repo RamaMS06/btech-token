@@ -3,8 +3,8 @@
   "color": {
     "background": {
       "primary": {
-        "default": { "$value": "{color.blue.500}", "$type": "color" },
-        "hover":   { "$value": "{color.blue.600}", "$type": "color" }
+        "default": { "$value": "#000000", "$type": "color" },
+        "hover":   { "$value": "#123101", "$type": "color" }
       }
     },
     "stroke": {

@@ -103,6 +103,15 @@ function dartSafeName(name: string): string {
 // Token source data — read once, used across all generators
 // =============================================================================
 
+interface TypeScaleEntry {
+  fontSize: number;
+  fontWeight: number;
+  lineHeightPx: number;
+  withTextColor?: boolean;
+  fontStyle?: string;       // 'italic'
+  textDecoration?: string;  // 'underline'
+}
+
 interface ResolvedTokenMap {
   baseMap: Record<string, string>;          // all resolved core+semantic tokens
   coreColors: Record<string, Record<string, string>>;  // e.g. { blue: { '50': '#eff6ff', ... } }
@@ -115,6 +124,11 @@ interface ResolvedTokenMap {
     fontWeights: Record<string, string>;
     lineHeights: Record<string, string>;
     semantic: Record<string, Record<string, string>>;   // { body: { fontFamily: ..., fontSize: ... }, heading: { ... } }
+    typeScale: {
+      heading: Record<string, TypeScaleEntry>;
+      subheading: Record<string, TypeScaleEntry>;
+      body: Record<string, TypeScaleEntry>;
+    };
   };
 }
 
@@ -213,10 +227,32 @@ function loadTokenData(): ResolvedTokenMap {
   const semanticTypo: Record<string, Record<string, string>> = {};
   for (const [group, props] of Object.entries(typoSemantic.typography as Record<string, unknown>)) {
     if (group.startsWith('$')) continue;
+    if (group === 'typeScale') continue; // parsed separately — not a flat group.$value structure
     semanticTypo[group] = {};
     for (const [prop, tokenDef] of Object.entries(props as Record<string, unknown>)) {
       if (prop.startsWith('$')) continue;
       semanticTypo[group][prop] = resolveRef((tokenDef as any).$value, resolvedBaseMap);
+    }
+  }
+
+  // Parse typeScale (heading h1-h4, subheading h5-h7, body variants)
+  const rawTypoJson = JSON.parse(readFileSync(`${semanticDir}/typography.json`, 'utf-8'));
+  const rawTypeScale = rawTypoJson?.typography?.typeScale ?? {};
+  const typeScale: ResolvedTokenMap['typography']['typeScale'] = {
+    heading: {}, subheading: {}, body: {},
+  };
+  for (const group of ['heading', 'subheading', 'body'] as const) {
+    const groupData = rawTypeScale[group] ?? {};
+    for (const [name, tokenDef] of Object.entries(groupData as Record<string, Record<string, any>>)) {
+      const entry: TypeScaleEntry = {
+        fontSize:     parseFloat(String(tokenDef.fontSize?.$value     ?? '12').replace('px', '')),
+        fontWeight:   Number(tokenDef.fontWeight?.$value   ?? 400),
+        lineHeightPx: parseFloat(String(tokenDef.lineHeightPx?.$value ?? '16').replace('px', '')),
+      };
+      if (tokenDef.withTextColor?.$value)  entry.withTextColor  = true;
+      if (tokenDef.fontStyle?.$value)      entry.fontStyle      = String(tokenDef.fontStyle.$value);
+      if (tokenDef.textDecoration?.$value) entry.textDecoration = String(tokenDef.textDecoration.$value);
+      typeScale[group][name] = entry;
     }
   }
 
@@ -226,7 +262,7 @@ function loadTokenData(): ResolvedTokenMap {
     semanticColors,
     spacing,
     radius: { core: coreRadius, semantic: semRadius },
-    typography: { fontFamilies, fontSizes, fontWeights, lineHeights, semantic: semanticTypo },
+    typography: { fontFamilies, fontSizes, fontWeights, lineHeights, semantic: semanticTypo, typeScale },
   };
 }
 
@@ -401,42 +437,143 @@ function generateDartFiles(data: ResolvedTokenMap): void {
   const typoDir = `${DART_SRC}/typography`;
   mkdirSync(typoDir, { recursive: true });
 
-  // 14. heading.dart — BTechHeadingFont
+  // Resolved sans font family name (first in comma list, e.g. "Inter")
+  const sansFam = (data.typography.fontFamilies.sans ?? 'Inter')
+    .split(',')[0].trim().replace(/'/g, '');
+
+  // Helper: emit a GoogleFonts.getFont(...) TextStyle field
+  function dartGetFont(
+    fam: string,
+    entry: TypeScaleEntry,
+    varName: string,
+  ): string[] {
+    const lines: string[] = [];
+    const hasExtra = entry.withTextColor || entry.fontStyle || entry.textDecoration;
+    if (!hasExtra) {
+      lines.push(
+        `  final TextStyle ${varName} = GoogleFonts.getFont('${fam}',`,
+        `      fontSize: ${entry.fontSize}, fontWeight: FontWeight.w${entry.fontWeight}, height: ${entry.lineHeightPx} / ${entry.fontSize});`,
+      );
+    } else {
+      lines.push(`  final TextStyle ${varName} = GoogleFonts.getFont('${fam}',`);
+      lines.push(`      fontSize: ${entry.fontSize}, fontWeight: FontWeight.w${entry.fontWeight}, height: ${entry.lineHeightPx} / ${entry.fontSize},`);
+      const extras: string[] = [];
+      if (entry.fontStyle === 'italic')      extras.push(`      fontStyle: FontStyle.italic,`);
+      if (entry.textDecoration === 'underline') extras.push(`      decoration: TextDecoration.underline,`);
+      if (entry.withTextColor)               extras.push(`      color: BTechColor.text.neutral,`);
+      // Last extra line should end with ); not ,
+      const last = extras.pop()!.replace(/,$/, ');');
+      lines.push(...extras, last);
+    }
+    return lines;
+  }
+
+  // 14. heading.dart — BTechFontHeading extends TextStyle
   {
-    const heading = data.typography.semantic.heading;
-    const L = [HEADER, "import 'package:flutter/material.dart';\n"];
-    L.push('/// Heading typography tokens.');
-    L.push('class BTechHeadingFont {');
-    L.push('  const BTechHeadingFont();');
-    L.push(`  final String fontFamily = '${String(heading?.fontFamily ?? data.typography.fontFamilies.sans).split(',')[0].trim().replace(/'/g, '')}';`);
-    L.push(`  final FontWeight fontWeight = FontWeight.w${heading?.fontWeight ?? '700'};`);
-    L.push(`  final double lineHeight = ${heading?.lineHeight ?? '1.25'};`);
+    const scales = data.typography.typeScale.heading;
+    const first = Object.values(scales)[0] ?? { fontSize: 35, fontWeight: 700, lineHeightPx: 40 };
+    const L = [HEADER];
+    L.push("import 'package:flutter/material.dart';");
+    L.push("import 'package:google_fonts/google_fonts.dart';");
+    L.push("import '../color/color.token.dart';\n");
+    L.push('/// Heading text styles (h1 – h4).');
+    L.push('/// For tenant-aware font switching, use context.btechFont.heading instead.');
+    L.push('///');
+    L.push('/// ```dart');
+    L.push("/// Text('Title',      style: BTechFont.heading.h1)");
+    L.push("/// Text('Card title', style: BTechFont.heading.h3)");
+    L.push('/// ```');
+    L.push('class BTechFontHeading extends TextStyle {');
+    L.push(`  BTechFontHeading()`);
+    L.push(`      : super(`);
+    L.push(`          fontSize: ${first.fontSize},`);
+    L.push(`          height: ${first.lineHeightPx} / ${first.fontSize},`);
+    L.push(`          fontFamily: GoogleFonts.getFont('${sansFam}',`);
+    L.push(`            fontWeight: FontWeight.w${first.fontWeight}).fontFamily,`);
+    L.push(`        );\n`);
+    for (const [name, entry] of Object.entries(scales)) {
+      L.push(`  /// ${name.toUpperCase()} — ${entry.fontSize}px · w${entry.fontWeight} · lineHeight: ${entry.lineHeightPx}/${entry.fontSize} = ${(entry.lineHeightPx / entry.fontSize).toFixed(3)}`);
+      L.push(...dartGetFont(sansFam, entry, name));
+      L.push('');
+    }
     L.push('}\n');
     writeFileSync(`${typoDir}/heading.dart`, L.join('\n') + '\n');
   }
 
-  // 15. body.dart — BTechBodyFont
+  // 15. subheading.dart — BTechFontSubHeading extends TextStyle
   {
-    const body = data.typography.semantic.body;
-    const L = [HEADER, "import 'package:flutter/material.dart';\n"];
-    L.push('/// Body typography tokens.');
-    L.push('class BTechBodyFont {');
-    L.push('  const BTechBodyFont();');
-    L.push(`  final String fontFamily = '${String(body?.fontFamily ?? data.typography.fontFamilies.sans).split(',')[0].trim().replace(/'/g, '')}';`);
-    L.push(`  final double fontSize = ${parseFloat(String(body?.fontSize ?? '16').replace('px', ''))};`);
-    L.push(`  final FontWeight fontWeight = FontWeight.w${body?.fontWeight ?? '400'};`);
-    L.push(`  final double lineHeight = ${body?.lineHeight ?? '1.5'};`);
+    const scales = data.typography.typeScale.subheading;
+    const first = Object.values(scales)[0] ?? { fontSize: 16, fontWeight: 700, lineHeightPx: 20 };
+    const L = [HEADER];
+    L.push("import 'package:flutter/material.dart';");
+    L.push("import 'package:google_fonts/google_fonts.dart';");
+    L.push("import '../color/color.token.dart';\n");
+    L.push('/// Subheading text styles (h5 – h7).');
+    L.push('/// For tenant-aware font switching, use context.btechFont.subheading instead.');
+    L.push('///');
+    L.push('/// ```dart');
+    L.push("/// Text('Section', style: BTechFont.subheading.h5)");
+    L.push("/// Text('Label',   style: BTechFont.subheading.h6)");
+    L.push('/// ```');
+    L.push('class BTechFontSubHeading extends TextStyle {');
+    L.push(`  BTechFontSubHeading()`);
+    L.push(`      : super(`);
+    L.push(`          fontSize: ${first.fontSize},`);
+    L.push(`          height: ${first.lineHeightPx} / ${first.fontSize},`);
+    L.push(`          fontFamily: GoogleFonts.getFont('${sansFam}',`);
+    L.push(`            fontWeight: FontWeight.w${first.fontWeight}).fontFamily,`);
+    L.push(`        );\n`);
+    for (const [name, entry] of Object.entries(scales)) {
+      L.push(`  /// ${name.toUpperCase()} — ${entry.fontSize}px · w${entry.fontWeight} · lineHeight: ${entry.lineHeightPx}/${entry.fontSize} = ${(entry.lineHeightPx / entry.fontSize).toFixed(3)}`);
+      L.push(...dartGetFont(sansFam, entry, name));
+      L.push('');
+    }
+    L.push('}\n');
+    writeFileSync(`${typoDir}/subheading.dart`, L.join('\n') + '\n');
+  }
+
+  // 16. body.dart — BTechFontBody extends TextStyle
+  {
+    const scales = data.typography.typeScale.body;
+    const baseEntry = scales['base'] ?? { fontSize: 12, fontWeight: 500, lineHeightPx: 16 };
+    const L = [HEADER];
+    L.push("import 'package:flutter/material.dart';");
+    L.push("import 'package:google_fonts/google_fonts.dart';");
+    L.push("import '../color/color.token.dart';\n");
+    L.push('/// Body text styles.');
+    L.push('/// For tenant-aware font switching, use context.btechFont.body instead.');
+    L.push('///');
+    L.push('/// ```dart');
+    L.push("/// Text('Body copy',  style: BTechFont.body)");
+    L.push("/// Text('Bold label', style: BTechFont.body.bold)");
+    L.push("/// Text('Small hint', style: BTechFont.body.small)");
+    L.push('/// ```');
+    L.push('class BTechFontBody extends TextStyle {');
+    L.push(`  BTechFontBody()`);
+    L.push(`      : super(`);
+    L.push(`          fontSize: ${baseEntry.fontSize},`);
+    L.push(`          fontWeight: FontWeight.w${baseEntry.fontWeight},`);
+    L.push(`          fontFamily: GoogleFonts.getFont('${sansFam}',`);
+    L.push(`            fontSize: ${baseEntry.fontSize}, fontWeight: FontWeight.w${baseEntry.fontWeight},`);
+    L.push(`            color: BTechColor.text.neutral,`);
+    L.push(`            height: ${baseEntry.lineHeightPx} / ${baseEntry.fontSize}).fontFamily,`);
+    L.push(`        );\n`);
+    for (const [name, entry] of Object.entries(scales)) {
+      L.push(`  /// ${name} — ${entry.fontSize}px · w${entry.fontWeight} · lineHeight: ${entry.lineHeightPx}/${entry.fontSize} = ${(entry.lineHeightPx / entry.fontSize).toFixed(3)}`);
+      L.push(...dartGetFont(sansFam, entry, name));
+      L.push('');
+    }
     L.push('}\n');
     writeFileSync(`${typoDir}/body.dart`, L.join('\n') + '\n');
   }
 
-  // 16. font.token.dart — BTechFont namespace + primitives
+  // 17. font.token.dart — primitives + BTechFont namespace
   {
     const L = [HEADER, "import 'package:flutter/material.dart';"];
     L.push("import 'heading.dart';");
+    L.push("import 'subheading.dart';");
     L.push("import 'body.dart';\n");
 
-    // Primitive font families
     L.push('/// Primitive font family tokens.');
     L.push('abstract class BTechFontFamily {');
     for (const [name, value] of Object.entries(data.typography.fontFamilies)) {
@@ -445,7 +582,6 @@ function generateDartFiles(data: ResolvedTokenMap): void {
     }
     L.push('}\n');
 
-    // Primitive font sizes
     L.push('/// Primitive font size tokens.');
     L.push('abstract class BTechFontSize {');
     for (const [name, value] of Object.entries(data.typography.fontSizes)) {
@@ -454,7 +590,6 @@ function generateDartFiles(data: ResolvedTokenMap): void {
     }
     L.push('}\n');
 
-    // Primitive font weights
     L.push('/// Primitive font weight tokens.');
     L.push('abstract class BTechFontWeight {');
     for (const [name, value] of Object.entries(data.typography.fontWeights)) {
@@ -462,28 +597,35 @@ function generateDartFiles(data: ResolvedTokenMap): void {
     }
     L.push('}\n');
 
-    // Primitive line heights
-    L.push('/// Primitive line height tokens.');
+    L.push('/// Primitive line height tokens (ratio, not pixels).');
     L.push('abstract class BTechLineHeight {');
     for (const [name, value] of Object.entries(data.typography.lineHeights)) {
       L.push(`  static const double ${name} = ${Number(value)};`);
     }
     L.push('}\n');
 
-    // BTechFont namespace
-    L.push('/// Typography namespace. Access: BTechFont.heading.fontFamily');
+    L.push('/// Root static font namespace — always uses the default sans font family.');
+    L.push('/// For tenant-aware fonts in widgets, prefer [context.btechFont].');
+    L.push('///');
+    L.push('/// ```dart');
+    L.push('/// BTechFont.heading.h1         // TextStyle — 35px bold');
+    L.push('/// BTechFont.subheading.h5      // TextStyle — 16px bold');
+    L.push('/// BTechFont.body.bold          // TextStyle — 12px bold');
+    L.push('/// ```');
     L.push('abstract class BTechFont {');
-    L.push('  static const BTechHeadingFont heading = BTechHeadingFont();');
-    L.push('  static const BTechBodyFont body = BTechBodyFont();');
+    L.push('  static final BTechFontHeading    heading    = BTechFontHeading();');
+    L.push('  static final BTechFontSubHeading subheading = BTechFontSubHeading();');
+    L.push('  static final BTechFontBody       body       = BTechFontBody();');
     L.push('}\n');
 
     writeFileSync(`${typoDir}/font.token.dart`, L.join('\n') + '\n');
   }
 
-  // 17. typography.dart — barrel
+  // 18. typography.dart — barrel
   {
     const L = [
       "export 'heading.dart';",
+      "export 'subheading.dart';",
       "export 'body.dart';",
       "export 'font.token.dart';",
       '',
