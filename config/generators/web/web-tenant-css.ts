@@ -1,5 +1,5 @@
 import { readFileSync, readdirSync, existsSync, appendFileSync } from 'fs';
-import { ROOT, flattenDTCG, resolveRef } from '../utils.js';
+import { ROOT, flattenDTCG, resolveRef, pathToCssVarStem } from '../utils.js';
 
 /** Append [data-tenant="*"] CSS override blocks to dist/styles.css. */
 export function appendTenantCSS(baseMap: Record<string, string>): void {
@@ -11,7 +11,7 @@ export function appendTenantCSS(baseMap: Record<string, string>): void {
   const cssOutPath = `${ROOT}/packages/tokens-web/dist/styles.css`;
   const blocks: string[] = [
     '',
-    '/* ── Tenant overrides — auto-generated from tokens/tenants/*/overrides.json ── */',
+    '/* Tenant overrides — auto-generated from tokens/tenants/{id}/overrides.json */',
   ];
 
   for (const tenantId of tenantIds) {
@@ -25,7 +25,8 @@ export function appendTenantCSS(baseMap: Record<string, string>): void {
     for (const [tokenPath, rawVal] of Object.entries(overrides)) {
       const resolved = resolveRef(rawVal, baseMap);
       const cleanPath = tokenPath.replace(/\.default$/, '');
-      const cssVar = `--btech-${cleanPath.replace(/\./g, '-').replace(/([A-Z])/g, m => `-${m.toLowerCase()}`)}`;
+      const stem = pathToCssVarStem(cleanPath.split('.')).replace(/([A-Z])/g, m => `-${m.toLowerCase()}`);
+      const cssVar = `--btech-${stem}`;
       blocks.push(`  ${cssVar}: ${resolved};`);
     }
     blocks.push('}');

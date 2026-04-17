@@ -6,8 +6,8 @@ import { ref, onMounted } from 'vue';
 // ── Tenant switching ──────────────────────────────────────────────────────────
 const activeTenant = ref('default');
 const tenants = [
-  { id: 'default',    label: 'Default' },
-  { id: 'tenant-a',   label: 'Tenant A' },
+  { id: 'default', label: 'Default' },
+  { id: 'tenant-a', label: 'Tenant A' },
   { id: 'tenant-bjb', label: 'Tenant BJB' },
 ];
 
@@ -21,73 +21,73 @@ onMounted(() => activateTenant({ tenant: 'default' }));
 // ── token() style objects — all categories ────────────────────────────────────
 // Color — background swatches
 const colorSwatches = [
-  { label: 'primary',         bg: token('color.background.primary'),        fg: token('color.text.on.primary'),  path: 'color.background.primary' },
-  { label: 'secondary',       bg: token('color.background.secondary'),      fg: token('color.text.neutral'),     path: 'color.background.secondary' },
-  { label: 'danger',          bg: token('color.background.danger'),         fg: token('color.text.on.danger'),   path: 'color.background.danger' },
-  { label: 'success',         bg: token('color.background.success'),        fg: token('color.text.on.primary'),  path: 'color.background.success' },
-  { label: 'warning',         bg: token('color.background.warning'),        fg: token('color.text.neutral'),     path: 'color.background.warning' },
-  { label: 'surface',         bg: token('color.background.surface'),        fg: token('color.text.neutral'),     path: 'color.background.surface' },
-  { label: 'surface.raised',  bg: token('color.background.surface.raised'), fg: token('color.text.neutral'),     path: 'color.background.surface.raised' },
+  { label: 'primary', bg: token('color.background.primary'), fg: token('color.text.on.primary'), path: 'color.background.primary' },
+  { label: 'secondary', bg: token('color.background.secondary'), fg: token('color.text.neutral'), path: 'color.background.secondary' },
+  { label: 'danger', bg: token('color.background.danger'), fg: token('color.text.on.danger'), path: 'color.background.danger' },
+  { label: 'success', bg: token('color.background.success'), fg: token('color.text.on.primary'), path: 'color.background.success' },
+  { label: 'warning', bg: token('color.background.warning'), fg: token('color.text.neutral'), path: 'color.background.warning' },
+  { label: 'surface', bg: token('color.background.surface'), fg: token('color.text.neutral'), path: 'color.background.surface' },
+  { label: 'surface.raised', bg: token('color.background.surface.raised'), fg: token('color.text.neutral'), path: 'color.background.surface.raised' },
 ];
 
 // Color — text
 const textSamples = [
-  { label: 'neutral',         color: token('color.text.neutral'),          path: 'color.text.neutral' },
-  { label: 'neutral.subtle',  color: token('color.text.neutral.subtle'),   path: 'color.text.neutral.subtle' },
-  { label: 'neutral.disabled',color: token('color.text.neutral.disabled'), path: 'color.text.neutral.disabled' },
-  { label: 'danger.base',     color: token('color.text.danger.base'),      path: 'color.text.danger.base' },
-  { label: 'success.base',    color: token('color.text.success.base'),     path: 'color.text.success.base' },
-  { label: 'warning.base',    color: token('color.text.warning.base'),     path: 'color.text.warning.base' },
+  { label: 'neutral', color: token('color.text.neutral'), path: 'color.text.neutral' },
+  { label: 'neutral.subtle', color: token('color.text.neutral.subtle'), path: 'color.text.neutral.subtle' },
+  { label: 'neutral.disabled', color: token('color.text.neutral.disabled'), path: 'color.text.neutral.disabled' },
+  { label: 'danger.base', color: token('color.text.danger.base'), path: 'color.text.danger.base' },
+  { label: 'success.base', color: token('color.text.success.base'), path: 'color.text.success.base' },
+  { label: 'warning.base', color: token('color.text.warning.base'), path: 'color.text.warning.base' },
 ];
 
 // Color — border/stroke
 const strokeSamples = [
-  { label: 'stroke.neutral',        path: 'color.stroke.neutral' as TokenPath },
+  { label: 'stroke.neutral', path: 'color.stroke.neutral' as TokenPath },
   { label: 'stroke.neutral.strong', path: 'color.stroke.neutral.strong' as TokenPath },
-  { label: 'stroke.primary',        path: 'color.stroke.primary' as TokenPath },
-  { label: 'stroke.danger',         path: 'color.stroke.danger' as TokenPath },
+  { label: 'stroke.primary', path: 'color.stroke.primary' as TokenPath },
+  { label: 'stroke.danger', path: 'color.stroke.danger' as TokenPath },
 ];
 
 // Spacing
 const spacings: Array<{ key: string; path: TokenPath }> = [
-  { key: 'xs',  path: 'spacing.xs' },
-  { key: 'sm',  path: 'spacing.sm' },
-  { key: 'md',  path: 'spacing.md' },
-  { key: 'lg',  path: 'spacing.lg' },
-  { key: 'xl',  path: 'spacing.xl' },
+  { key: 'xs', path: 'spacing.xs' },
+  { key: 'sm', path: 'spacing.sm' },
+  { key: 'md', path: 'spacing.md' },
+  { key: 'lg', path: 'spacing.lg' },
+  { key: 'xl', path: 'spacing.xl' },
   { key: 'xl2', path: 'spacing.xl2' },
   { key: 'xl3', path: 'spacing.xl3' },
 ];
 
 // Font sizes
 const fontSizes: Array<{ key: string; path: TokenPath }> = [
-  { key: 'xs',   path: 'typography.fontSize.xs' },
-  { key: 'sm',   path: 'typography.fontSize.sm' },
+  { key: 'xs', path: 'typography.fontSize.xs' },
+  { key: 'sm', path: 'typography.fontSize.sm' },
   { key: 'base', path: 'typography.fontSize.base' },
-  { key: 'lg',   path: 'typography.fontSize.lg' },
-  { key: 'xl',   path: 'typography.fontSize.xl' },
-  { key: '2xl',  path: 'typography.fontSize.2xl' },
-  { key: '3xl',  path: 'typography.fontSize.3xl' },
+  { key: 'lg', path: 'typography.fontSize.lg' },
+  { key: 'xl', path: 'typography.fontSize.xl' },
+  { key: '2xl', path: 'typography.fontSize.2xl' },
+  { key: '3xl', path: 'typography.fontSize.3xl' },
 ];
 
 // Font weights
 const fontWeights: Array<{ key: string; path: TokenPath }> = [
-  { key: 'regular',  path: 'typography.fontWeight.regular' },
-  { key: 'medium',   path: 'typography.fontWeight.medium' },
+  { key: 'regular', path: 'typography.fontWeight.regular' },
+  { key: 'medium', path: 'typography.fontWeight.medium' },
   { key: 'semibold', path: 'typography.fontWeight.semibold' },
-  { key: 'bold',     path: 'typography.fontWeight.bold' },
+  { key: 'bold', path: 'typography.fontWeight.bold' },
 ];
 
 // Radius
 const radii: Array<{ key: string; path: TokenPath }> = [
-  { key: 'none',        path: 'radius.none' },
-  { key: 'sm',          path: 'radius.sm' },
-  { key: 'md',          path: 'radius.md' },
-  { key: 'lg',          path: 'radius.lg' },
-  { key: 'xl',          path: 'radius.xl' },
-  { key: 'full',        path: 'radius.full' },
+  { key: 'none', path: 'radius.none' },
+  { key: 'sm', path: 'radius.sm' },
+  { key: 'md', path: 'radius.md' },
+  { key: 'lg', path: 'radius.lg' },
+  { key: 'xl', path: 'radius.xl' },
+  { key: 'full', path: 'radius.full' },
   { key: 'interactive', path: 'radius.interactive' },
-  { key: 'card',        path: 'radius.card' },
+  { key: 'card', path: 'radius.card' },
 ];
 
 // Shadows
@@ -100,9 +100,9 @@ const shadows: Array<{ key: string; path: TokenPath }> = [
 
 // Motion
 const motions: Array<{ key: string; path: TokenPath }> = [
-  { key: 'fast (100ms)',   path: 'motion.duration.fast' },
+  { key: 'fast (100ms)', path: 'motion.duration.fast' },
   { key: 'normal (200ms)', path: 'motion.duration.normal' },
-  { key: 'slow (400ms)',   path: 'motion.duration.slow' },
+  { key: 'slow (400ms)', path: 'motion.duration.slow' },
 ];
 
 // Hover expand for motion demo
@@ -116,18 +116,14 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
     <!-- ── Header ── -->
     <header class="header">
       <h1>token() · Full Token Showcase · Vue</h1>
-      <p>Every style below is applied via <code>token('path')</code> — type-safe, zero magic strings</p>
+      <p class="text-muted">Every style below is applied via <code>token('path')</code> — type-safe, zero magic strings
+      </p>
       <div class="switcher">
         <span class="label-muted">Tenant:</span>
-        <button
-          v-for="t in tenants" :key="t.id"
-          class="switcher-btn"
-          :class="{ active: activeTenant === t.id }"
+        <button v-for="t in tenants" :key="t.id" class="switcher-btn" :class="{ active: activeTenant === t.id }"
           :style="activeTenant === t.id
             ? { background: token('color.background.primary'), color: token('color.text.on.primary'), borderColor: token('color.stroke.primary') }
-            : { background: token('color.background.surface.raised'), color: token('color.text.neutral'), borderColor: token('color.stroke.neutral') }"
-          @click="switchTenant(t.id)"
-        >{{ t.label }}</button>
+            : { background: token('color.background.surface.raised'), color: token('color.text.neutral'), borderColor: token('color.stroke.neutral') }" @click="switchTenant(t.id)">{{ t.label }}</button>
       </div>
     </header>
 
@@ -135,11 +131,7 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
     <section class="section">
       <h2 class="section-title">Color · Background</h2>
       <div class="grid-auto">
-        <div
-          v-for="s in colorSwatches" :key="s.label"
-          class="swatch"
-          :style="{ background: s.bg, color: s.fg }"
-        >
+        <div v-for="s in colorSwatches" :key="s.label" class="swatch" :style="{ background: s.bg, color: s.fg }">
           <span class="swatch-name">{{ s.label }}</span>
           <code class="swatch-token">{{ s.path }}</code>
         </div>
@@ -149,10 +141,7 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
     <!-- ── Color — Text ── -->
     <section class="section">
       <h2 class="section-title">Color · Text</h2>
-      <div
-        v-for="s in textSamples" :key="s.label"
-        class="token-row"
-      >
+      <div v-for="s in textSamples" :key="s.label" class="token-row">
         <span :style="{ color: s.color, fontSize: token('typography.fontSize.base') }">
           The quick brown fox — {{ s.label }}
         </span>
@@ -164,16 +153,14 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
     <section class="section">
       <h2 class="section-title">Color · Border / Stroke</h2>
       <div v-for="s in strokeSamples" :key="s.label" class="token-row">
-        <div
-          :style="{
-            display: 'inline-block',
-            padding: `${token('spacing.xs')} ${token('spacing.md')}`,
-            border: `1.5px solid ${token(s.path)}`,
-            borderRadius: token('radius.interactive'),
-            fontSize: token('typography.fontSize.sm'),
-            fontWeight: token('typography.fontWeight.medium'),
-          }"
-        >{{ s.label }}</div>
+        <div :style="{
+          display: 'inline-block',
+          padding: `${token('spacing.xs')} ${token('spacing.md')}`,
+          border: `1.5px solid ${token(s.path)}`,
+          borderRadius: token('radius.interactive'),
+          fontSize: token('typography.fontSize.sm'),
+          fontWeight: token('typography.fontWeight.medium'),
+        }">{{ s.label }}</div>
         <code>token('{{ s.path }}')</code>
       </div>
     </section>
@@ -182,15 +169,13 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
     <section class="section">
       <h2 class="section-title">Spacing</h2>
       <div v-for="s in spacings" :key="s.key" class="spacing-row">
-        <div
-          :style="{
-            width: token(s.path),
-            height: token(s.path),
-            background: token('color.background.primary'),
-            borderRadius: token('radius.sm'),
-            flexShrink: '0',
-          }"
-        />
+        <div :style="{
+          width: token(s.path),
+          height: token(s.path),
+          background: token('color.background.primary'),
+          borderRadius: token('radius.sm'),
+          flexShrink: '0',
+        }" />
         <code>token('{{ s.path }}')</code>
         <span class="label-muted">→ <code>{{ token(s.path) }}</code></span>
       </div>
@@ -237,15 +222,11 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
     <section class="section">
       <h2 class="section-title">Radius</h2>
       <div class="grid-auto">
-        <div
-          v-for="r in radii" :key="r.key"
-          class="radius-box"
-          :style="{
-            borderRadius: token(r.path),
-            background: token('color.background.secondary'),
-            border: `1.5px solid ${token('color.stroke.primary')}`,
-          }"
-        >
+        <div v-for="r in radii" :key="r.key" class="radius-box" :style="{
+          borderRadius: token(r.path),
+          background: token('color.background.secondary'),
+          border: `1.5px solid ${token('color.stroke.primary')}`,
+        }">
           <span class="swatch-name">{{ r.key }}</span>
           <code class="swatch-token">{{ token(r.path) }}</code>
         </div>
@@ -256,11 +237,7 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
     <section class="section">
       <h2 class="section-title">Shadow</h2>
       <div class="grid-auto">
-        <div
-          v-for="s in shadows" :key="s.key"
-          class="shadow-box"
-          :style="{ boxShadow: token(s.path) }"
-        >
+        <div v-for="s in shadows" :key="s.key" class="shadow-box" :style="{ boxShadow: token(s.path) }">
           <span class="swatch-name">{{ s.key }}</span>
           <code class="swatch-token">shadow.{{ s.key }}</code>
         </div>
@@ -271,15 +248,10 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
     <section class="section">
       <h2 class="section-title">Motion · Duration — hover the bar</h2>
       <div v-for="m in motions" :key="m.key" class="motion-row">
-        <div
-          class="motion-bar"
-          :style="{
-            background: token('color.background.primary'),
-            transition: `transform ${token(m.path)} ${token('motion.easing.ease')}`,
-          }"
-          @mouseenter="expand"
-          @mouseleave="collapse"
-        />
+        <div class="motion-bar" :style="{
+          background: token('color.background.primary'),
+          transition: `transform ${token(m.path)} ${token('motion.easing.ease')}`,
+        }" @mouseenter="expand" @mouseleave="collapse" />
         <div>
           <code>token('{{ m.path }}')</code>
           <span class="label-muted"> — {{ m.key }}</span>
@@ -294,17 +266,25 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
 </template>
 
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
-  font-family: var(--btech-typography-font-family-sans);
-  background: var(--btech-color-background-surface);
-  color: var(--btech-color-text-neutral);
+  font-family: var(--btech-font-family-sans);
+  background: var(--btech-background-surface);
+  color: var(--btech-text-neutral);
   min-height: 100vh;
 }
+
 code {
-  font-family: var(--btech-typography-font-family-mono);
-  font-size: var(--btech-typography-font-size-xs);
-  background: var(--btech-color-background-surface-subtle);
+  font-family: var(--btech-font-family-mono);
+  font-size: var(--btech-font-size-xs);
+  background: var(--btech-background-surface-subtle);
   padding: 1px 5px;
   border-radius: 4px;
 }
@@ -314,10 +294,10 @@ code {
 .page {
   max-width: 900px;
   margin: 0 auto;
-  padding: var(--btech-spacing-xl);
+  padding: var(--btech-space-xl);
   display: flex;
   flex-direction: column;
-  gap: var(--btech-spacing-xl);
+  gap: var(--btech-space-xl);
 }
 
 /* Header */
@@ -325,85 +305,119 @@ code {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--btech-spacing-md);
+  gap: var(--btech-space-md);
   text-align: center;
 }
+
 .header h1 {
-  font-size: var(--btech-typography-font-size-xl);
-  font-weight: var(--btech-typography-font-weight-bold);
+  font-size: var(--btech-font-size-xl);
+  font-weight: var(--btech-font-weight-bold);
 }
-.header p { color: var(--btech-color-text-neutral-subtle); font-size: var(--btech-typography-font-size-sm); }
+
+.header p {
+  color: var(--btech-text-neutral-subtle);
+  font-size: var(--btech-font-size-sm);
+}
 
 /* Switcher */
-.switcher { display: flex; align-items: center; gap: var(--btech-spacing-sm); }
+.switcher {
+  display: flex;
+  align-items: center;
+  gap: var(--btech-space-sm);
+}
+
 .switcher-btn {
-  padding: var(--btech-spacing-xs) var(--btech-spacing-md);
+  padding: var(--btech-space-xs) var(--btech-space-md);
   border-radius: var(--btech-radius-interactive);
   border: 1.5px solid;
   cursor: pointer;
-  font-size: var(--btech-typography-font-size-sm);
-  font-weight: var(--btech-typography-font-weight-medium);
-  transition: all var(--btech-motion-duration-fast) var(--btech-motion-easing-ease);
+  font-size: var(--btech-font-size-sm);
+  font-weight: var(--btech-font-weight-medium);
+  transition: all var(--btech-duration-fast) var(--btech-easing-ease);
 }
 
 /* Section */
 .section {
-  background: var(--btech-color-background-surface-raised);
-  border: 1px solid var(--btech-color-stroke-neutral);
+  background: var(--btech-background-surface-raised);
+  border: 1px solid var(--btech-border-neutral);
   border-radius: var(--btech-radius-card);
-  padding: var(--btech-spacing-lg);
+  padding: var(--btech-space-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--btech-spacing-md);
+  gap: var(--btech-space-md);
   box-shadow: var(--btech-shadow-sm);
 }
+
 .section-title {
-  font-size: var(--btech-typography-font-size-xs);
-  font-weight: var(--btech-typography-font-weight-semibold);
+  font-size: var(--btech-font-size-xs);
+  font-weight: var(--btech-font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--btech-color-text-neutral-subtle);
-  border-bottom: 1px solid var(--btech-color-stroke-neutral);
-  padding-bottom: var(--btech-spacing-sm);
+  color: var(--btech-text-neutral-subtle);
+  border-bottom: 1px solid var(--btech-border-neutral);
+  padding-bottom: var(--btech-space-sm);
 }
 
 /* Color grid */
 .grid-auto {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: var(--btech-spacing-sm);
+  gap: var(--btech-space-sm);
 }
+
 .swatch {
   border-radius: var(--btech-radius-md);
-  padding: var(--btech-spacing-sm);
+  padding: var(--btech-space-sm);
   min-height: 72px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   gap: 2px;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
-.swatch-name { font-size: 11px; font-weight: 600; opacity: .9; }
-.swatch-token { font-size: 9px; opacity: .75; background: transparent !important; padding: 0 !important; }
+
+.swatch-name {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .9;
+}
+
+.swatch-token {
+  font-size: 9px;
+  opacity: .75;
+  background: transparent !important;
+  padding: 0 !important;
+}
 
 /* Token row */
 .token-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--btech-spacing-md);
-  padding: var(--btech-spacing-xs) 0;
-  border-bottom: 1px solid var(--btech-color-stroke-neutral);
+  gap: var(--btech-space-md);
+  padding: var(--btech-space-xs) 0;
+  border-bottom: 1px solid var(--btech-border-neutral);
 }
-.token-row:last-child { border-bottom: none; }
+
+.token-row:last-child {
+  border-bottom: none;
+}
 
 /* Spacing */
 .spacing-row {
   display: flex;
   align-items: center;
-  gap: var(--btech-spacing-md);
+  gap: var(--btech-space-md);
 }
-.label-muted { font-size: var(--btech-typography-font-size-xs); color: var(--btech-color-text-neutral-subtle); }
+
+.text-muted {
+  color: var(--btech-color-blue-200);
+}
+
+.label-muted {
+  font-size: var(--btech-font-size-xs);
+  color: var(--btech-text-neutral-subtle);
+}
 
 /* Radius */
 .radius-box {
@@ -413,15 +427,15 @@ code {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: var(--btech-spacing-sm);
+  padding: var(--btech-space-sm);
   text-align: center;
 }
 
 /* Shadow */
 .shadow-box {
-  background: var(--btech-color-background-surface-raised);
+  background: var(--btech-background-surface-raised);
   border-radius: var(--btech-radius-md);
-  padding: var(--btech-spacing-md);
+  padding: var(--btech-space-md);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -433,9 +447,10 @@ code {
 .motion-row {
   display: flex;
   align-items: center;
-  gap: var(--btech-spacing-md);
-  padding: var(--btech-spacing-sm) 0;
+  gap: var(--btech-space-md);
+  padding: var(--btech-space-sm) 0;
 }
+
 .motion-bar {
   width: 80px;
   height: 24px;
@@ -448,7 +463,7 @@ code {
 /* Footer */
 .footer {
   text-align: center;
-  padding: var(--btech-spacing-md);
-  color: var(--btech-color-text-neutral-subtle);
+  padding: var(--btech-space-md);
+  color: var(--btech-text-neutral-subtle);
 }
 </style>

@@ -15,7 +15,7 @@
   },
   "typography": {
     "fontFamily": {
-      "sans": { "$value": "BitcountGrid, system-ui", "$type": "fontFamily" }
+      "sans": { "$value": "Poppins, system-ui", "$type": "fontFamily" }
     }
   },
   "radius": {
