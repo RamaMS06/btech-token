@@ -35,33 +35,51 @@ export function generateDartFiles(data: ResolvedTokenMap): void {
   const colorDir = `${DART_SRC}/color`;
   mkdirSync(colorDir, { recursive: true });
 
-  // shades.color.dart
+  // shades.color.dart — uses MaterialColor so Flutter theming works natively.
+  // Access: BTechColor.shades.blue          → primary swatch color (500)
+  //         BTechColor.shades.blue[400]     → specific shade via MaterialColor
+  //         BTechColor.shades.blue.shade700 → via MaterialColor getter
   {
     const L = [HEADER, "import 'package:flutter/material.dart';\n"];
     const groupNames: string[] = [];
+
     for (const [group, shades] of Object.entries(data.coreColors)) {
-      const className = `BTechShades${toPascalCase(group)}Color`;
       groupNames.push(group);
-      const entries = Object.entries(shades).sort((a, b) => Number(a[0]) - Number(b[0]));
-      L.push(`class ${className} {`);
-      L.push(`  const ${className}()`);
-      L.push(entries.map(([shade, hex], i) =>
-        `    ${i === 0 ? ': ' : '  '}s${shade} = const Color(${hexToArgb(hex)})`
-      ).join(',\n') + ';');
-      for (const [shade] of entries) L.push(`  final Color s${shade};`);
-      L.push('}\n');
+      const entries = Object.entries(shades)
+        .filter(([k]) => k !== '0') // key 0 (white) is excluded from MaterialColor map
+        .sort((a, b) => Number(a[0]) - Number(b[0]));
+
+      // Pick the 500 shade as the MaterialColor primary; fall back to the middle entry
+      const primaryHex = (shades['500'] ?? shades[Object.keys(shades).sort((a, b) => Number(a) - Number(b))[Math.floor(Object.keys(shades).length / 2)]]) as string;
+
+      const mapEntries = entries.map(([shade, hex]) =>
+        `      ${shade}: Color(${hexToArgb(hex)}),`
+      ).join('\n');
+
+      L.push(`/// ${toPascalCase(group)} color swatch — BTechColor.shades.${group}[500]`);
+      L.push(`final MaterialColor btechShades${toPascalCase(group)} = MaterialColor(`);
+      L.push(`  ${hexToArgb(primaryHex)},`);
+      L.push(`  <int, Color>{`);
+      L.push(mapEntries);
+      L.push(`  },`);
+      L.push(`);\n`);
     }
-    L.push('/// Primitive color palette. Access: BTechShadesColor.blue.s500');
+
+    L.push('/// Primitive color palette as MaterialColor swatches.');
+    L.push('/// Access: BTechColor.shades.blue        → primary 500');
+    L.push('///         BTechColor.shades.blue[400]   → shade 400');
+    L.push('///         BTechColor.shades.green.shade700');
     L.push('class BTechShadesColor {');
     L.push('  const BTechShadesColor();');
     for (const group of groupNames) {
-      L.push(`  final BTechShades${toPascalCase(group)}Color ${group} = const BTechShades${toPascalCase(group)}Color();`);
+      L.push(`  MaterialColor get ${group} => btechShades${toPascalCase(group)};`);
     }
     L.push('}\n');
     writeFileSync(`${colorDir}/shades.color.dart`, L.join('\n') + '\n');
   }
 
   generateDartSemanticColorGroup(colorDir, 'text',       data.semanticColors.text,       HEADER);
+  generateDartSemanticColorGroup(colorDir, 'icon',       data.semanticColors.icon,       HEADER);
   generateDartSemanticColorGroup(colorDir, 'background', data.semanticColors.background, HEADER);
   generateDartSemanticColorGroup(colorDir, 'stroke',     data.semanticColors.stroke,     HEADER);
 
@@ -69,15 +87,23 @@ export function generateDartFiles(data: ResolvedTokenMap): void {
   writeFileSync(`${colorDir}/color.token.dart`, [
     HEADER,
     "import 'text.color.dart';",
+    "import 'icon.color.dart';",
     "import 'background.color.dart';",
     "import 'stroke.color.dart';",
     "import 'shades.color.dart';\n",
     '/// Semantic color tokens — use context.btechColor for tenant-aware access.',
+    '///   BTechColor.text.neutral           → Color (#111827)',
+    '///   BTechColor.text.neutral.subtle    → Color (#6B7280)',
+    '///   BTechColor.icon.neutral           → Color (#374151)',
+    '///   BTechColor.background.primary     → Color (#15803D)',
+    '///   BTechColor.stroke.neutral         → Color (#E5E7EB)',
+    '///   BTechColor.shades.green[500]      → Color (#22C55E)',
     'abstract class BTechColor {',
-    '  static const BTechTextColor text = BTechTextColor();',
+    '  static const BTechTextColor       text       = BTechTextColor();',
+    '  static const BTechIconColor       icon       = BTechIconColor();',
     '  static const BTechBackgroundColor background = BTechBackgroundColor();',
-    '  static const BTechStrokeColor stroke = BTechStrokeColor();',
-    '  static const BTechShadesColor shades = BTechShadesColor();',
+    '  static const BTechStrokeColor     stroke     = BTechStrokeColor();',
+    '  static const BTechShadesColor     shades     = BTechShadesColor();',
     '}\n',
   ].join('\n') + '\n');
 
@@ -85,6 +111,7 @@ export function generateDartFiles(data: ResolvedTokenMap): void {
   writeFileSync(`${colorDir}/color.dart`, [
     "export 'shades.color.dart';",
     "export 'text.color.dart';",
+    "export 'icon.color.dart';",
     "export 'background.color.dart';",
     "export 'stroke.color.dart';",
     "export 'color.token.dart';",

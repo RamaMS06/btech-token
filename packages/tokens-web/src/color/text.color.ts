@@ -12,8 +12,13 @@ export class BTechTextColor {
   readonly successBolder = '#166534' as const;
   readonly warning = '#ea580c' as const;
   readonly warningBolder = '#9a3412' as const;
-  readonly on = '#f9fafb' as const;
+  readonly info = '#2563eb' as const;
+  readonly infoBolder = '#1e40af' as const;
+  readonly secondary = '#9333ea' as const;
+  readonly secondaryBolder = '#6b21a8' as const;
+  readonly on = '#ffffff' as const;
   readonly onSecondary = '#166534' as const;
-  readonly onDanger = '#f9fafb' as const;
+  readonly onDanger = '#ffffff' as const;
+  readonly onInfo = '#ffffff' as const;
 }
 

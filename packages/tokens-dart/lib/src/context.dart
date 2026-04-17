@@ -79,29 +79,95 @@ class _BTechContextColorBackgroundSurface extends Color {
 
 class _BTechContextColorBackgroundPrimary extends Color {
   _BTechContextColorBackgroundPrimary(BTechTenantTokens t)
-    : hover = t.colorBackgroundPrimaryHover,
+    : hover    = t.colorBackgroundPrimaryHover,
+      pressed  = t.colorBackgroundPrimaryPressed,
+      disable  = t.colorBackgroundPrimaryDisable,
+      subtle   = t.colorBackgroundPrimarySubtle,
       // ignore: deprecated_member_use
       super(t.colorBackgroundPrimary.value);
 
   final Color hover;
+  final Color pressed;
+  final Color disable;
+  final Color subtle;
 }
 
 // ── Background / secondary ───────────────────────────────────────────────────
 
 class _BTechContextColorBackgroundSecondary extends Color {
   _BTechContextColorBackgroundSecondary(BTechTenantTokens t)
-    : hover = t.colorBackgroundSecondaryHover,
+    : hover    = t.colorBackgroundSecondaryHover,
+      pressed  = t.colorBackgroundSecondaryPressed,
+      disable  = t.colorBackgroundSecondaryDisable,
+      subtle   = t.colorBackgroundSecondarySubtle,
       // ignore: deprecated_member_use
       super(t.colorBackgroundSecondary.value);
 
   final Color hover;
+  final Color pressed;
+  final Color disable;
+  final Color subtle;
 }
 
 // ── Background / danger ──────────────────────────────────────────────────────
 
 class _BTechContextColorBackgroundDanger extends Color {
-  // ignore: deprecated_member_use
-  _BTechContextColorBackgroundDanger(BTechTenantTokens t) : super(t.colorBackgroundDanger.value);
+  _BTechContextColorBackgroundDanger(BTechTenantTokens t)
+    : hover    = t.colorBackgroundDangerHover,
+      pressed  = t.colorBackgroundDangerPressed,
+      disable  = t.colorBackgroundDangerDisable,
+      subtle   = t.colorBackgroundDangerSubtle,
+      // ignore: deprecated_member_use
+      super(t.colorBackgroundDanger.value);
+
+  final Color hover;
+  final Color pressed;
+  final Color disable;
+  final Color subtle;
+}
+
+// ── Background / success ─────────────────────────────────────────────────────
+
+class _BTechContextColorBackgroundSuccess extends Color {
+  _BTechContextColorBackgroundSuccess(BTechTenantTokens t)
+    : subtle = t.colorBackgroundSuccessSubtle,
+      // ignore: deprecated_member_use
+      super(t.colorBackgroundSuccess.value);
+
+  final Color subtle;
+}
+
+// ── Background / warning ─────────────────────────────────────────────────────
+
+class _BTechContextColorBackgroundWarning extends Color {
+  _BTechContextColorBackgroundWarning(BTechTenantTokens t)
+    : subtle = t.colorBackgroundWarningSubtle,
+      // ignore: deprecated_member_use
+      super(t.colorBackgroundWarning.value);
+
+  final Color subtle;
+}
+
+// ── Background / info ────────────────────────────────────────────────────────
+
+class _BTechContextColorBackgroundInfo extends Color {
+  _BTechContextColorBackgroundInfo(BTechTenantTokens t)
+    : subtle = t.colorBackgroundInfoSubtle,
+      // ignore: deprecated_member_use
+      super(t.colorBackgroundInfo.value);
+
+  final Color subtle;
+}
+
+// ── Background / neutral ─────────────────────────────────────────────────────
+
+class _BTechContextColorBackgroundNeutral extends Color {
+  _BTechContextColorBackgroundNeutral(BTechTenantTokens t)
+    : subtle = t.colorBackgroundNeutralSubtle,
+      // ignore: deprecated_member_use
+      super(t.colorBackgroundNeutral.value);
+
+  final Color subtle;
 }
 
 // ── Background group ─────────────────────────────────────────────────────────
@@ -114,6 +180,10 @@ class _BTechContextColorBackground {
   _BTechContextColorBackgroundPrimary   get primary   => _BTechContextColorBackgroundPrimary(_t);
   _BTechContextColorBackgroundSecondary get secondary => _BTechContextColorBackgroundSecondary(_t);
   _BTechContextColorBackgroundDanger    get danger    => _BTechContextColorBackgroundDanger(_t);
+  _BTechContextColorBackgroundSuccess   get success   => _BTechContextColorBackgroundSuccess(_t);
+  _BTechContextColorBackgroundWarning   get warning   => _BTechContextColorBackgroundWarning(_t);
+  _BTechContextColorBackgroundInfo      get info      => _BTechContextColorBackgroundInfo(_t);
+  _BTechContextColorBackgroundNeutral   get neutral   => _BTechContextColorBackgroundNeutral(_t);
 }
 
 // ── Text / neutral ───────────────────────────────────────────────────────────
@@ -140,6 +210,7 @@ class _BTechContextColorTextOn {
   Color get primary   => _t.colorTextOnPrimary;
   Color get secondary => _t.colorTextOnSecondary;
   Color get danger    => _t.colorTextOnDanger;
+  Color get info      => _t.colorTextOnInfo;
 }
 
 // ── Text group ───────────────────────────────────────────────────────────────
@@ -152,22 +223,77 @@ class _BTechContextColorText {
   _BTechContextColorTextOn      get on      => _BTechContextColorTextOn(_t);
 }
 
+// ── Icon / neutral ────────────────────────────────────────────────────────────
+
+class _BTechContextColorIconNeutral extends Color {
+  _BTechContextColorIconNeutral(BTechTenantTokens t)
+    : subtle   = t.colorIconNeutralSubtle,
+      disabled = t.colorIconNeutralDisabled,
+      inverse  = t.colorIconNeutralInverse,
+      // ignore: deprecated_member_use
+      super(t.colorIconNeutral.value);
+
+  final Color subtle;
+  final Color disabled;
+  final Color inverse;
+}
+
+// ── Icon / on ────────────────────────────────────────────────────────────────
+
+class _BTechContextColorIconOn {
+  final BTechTenantTokens _t;
+  const _BTechContextColorIconOn(this._t);
+
+  Color get primary => _t.colorIconOnPrimary;
+  Color get danger  => _t.colorIconOnDanger;
+}
+
+// ── Icon group ────────────────────────────────────────────────────────────────
+
+/// Tenant-aware icon color accessor returned by [context.btechColor.icon].
+///
+/// ```dart
+/// Icon(Icons.check, color: context.btechColor.icon.neutral)
+/// Icon(Icons.error, color: context.btechColor.icon.neutral.subtle)
+/// Icon(Icons.close, color: context.btechColor.icon.on.primary)
+/// ```
+class _BTechContextColorIcon {
+  final BTechTenantTokens _t;
+  const _BTechContextColorIcon(this._t);
+
+  _BTechContextColorIconNeutral get neutral => _BTechContextColorIconNeutral(_t);
+  _BTechContextColorIconOn      get on      => _BTechContextColorIconOn(_t);
+}
+
 // ── Stroke / neutral ─────────────────────────────────────────────────────────
 
 class _BTechContextColorStrokeNeutral extends Color {
   _BTechContextColorStrokeNeutral(BTechTenantTokens t)
     : strong = t.colorStrokeNeutralStrong,
+      subtle = t.colorStrokeNeutralSubtle,
       // ignore: deprecated_member_use
       super(t.colorStrokeNeutral.value);
 
   final Color strong;
+  final Color subtle;
 }
 
 // ── Stroke / primary ─────────────────────────────────────────────────────────
 
 class _BTechContextColorStrokePrimary extends Color {
+  _BTechContextColorStrokePrimary(BTechTenantTokens t)
+    : bolder = t.colorStrokePrimaryBolder,
+      // ignore: deprecated_member_use
+      super(t.colorStrokePrimary.value);
+
+  final Color bolder;
+}
+
+// ── Stroke / danger ──────────────────────────────────────────────────────────
+
+class _BTechContextColorStrokeDanger extends Color {
   // ignore: deprecated_member_use
-  _BTechContextColorStrokePrimary(BTechTenantTokens t) : super(t.colorStrokePrimary.value);
+  _BTechContextColorStrokeDanger(BTechTenantTokens t) : super(t.colorStrokeDanger.value);
 }
 
 // ── Stroke group ─────────────────────────────────────────────────────────────
@@ -178,6 +304,7 @@ class _BTechContextColorStroke {
 
   _BTechContextColorStrokeNeutral get neutral => _BTechContextColorStrokeNeutral(_t);
   _BTechContextColorStrokePrimary get primary => _BTechContextColorStrokePrimary(_t);
+  _BTechContextColorStrokeDanger  get danger  => _BTechContextColorStrokeDanger(_t);
 }
 
 // ── Top-level color accessor ─────────────────────────────────────────────────
@@ -185,14 +312,30 @@ class _BTechContextColorStroke {
 /// Tenant-aware color accessor returned by [context.btechColor].
 ///
 /// Each property IS a [Color] — usable anywhere a Color is expected.
+/// State variants are sub-fields on the returned Color.
 ///
 /// ```dart
+/// // Background
 /// Container(color: context.btechColor.background.primary)
 /// Container(color: context.btechColor.background.primary.hover)
+/// Container(color: context.btechColor.background.primary.pressed)
+/// Container(color: context.btechColor.background.danger.subtle)
+/// Container(color: context.btechColor.background.neutral)
+///
+/// // Text
 /// Text('x', style: TextStyle(color: context.btechColor.text.neutral))
 /// Text('x', style: TextStyle(color: context.btechColor.text.neutral.subtle))
+/// Text('x', style: TextStyle(color: context.btechColor.text.on.primary))
+///
+/// // Icon
+/// Icon(Icons.check, color: context.btechColor.icon.neutral)
+/// Icon(Icons.check, color: context.btechColor.icon.neutral.subtle)
+/// Icon(Icons.close, color: context.btechColor.icon.on.danger)
+///
+/// // Stroke
 /// Divider(color: context.btechColor.stroke.neutral)
 /// Divider(color: context.btechColor.stroke.neutral.strong)
+/// Divider(color: context.btechColor.stroke.primary.bolder)
 /// ```
 class BTechContextColor {
   final BTechTenantTokens _t;
@@ -200,6 +343,7 @@ class BTechContextColor {
 
   _BTechContextColorBackground get background => _BTechContextColorBackground(_t);
   _BTechContextColorText       get text       => _BTechContextColorText(_t);
+  _BTechContextColorIcon       get icon       => _BTechContextColorIcon(_t);
   _BTechContextColorStroke     get stroke     => _BTechContextColorStroke(_t);
 }
 

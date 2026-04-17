@@ -37,13 +37,29 @@ class BTechTextWarningColor extends Color {
   final Color bolder;
 }
 
+class BTechTextInfoColor extends Color {
+  const BTechTextInfoColor()
+    : bolder = const Color(0xFF1E40AF),
+      super(0xFF2563EB);
+  final Color bolder;
+}
+
+class BTechTextSecondaryColor extends Color {
+  const BTechTextSecondaryColor()
+    : bolder = const Color(0xFF6B21A8),
+      super(0xFF9333EA);
+  final Color bolder;
+}
+
 class BTechTextOnColor extends Color {
   const BTechTextOnColor()
     : secondary = const Color(0xFF166534),
-      danger = const Color(0xFFF9FAFB),
-      super(0xFFF9FAFB);
+      danger = const Color(0xFFFFFFFF),
+      info = const Color(0xFFFFFFFF),
+      super(0xFFFFFFFF);
   final Color secondary;
   final Color danger;
+  final Color info;
 }
 
 /// Semantic text color tokens.
@@ -55,11 +71,15 @@ class BTechTextColor {
       danger = const BTechTextDangerColor(),
       success = const BTechTextSuccessColor(),
       warning = const BTechTextWarningColor(),
+      info = const BTechTextInfoColor(),
+      secondary = const BTechTextSecondaryColor(),
       on = const BTechTextOnColor();
   final BTechTextNeutralColor neutral;
   final BTechTextDangerColor danger;
   final BTechTextSuccessColor success;
   final BTechTextWarningColor warning;
+  final BTechTextInfoColor info;
+  final BTechTextSecondaryColor secondary;
   final BTechTextOnColor on;
 }
 

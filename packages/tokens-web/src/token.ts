@@ -37,18 +37,47 @@ export type TokenPath =
   | 'button.size.sm.paddingX'
   | 'button.size.sm.paddingY'
   | 'color.background.danger'
+  | 'color.background.danger.bolder'
+  | 'color.background.danger.disable'
   | 'color.background.danger.hover'
+  | 'color.background.danger.pressed'
+  | 'color.background.danger.subtle'
+  | 'color.background.info'
+  | 'color.background.info.bolder'
+  | 'color.background.info.disable'
+  | 'color.background.info.hover'
+  | 'color.background.info.pressed'
+  | 'color.background.info.subtle'
+  | 'color.background.neutral'
+  | 'color.background.neutral.bolder'
+  | 'color.background.neutral.subtle'
   | 'color.background.primary'
+  | 'color.background.primary.bolder'
+  | 'color.background.primary.disable'
   | 'color.background.primary.hover'
+  | 'color.background.primary.pressed'
+  | 'color.background.primary.subtle'
   | 'color.background.secondary'
+  | 'color.background.secondary.bolder'
+  | 'color.background.secondary.disable'
   | 'color.background.secondary.hover'
+  | 'color.background.secondary.pressed'
+  | 'color.background.secondary.subtle'
   | 'color.background.success'
+  | 'color.background.success.bolder'
+  | 'color.background.success.disable'
   | 'color.background.success.hover'
+  | 'color.background.success.pressed'
+  | 'color.background.success.subtle'
   | 'color.background.surface'
   | 'color.background.surface.raised'
   | 'color.background.surface.subtle'
   | 'color.background.warning'
+  | 'color.background.warning.bolder'
+  | 'color.background.warning.disable'
   | 'color.background.warning.hover'
+  | 'color.background.warning.pressed'
+  | 'color.background.warning.subtle'
   | 'color.blue.100'
   | 'color.blue.200'
   | 'color.blue.300'
@@ -69,6 +98,23 @@ export type TokenPath =
   | 'color.green.700'
   | 'color.green.800'
   | 'color.green.900'
+  | 'color.icon.danger.base'
+  | 'color.icon.danger.bolder'
+  | 'color.icon.info.base'
+  | 'color.icon.info.bolder'
+  | 'color.icon.neutral'
+  | 'color.icon.neutral.disabled'
+  | 'color.icon.neutral.inverse'
+  | 'color.icon.neutral.subtle'
+  | 'color.icon.on.danger'
+  | 'color.icon.on.primary'
+  | 'color.icon.on.secondary'
+  | 'color.icon.secondary.base'
+  | 'color.icon.secondary.bolder'
+  | 'color.icon.success.base'
+  | 'color.icon.success.bolder'
+  | 'color.icon.warning.base'
+  | 'color.icon.warning.bolder'
   | 'color.neutral.0'
   | 'color.neutral.100'
   | 'color.neutral.1000'
@@ -91,27 +137,89 @@ export type TokenPath =
   | 'color.orange.700'
   | 'color.orange.800'
   | 'color.orange.900'
+  | 'color.pink.100'
+  | 'color.pink.200'
+  | 'color.pink.300'
+  | 'color.pink.400'
+  | 'color.pink.50'
+  | 'color.pink.500'
+  | 'color.pink.600'
+  | 'color.pink.700'
+  | 'color.pink.800'
+  | 'color.pink.900'
+  | 'color.purple.100'
+  | 'color.purple.200'
+  | 'color.purple.300'
+  | 'color.purple.400'
+  | 'color.purple.50'
+  | 'color.purple.500'
+  | 'color.purple.600'
+  | 'color.purple.700'
+  | 'color.purple.800'
+  | 'color.purple.900'
+  | 'color.red.100'
+  | 'color.red.200'
+  | 'color.red.300'
+  | 'color.red.400'
+  | 'color.red.50'
   | 'color.red.500'
   | 'color.red.600'
   | 'color.red.700'
   | 'color.red.800'
+  | 'color.red.900'
   | 'color.stroke.danger'
+  | 'color.stroke.danger.bolder'
+  | 'color.stroke.info'
+  | 'color.stroke.info.bolder'
   | 'color.stroke.neutral'
   | 'color.stroke.neutral.strong'
+  | 'color.stroke.neutral.subtle'
   | 'color.stroke.primary'
+  | 'color.stroke.primary.bolder'
+  | 'color.stroke.secondary'
+  | 'color.stroke.secondary.bolder'
+  | 'color.stroke.success'
+  | 'color.stroke.success.bolder'
+  | 'color.stroke.warning'
+  | 'color.stroke.warning.bolder'
+  | 'color.teal.100'
+  | 'color.teal.200'
+  | 'color.teal.300'
+  | 'color.teal.400'
+  | 'color.teal.50'
+  | 'color.teal.500'
+  | 'color.teal.600'
+  | 'color.teal.700'
+  | 'color.teal.800'
+  | 'color.teal.900'
   | 'color.text.danger.base'
   | 'color.text.danger.bolder'
+  | 'color.text.info.base'
+  | 'color.text.info.bolder'
   | 'color.text.neutral'
   | 'color.text.neutral.disabled'
   | 'color.text.neutral.inverse'
   | 'color.text.neutral.subtle'
   | 'color.text.on.danger'
+  | 'color.text.on.info'
   | 'color.text.on.primary'
   | 'color.text.on.secondary'
+  | 'color.text.secondary.base'
+  | 'color.text.secondary.bolder'
   | 'color.text.success.base'
   | 'color.text.success.bolder'
   | 'color.text.warning.base'
   | 'color.text.warning.bolder'
+  | 'color.yellow.100'
+  | 'color.yellow.200'
+  | 'color.yellow.300'
+  | 'color.yellow.400'
+  | 'color.yellow.50'
+  | 'color.yellow.500'
+  | 'color.yellow.600'
+  | 'color.yellow.700'
+  | 'color.yellow.800'
+  | 'color.yellow.900'
   | 'motion.duration.fast'
   | 'motion.duration.normal'
   | 'motion.duration.slow'
@@ -244,28 +352,100 @@ export type TokenPath =
   | 'zIndex.toast'
   | 'zIndex.tooltip'
 
-/**
- * Returns the CSS custom property reference for a design token.
- *
- * @example
- * token('color.background.primary')
- * // → "var(--btech-color-background-primary)"
- *
- * token('color.background.primary', '#15803d')
- * // → "var(--btech-color-background-primary, #15803d)"
- */
-export function token(path: TokenPath, fallback?: string): string {
-  const cssVar = `--btech-${path.replace(/\./g, '-').replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}`;
-  return fallback ? `var(${cssVar}, ${fallback})` : `var(${cssVar})`;
+// =============================================================================
+// Atlassian-aligned CSS variable naming (mirrors --ds-* with --btech-* prefix)
+// =============================================================================
+// styles.css defines every token as a CSS custom property:
+//   :root {
+//     --btech-background-primary: #...;   (was --btech-color-background-primary)
+//     --btech-space-md: 16px;             (was --btech-spacing-md)
+//     --btech-font-family-sans: ...;      (was --btech-typography-font-family-sans)
+//     --btech-border-neutral: #...;       (was --btech-color-stroke-neutral)
+//     --btech-duration-fast: 100ms;       (was --btech-motion-duration-fast)
+//     --btech-z-modal: 400;               (was --btech-z-index-modal)
+//   }
+//
+// token() returns the identical var() — same as writing it by hand in CSS.
+// Tenant switching via [data-tenant="bjb"] works automatically for both.
+// =============================================================================
+
+// Internal: same logic as pathToCssVarStem() in config/generators/utils.ts
+const PRIMITIVE_COLORS = new Set(['blue','red','green','orange','neutral','yellow','pink','purple','teal','slate']);
+function _pathToVarName(dotPath: string): string {
+  const [cat, ...rest] = dotPath.split('.');
+  let stem: string;
+  switch (cat) {
+    case 'color': {
+      const sub = rest[0];
+      if (PRIMITIVE_COLORS.has(sub)) { stem = ['color', ...rest].join('-'); break; }
+      if (sub === 'stroke')          { stem = ['border', ...rest.slice(1)].join('-'); break; }
+      stem = rest.join('-'); break;
+    }
+    case 'spacing': stem = ['space', ...rest].join('-'); break;
+    case 'typography': stem = rest.join('-'); break;
+    case 'zIndex': stem = ['z', ...rest].join('-'); break;
+    case 'motion': stem = rest.join('-'); break;
+    default: stem = [cat, ...rest].join('-');
+  }
+  return stem.replace(/([A-Z])/g, m => `-${m.toLowerCase()}`);
 }
 
 /**
- * Returns the raw CSS variable name for a token (without var() wrapper).
+ * Returns the CSS custom property reference for any design token.
+ * Atlassian-aligned: category is dropped from the var name.
  *
- * @example
- * cssVar('color.background.primary')
- * // → '--btech-color-background-primary'
+ * ── Color ────────────────────────────────────────────────────────────────────
+ * token('color.background.primary')        → var(--btech-background-primary)
+ * token('color.background.primary.hover')  → var(--btech-background-primary-hover)
+ * token('color.text.on.primary')           → var(--btech-text-on-primary)
+ * token('color.icon.neutral.subtle')       → var(--btech-icon-neutral-subtle)
+ * token('color.stroke.primary')            → var(--btech-border-primary)
+ * token('color.blue.500')                  → var(--btech-color-blue-500)
+ *
+ * ── Spacing ─────────────────────────────────────────────────────────────────
+ * token('spacing.xs')   → var(--btech-space-xs)
+ * token('spacing.md')   → var(--btech-space-md)
+ *
+ * ── Radius / Shadow ─────────────────────────────────────────────────────────
+ * token('radius.interactive') → var(--btech-radius-interactive)
+ * token('shadow.md')          → var(--btech-shadow-md)
+ *
+ * ── Typography ─────────────────────────────────────────────────────────────
+ * token('typography.fontFamily.sans')     → var(--btech-font-family-sans)
+ * token('typography.fontSize.sm')         → var(--btech-font-size-sm)
+ * token('typography.fontWeight.semibold') → var(--btech-font-weight-semibold)
+ * token('typography.lineHeight.normal')   → var(--btech-line-height-normal)
+ *
+ * ── Motion / Z-Index ───────────────────────────────────────────────────────
+ * token('motion.duration.fast')  → var(--btech-duration-fast)
+ * token('motion.easing.ease')    → var(--btech-easing-ease)
+ * token('zIndex.modal')          → var(--btech-z-modal)
+ *
+ * ── With fallback ───────────────────────────────────────────────────────────
+ * token('color.background.primary', '#15803d') → var(--btech-background-primary, #15803d)
+ */
+export function token(path: TokenPath, fallback?: string): string {
+  const varName = `--btech-${_pathToVarName(path)}`;
+  return fallback ? `var(${varName}, ${fallback})` : `var(${varName})`;
+}
+
+/**
+ * Raw CSS variable name — no var() wrapper.
+ * Use for setProperty(), CSS-in-JS that wraps var() itself, or calc().
+ *
+ * cssVar('color.background.primary') → '--btech-background-primary'
+ * element.style.setProperty(cssVar('color.background.primary'), '#0057b7');
  */
 export function cssVar(path: TokenPath): string {
-  return `--btech-${path.replace(/\./g, '-').replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`)}`;
+  return `--btech-${_pathToVarName(path)}`;
+}
+
+/**
+ * Wraps a token in calc().
+ *
+ * tokenCalc('spacing.md', '* 2')    → 'calc(var(--btech-space-md) * 2)'
+ * tokenCalc('spacing.sm', '+ 4px')  → 'calc(var(--btech-space-sm) + 4px)'
+ */
+export function tokenCalc(path: TokenPath, expression: string): string {
+  return `calc(${token(path)} ${expression})`;
 }

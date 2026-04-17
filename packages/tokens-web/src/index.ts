@@ -10,7 +10,7 @@ export * from './radius/index';
 export * from './typography/index';
 
 // ── Type-safe token() helper — analogous to Atlassian's @atlaskit/tokens ─────
-export { token, cssVar } from './token';
+export { token, cssVar, tokenCalc } from './token';
 export type { TokenPath } from './token';
 
 // ── Vanilla JS tenant API ─────────────────────────────────────────────────────

@@ -11,7 +11,8 @@
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./dist/styles.css",
+    "./utilities.css": "./dist/utilities.css"
   },
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts"

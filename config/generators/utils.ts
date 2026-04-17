@@ -79,6 +79,78 @@ export function toYaml(obj: unknown, indent = 0): string {
   return String(obj);
 }
 
+// =============================================================================
+// Atlassian-aligned CSS variable naming
+// =============================================================================
+// Rules (mirrors Atlassian's --ds-* pattern with --btech-* prefix):
+//   color.background.*  → background-*        (drop 'color.' prefix)
+//   color.text.*        → text-*              (drop 'color.' prefix)
+//   color.icon.*        → icon-*              (drop 'color.' prefix)
+//   color.stroke.*      → border-*            (stroke → border, drop 'color.')
+//   color.{primitive}.* → color-{primitive}-* (primitives keep 'color-' prefix)
+//   spacing.*           → space-*             (spacing → space)
+//   typography.*        → drop 'typography.'  (font-family-sans, font-size-sm, …)
+//   zIndex.*            → z-*                 (zIndex → z)
+//   motion.*            → drop 'motion.'      (duration-fast, easing-ease, …)
+//   radius.* / shadow.* → kept as-is
+// =============================================================================
+
+const PRIMITIVE_COLOR_KEYS = new Set([
+  'blue', 'red', 'green', 'orange', 'neutral',
+  'yellow', 'pink', 'purple', 'teal', 'slate',
+]);
+
+/**
+ * Converts a token dot-path array to an Atlassian-aligned CSS variable stem
+ * (no prefix, no leading `--`). camelCase segments are NOT yet kebab-cased here
+ * — call `.replace(/([A-Z])/g, m => `-${m.toLowerCase()}`)` on the result.
+ *
+ * @example
+ * pathToCssVarStem(['color', 'background', 'primary'])  → 'background-primary'
+ * pathToCssVarStem(['color', 'stroke', 'primary'])       → 'border-primary'
+ * pathToCssVarStem(['color', 'blue', '500'])             → 'color-blue-500'
+ * pathToCssVarStem(['spacing', 'md'])                    → 'space-md'
+ * pathToCssVarStem(['typography', 'fontFamily', 'sans']) → 'fontFamily-sans'
+ * pathToCssVarStem(['zIndex', 'modal'])                  → 'z-modal'
+ * pathToCssVarStem(['motion', 'duration', 'fast'])       → 'duration-fast'
+ */
+export function pathToCssVarStem(path: string[]): string {
+  const [cat, ...rest] = path;
+
+  switch (cat) {
+    case 'color': {
+      const sub = rest[0];
+      if (PRIMITIVE_COLOR_KEYS.has(sub)) return ['color', ...rest].join('-');
+      if (sub === 'stroke')              return ['border', ...rest.slice(1)].join('-');
+      return rest.join('-');
+    }
+    case 'spacing':
+      return ['space', ...rest].join('-');
+    case 'typography':
+      return rest.join('-');
+    case 'zIndex':
+      return ['z', ...rest].join('-');
+    case 'motion':
+      return rest.join('-');
+    default:
+      return [cat, ...rest].join('-');
+  }
+}
+
+/**
+ * Full CSS variable name with `--btech-` prefix and kebab-case conversion.
+ *
+ * @example
+ * pathToCssVar(['color', 'background', 'primary']) → '--btech-background-primary'
+ * pathToCssVar(['spacing', 'md'])                  → '--btech-space-md'
+ * pathToCssVar(['typography', 'fontFamily', 'sans'])→ '--btech-font-family-sans'
+ */
+export function pathToCssVar(path: string[], prefix = 'btech'): string {
+  const stem = pathToCssVarStem(path)
+    .replace(/([A-Z])/g, m => `-${m.toLowerCase()}`);
+  return `--${prefix}-${stem}`;
+}
+
 /** Dart reserved words that need a trailing underscore. */
 const DART_RESERVED = new Set([
   'default', 'switch', 'class', 'return', 'new', 'if', 'else',

@@ -4,7 +4,18 @@
 export class BTechStrokeColor {
   readonly neutral = '#e5e7eb' as const;
   readonly neutralStrong = '#9ca3af' as const;
+  readonly neutralSubtle = '#f3f4f6' as const;
   readonly primary = '#15803d' as const;
+  readonly primaryBolder = '#14532d' as const;
   readonly danger = '#dc2626' as const;
+  readonly dangerBolder = '#991b1b' as const;
+  readonly success = '#22c55e' as const;
+  readonly successBolder = '#15803d' as const;
+  readonly warning = '#fb923c' as const;
+  readonly warningBolder = '#ea580c' as const;
+  readonly info = '#3b82f6' as const;
+  readonly infoBolder = '#1d4ed8' as const;
+  readonly secondary = '#a855f7' as const;
+  readonly secondaryBolder = '#7e22ce' as const;
 }
 

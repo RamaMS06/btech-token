@@ -7,33 +7,62 @@ export const TENANT_FIELD_MAP: Array<{
   field: string;
   type: 'Color' | 'double' | 'String';
 }> = [
-  // color.background
-  { path: 'color.background.primary.default',   field: 'colorBackgroundPrimary',        type: 'Color'  },
-  { path: 'color.background.primary.hover',     field: 'colorBackgroundPrimaryHover',   type: 'Color'  },
-  { path: 'color.background.secondary.default', field: 'colorBackgroundSecondary',      type: 'Color'  },
-  { path: 'color.background.secondary.hover',   field: 'colorBackgroundSecondaryHover', type: 'Color'  },
-  { path: 'color.background.danger.default',    field: 'colorBackgroundDanger',         type: 'Color'  },
-  { path: 'color.background.surface.default',   field: 'colorBackgroundSurface',        type: 'Color'  },
-  { path: 'color.background.surface.subtle',    field: 'colorBackgroundSurfaceSubtle',  type: 'Color'  },
-  { path: 'color.background.surface.raised',    field: 'colorBackgroundSurfaceRaised',  type: 'Color'  },
-  // color.text
-  { path: 'color.text.neutral.default',         field: 'colorTextNeutral',              type: 'Color'  },
-  { path: 'color.text.neutral.subtle',          field: 'colorTextNeutralSubtle',        type: 'Color'  },
-  { path: 'color.text.neutral.disabled',        field: 'colorTextNeutralDisabled',      type: 'Color'  },
-  { path: 'color.text.neutral.inverse',         field: 'colorTextNeutralInverse',       type: 'Color'  },
-  { path: 'color.text.on.primary',              field: 'colorTextOnPrimary',            type: 'Color'  },
-  { path: 'color.text.on.secondary',            field: 'colorTextOnSecondary',          type: 'Color'  },
-  { path: 'color.text.on.danger',               field: 'colorTextOnDanger',             type: 'Color'  },
-  // color.stroke
-  { path: 'color.stroke.primary.default',       field: 'colorStrokePrimary',            type: 'Color'  },
-  { path: 'color.stroke.neutral.default',       field: 'colorStrokeNeutral',            type: 'Color'  },
-  { path: 'color.stroke.neutral.strong',        field: 'colorStrokeNeutralStrong',      type: 'Color'  },
-  // radius
-  { path: 'radius.interactive',                 field: 'radiusInteractive',             type: 'double' },
-  { path: 'radius.card',                        field: 'radiusCard',                    type: 'double' },
-  { path: 'radius.badge',                       field: 'radiusBadge',                   type: 'double' },
-  // typography
-  { path: 'typography.fontFamily.sans',         field: 'typographyFontFamilySans',      type: 'String' },
+  // ── color.background ────────────────────────────────────────────────────────
+  { path: 'color.background.surface.default',   field: 'colorBackgroundSurface',              type: 'Color' },
+  { path: 'color.background.surface.subtle',    field: 'colorBackgroundSurfaceSubtle',        type: 'Color' },
+  { path: 'color.background.surface.raised',    field: 'colorBackgroundSurfaceRaised',        type: 'Color' },
+  { path: 'color.background.primary.default',   field: 'colorBackgroundPrimary',              type: 'Color' },
+  { path: 'color.background.primary.hover',     field: 'colorBackgroundPrimaryHover',         type: 'Color' },
+  { path: 'color.background.primary.pressed',   field: 'colorBackgroundPrimaryPressed',       type: 'Color' },
+  { path: 'color.background.primary.disable',   field: 'colorBackgroundPrimaryDisable',       type: 'Color' },
+  { path: 'color.background.primary.subtle',    field: 'colorBackgroundPrimarySubtle',        type: 'Color' },
+  { path: 'color.background.secondary.default', field: 'colorBackgroundSecondary',            type: 'Color' },
+  { path: 'color.background.secondary.hover',   field: 'colorBackgroundSecondaryHover',       type: 'Color' },
+  { path: 'color.background.secondary.pressed', field: 'colorBackgroundSecondaryPressed',     type: 'Color' },
+  { path: 'color.background.secondary.disable', field: 'colorBackgroundSecondaryDisable',     type: 'Color' },
+  { path: 'color.background.secondary.subtle',  field: 'colorBackgroundSecondarySubtle',      type: 'Color' },
+  { path: 'color.background.danger.default',    field: 'colorBackgroundDanger',               type: 'Color' },
+  { path: 'color.background.danger.hover',      field: 'colorBackgroundDangerHover',          type: 'Color' },
+  { path: 'color.background.danger.pressed',    field: 'colorBackgroundDangerPressed',        type: 'Color' },
+  { path: 'color.background.danger.disable',    field: 'colorBackgroundDangerDisable',        type: 'Color' },
+  { path: 'color.background.danger.subtle',     field: 'colorBackgroundDangerSubtle',         type: 'Color' },
+  { path: 'color.background.success.default',   field: 'colorBackgroundSuccess',              type: 'Color' },
+  { path: 'color.background.success.subtle',    field: 'colorBackgroundSuccessSubtle',        type: 'Color' },
+  { path: 'color.background.warning.default',   field: 'colorBackgroundWarning',              type: 'Color' },
+  { path: 'color.background.warning.subtle',    field: 'colorBackgroundWarningSubtle',        type: 'Color' },
+  { path: 'color.background.info.default',      field: 'colorBackgroundInfo',                 type: 'Color' },
+  { path: 'color.background.info.subtle',       field: 'colorBackgroundInfoSubtle',           type: 'Color' },
+  { path: 'color.background.neutral.default',   field: 'colorBackgroundNeutral',              type: 'Color' },
+  { path: 'color.background.neutral.subtle',    field: 'colorBackgroundNeutralSubtle',        type: 'Color' },
+  // ── color.text ──────────────────────────────────────────────────────────────
+  { path: 'color.text.neutral.default',         field: 'colorTextNeutral',                    type: 'Color' },
+  { path: 'color.text.neutral.subtle',          field: 'colorTextNeutralSubtle',              type: 'Color' },
+  { path: 'color.text.neutral.disabled',        field: 'colorTextNeutralDisabled',            type: 'Color' },
+  { path: 'color.text.neutral.inverse',         field: 'colorTextNeutralInverse',             type: 'Color' },
+  { path: 'color.text.on.primary',              field: 'colorTextOnPrimary',                  type: 'Color' },
+  { path: 'color.text.on.secondary',            field: 'colorTextOnSecondary',                type: 'Color' },
+  { path: 'color.text.on.danger',               field: 'colorTextOnDanger',                   type: 'Color' },
+  { path: 'color.text.on.info',                 field: 'colorTextOnInfo',                     type: 'Color' },
+  // ── color.icon ──────────────────────────────────────────────────────────────
+  { path: 'color.icon.neutral.default',         field: 'colorIconNeutral',                    type: 'Color' },
+  { path: 'color.icon.neutral.subtle',          field: 'colorIconNeutralSubtle',              type: 'Color' },
+  { path: 'color.icon.neutral.disabled',        field: 'colorIconNeutralDisabled',            type: 'Color' },
+  { path: 'color.icon.neutral.inverse',         field: 'colorIconNeutralInverse',             type: 'Color' },
+  { path: 'color.icon.on.primary',              field: 'colorIconOnPrimary',                  type: 'Color' },
+  { path: 'color.icon.on.danger',               field: 'colorIconOnDanger',                   type: 'Color' },
+  // ── color.stroke ────────────────────────────────────────────────────────────
+  { path: 'color.stroke.neutral.default',       field: 'colorStrokeNeutral',                  type: 'Color' },
+  { path: 'color.stroke.neutral.strong',        field: 'colorStrokeNeutralStrong',            type: 'Color' },
+  { path: 'color.stroke.neutral.subtle',        field: 'colorStrokeNeutralSubtle',            type: 'Color' },
+  { path: 'color.stroke.primary.default',       field: 'colorStrokePrimary',                  type: 'Color' },
+  { path: 'color.stroke.primary.bolder',        field: 'colorStrokePrimaryBolder',            type: 'Color' },
+  { path: 'color.stroke.danger.default',        field: 'colorStrokeDanger',                   type: 'Color' },
+  // ── radius ──────────────────────────────────────────────────────────────────
+  { path: 'radius.interactive',                 field: 'radiusInteractive',                   type: 'double' },
+  { path: 'radius.card',                        field: 'radiusCard',                          type: 'double' },
+  { path: 'radius.badge',                       field: 'radiusBadge',                         type: 'double' },
+  // ── typography ──────────────────────────────────────────────────────────────
+  { path: 'typography.fontFamily.sans',         field: 'typographyFontFamilySans',            type: 'String' },
 ];
 
 export const dartTenantsFormat: Format = {

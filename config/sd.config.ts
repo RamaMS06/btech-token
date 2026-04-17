@@ -3,7 +3,7 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { mkdirSync, readFileSync, writeFileSync, readdirSync } from 'fs';
 
-import { ROOT, flattenDTCG, resolveRef } from './generators/utils.js';
+import { ROOT, flattenDTCG, resolveRef, pathToCssVarStem } from './generators/utils.js';
 import { loadTokenData } from './generators/token-loader.js';
 import { generateDartFiles } from './generators/dart/dart-generator.js';
 import { dartTenantsFormat } from './generators/dart/dart-tenant-format.js';
@@ -16,11 +16,52 @@ import {
   generateWebFontRegistry,
   prependGoogleFontsCssImport,
 } from './generators/font-registry-generator.js';
+import { generateUtilitiesCss } from './generators/web/web-utilities-generator.js';
 
 // =============================================================================
-// Register custom Style Dictionary formats
+// Register custom Style Dictionary formats + transforms
 // =============================================================================
 StyleDictionary.registerFormat(dartTenantsFormat);
+
+// Atlassian-aligned name transform:
+//   color.background.primary → background-primary  (not color-background-primary)
+//   color.stroke.neutral     → border-neutral       (stroke → border)
+//   spacing.md               → space-md             (spacing → space)
+//   typography.fontFamily.sans → font-family-sans   (drop typography.)
+//   zIndex.modal             → z-modal
+//   motion.duration.fast     → duration-fast        (drop motion.)
+StyleDictionary.registerTransform({
+  name: 'name/btech/aligned',
+  type: 'name',
+  // SD v4 passes (token, options) — options carries the platform prefix
+  transform(token: { path: string[] }, options?: { prefix?: string }): string {
+    const stem = pathToCssVarStem(token.path)
+      .replace(/([A-Z])/g, (m: string) => `-${m.toLowerCase()}`);
+    const prefix = options?.prefix;
+    return prefix ? `${prefix}-${stem}` : stem;
+  },
+});
+
+// Custom transform group: CSS defaults with our name transform
+StyleDictionary.registerTransformGroup({
+  name: 'css/btech',
+  transforms: [
+    'attribute/cti',
+    'name/btech/aligned',   // ← replaces name/cti/kebab
+    'time/seconds',
+    'html/icon',
+    'size/rem',
+    'color/css',
+    'asset/url',
+    'fontFamily/css',
+    'cubicBezier/css',
+    'strokeStyle/css/shorthand',
+    'border/css/shorthand',
+    'typography/css/shorthand',
+    'transition/css/shorthand',
+    'shadow/css/shorthand',
+  ],
+});
 
 // =============================================================================
 // Output paths
@@ -47,7 +88,7 @@ const sd = new StyleDictionary({
   platforms: {
     // CSS custom properties → packages/tokens-web/dist/styles.css (:root block)
     css: {
-      transformGroup: 'css',
+      transformGroup: 'css/btech',
       prefix: 'btech',
       buildPath: WEB_OUT,
       files: [{
@@ -59,7 +100,7 @@ const sd = new StyleDictionary({
 
     // Dart tenant constants → packages/tokens-dart/lib/src/tenant.dart
     dart: {
-      transformGroup: 'css',
+      transformGroup: 'css/btech',
       buildPath: DART_OUT,
       files: [{
         destination: 'tenant.dart',
@@ -103,12 +144,15 @@ const sd = new StyleDictionary({
   const cssPath = `${WEB_OUT}styles.css`;
   const rawCss  = readFileSync(cssPath, 'utf8');
   const cleanedCss = rawCss
-    .replace(/--btech-([a-z0-9-]+)-default([\s:);,])/g, '--btech-$1$2')
-    .replace(/--btech-([a-z0-9-]+)-default([\s:);,])/g, '--btech-$1$2'); // twice for chained refs
+    .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2')
+    .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2'); // twice for chained refs
   writeFileSync(cssPath, cleanedCss, 'utf8');
 
   // Post-build: prepend Google Fonts @import to styles.css
   prependGoogleFontsCssImport(cssPath, fontRegistry);
+
+  // Generate utility CSS (bg-*, text-*, mt-*, rounded-*, etc.) — all via var(--btech-...)
+  generateUtilitiesCss(`${WEB_OUT}utilities.css`, data);
 
   // Post-build: append [data-tenant="*"] overrides to styles.css
   const coreTokenFiles = [
@@ -132,5 +176,6 @@ const sd = new StyleDictionary({
   console.log('                 packages/tokens-web/src/token.ts (TokenPath + token())');
   console.log('                 packages/tokens-web/dist/styles.css');
   console.log('  React/Vue → re-export from @ramaMS06/tokens-web (no separate generation)');
+  console.log('                 packages/tokens-web/dist/utilities.css');
   console.log('');
 })();

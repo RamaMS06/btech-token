@@ -41,10 +41,68 @@ export class BTechShadesOrangeColor {
 }
 
 export class BTechShadesRedColor {
+  readonly s50 = '#fef2f2' as const;
+  readonly s100 = '#fee2e2' as const;
+  readonly s200 = '#fecaca' as const;
+  readonly s300 = '#fca5a5' as const;
+  readonly s400 = '#f87171' as const;
   readonly s500 = '#ef4444' as const;
   readonly s600 = '#dc2626' as const;
   readonly s700 = '#b91c1c' as const;
   readonly s800 = '#991b1b' as const;
+  readonly s900 = '#7f1d1d' as const;
+}
+
+export class BTechShadesYellowColor {
+  readonly s50 = '#fefce8' as const;
+  readonly s100 = '#fef9c3' as const;
+  readonly s200 = '#fef08a' as const;
+  readonly s300 = '#fde047' as const;
+  readonly s400 = '#facc15' as const;
+  readonly s500 = '#eab308' as const;
+  readonly s600 = '#ca8a04' as const;
+  readonly s700 = '#a16207' as const;
+  readonly s800 = '#854d0e' as const;
+  readonly s900 = '#713f12' as const;
+}
+
+export class BTechShadesPinkColor {
+  readonly s50 = '#fdf2f8' as const;
+  readonly s100 = '#fce7f3' as const;
+  readonly s200 = '#fbcfe8' as const;
+  readonly s300 = '#f9a8d4' as const;
+  readonly s400 = '#f472b6' as const;
+  readonly s500 = '#ec4899' as const;
+  readonly s600 = '#db2777' as const;
+  readonly s700 = '#be185d' as const;
+  readonly s800 = '#9d174d' as const;
+  readonly s900 = '#831843' as const;
+}
+
+export class BTechShadesPurpleColor {
+  readonly s50 = '#faf5ff' as const;
+  readonly s100 = '#f3e8ff' as const;
+  readonly s200 = '#e9d5ff' as const;
+  readonly s300 = '#d8b4fe' as const;
+  readonly s400 = '#c084fc' as const;
+  readonly s500 = '#a855f7' as const;
+  readonly s600 = '#9333ea' as const;
+  readonly s700 = '#7e22ce' as const;
+  readonly s800 = '#6b21a8' as const;
+  readonly s900 = '#581c87' as const;
+}
+
+export class BTechShadesTealColor {
+  readonly s50 = '#f0fdfa' as const;
+  readonly s100 = '#ccfbf1' as const;
+  readonly s200 = '#99f6e4' as const;
+  readonly s300 = '#5eead4' as const;
+  readonly s400 = '#2dd4bf' as const;
+  readonly s500 = '#14b8a6' as const;
+  readonly s600 = '#0d9488' as const;
+  readonly s700 = '#0f766e' as const;
+  readonly s800 = '#115e59' as const;
+  readonly s900 = '#134e4a' as const;
 }
 
 export class BTechShadesNeutralColor {
@@ -67,6 +125,10 @@ export class BTechShadesColor {
   readonly green = new BTechShadesGreenColor();
   readonly orange = new BTechShadesOrangeColor();
   readonly red = new BTechShadesRedColor();
+  readonly yellow = new BTechShadesYellowColor();
+  readonly pink = new BTechShadesPinkColor();
+  readonly purple = new BTechShadesPurpleColor();
+  readonly teal = new BTechShadesTealColor();
   readonly neutral = new BTechShadesNeutralColor();
 }
 
