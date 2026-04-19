@@ -1,5 +1,6 @@
-import '@ramaMS06/tokens-web/styles.css';
-import { token, activateTenant, type TokenPath } from '@ramaMS06/tokens-web';
+import '@btech/tokens/styles.css';
+import '@btech/tokens/utilities.css';
+import { token, activateTenant, type TokenPath } from '@btech/tokens';
 import { useState, useEffect, CSSProperties } from 'react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -362,8 +363,74 @@ export default function App() {
           ))}
         </Section>
 
+        {/* Utility Classes */}
+        <Section title="Utility Classes (HTML className)">
+          <p style={{ fontSize: token('typography.fontSize.sm'), color: token('color.text.neutral.subtle') }}>
+            Classes from <code>utilities.css</code> — same tokens, zero JS, fully tenant-aware.
+          </p>
+
+          {/* Spacing */}
+          <p style={{ fontSize: token('typography.fontSize.xs'), fontWeight: token('typography.fontWeight.semibold'), marginBottom: 4 }}>
+            Spacing — <code>mt-lg</code>, <code>px-sm</code>, <code>gap-md</code>
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <span className="bg-secondary text-neutral rounded-sm" style={{ padding: '4px 10px', fontSize: 12 }}>mt-lg</span>
+            <span className="bg-secondary text-neutral rounded-sm" style={{ padding: '4px 10px', fontSize: 12 }}>px-sm</span>
+            <span className="bg-secondary text-neutral rounded-sm" style={{ padding: '4px 10px', fontSize: 12 }}>px-md</span>
+            <span className="bg-secondary text-neutral rounded-sm" style={{ padding: '4px 10px', fontSize: 12 }}>px-lg</span>
+          </div>
+
+          {/* Background */}
+          <p style={{ fontSize: token('typography.fontSize.xs'), fontWeight: token('typography.fontWeight.semibold'), marginTop: 12, marginBottom: 4 }}>
+            Background — <code>bg-primary</code>, <code>bg-danger-subtle</code>
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <span className="bg-primary text-on-primary rounded-interactive" style={{ padding: '4px 12px', fontSize: 12 }}>bg-primary</span>
+            <span className="bg-danger text-on-danger rounded-interactive" style={{ padding: '4px 12px', fontSize: 12 }}>bg-danger</span>
+            <span className="bg-success text-on-primary rounded-interactive" style={{ padding: '4px 12px', fontSize: 12 }}>bg-success</span>
+            <span className="bg-warning text-neutral rounded-interactive" style={{ padding: '4px 12px', fontSize: 12 }}>bg-warning</span>
+            <span className="bg-danger-subtle text-neutral rounded-interactive" style={{ padding: '4px 12px', fontSize: 12, border: '1px solid' }} >bg-danger-subtle</span>
+            <span className="bg-surface text-neutral rounded-interactive" style={{ padding: '4px 12px', fontSize: 12, border: '1px solid rgba(0,0,0,0.1)' }}>bg-surface</span>
+          </div>
+
+          {/* Typography */}
+          <p style={{ fontSize: token('typography.fontSize.xs'), fontWeight: token('typography.fontWeight.semibold'), marginTop: 12, marginBottom: 4 }}>
+            Typography — <code>text-xs</code>, <code>font-bold</code>
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span className="text-xs text-neutral-subtle">text-xs · The quick brown fox</span>
+            <span className="text-sm text-neutral">text-sm · The quick brown fox</span>
+            <span className="text-base text-neutral font-normal">text-base font-normal</span>
+            <span className="text-lg text-neutral font-semibold">text-lg font-semibold</span>
+            <span className="text-xl text-neutral font-bold">text-xl font-bold</span>
+          </div>
+
+          {/* Border */}
+          <p style={{ fontSize: token('typography.fontSize.xs'), fontWeight: token('typography.fontWeight.semibold'), marginTop: 12, marginBottom: 4 }}>
+            Border — <code>border-neutral</code>, <code>border-primary</code>
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <span className="border-neutral rounded-interactive" style={{ padding: '4px 12px', fontSize: 12, border: '1.5px solid' }}>border-neutral</span>
+            <span className="border-primary rounded-interactive" style={{ padding: '4px 12px', fontSize: 12, border: '1.5px solid' }}>border-primary</span>
+            <span className="border-danger rounded-interactive" style={{ padding: '4px 12px', fontSize: 12, border: '1.5px solid' }}>border-danger</span>
+          </div>
+
+          {/* Radius */}
+          <p style={{ fontSize: token('typography.fontSize.xs'), fontWeight: token('typography.fontWeight.semibold'), marginTop: 12, marginBottom: 4 }}>
+            Radius — <code>rounded-sm</code>, <code>rounded-interactive</code>, <code>rounded-full</code>
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <span className="bg-primary text-on-primary rounded-none" style={{ padding: '4px 12px', fontSize: 12 }}>rounded-none</span>
+            <span className="bg-primary text-on-primary rounded-sm" style={{ padding: '4px 12px', fontSize: 12 }}>rounded-sm</span>
+            <span className="bg-primary text-on-primary rounded-md" style={{ padding: '4px 12px', fontSize: 12 }}>rounded-md</span>
+            <span className="bg-primary text-on-primary rounded-interactive" style={{ padding: '4px 12px', fontSize: 12 }}>rounded-interactive</span>
+            <span className="bg-primary text-on-primary rounded-card" style={{ padding: '4px 12px', fontSize: 12 }}>rounded-card</span>
+            <span className="bg-primary text-on-primary rounded-full" style={{ padding: '4px 12px', fontSize: 12 }}>rounded-full</span>
+          </div>
+        </Section>
+
         <footer style={{ textAlign: 'center', padding: token('spacing.md'), color: token('color.text.neutral.subtle') }}>
-          <code>token('path') → var(--btech-*) · all styles are tenant-aware via CSS cascade</code>
+          <code>token('path') → var(--btech-*) · tenant-aware via CSS cascade · switch tenant above</code>
         </footer>
       </div>
     </div>

@@ -3,7 +3,7 @@
 Multi-platform, multi-tenant design tokens for Web and Flutter. One source under
 `tokens/` compiles into three outputs:
 
-- `@ramaMS06/tokens-web` — TypeScript API + CSS variables (GitHub Packages)
+- `@btech/tokens` — TypeScript API + CSS variables (GitHub Packages)
 - `btech_tokens`          — Dart/Flutter API + tenant themes
 - `dist/styles.css`       — CSS variables with per-tenant overrides
 
@@ -16,21 +16,21 @@ Multi-platform, multi-tenant design tokens for Web and Flutter. One source under
 **Install:**
 
 ```
-pnpm add @ramaMS06/tokens-web
+pnpm add @btech/tokens
 ```
 
 Add this to your repo's `.npmrc`:
 
 ```
-@ramaMS06:registry=https://npm.pkg.github.com
+@btech:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
 **Setup (once at app entry):**
 
 ```ts
-import '@ramaMS06/tokens-web/styles.css';
-import { activateTenant } from '@ramaMS06/tokens-web';
+import '@btech/tokens/styles.css';
+import { activateTenant } from '@btech/tokens';
 
 // Call once after user login — CSS cascade handles the rest
 activateTenant({ tenant: user.tenantId });
@@ -45,7 +45,7 @@ Inspired by Atlassian's `@atlaskit/tokens`, the `token()` helper gives you
 any invalid or mistyped token path at compile time.
 
 ```ts
-import { token } from '@ramaMS06/tokens-web';
+import { token } from '@btech/tokens';
 
 // CSS-in-JS / inline style / Vue :style binding
 const buttonStyles = {
@@ -60,7 +60,7 @@ token('color.background.primary', '#15803d')
 // → "var(--btech-color-background-primary, #15803d)"
 
 // Just the CSS variable name (for SCSS #{} or third-party libs)
-import { cssVar } from '@ramaMS06/tokens-web';
+import { cssVar } from '@btech/tokens';
 cssVar('color.background.primary')
 // → "--btech-color-background-primary"
 ```
@@ -75,7 +75,7 @@ token('color.background.primary') // ✅
 **All valid token paths are exported as `TokenPath`:**
 
 ```ts
-import type { TokenPath } from '@ramaMS06/tokens-web';
+import type { TokenPath } from '@btech/tokens';
 
 function applyToken(path: TokenPath) { ... }
 ```

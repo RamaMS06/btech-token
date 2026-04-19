@@ -45,7 +45,7 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@ramaMS06'
+          scope: '@btech'
 
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
@@ -60,7 +60,7 @@ jobs:
 
       - name: Flutter pub get
         run: flutter pub get
-        working-directory: packages/tokens-dart
+        working-directory: packages/tokens/platforms/flutter
 
       # ── Validate → Build → Publish ────────────────────────────────────────
       - name: Validate tokens (JS)
@@ -71,9 +71,9 @@ jobs:
 
       - name: Flutter analyze
         run: flutter analyze --no-fatal-infos
-        working-directory: packages/tokens-dart
+        working-directory: packages/tokens/platforms/flutter
 
-      - name: Publish @ramaMS06/tokens-web
-        run: pnpm --filter @ramaMS06/tokens-web publish --no-git-checks
+      - name: Publish @btech/tokens
+        run: pnpm --filter @btech/tokens publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

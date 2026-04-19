@@ -1,9 +1,0 @@
-name: btech_design_system
-publish_to: none
-description: Root workspace pubspec — required by Melos 3.0+ for local installation.
-
-environment:
-  sdk: '>=3.0.0 <4.0.0'
-
-dev_dependencies:
-  melos: ^6.0.0

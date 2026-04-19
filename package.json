@@ -1,5 +1,5 @@
 {
-  "name": "@ramaMS06/design-tokens",
+  "name": "@btech/design-system",
   "version": "0.0.1",
   "private": true,
   "packageManager": "pnpm@9.15.9",
@@ -7,7 +7,7 @@
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
     "tokens:watch": "node scripts/watch-tokens.mjs",
-    "generate": "pnpm exec tsx config/sd.config.ts && pnpm --filter @ramaMS06/tokens-web build",
+    "generate": "pnpm exec tsx packages/tokens/sd.config.ts && pnpm --filter @btech/tokens build",
     "build": "pnpm generate && turbo run build",
     "validate": "pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts",
     "add-tenant": "pnpm exec tsx scripts/add-tenant.ts",
@@ -15,12 +15,12 @@
     "flutter:get": "melos run get",
     "flutter:analyze": "melos run analyze",
     "flutter:test": "melos run test",
-    "sync-dart-version": "pnpm exec tsx scripts/sync-dart-version.ts",
+    "sync-flutter-version": "pnpm exec tsx scripts/sync-flutter-version.ts",
     "bump": "pnpm exec tsx scripts/bump-version.ts",
     "bump:minor": "pnpm exec tsx scripts/bump-version.ts minor",
     "bump:major": "pnpm exec tsx scripts/bump-version.ts major",
     "changeset": "changeset",
-    "version": "changeset version && pnpm sync-dart-version",
+    "version": "changeset version && pnpm sync-flutter-version",
     "release": "turbo run build && changeset publish"
   },
   "devDependencies": {

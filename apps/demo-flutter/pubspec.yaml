@@ -11,7 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   btech_tokens:
-    path: ../../packages/tokens-dart
+    path: ../../packages/tokens/platforms/flutter
 
 dev_dependencies:
   flutter_test:

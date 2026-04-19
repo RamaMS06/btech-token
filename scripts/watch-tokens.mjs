@@ -2,7 +2,7 @@
 /**
  * watch-tokens.mjs
  *
- * Watches tokens/ and config/sd.config.ts.
+ * Watches tokens/ and packages/tokens/sd.config.ts.
  * Re-runs the token generator whenever a file changes.
  *
  * Usage:  pnpm tokens:watch
@@ -16,8 +16,8 @@ import { spawn } from 'child_process';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const WATCH_DIRS = [
-  resolve(ROOT, 'tokens'),
-  resolve(ROOT, 'config', 'sd.config.ts'),
+  resolve(ROOT, 'packages/tokens/sources'),
+  resolve(ROOT, 'packages/tokens/sd.config.ts'),
 ];
 
 let debounceTimer = null;
@@ -31,7 +31,7 @@ function generate(changedFile) {
   console.log(`\n📁  Changed: ${rel}`);
   console.log('🔄  Regenerating packages...\n');
 
-  const proc = spawn('pnpm', ['exec', 'tsx', 'config/sd.config.ts'], {
+  const proc = spawn('pnpm', ['exec', 'tsx', 'packages/tokens/sd.config.ts'], {
     cwd: ROOT,
     stdio: 'inherit',
     shell: true,
@@ -60,5 +60,5 @@ for (const target of WATCH_DIRS) {
   });
 }
 
-console.log('👀  Watching tokens/ and config/sd.config.ts...');
+console.log('👀  Watching tokens/ and packages/tokens/sd.config.ts...');
 console.log('    Edit any file in tokens/ to trigger generation.\n');

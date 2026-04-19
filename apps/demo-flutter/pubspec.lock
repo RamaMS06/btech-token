@@ -20,7 +20,7 @@ packages:
   btech_tokens:
     dependency: "direct main"
     description:
-      path: "../../packages/tokens-dart"
+      path: "../../packages/tokens/platforms/flutter"
       relative: true
     source: path
     version: "1.0.1"

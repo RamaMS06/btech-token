@@ -2,8 +2,8 @@ name: Auto Version & Publish
 
 # Triggers when a PR is merged into main.
 # Reads PR labels to determine semver bump type, then:
-#   1. Bumps version in packages/tokens-web/package.json
-#   2. Syncs version to packages/tokens-dart/pubspec.yaml (mirror versioning)
+#   1. Bumps version in packages/tokens/platforms/web/package.json
+#   2. Syncs version to packages/tokens/platforms/flutter/pubspec.yaml (mirror versioning)
 #   3. Commits version bump back to main
 #   4. Creates and pushes a v* tag (triggers publish.yml)
 #
@@ -48,7 +48,7 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@ramaMS06'
+          scope: '@btech'
 
       - name: Install JS dependencies
         run: pnpm install --frozen-lockfile
@@ -63,7 +63,7 @@ jobs:
 
       - name: Flutter pub get
         run: flutter pub get
-        working-directory: packages/tokens-dart
+        working-directory: packages/tokens/platforms/flutter
 
       # ── Determine bump type from PR labels ───────────────────────────────
       - name: Determine bump type
@@ -92,7 +92,7 @@ jobs:
       - name: Read new version
         id: new_version
         run: |
-          VERSION=$(node -p "require('./packages/tokens-web/package.json').version")
+          VERSION=$(node -p "require('./packages/tokens/platforms/web/package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
           echo "New version: $VERSION"
@@ -102,13 +102,13 @@ jobs:
         run: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
 
       # ── Build all packages ───────────────────────────────────────────────
-      - name: Build @ramaMS06/tokens-web
+      - name: Build @btech/tokens
         run: pnpm build
 
       # ── Flutter analyze ──────────────────────────────────────────────────
       - name: Flutter analyze
         run: flutter analyze --no-fatal-infos
-        working-directory: packages/tokens-dart
+        working-directory: packages/tokens/platforms/flutter
 
       # ── Commit version bump back to main ─────────────────────────────────
       - name: Configure git
@@ -118,14 +118,14 @@ jobs:
 
       - name: Commit version bump
         run: |
-          git add packages/tokens-web/package.json packages/tokens-dart/pubspec.yaml
+          git add packages/tokens/platforms/web/package.json packages/tokens/platforms/flutter/pubspec.yaml
           git commit -m "chore(release): bump to v${{ steps.new_version.outputs.version }} [skip ci]
 
           Auto-bumped by auto-version.yml after merging PR #${{ github.event.pull_request.number }}:
           '${{ github.event.pull_request.title }}'
 
           Bump type: ${{ steps.bump_type.outputs.type }}
-          @ramaMS06/tokens-web@${{ steps.new_version.outputs.version }}
+          @btech/tokens@${{ steps.new_version.outputs.version }}
           btech_tokens ${{ steps.new_version.outputs.version }}"
 
       # ── Tag the release ───────────────────────────────────────────────────
@@ -135,8 +135,8 @@ jobs:
           git push origin main --follow-tags
 
       # ── Publish to GitHub Packages ────────────────────────────────────────
-      - name: Publish @ramaMS06/tokens-web to GitHub Packages
-        run: pnpm --filter @ramaMS06/tokens-web publish --no-git-checks
+      - name: Publish @btech/tokens to GitHub Packages
+        run: pnpm --filter @btech/tokens publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -147,7 +147,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Package | Version |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| \`@ramaMS06/tokens-web\` | \`${{ steps.new_version.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| \`@btech/tokens\` | \`${{ steps.new_version.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| \`btech_tokens\` | \`${{ steps.new_version.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**PR:** #${{ github.event.pull_request.number }} — ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY

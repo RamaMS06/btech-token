@@ -4,11 +4,11 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['@ramaMS06/tokens-web'],
+    exclude: ['@btech/tokens'],
   },
   server: {
     watch: {
-      ignored: ['!**/packages/tokens-web/**'],
+      ignored: ['!**/packages/tokens/platforms/web/**'],
     },
   },
 });

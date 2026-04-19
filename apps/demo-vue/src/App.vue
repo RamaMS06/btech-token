@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import '@ramaMS06/tokens-web/styles.css';
-import { token, activateTenant, type TokenPath } from '@ramaMS06/tokens-web';
+import '@btech/tokens/styles.css';
+import '@btech/tokens/utilities.css';
+import { token, activateTenant, type TokenPath } from '@btech/tokens';
 import { ref, onMounted } from 'vue';
 
 // ── Tenant switching ──────────────────────────────────────────────────────────
@@ -116,8 +117,8 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
     <!-- ── Header ── -->
     <header class="header">
       <h1>token() · Full Token Showcase · Vue</h1>
-      <p class="text-muted">Every style below is applied via <code>token('path')</code> — type-safe, zero magic strings
-      </p>
+      <span class="text-muted">Every style below is applied via <code>token('path')</code> — type-safe, zero magic strings
+      </span>
       <div class="switcher">
         <span class="label-muted">Tenant:</span>
         <button v-for="t in tenants" :key="t.id" class="switcher-btn" :class="{ active: activeTenant === t.id }"
@@ -256,6 +257,65 @@ function collapse(e: MouseEvent) { (e.currentTarget as HTMLElement).style.transf
           <code>token('{{ m.path }}')</code>
           <span class="label-muted"> — {{ m.key }}</span>
         </div>
+      </div>
+    </section>
+
+    <!-- ── Utility Classes ── -->
+    <section class="section">
+      <h2 class="section-title">Utility Classes · HTML className usage</h2>
+
+      <!-- Spacing -->
+      <p class="util-label">Spacing — <code>mt-md</code>, <code>px-lg</code>, <code>gap-sm</code></p>
+      <div class="util-row">
+        <div class="util-box bg-primary text-on-primary mt-xs">mt-xs</div>
+        <div class="util-box bg-primary text-on-primary mt-sm">mt-sm</div>
+        <div class="util-box bg-primary text-on-primary mt-md">mt-md</div>
+        <div class="util-box bg-primary text-on-primary mt-lg">mt-lg</div>
+      </div>
+      <div class="util-row gap-md" style="margin-top: 8px">
+        <div class="util-box bg-secondary px-sm">px-sm</div>
+        <div class="util-box bg-secondary px-md">px-md</div>
+        <div class="util-box bg-secondary px-lg">px-lg</div>
+      </div>
+
+      <!-- Background -->
+      <p class="util-label" style="margin-top: 16px">Background — <code>bg-primary</code>, <code>bg-danger-subtle</code></p>
+      <div class="util-row gap-sm">
+        <div class="util-box bg-primary text-on-primary rounded-interactive">bg-primary</div>
+        <div class="util-box bg-danger text-on-danger rounded-interactive">bg-danger</div>
+        <div class="util-box bg-success text-on-primary rounded-interactive">bg-success</div>
+        <div class="util-box bg-warning text-neutral rounded-interactive">bg-warning</div>
+        <div class="util-box bg-danger-subtle text-danger rounded-interactive">bg-danger-subtle</div>
+        <div class="util-box bg-surface rounded-interactive border-neutral" style="border:1px solid">bg-surface</div>
+      </div>
+
+      <!-- Typography -->
+      <p class="util-label" style="margin-top: 16px">Typography — <code>text-xs</code>, <code>font-bold</code></p>
+      <div class="util-col">
+        <span class="text-xs text-neutral-subtle">text-xs · The quick brown fox</span>
+        <span class="text-sm text-neutral">text-sm · The quick brown fox</span>
+        <span class="text-base text-neutral font-normal">text-base font-normal</span>
+        <span class="text-lg text-neutral font-semibold">text-lg font-semibold</span>
+        <span class="text-xl text-neutral font-bold">text-xl font-bold</span>
+      </div>
+
+      <!-- Border -->
+      <p class="util-label" style="margin-top: 16px">Border — <code>border-neutral</code>, <code>border-primary</code></p>
+      <div class="util-row gap-sm">
+        <div class="util-box rounded-md border-neutral text-neutral-subtle" style="border: 1.5px solid">border-neutral</div>
+        <div class="util-box rounded-md border-primary text-neutral" style="border: 1.5px solid">border-primary</div>
+        <div class="util-box rounded-md border-danger text-danger" style="border: 1.5px solid">border-danger</div>
+      </div>
+
+      <!-- Radius -->
+      <p class="util-label" style="margin-top: 16px">Radius — <code>rounded-sm</code>, <code>rounded-interactive</code>, <code>rounded-full</code></p>
+      <div class="util-row gap-sm">
+        <div class="util-box bg-primary text-on-primary rounded-none">rounded-none</div>
+        <div class="util-box bg-primary text-on-primary rounded-sm">rounded-sm</div>
+        <div class="util-box bg-primary text-on-primary rounded-md">rounded-md</div>
+        <div class="util-box bg-primary text-on-primary rounded-interactive">rounded-interactive</div>
+        <div class="util-box bg-primary text-on-primary rounded-card">rounded-card</div>
+        <div class="util-box bg-primary text-on-primary rounded-full">rounded-full</div>
       </div>
     </section>
 
@@ -411,7 +471,7 @@ code {
 }
 
 .text-muted {
-  color: var(--btech-color-blue-200);
+  color: var(--btech-color-blue-300);
 }
 
 .label-muted {
@@ -458,6 +518,35 @@ code {
   transform-origin: left;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+/* Utility class demo helpers */
+.util-label {
+  font-size: var(--btech-font-size-xs);
+  font-weight: var(--btech-font-weight-semibold);
+  color: var(--btech-text-neutral-subtle);
+  margin-bottom: 4px;
+}
+
+.util-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.util-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--btech-space-xs);
+}
+
+.util-box {
+  min-width: 80px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* Footer */

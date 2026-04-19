@@ -7,7 +7,7 @@
     "dev": "vite --port 5177"
   },
   "dependencies": {
-    "@ramaMS06/tokens-web": "file:../../packages/tokens-web",
+    "@btech/tokens": "workspace:*",
     "vue": "^3.4.0"
   },
   "devDependencies": {

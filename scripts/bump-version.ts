@@ -1,8 +1,8 @@
 /**
  * bump-version.ts
  *
- * Bumps the version in packages/tokens-web/package.json, then syncs
- * packages/tokens-dart/pubspec.yaml to the same version (mirror versioning).
+ * Bumps the version in packages/tokens/platforms/web/package.json, then syncs
+ * packages/tokens/platforms/flutter/pubspec.yaml to the same version (mirror versioning).
  *
  * Usage:
  *   pnpm bump patch     ← default, e.g. 1.0.1 → 1.0.2
@@ -29,7 +29,7 @@ if (!['patch', 'minor', 'major'].includes(bumpType)) {
 }
 
 // ── Read current version from tokens-web ──────────────────────────────────
-const webPkgPath = resolve(ROOT, 'packages/tokens-web/package.json');
+const webPkgPath = resolve(ROOT, 'packages/tokens/platforms/web/package.json');
 const webPkg = JSON.parse(readFileSync(webPkgPath, 'utf8'));
 const currentVersion: string = webPkg.version;
 
@@ -49,10 +49,10 @@ else newVersion = `${major}.${minor}.${patch + 1}`;
 // ── Write tokens-web/package.json ────────────────────────────────────────
 webPkg.version = newVersion;
 writeFileSync(webPkgPath, JSON.stringify(webPkg, null, 2) + '\n', 'utf8');
-console.log(`✅  @ramaMS06/tokens-web  ${currentVersion} → ${newVersion}`);
+console.log(`✅  @btech/tokens  ${currentVersion} → ${newVersion}`);
 
 // ── Write tokens-dart/pubspec.yaml (mirror versioning) ───────────────────
-const pubspecPath = resolve(ROOT, 'packages/tokens-dart/pubspec.yaml');
+const pubspecPath = resolve(ROOT, 'packages/tokens/platforms/flutter/pubspec.yaml');
 const pubspec = readFileSync(pubspecPath, 'utf8');
 const updatedPubspec = pubspec.replace(/^version:\s*.+$/m, `version: ${newVersion}`);
 

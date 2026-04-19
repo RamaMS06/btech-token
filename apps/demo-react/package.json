@@ -7,7 +7,7 @@
     "dev": "vite --port 5176"
   },
   "dependencies": {
-    "@ramaMS06/tokens-web": "file:../../packages/tokens-web",
+    "@btech/tokens": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

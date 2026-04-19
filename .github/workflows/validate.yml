@@ -44,24 +44,24 @@ jobs:
       # Re-run the generator directly (bypasses Turbo cache) so the sync check
       # always compares committed files against a fresh generation from tokens/.
       - name: Run token generator
-        run: pnpm exec tsx config/sd.config.ts
+        run: pnpm exec tsx packages/tokens/sd.config.ts
 
-      - name: Build tokens-web
-        run: pnpm --filter @ramaMS06/tokens-web build
+      - name: Build @btech/tokens
+        run: pnpm --filter @btech/tokens build
 
       - name: Check generated files are in sync with tokens/
         run: |
           CHANGED=$(git diff --name-only \
-            packages/tokens-dart/lib/btech_tokens.dart \
-            packages/tokens-dart/lib/src/color/ \
-            packages/tokens-dart/lib/src/spacing/ \
-            packages/tokens-dart/lib/src/radius/ \
-            packages/tokens-dart/lib/src/typography/ \
-            packages/tokens-dart/lib/src/tenant.dart \
-            packages/tokens-web/src/color/ \
-            packages/tokens-web/src/spacing/ \
-            packages/tokens-web/src/radius/ \
-            packages/tokens-web/src/typography/)
+            packages/tokens/platforms/flutter/lib/btech_tokens.dart \
+            packages/tokens/platforms/flutter/lib/src/color/ \
+            packages/tokens/platforms/flutter/lib/src/spacing/ \
+            packages/tokens/platforms/flutter/lib/src/radius/ \
+            packages/tokens/platforms/flutter/lib/src/typography/ \
+            packages/tokens/platforms/flutter/lib/src/tenant.dart \
+            packages/tokens/platforms/web/src/color/ \
+            packages/tokens/platforms/web/src/spacing/ \
+            packages/tokens/platforms/web/src/radius/ \
+            packages/tokens/platforms/web/src/typography/)
 
           if [ -n "$CHANGED" ]; then
             echo ""
@@ -81,13 +81,13 @@ jobs:
         run: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
 
       # ── Flutter: packages/tokens-dart ────────────────────────────────────
-      - name: Flutter pub get (tokens-dart)
+      - name: Flutter pub get (tokens-flutter)
         run: flutter pub get
-        working-directory: packages/tokens-dart
+        working-directory: packages/tokens/platforms/flutter
 
-      - name: Flutter analyze (tokens-dart)
+      - name: Flutter analyze (tokens-flutter)
         run: flutter analyze --no-fatal-infos
-        working-directory: packages/tokens-dart
+        working-directory: packages/tokens/platforms/flutter
 
       # ── Flutter: apps/demo-flutter ────────────────────────────────────────
       - name: Flutter pub get (demo-flutter)
