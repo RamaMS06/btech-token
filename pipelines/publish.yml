@@ -1,0 +1,78 @@
+name: Publish Packages (Manual / Emergency)
+
+# This pipeline is the MANUAL / EMERGENCY release path.
+# Normal releases are handled automatically by auto-version pipeline on PR merge.
+#
+# Use this pipeline when you need to:
+#   - Re-publish a version that failed mid-publish
+#   - Publish a hotfix tag manually
+#   - Release without going through a PR
+#
+# Trigger: push a v* tag manually
+#   git tag v1.2.3 -m "hotfix"
+#   git push origin v1.2.3
+
+trigger:
+  tags:
+    include:
+      - v*
+  branches:
+    exclude:
+      - '*'   # tags only — no branch push triggers
+
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: publish
+    displayName: 'Build & Publish to Azure Artifacts'
+    # Skip if the tag was pushed by the auto-version pipeline (it already published inline).
+    condition: ne(variables['Build.RequestedFor'], 'Azure Pipelines')
+
+    steps:
+      # ── Node / pnpm ───────────────────────────────────────────────────────
+      - task: NodeTool@0
+        displayName: 'Setup Node.js 20'
+        inputs:
+          versionSpec: '20.x'
+
+      - script: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+        displayName: 'Setup pnpm 9'
+
+      - task: npmAuthenticate@0
+        displayName: 'Authenticate with Azure Artifacts'
+        inputs:
+          workingFile: .npmrc
+
+      - script: pnpm install --frozen-lockfile
+        displayName: 'Install JS dependencies'
+
+      # ── Flutter ───────────────────────────────────────────────────────────
+      - script: |
+          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
+          echo "##vso[task.prependpath]$HOME/flutter/bin"
+        displayName: 'Setup Flutter (stable)'
+
+      - script: flutter pub get
+        displayName: 'Flutter pub get'
+        workingDirectory: packages/tokens/platforms/flutter
+
+      # ── Validate → Build → Publish ────────────────────────────────────────
+      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
+        displayName: 'Validate tokens (JS)'
+
+      - script: pnpm build
+        displayName: 'Build all packages'
+
+      - script: flutter analyze --no-fatal-infos
+        displayName: 'Flutter analyze'
+        workingDirectory: packages/tokens/platforms/flutter
+
+      - script: pnpm --filter @btech/tokens publish --no-git-checks
+        displayName: 'Publish @btech/tokens'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)

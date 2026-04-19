@@ -1,0 +1,167 @@
+name: Auto Version & Publish
+
+# Triggers when a PR is merged into main.
+# Reads PR tags to determine semver bump type, then:
+#   1. Bumps version in packages/tokens/platforms/web/package.json
+#   2. Syncs version to packages/tokens/platforms/flutter/pubspec.yaml (mirror versioning)
+#   3. Commits version bump back to main (***NO_CI*** to skip re-triggering)
+#   4. Creates and pushes a v* tag (triggers publish pipeline)
+#
+# PR Tag → Bump type:
+#   release:major  → X+1.0.0
+#   release:minor  → X.Y+1.0
+#   release:patch  → X.Y.Z+1  (default — no tag needed)
+#   no-release     → skip entirely (docs, chore, etc.)
+
+trigger: none   # triggered by PR completion only
+
+pr: none
+
+# This pipeline is triggered via a service hook on PR merge.
+# Set up: Project Settings → Service Hooks → Web Hooks → Pull request merged
+# Or trigger manually via az pipelines run.
+
+pool:
+  vmImage: ubuntu-latest
+
+# Variable group "btech-ds-secrets" must be created in Azure DevOps:
+#   Project Settings → Pipelines → Library → + Variable group
+#   Add: AZURE_DEVOPS_EXT_PAT (personal access token with Code + Packaging write)
+variables:
+  - group: btech-ds-secrets
+  - name: BUMP_TYPE
+    value: patch   # overridden by determine-bump step
+
+jobs:
+  - job: auto_version
+    displayName: 'Bump version & publish'
+
+    steps:
+      - checkout: self
+        persistCredentials: true
+        fetchDepth: 0
+
+      # ── Node / pnpm ──────────────────────────────────────────────────────
+      - task: NodeTool@0
+        displayName: 'Setup Node.js 20'
+        inputs:
+          versionSpec: '20.x'
+
+      - script: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+        displayName: 'Setup pnpm 9'
+
+      - task: npmAuthenticate@0
+        displayName: 'Authenticate with Azure Artifacts'
+        inputs:
+          workingFile: .npmrc
+
+      - script: pnpm install --frozen-lockfile
+        displayName: 'Install JS dependencies'
+
+      # ── Flutter ──────────────────────────────────────────────────────────
+      - script: |
+          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
+          echo "##vso[task.prependpath]$HOME/flutter/bin"
+        displayName: 'Setup Flutter (stable)'
+
+      - script: flutter pub get
+        displayName: 'Flutter pub get'
+        workingDirectory: packages/tokens/platforms/flutter
+
+      # ── Determine bump type from PR tags ─────────────────────────────────
+      # Set PR_TAGS as pipeline variable before running, or pass via API.
+      # Format: comma-separated list of tag names, e.g. "release:major,bug-fix"
+      - script: |
+          TAGS="${PR_TAGS:-}"
+          echo "PR tags: $TAGS"
+
+          if echo "$TAGS" | grep -q "no-release"; then
+            echo "Tag 'no-release' found — skipping release."
+            echo "##vso[task.setvariable variable=SKIP_RELEASE]true"
+            exit 0
+          fi
+
+          if echo "$TAGS" | grep -q "release:major"; then
+            BUMP=major
+          elif echo "$TAGS" | grep -q "release:minor"; then
+            BUMP=minor
+          else
+            BUMP=patch
+          fi
+
+          echo "Bump type: $BUMP"
+          echo "##vso[task.setvariable variable=BUMP_TYPE]$BUMP"
+        displayName: 'Determine bump type from PR tags'
+        env:
+          PR_TAGS: $(PR_TAGS)   # pass from trigger payload or variable group
+
+      # ── Bump version ─────────────────────────────────────────────────────
+      - script: pnpm exec tsx scripts/bump-version.ts $(BUMP_TYPE)
+        displayName: 'Bump package versions'
+        condition: ne(variables['SKIP_RELEASE'], 'true')
+
+      # ── Read new version ─────────────────────────────────────────────────
+      - script: |
+          VERSION=$(node -p "require('./packages/tokens/platforms/web/package.json').version")
+          echo "New version: $VERSION"
+          echo "##vso[task.setvariable variable=NEW_VERSION]$VERSION"
+          echo "##vso[task.setvariable variable=NEW_TAG]v$VERSION"
+        displayName: 'Read new version'
+        condition: ne(variables['SKIP_RELEASE'], 'true')
+
+      # ── Validate tokens ──────────────────────────────────────────────────
+      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
+        displayName: 'Validate tokens (contrast + boundary)'
+        condition: ne(variables['SKIP_RELEASE'], 'true')
+
+      # ── Build all packages ───────────────────────────────────────────────
+      - script: pnpm build
+        displayName: 'Build @btech/tokens'
+        condition: ne(variables['SKIP_RELEASE'], 'true')
+
+      # ── Flutter analyze ──────────────────────────────────────────────────
+      - script: flutter analyze --no-fatal-infos
+        displayName: 'Flutter analyze'
+        workingDirectory: packages/tokens/platforms/flutter
+        condition: ne(variables['SKIP_RELEASE'], 'true')
+
+      # ── Commit version bump back to main ─────────────────────────────────
+      - script: |
+          git config user.name "Azure Pipelines"
+          git config user.email "azure-pipelines@users.noreply.azure.com"
+
+          git add \
+            packages/tokens/platforms/web/package.json \
+            packages/tokens/platforms/flutter/pubspec.yaml
+
+          git commit -m "chore(release): bump to $(NEW_TAG) ***NO_CI***
+
+          Auto-bumped by Azure Pipelines after merging PR.
+          Bump type: $(BUMP_TYPE)
+          @btech/tokens@$(NEW_VERSION)
+          btech_tokens $(NEW_VERSION)"
+
+          git tag $(NEW_TAG) -m "Release $(NEW_TAG)"
+          git push origin HEAD:main --follow-tags
+        displayName: 'Commit version bump & push tag'
+        condition: ne(variables['SKIP_RELEASE'], 'true')
+        env:
+          AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+
+      # ── Publish to Azure Artifacts ────────────────────────────────────────
+      - script: pnpm --filter @btech/tokens publish --no-git-checks
+        displayName: 'Publish @btech/tokens to Azure Artifacts'
+        condition: ne(variables['SKIP_RELEASE'], 'true')
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
+
+      # ── Summary ───────────────────────────────────────────────────────────
+      - script: |
+          echo "##[section]Released $(NEW_TAG)"
+          echo "  @btech/tokens: $(NEW_VERSION)"
+          echo "  btech_tokens:  $(NEW_VERSION)"
+          echo "  Bump type:     $(BUMP_TYPE)"
+        displayName: 'Release summary'
+        condition: ne(variables['SKIP_RELEASE'], 'true')

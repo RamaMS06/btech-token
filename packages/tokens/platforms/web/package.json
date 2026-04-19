@@ -23,6 +23,6 @@
     "typescript": "^5.4.5"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry": "https://pkgs.dev.azure.com/buma/_packaging/btech/npm/registry/"
   }
 }
