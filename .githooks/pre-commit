@@ -2,57 +2,102 @@
 # pre-commit — auto-generate token outputs when sources change
 #
 # Triggers when any staged file matches:
-#   packages/tokens/sources/**   — token source JSON
-#   packages/tokens/sd.config.ts — generator config
+#   packages/tokens/sources/core/**      — base token JSON
+#   packages/tokens/sources/semantic/**  — semantic token JSON
+#   packages/tokens/sd.config.ts         — generator config
+#   packages/tokens/sources/tenants/**   — tenant overrides (runs tenant mode)
 #
-# On match:
-#   1. Runs the token generator
-#   2. Builds @btech/tokens (web)
-#   3. Stages all generated output files
-#   4. Continues the commit (includes generated files automatically)
+# Base mode  (no --tenant): regenerates all platform outputs
+# Tenant mode (--tenant id): regenerates only that tenant's packages
 
 set -e
 
 STAGED=$(git diff --cached --name-only)
 
-SOURCES_CHANGED=$(echo "$STAGED" | grep -E '^packages/tokens/(sources/|sd\.config\.ts)' || true)
+BASE_CHANGED=$(echo "$STAGED" | grep -E '^packages/tokens/(sources/(core|semantic|components)/|sd\.config\.ts)' || true)
+TENANT_CHANGED=$(echo "$STAGED" | grep -E '^packages/tokens/sources/tenants/' || true)
 
-if [ -z "$SOURCES_CHANGED" ]; then
-  exit 0  # nothing to generate
+if [ -z "$BASE_CHANGED" ] && [ -z "$TENANT_CHANGED" ]; then
+  exit 0
 fi
 
-echo ""
-echo "🎨  Token sources changed — running generator..."
-echo ""
-echo "$SOURCES_CHANGED" | sed 's/^/   /'
-echo ""
+# ── Tenant mode — one run per changed tenant ─────────────────────────────────
+if [ -n "$TENANT_CHANGED" ]; then
+  TENANT_IDS=$(echo "$TENANT_CHANGED" \
+    | grep -oE 'sources/tenants/[^/]+' \
+    | sed 's|sources/tenants/||' \
+    | sort -u)
 
-if ! pnpm exec tsx packages/tokens/sd.config.ts; then
+  for TENANT_ID in $TENANT_IDS; do
+    echo ""
+    echo "🎨  Tenant overrides changed — running tenant generator for: $TENANT_ID"
+    echo ""
+
+    if ! pnpm exec tsx packages/tokens/sd.config.ts --tenant "$TENANT_ID"; then
+      echo ""
+      echo "❌  Tenant generation failed for $TENANT_ID. Fix errors above and try again."
+      exit 1
+    fi
+
+    # Stage web tenant output (package.json + src only — dist/ is gitignored)
+    git add \
+      "packages/platforms/web/tenants/${TENANT_ID}/package.json" \
+      "packages/platforms/web/tenants/${TENANT_ID}/src/" \
+      2>/dev/null || true
+
+    # Stage flutter tenant output
+    git add \
+      "packages/platforms/flutter/tenants/${TENANT_ID}/pubspec.yaml" \
+      "packages/platforms/flutter/tenants/${TENANT_ID}/lib/" \
+      2>/dev/null || true
+
+    echo ""
+    echo "✅  Tenant packages staged: $TENANT_ID"
+    echo ""
+  done
+fi
+
+# ── Base mode — full regeneration ────────────────────────────────────────────
+if [ -n "$BASE_CHANGED" ]; then
   echo ""
-  echo "❌  Token generation failed. Fix the errors above and try again."
-  exit 1
-fi
-
-if ! pnpm --filter @btech/tokens build; then
+  echo "🎨  Token sources changed — running base generator..."
   echo ""
-  echo "❌  @btech/tokens build failed. Fix the errors above and try again."
-  exit 1
+  echo "$BASE_CHANGED" | sed 's/^/   /'
+  echo ""
+
+  if ! pnpm exec tsx packages/tokens/sd.config.ts; then
+    echo ""
+    echo "❌  Token generation failed. Fix the errors above and try again."
+    exit 1
+  fi
+
+  if ! pnpm --filter @btech/tokens build; then
+    echo ""
+    echo "❌  @btech/tokens build failed. Fix the errors above and try again."
+    exit 1
+  fi
+
+  # Stage Flutter base platform outputs (moved to packages/platforms/flutter/)
+  git add \
+    packages/platforms/flutter/lib/btech_tokens.dart \
+    packages/platforms/flutter/lib/src/color/ \
+    packages/platforms/flutter/lib/src/spacing/ \
+    packages/platforms/flutter/lib/src/radius/ \
+    packages/platforms/flutter/lib/src/typography/ \
+    packages/platforms/flutter/lib/src/tenant.dart \
+    packages/platforms/flutter/lib/src/btech_token.dart \
+    2>/dev/null || true
+
+  # Stage web base platform outputs
+  git add \
+    packages/tokens/platforms/web/src/color/ \
+    packages/tokens/platforms/web/src/spacing/ \
+    packages/tokens/platforms/web/src/radius/ \
+    packages/tokens/platforms/web/src/typography/ \
+    packages/tokens/platforms/web/dist/styles.css \
+    2>/dev/null || true
+
+  echo ""
+  echo "✅  Generated outputs staged and ready to commit."
+  echo ""
 fi
-
-git add \
-  packages/tokens/platforms/flutter/lib/btech_tokens.dart \
-  packages/tokens/platforms/flutter/lib/src/color/ \
-  packages/tokens/platforms/flutter/lib/src/spacing/ \
-  packages/tokens/platforms/flutter/lib/src/radius/ \
-  packages/tokens/platforms/flutter/lib/src/typography/ \
-  packages/tokens/platforms/flutter/lib/src/tenant.dart \
-  packages/tokens/platforms/web/src/color/ \
-  packages/tokens/platforms/web/src/spacing/ \
-  packages/tokens/platforms/web/src/radius/ \
-  packages/tokens/platforms/web/src/typography/ \
-  packages/tokens/platforms/web/dist/styles.css \
-  2>/dev/null || true
-
-echo ""
-echo "✅  Generated outputs staged and ready to commit."
-echo ""

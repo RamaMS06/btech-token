@@ -89,9 +89,9 @@ export function generateTenantIsolatedCss(
   // Write to packages/tenants/{id}/dist/styles.css
   // ROOT = packages/tokens/, so resolve up two levels to reach monorepo root
   const MONOREPO_ROOT = resolve(ROOT, '../..');
-  const outDir = resolve(MONOREPO_ROOT, 'packages', 'tenants', tenantId, 'dist');
+  const outDir = resolve(MONOREPO_ROOT, 'packages', 'platforms', 'web', 'tenants', tenantId, 'dist');
   mkdirSync(outDir, { recursive: true });
 
   writeFileSync(resolve(outDir, 'styles.css'), deduped.join('\n'), 'utf-8');
-  console.log(`  Tenant CSS  — packages/tenants/${tenantId}/dist/styles.css`);
+  console.log(`  Tenant CSS  — packages/platforms/web/tenants/${tenantId}/dist/styles.css`);
 }

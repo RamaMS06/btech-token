@@ -7,6 +7,8 @@ import { ROOT, flattenDTCG, resolveRef, pathToCssVarStem } from './generators/ut
 import { loadTokenData } from './generators/token-loader.js';
 import { generateFlutterFiles } from './generators/flutter/flutter-generator.js';
 import { flutterTenantsFormat } from './generators/flutter/flutter-tenant-format.js';
+import { generateFlutterBaseToken } from './generators/flutter/flutter-base-token.js';
+import { generateFlutterTenantPackage } from './generators/flutter/flutter-tenant-isolated.js';
 import { generateTsFiles } from './generators/web/web-generator.js';
 import { generateTokenTypes } from './generators/web/web-token-types.js';
 import { appendTenantCSS } from './generators/web/web-tenant-css.js';
@@ -65,11 +67,14 @@ StyleDictionary.registerTransformGroup({
 });
 
 // =============================================================================
-// Output paths — ROOT = packages/tokens/
+// Output paths
+//   ROOT         = packages/tokens/
+//   MONOREPO_ROOT = repo root (packages/tokens/ → up 2 levels)
 // =============================================================================
-const FLUTTER_OUT = `${ROOT}/platforms/flutter/lib/src/`;
-const WEB_OUT     = `${ROOT}/platforms/web/dist/`;
-const WEB_SRC     = `${ROOT}/platforms/web/src/`;
+const MONOREPO_ROOT = resolve(ROOT, '../..');
+const FLUTTER_OUT   = `${MONOREPO_ROOT}/packages/platforms/flutter/lib/src/`;
+const WEB_OUT       = `${ROOT}/platforms/web/dist/`;
+const WEB_SRC       = `${ROOT}/platforms/web/src/`;
 
 mkdirSync(FLUTTER_OUT, { recursive: true });
 mkdirSync(WEB_OUT,     { recursive: true });
@@ -99,7 +104,7 @@ const sd = new StyleDictionary({
       }],
     },
 
-    // Flutter tenant constants → platforms/flutter/lib/src/tenant.dart
+    // Flutter tenant constants → packages/platforms/flutter/lib/src/tenant.dart
     flutter: {
       transformGroup: 'css/btech',
       buildPath: FLUTTER_OUT,
@@ -143,20 +148,25 @@ function buildResolvedBaseMap(): Record<string, string> {
 
   if (tenantArg) {
     // =========================================================================
-    // TENANT MODE — only generates packages/tokens-{id}/
-    // Does NOT touch platforms/web/ or platforms/flutter/
+    // TENANT MODE
+    // Web:     packages/platforms/web/tenants/{id}/
+    // Flutter: packages/platforms/flutter/tenants/{id}/
+    // Does NOT touch base platform outputs.
     // =========================================================================
-    console.log(`\n  Tenant mode — generating isolated package for: ${tenantArg}\n`);
+    console.log(`\n  Tenant mode — generating isolated packages for: ${tenantArg}\n`);
 
-    // Only the resolved base map is needed (for merging with tenant overrides)
     const resolvedBaseMap = buildResolvedBaseMap();
 
+    // Web — isolated :root CSS + npm package scaffold
     generateTenantIsolatedCss(tenantArg, resolvedBaseMap);
     ensureTenantPackageJson(tenantArg);
 
-    console.log(`\n  ✅ @btech/tokens-${tenantArg} ready`);
-    console.log(`  Web  → packages/tenants/${tenantArg}/dist/styles.css`);
-    console.log(`  Pkg  → packages/tenants/${tenantArg}/package.json\n`);
+    // Flutter — BtechToken{Id} extends BtechToken + pubspec.yaml
+    generateFlutterTenantPackage(tenantArg, resolvedBaseMap);
+
+    console.log(`\n  ✅ tenant packages ready for: ${tenantArg}`);
+    console.log(`  Web     → packages/platforms/web/tenants/${tenantArg}/dist/styles.css`);
+    console.log(`  Flutter → packages/platforms/flutter/tenants/${tenantArg}/lib/btech_tokens_${tenantArg}.dart\n`);
 
   } else {
     // =========================================================================
@@ -166,10 +176,14 @@ function buildResolvedBaseMap(): Record<string, string> {
     const data = loadTokenData();
     const fontRegistry = loadFontRegistry();
 
-    // Generate multi-file Flutter output
+    // Generate multi-file Flutter output (base package)
     generateFlutterFiles(data);
     generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
-    console.log('  Flutter — multi-file token output generated');
+
+    // Generate BtechToken base class (for tenant extends)
+    const resolvedBaseMapForFlutter = buildResolvedBaseMap();
+    generateFlutterBaseToken(resolvedBaseMapForFlutter);
+    console.log('  Flutter — multi-file token output + BtechToken base class generated');
 
     // Generate multi-file TypeScript output (framework-agnostic, in platforms/web/src/)
     generateTsFiles(data, WEB_SRC);
@@ -202,7 +216,7 @@ function buildResolvedBaseMap(): Record<string, string> {
     appendTenantCSS(resolvedBaseMap);
 
     console.log('\n pnpm generate complete\n');
-    console.log('  Flutter → packages/tokens/platforms/flutter/lib/src/');
+    console.log('  Flutter → packages/platforms/flutter/lib/src/');
     console.log('  Web     → packages/tokens/platforms/web/src/ + dist/');
     console.log('');
   }

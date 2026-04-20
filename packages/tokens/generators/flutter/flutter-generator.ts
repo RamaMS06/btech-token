@@ -1,4 +1,5 @@
 import { mkdirSync, writeFileSync } from 'fs';
+import { resolve } from 'path';
 import { ROOT, hexToArgb, toPascalCase, toYaml } from '../utils.js';
 import type { ResolvedTokenMap, TypeScaleEntry } from '../token-loader.js';
 import { generateDartSemanticColorGroup, generateTokensMeta } from './flutter-color.js';
@@ -28,8 +29,9 @@ function dartGetFont(fam: string, entry: TypeScaleEntry, varName: string): strin
 }
 
 export function generateFlutterFiles(data: ResolvedTokenMap): void {
-  const DART_SRC = `${ROOT}/platforms/flutter/lib/src`;
-  const DART_LIB = `${ROOT}/platforms/flutter/lib`;
+  const MONOREPO_ROOT = resolve(ROOT, '../..');
+  const DART_SRC = `${MONOREPO_ROOT}/packages/platforms/flutter/lib/src`;
+  const DART_LIB = `${MONOREPO_ROOT}/packages/platforms/flutter/lib`;
 
   // ── color/ ─────────────────────────────────────────────────────────────────
   const colorDir = `${DART_SRC}/color`;
