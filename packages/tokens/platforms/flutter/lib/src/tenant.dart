@@ -225,7 +225,7 @@ class BTechTenantTokens {
     colorBackgroundSurface: const Color(0xFFF9FAFB),
     colorBackgroundSurfaceSubtle: const Color(0xFFF3F4F6),
     colorBackgroundSurfaceRaised: const Color(0xFFFFFFFF),
-    colorBackgroundPrimary: const Color(0xFF2563EB),
+    colorBackgroundPrimary: const Color(0xFFDC2626),
     colorBackgroundPrimaryHover: const Color(0xFF1D4ED8),
     colorBackgroundPrimaryPressed: const Color(0xFF14532D),
     colorBackgroundPrimaryDisable: const Color(0xFFE5E7EB),
