@@ -41,5 +41,8 @@ Thumbs.db
 *.swp
 *.swo
 
+# ── Demo apps — local only, not published ─────────────────────────────────────
+apps/
+
 # ── Changesets ────────────────────────────────────────────────────────────────
 .changeset/*.js
