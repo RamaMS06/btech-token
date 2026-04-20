@@ -1,0 +1,61 @@
+{
+  "$description": "Font registry — declares how every font family is sourced across platforms.\n\nsource values:\n  google-fonts  → loaded via the google_fonts Flutter package / Google Fonts CDN on web\n  system        → pre-installed on the target OS (no download needed)\n  asset         → bundled in the app's assets (add to pubspec.yaml / vite config)\n  custom-cdn    → loaded from a non-Google CDN; supply url field\n\nThis file is the single source of truth. The generator reads it and produces:\n  packages/tokens-dart/lib/src/typography/font_registry.dart   (BTechFontRegistry)\n  packages/tokens-web/src/typography/font-registry.ts           (fontRegistry + buildGoogleFontsUrl)\n  packages/tokens-web/dist/styles.css                           (@import prepended automatically)\n\nDo not add raw font-family values here — those live in tokens/core/font.primitive.json.\nThis file only describes loader metadata for fonts already referenced in token files.",
+
+  "fontRegistry": {
+    "Inter": {
+      "$description": "Default sans-serif — all tenants unless overridden.",
+      "source": "google-fonts",
+      "weights": [400, 500, 600, 700],
+      "styles": ["normal", "italic"],
+      "fallback": "system-ui, -apple-system, sans-serif"
+    },
+    "JetBrains Mono": {
+      "$description": "Default monospace — code blocks, token paths.",
+      "source": "google-fonts",
+      "weights": [400, 500, 700],
+      "styles": ["normal", "italic"],
+      "fallback": "Fira Code, Courier New, monospace"
+    },
+    "Roboto": {
+      "$description": "Android system sans-serif — commonly used as a Google Fonts fallback.",
+      "source": "google-fonts",
+      "weights": [400, 500, 700],
+      "styles": ["normal", "italic"],
+      "fallback": "Arial, sans-serif"
+    },
+    "Google Sans": {
+      "$description": "Proprietary Google brand font — pre-installed on Android, not in google_fonts package. Falls back to Roboto on other platforms.",
+      "source": "system",
+      "platform": ["android"],
+      "fallback": "Roboto, sans-serif"
+    },
+    "Poppins": {
+      "$description": "Geometric sans-serif — available for tenant overrides.",
+      "source": "google-fonts",
+      "weights": [400, 500, 600, 700],
+      "styles": ["normal", "italic"],
+      "fallback": "sans-serif"
+    },
+    "Nunito": {
+      "$description": "Rounded sans-serif — available for tenant overrides.",
+      "source": "google-fonts",
+      "weights": [400, 600, 700],
+      "styles": ["normal"],
+      "fallback": "sans-serif"
+    },
+    "Noto Sans": {
+      "$description": "Broad Unicode coverage — use for multi-language tenants.",
+      "source": "google-fonts",
+      "weights": [400, 500, 700],
+      "styles": ["normal"],
+      "fallback": "sans-serif"
+    },
+    "Bitcount Grid Double": {
+      "$description": "Tenant BJB display font — decorative variable font by Underware, available on Google Fonts.",
+      "source": "google-fonts",
+      "weights": [100, 200, 300, 400, 500, 600, 700, 800, 900],
+      "styles": ["normal"],
+      "fallback": "system-ui, sans-serif"
+    }
+  }
+}
