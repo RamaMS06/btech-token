@@ -72,7 +72,7 @@ jobs:
         displayName: 'Flutter analyze'
         workingDirectory: packages/tokens/platforms/flutter
 
+      # npmAuthenticate@0 above already injected System.AccessToken into .npmrc.
+      # No NODE_AUTH_TOKEN variable needed.
       - script: pnpm --filter @btech/tokens publish --no-git-checks
         displayName: 'Publish @btech/tokens'
-        env:
-          NODE_AUTH_TOKEN: $(System.AccessToken)
