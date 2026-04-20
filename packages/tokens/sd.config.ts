@@ -112,47 +112,10 @@ const sd = new StyleDictionary({
 });
 
 // =============================================================================
-// Main
+// Shared helper — builds the fully-resolved base token map from core + semantic
+// sources. Used by both modes; does NOT write any files.
 // =============================================================================
-(async () => {
-  // Load all token data once — shared by all generators
-  const data = loadTokenData();
-
-  // Load font registry — drives font-loading decisions across all platforms
-  const fontRegistry = loadFontRegistry();
-
-  // Generate multi-file Flutter output
-  generateFlutterFiles(data);
-  generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
-  console.log('  Flutter — multi-file token output generated');
-
-  // Generate multi-file TypeScript output (framework-agnostic, in platforms/web/src/)
-  generateTsFiles(data, WEB_SRC);
-  generateWebFontRegistry(`${WEB_SRC}/typography`, fontRegistry);
-  console.log('  Web (shared) — multi-file token output generated');
-
-  // Generate typed token() helper + TokenPath union type
-  generateTokenTypes(WEB_SRC);
-  console.log('  Token types  — token.ts + TokenPath generated');
-
-  // Build Style Dictionary platforms (CSS + tenant.dart)
-  await sd.buildAllPlatforms();
-
-  // Post-build: strip `-default` suffix from CSS variable names & references
-  const cssPath = `${WEB_OUT}styles.css`;
-  const rawCss  = readFileSync(cssPath, 'utf8');
-  const cleanedCss = rawCss
-    .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2')
-    .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2');
-  writeFileSync(cssPath, cleanedCss, 'utf8');
-
-  // Post-build: prepend Google Fonts @import to styles.css
-  prependGoogleFontsCssImport(cssPath, fontRegistry);
-
-  // Generate utility CSS (bg-*, text-*, mt-*, rounded-*, etc.)
-  generateUtilitiesCss(`${WEB_OUT}utilities.css`, data);
-
-  // Post-build: append [data-tenant="*"] overrides to styles.css
+function buildResolvedBaseMap(): Record<string, string> {
   const coreTokenFiles = [
     ...readdirSync(`${ROOT}/sources/core`).map((f: string) => `${ROOT}/sources/core/${f}`),
     ...readdirSync(`${ROOT}/sources/semantic`).map((f: string) => `${ROOT}/sources/semantic/${f}`),
@@ -165,6 +128,13 @@ const sd = new StyleDictionary({
   const resolvedBaseMap: Record<string, string> = {};
   for (const [k, v] of Object.entries(rawBaseMap)) resolvedBaseMap[k] = resolveRef(v, rawBaseMap);
   for (const [k, v] of Object.entries(resolvedBaseMap)) resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
+  return resolvedBaseMap;
+}
+
+// =============================================================================
+// Main
+// =============================================================================
+(async () => {
   // Parse --tenant flag
   const tenantIdx = process.argv.indexOf('--tenant');
   const tenantArg = tenantIdx !== -1
@@ -172,14 +142,65 @@ const sd = new StyleDictionary({
     : process.argv.find(a => a.startsWith('--tenant='))?.split('=')[1];
 
   if (tenantArg) {
-    // Per-tenant mode: generate isolated package for one tenant only
-    console.log(`\n  Generating isolated package for tenant: ${tenantArg}\n`);
+    // =========================================================================
+    // TENANT MODE — only generates packages/tokens-{id}/
+    // Does NOT touch platforms/web/ or platforms/flutter/
+    // =========================================================================
+    console.log(`\n  Tenant mode — generating isolated package for: ${tenantArg}\n`);
+
+    // Only the resolved base map is needed (for merging with tenant overrides)
+    const resolvedBaseMap = buildResolvedBaseMap();
+
     generateTenantIsolatedCss(tenantArg, resolvedBaseMap);
     ensureTenantPackageJson(tenantArg);
-    console.log(`\n  ✅ @btech/tokens-${tenantArg} ready\n`);
+
+    console.log(`\n  ✅ @btech/tokens-${tenantArg} ready`);
+    console.log(`  Web  → packages/tokens-${tenantArg}/dist/styles.css`);
+    console.log(`  Pkg  → packages/tokens-${tenantArg}/package.json\n`);
+
   } else {
-    // Default mode: existing full-generate behavior (unchanged)
+    // =========================================================================
+    // BASE MODE — full generation of shared platform outputs (unchanged)
+    // Does NOT touch packages/tokens-{id}/
+    // =========================================================================
+    const data = loadTokenData();
+    const fontRegistry = loadFontRegistry();
+
+    // Generate multi-file Flutter output
+    generateFlutterFiles(data);
+    generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
+    console.log('  Flutter — multi-file token output generated');
+
+    // Generate multi-file TypeScript output (framework-agnostic, in platforms/web/src/)
+    generateTsFiles(data, WEB_SRC);
+    generateWebFontRegistry(`${WEB_SRC}/typography`, fontRegistry);
+    console.log('  Web (shared) — multi-file token output generated');
+
+    // Generate typed token() helper + TokenPath union type
+    generateTokenTypes(WEB_SRC);
+    console.log('  Token types  — token.ts + TokenPath generated');
+
+    // Build Style Dictionary platforms (CSS + tenant.dart)
+    await sd.buildAllPlatforms();
+
+    // Post-build: strip `-default` suffix from CSS variable names & references
+    const cssPath = `${WEB_OUT}styles.css`;
+    const rawCss  = readFileSync(cssPath, 'utf8');
+    const cleanedCss = rawCss
+      .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2')
+      .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2');
+    writeFileSync(cssPath, cleanedCss, 'utf8');
+
+    // Post-build: prepend Google Fonts @import to styles.css
+    prependGoogleFontsCssImport(cssPath, fontRegistry);
+
+    // Generate utility CSS (bg-*, text-*, mt-*, rounded-*, etc.)
+    generateUtilitiesCss(`${WEB_OUT}utilities.css`, data);
+
+    // Post-build: append [data-tenant="*"] overrides to styles.css
+    const resolvedBaseMap = buildResolvedBaseMap();
     appendTenantCSS(resolvedBaseMap);
+
     console.log('\n pnpm generate complete\n');
     console.log('  Flutter → packages/tokens/platforms/flutter/lib/src/');
     console.log('  Web     → packages/tokens/platforms/web/src/ + dist/');
