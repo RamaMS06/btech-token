@@ -1,0 +1,105 @@
+# sync-tenant.yml
+# Manually triggered by btech team to pull a tenant's overrides.json
+# from their private repo (btech-ds-{id}) and open a PR in btech-ds.
+#
+# Parameters:
+#   tenantId      — slug, e.g. "bspace"
+#   tenantRepoUrl — optional override; defaults to btech-ds-{tenantId} in same project
+
+trigger: none
+
+parameters:
+  - name: tenantId
+    displayName: 'Tenant ID (slug, e.g. bspace)'
+    type: string
+  - name: tenantRepoUrl
+    displayName: 'Tenant repo URL (leave blank to auto-resolve btech-ds-{id})'
+    type: string
+    default: ''
+
+variables:
+  - group: btech-ds-secrets
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    persistCredentials: true
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+    displayName: Setup Node 20
+
+  - task: npmAuthenticate@0
+    inputs:
+      workingFile: .npmrc
+    displayName: Authenticate npm (Azure Artifacts)
+
+  - script: npm install -g pnpm@9 && pnpm install --frozen-lockfile
+    displayName: Install dependencies
+
+  - script: |
+      set -e
+      TENANT_ID="${{ parameters.tenantId }}"
+      TENANT_REPO="${{ parameters.tenantRepoUrl }}"
+
+      if [ -z "$TENANT_REPO" ]; then
+        TENANT_REPO="https://$(System.AccessToken)@dev.azure.com/buma/BUMA%20-%20Bspace%20Design%20System/_git/btech-ds-${TENANT_ID}"
+      fi
+
+      echo "Cloning tenant repo: btech-ds-${TENANT_ID}"
+      git clone "$TENANT_REPO" /tmp/tenant-repo
+
+      OVERRIDE_SRC="/tmp/tenant-repo/overrides.json"
+      if [ ! -f "$OVERRIDE_SRC" ]; then
+        echo "##[error] overrides.json not found in btech-ds-${TENANT_ID}"
+        exit 1
+      fi
+
+      DEST_DIR="packages/tokens/sources/tenants/${TENANT_ID}"
+      mkdir -p "$DEST_DIR"
+      cp "$OVERRIDE_SRC" "$DEST_DIR/overrides.json"
+      echo "Copied overrides.json to $DEST_DIR"
+    displayName: Pull overrides.json from tenant repo
+
+  - script: pnpm exec tsx tools/validators/contrast.ts
+    displayName: Validate contrast (WCAG AA)
+
+  - script: pnpm exec tsx tools/validators/boundary.ts
+    displayName: Validate boundary (allowed overrides only)
+
+  - script: |
+      set -e
+      TENANT_ID="${{ parameters.tenantId }}"
+      BRANCH="sync/tenant-${TENANT_ID}-$(Build.BuildId)"
+
+      git config user.email "pipeline@btech-ds.com"
+      git config user.name "BTech Pipeline"
+      git checkout -b "$BRANCH"
+      git add "packages/tokens/sources/tenants/${TENANT_ID}/"
+      git commit -m "sync: update ${TENANT_ID} overrides from btech-ds-${TENANT_ID} ***NO_CI***"
+      git push origin "$BRANCH"
+    displayName: Push sync branch
+
+  - script: |
+      set -e
+      TENANT_ID="${{ parameters.tenantId }}"
+      BRANCH="sync/tenant-${TENANT_ID}-$(Build.BuildId)"
+      PROJECT="BUMA%20-%20Bspace%20Design%20System"
+      REPO="btech-ds"
+      API="https://dev.azure.com/buma/${PROJECT}/_apis/git/repositories/${REPO}/pullrequests?api-version=7.1"
+
+      curl -s -X POST "$API" \
+        -H "Authorization: Bearer $(System.AccessToken)" \
+        -H "Content-Type: application/json" \
+        -d "{
+          \"title\": \"sync: update ${TENANT_ID} tenant overrides\",
+          \"description\": \"Automated sync from btech-ds-${TENANT_ID}. Review overrides.json before merging.\",
+          \"sourceRefName\": \"refs/heads/${BRANCH}\",
+          \"targetRefName\": \"refs/heads/main\"
+        }"
+      echo ""
+      echo "PR created — btech team should review before merging."
+    displayName: Open PR in btech-ds
