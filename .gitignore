@@ -1,19 +1,25 @@
 # ── Node / pnpm ───────────────────────────────────────────────────────────────
 node_modules/
-apps/**/node_modules/
+.pnpm-store/
 
 # ── Build outputs ─────────────────────────────────────────────────────────────
 dist/
 **/dist/
 .turbo/
 
-# ── TypeScript compiled output (build artefacts only, not source) ─────────────
+# ── TypeScript ────────────────────────────────────────────────────────────────
 packages/**/src/**/*.js
 packages/**/src/**/*.js.map
 packages/**/src/**/*.d.ts
+*.tsbuildinfo
+
+# ── Vite / demo apps dev artifacts ───────────────────────────────────────────
+apps/**/.vite/
+apps/**/coverage/
+apps/**/*.local
 
 # ── Dart / Flutter — libraries (packages/) ────────────────────────────────────
-# pubspec.lock for libraries is intentionally ignored (pub resolves at consumer side)
+# pubspec.lock for libraries is intentionally NOT committed (pub resolves at consumer side)
 packages/**/pubspec.lock
 packages/**/.dart_tool/
 packages/**/build/
@@ -21,29 +27,32 @@ packages/**/.flutter-plugins
 packages/**/.flutter-plugins-dependencies
 
 # ── Dart / Flutter — apps (apps/) ─────────────────────────────────────────────
-# pubspec.lock for apps IS committed (reproducible builds) — do NOT ignore it
+# pubspec.lock for apps IS committed (reproducible builds) — do NOT add it here
 apps/**/.dart_tool/
 apps/**/build/
 apps/**/.flutter-plugins
 apps/**/.flutter-plugins-dependencies
 apps/**/.metadata
 
-# ── Root-level Dart tooling (if any) ──────────────────────────────────────────
+# ── Root-level Dart tooling ────────────────────────────────────────────────────
 .dart_tool/
 build/
 
-# ── Secrets / env ─────────────────────────────────────────────────────────────
-# Root .npmrc may contain GITHUB_TOKEN — never commit
-/.npmrc
+# ── Env / secrets ─────────────────────────────────────────────────────────────
+# .npmrc is committed — it contains only registry config, no secrets.
+# Auth tokens are injected at runtime via ${NODE_AUTH_TOKEN} env var.
 .env
 .env.*
+.env.local
+.env.*.local
 
 # ── OS / editor ───────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/settings.json
+*.swp
+*.swo
 
 # ── Changesets ────────────────────────────────────────────────────────────────
-# Keep .changeset/*.md (changelog entries) but ignore compiled js if any
 .changeset/*.js
