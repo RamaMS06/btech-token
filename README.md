@@ -1,29 +1,147 @@
-# BTech Design Tokens
+# BTech Design System
 
 Multi-platform, multi-tenant design tokens for Web and Flutter. One source under
-`tokens/` compiles into three outputs:
+`packages/tokens/sources/` compiles into platform outputs:
 
-- `@btech/tokens` — TypeScript API + CSS variables (GitHub Packages)
-- `btech_tokens`          — Dart/Flutter API + tenant themes
-- `dist/styles.css`       — CSS variables with per-tenant overrides
+| Package | Platform | Registry |
+|---|---|---|
+| `@btech/tokens` | Web — TypeScript API + CSS variables | Azure Artifacts `btech` |
+| `btech_tokens` | Flutter — Dart API + tenant themes | pub.dev (path dep in dev) |
+
+---
+
+## Setup — Azure Artifacts Authentication
+
+`@btech/tokens` is published to the **btech** Azure Artifacts feed.
+Follow the steps for your OS — same pattern as `buma-dev`.
+
+---
+
+### macOS / Linux
+
+**Step 1 — Generate a Personal Access Token**
+
+1. Go to: **https://buma.visualstudio.com/_usersSettings/tokens**
+2. Click **+ New Token**
+3. Set:
+   - Name: `btech-npm` (or anything descriptive)
+   - Organization: `buma`
+   - Expiration: 1 year (recommended)
+   - Scopes: **Packaging → Read & Write**
+4. Click **Create** and copy the token
+
+**Step 2 — Base64-encode your PAT**
+
+Open Terminal and run:
+
+```bash
+node -e "require('readline').createInterface({input:process.stdin,output:process.stdout,historySize:0}).question('PAT> ',p=>{console.log(Buffer.from(p.trim()).toString('base64'));process.exit();})"
+```
+
+Paste your PAT when prompted → copy the base64 output.
+
+**Step 3 — Add credentials to your global `~/.npmrc`**
+
+```bash
+code ~/.npmrc
+```
+
+Add the following block (replace `<base64-pat>` with your encoded token):
+
+```ini
+; begin auth token — btech feed
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:username=buma
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:_password=<base64-pat>
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:email=npm requires email to be set but doesn't use the value
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/:username=buma
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/:_password=<base64-pat>
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/:email=npm requires email to be set but doesn't use the value
+; end auth token
+```
+
+**Step 4 — Verify**
+
+```bash
+npm view @btech/tokens --registry https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/
+```
+
+---
+
+### Windows
+
+**Step 1 — Generate a Personal Access Token**
+
+1. Go to: **https://buma.visualstudio.com/_usersSettings/tokens**
+2. Click **+ New Token**
+3. Set:
+   - Name: `btech-npm`
+   - Organization: `buma`
+   - Expiration: 1 year
+   - Scopes: **Packaging → Read & Write**
+4. Click **Create** and copy the token
+
+**Step 2 — Base64-encode your PAT**
+
+Open **Command Prompt** or **PowerShell** and run:
+
+```powershell
+node -e "require('readline').createInterface({input:process.stdin,output:process.stdout,historySize:0}).question('PAT> ',p=>{console.log(Buffer.from(p.trim()).toString('base64'));process.exit();})"
+```
+
+Paste your PAT when prompted → copy the base64 output.
+
+**Step 3 — Add credentials to your global `.npmrc`**
+
+Open your global `.npmrc` file:
+
+```powershell
+# PowerShell
+code $env:USERPROFILE\.npmrc
+
+# Or Command Prompt
+code %USERPROFILE%\.npmrc
+```
+
+Add the following block (replace `<base64-pat>` with your encoded token):
+
+```ini
+; begin auth token — btech feed
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:username=buma
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:_password=<base64-pat>
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:email=npm requires email to be set but doesn't use the value
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/:username=buma
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/:_password=<base64-pat>
+//buma.pkgs.visualstudio.com/_packaging/btech/npm/:email=npm requires email to be set but doesn't use the value
+; end auth token
+```
+
+**Step 4 — Verify**
+
+```powershell
+npm view @btech/tokens --registry https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/
+```
+
+---
+
+> **CI Pipelines** — no setup needed. Pipelines authenticate automatically via
+> `System.AccessToken`. No PAT or env var required.
 
 ---
 
 ## Quick Start — Consuming Tokens
 
-### Web (React / Vue / anything that runs CSS)
+### Web (React / Vue / any CSS)
 
-**Install:**
+Your project's `.npmrc` must point to the `btech` feed:
 
+```ini
+@btech:registry=https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/
 ```
+
+Then install:
+
+```bash
 pnpm add @btech/tokens
-```
-
-Add this to your repo's `.npmrc`:
-
-```
-@btech:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
 **Setup (once at app entry):**
@@ -39,10 +157,6 @@ activateTenant({ tenant: user.tenantId });
 ---
 
 ### Using `token()` — Type-safe Token Access
-
-Inspired by Atlassian's `@atlaskit/tokens`, the `token()` helper gives you
-**autocomplete and type-safety** for every token name. TypeScript will catch
-any invalid or mistyped token path at compile time.
 
 ```ts
 import { token } from '@btech/tokens';
@@ -65,26 +179,16 @@ cssVar('color.background.primary')
 // → "--btech-color-background-primary"
 ```
 
-**TypeScript will error on invalid paths:**
+**TypeScript catches typos at compile time:**
 
 ```ts
-token('color.backgrond.primary')  // ❌ Type error — typo caught at compile time
+token('color.backgrond.primary')  // ❌ Type error — typo caught
 token('color.background.primary') // ✅
-```
-
-**All valid token paths are exported as `TokenPath`:**
-
-```ts
-import type { TokenPath } from '@btech/tokens';
-
-function applyToken(path: TokenPath) { ... }
 ```
 
 ---
 
 ### Using CSS Variables Directly
-
-For plain CSS / SCSS files where `token()` cannot be used:
 
 ```css
 .btn-primary {
@@ -99,11 +203,8 @@ For plain CSS / SCSS files where `token()` cannot be used:
 
 ### Multi-Tenant Switching
 
-Set `data-tenant` **once** on `<html>` — CSS cascade updates every component automatically.
-No per-component changes needed.
-
 ```ts
-// After login: set once, everything updates
+// After login: set once, all components update automatically
 activateTenant({ tenant: 'tenant-bjb' });
 
 // Or directly via DOM
@@ -111,7 +212,7 @@ document.documentElement.setAttribute('data-tenant', 'tenant-a');
 ```
 
 ```html
-<!-- Side-by-side tenant preview (e.g. design review) -->
+<!-- Side-by-side tenant preview -->
 <div data-tenant="tenant-a">
   <Button /> <!-- blue theme -->
 </div>
@@ -124,15 +225,28 @@ document.documentElement.setAttribute('data-tenant', 'tenant-a');
 
 ### Flutter
 
+**Local / monorepo (development):**
+
+```yaml
+# pubspec.yaml
+dependencies:
+  btech_tokens:
+    path: ../../packages/tokens/platforms/flutter
+```
+
+**Published release:**
+
 ```yaml
 # pubspec.yaml
 dependencies:
   btech_tokens:
     git:
-      url: https://github.com/RamaMS06/btech-token.git
+      url: https://dev.azure.com/buma/BUMA%20-%20Bspace%20Design%20System/_git/btech-ds
       ref: main
-      path: packages/tokens-dart
+      path: packages/tokens/platforms/flutter
 ```
+
+**Usage:**
 
 ```dart
 // main.dart — set tenant once
@@ -143,19 +257,10 @@ MaterialApp(
 
 // Inside widgets — tenant-aware via BuildContext
 Container(
-  color:  context.btechColor.background.primary,   // Color (IS a Color, not a getter)
-  child:  Text(
+  color: context.btechColor.background.primary,
+  child: Text(
     'Hello',
     style: TextStyle(color: context.btechColor.text.neutral),
-  ),
-)
-
-// Variant states
-ElevatedButton(
-  style: ElevatedButton.styleFrom(
-    backgroundColor: context.btechColor.background.primary,
-    // hover variant — accessible as a field, not a separate token call
-    // (hover resolved by Flutter gesture layer, not CSS)
   ),
 )
 ```
@@ -164,51 +269,35 @@ ElevatedButton(
 
 ## Token Naming Convention
 
-Tokens follow a predictable grammar — same philosophy as Atlassian Design System:
-
 ```
 [category].[property].[role].[emphasis].[state]
 ```
 
-| Segment | Examples | Notes |
-|---|---|---|
-| `category` | `color`, `spacing`, `radius`, `typography`, `motion`, `shadow` | Top-level domain |
-| `property` | `background`, `text`, `stroke`, `icon` | What UI element receives this token |
-| `role` | `primary`, `neutral`, `danger`, `success`, `warning` | Semantic meaning / brand role |
-| `emphasis` | `subtle`, `strong`, `inverse` | Visual weight variant |
-| `state` | `hover`, `disabled`, `base`, `bolder` | Interaction or hierarchy state |
+| Segment | Examples |
+|---|---|
+| `category` | `color`, `spacing`, `radius`, `typography`, `motion`, `shadow` |
+| `property` | `background`, `text`, `stroke`, `icon` |
+| `role` | `primary`, `neutral`, `danger`, `success`, `warning` |
+| `emphasis` | `subtle`, `strong`, `inverse` |
+| `state` | `hover`, `disabled`, `base`, `bolder` |
 
 **Examples:**
 
 ```
-color.background.primary          → primary CTA background (green/blue/red per tenant)
-color.background.primary.hover    → hover state of primary background
+color.background.primary          → primary CTA background (per tenant)
+color.background.primary.hover    → hover state
 color.text.neutral                → default body text
-color.text.neutral.subtle         → secondary / placeholder text
-color.text.neutral.disabled       → disabled text
-color.text.on-primary             → text on top of a primary background
-color.stroke.neutral              → default border / divider
-color.stroke.neutral.strong       → stronger border for emphasis
+color.text.neutral.subtle         → secondary / placeholder
+color.text.on-primary             → text on primary background
 spacing.md                        → 16px
-radius.interactive                → button/input corner radius (overridable per tenant)
-radius.card                       → card corner radius
-typography.fontFamily.sans        → brand sans-serif font stack
+radius.interactive                → button/input corner radius
 ```
 
-**CSS Variable mapping** — dots become dashes, prefixed with `--btech-`:
+**CSS variable mapping** — dots → dashes, prefixed `--btech-`:
 
 ```
 color.background.primary  →  --btech-color-background-primary
 spacing.md                →  --btech-spacing-md
-radius.interactive        →  --btech-radius-interactive
-```
-
-**Primitive tokens** (raw palette values — do not use directly in components):
-
-```
-color.blue.500       →  #3b82f6
-color.neutral.900    →  #111827
-color.green.700      →  #15803d
 ```
 
 ---
@@ -216,48 +305,57 @@ color.green.700      →  #15803d
 ## Token Layer Architecture
 
 ```
-tokens/
-├── core/          Primitive tokens   — raw values (color.blue.500, radius.md)
-├── semantic/      Semantic tokens    — meaningful names (color.background.primary)
-├── components/    Component tokens   — scoped to a component (button.primary.background)
-└── tenants/
-    ├── default/   Fallback values for all tokens
-    ├── tenant-a/  Brand overrides for Tenant A
-    └── tenant-bjb/ Brand overrides for Tenant BJB
+packages/tokens/
+├── sources/
+│   ├── core/          Primitive tokens   — raw values (color.blue.500)
+│   ├── semantic/      Semantic tokens    — meaningful names (color.background.primary)
+│   ├── components/    Component tokens   — scoped (button.primary.background)
+│   └── tenants/
+│       ├── default/   Fallback values for all tokens
+│       ├── tenant-a/  Brand overrides for Tenant A
+│       └── tenant-bjb/ Brand overrides for Tenant BJB
+├── generators/        Style Dictionary formatters (web, flutter, python)
+├── platforms/
+│   ├── web/           @btech/tokens — TypeScript + CSS output
+│   ├── flutter/       btech_tokens  — Dart output
+│   └── python/        (future) PyPI output
+└── sd.config.ts       Style Dictionary entry point
 ```
 
-**Rule:** components should only reference **semantic** or **component** tokens,
-never primitive tokens directly. The `token()` function enforces this — primitives
-are valid `TokenPath` values but are clearly labelled as `color.blue.500` etc.,
-making intent obvious.
+**Rule:** components reference **semantic** or **component** tokens only —
+never primitive tokens directly.
 
 ---
 
 ## Quick Start — Editing Tokens
 
 ```
-1. Edit  tokens/tenants/<id>/overrides.json   — tenant brand values
-         tokens/semantic/color.json           — semantic meaning
-         tokens/core/color.primitive.json     — primitive palette
-2. pnpm generate                              — regenerate all TS/Dart/CSS outputs
-3. pnpm validate                              — contrast + boundary checks
-4. git push                                   — CI auto-commits generated files
-5. Open PR to main                            — validate.yml is the final gate
+1. Edit  packages/tokens/sources/tenants/<id>/overrides.json   — tenant brand values
+         packages/tokens/sources/semantic/color.json           — semantic meaning
+         packages/tokens/sources/core/color.primitive.json     — primitive palette
+
+2. pnpm generate        — regenerate all Web/Flutter/CSS outputs
+
+3. pnpm validate        — contrast + boundary checks
+
+4. git push             — CI auto-commits generated files to your branch
+
+5. Open PR to main      — validate pipeline is the final gate
 ```
 
-> **Do not edit** `packages/**/src/**` or `packages/**/lib/src/**` —
-> those are auto-generated. Changes will be overwritten by `pnpm generate`.
+> **Do not edit** `packages/tokens/platforms/**/src/` or `**/lib/src/` —
+> these are auto-generated and will be overwritten by `pnpm generate`.
 
 **Add a new tenant:**
 
-```
+```bash
 pnpm add-tenant
 # Interactive CLI: enter tenant ID, primary color, border radius
 ```
 
 ---
 
-## Token() vs var() — When to Use Which
+## `token()` vs `var()` — When to Use Which
 
 | Context | Use |
 |---|---|
@@ -269,18 +367,35 @@ pnpm add-tenant
 | SCSS variable name | `cssVar('color.background.primary')` |
 | Flutter | `context.btechColor.background.primary` |
 
-The `token()` function always returns a `var(--btech-*)` string — so it works
-anywhere a CSS value is accepted in JS/TS.
-
 ---
 
 ## Prerequisites
 
-Node 20, pnpm 9, Flutter 3.22.x (stable).
+| Tool | Version |
+|---|---|
+| Node.js | 20.x |
+| pnpm | 9.x |
+| Flutter | 3.22.x stable |
 
-```
+```bash
 pnpm install
 ```
+
+---
+
+## CI/CD — Azure Pipelines
+
+| Pipeline | Trigger | Purpose |
+|---|---|---|
+| `btech-ds.validate` | PR / push to `main` | Schema · contrast · sync check · flutter analyze |
+| `btech-ds.generate` | Push touching `sources/**` | Auto-generate outputs, commit back to branch |
+| `btech-ds.publish` | Push `v*` tag (manual) | Build + publish to Azure Artifacts |
+| `btech-ds.auto-version` | PR merged to `main` | Bump semver, tag, publish |
+
+**Release flow:**
+- Add PR tag `release:major`, `release:minor`, or `release:patch` before merging
+- Add `no-release` to skip publishing (docs, chore PRs)
+- Default bump is `patch` if no tag is set
 
 ---
 
@@ -288,4 +403,4 @@ pnpm install
 
 - [docs/architecture.md](./docs/architecture.md) — Pipeline, token model, naming conventions
 - [docs/contributing.md](./docs/contributing.md) — Add/modify tenants, local dev, validators
-- [docs/ci-cd.md](./docs/ci-cd.md) — CI workflows, release flow, versioning
+- [docs/ci-cd.md](./docs/ci-cd.md) — Pipeline details, release flow, versioning
