@@ -28,8 +28,8 @@ function dartGetFont(fam: string, entry: TypeScaleEntry, varName: string): strin
 }
 
 export function generateFlutterFiles(data: ResolvedTokenMap): void {
-  const DART_SRC = `${ROOT}/packages/tokens-dart/lib/src`;
-  const DART_LIB = `${ROOT}/packages/tokens-dart/lib`;
+  const DART_SRC = `${ROOT}/platforms/flutter/lib/src`;
+  const DART_LIB = `${ROOT}/platforms/flutter/lib`;
 
   // ── color/ ─────────────────────────────────────────────────────────────────
   const colorDir = `${DART_SRC}/color`;
