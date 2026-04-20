@@ -1,0 +1,140 @@
+# generate-tenant.yml
+# Auto-triggered when a PR merges into main touching sources/tenants/**
+# Detects which tenant(s) changed, runs the isolated generator, and publishes
+# the resulting @btech/tokens-{id} package to Azure Artifacts.
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - packages/tokens/sources/tenants/**
+
+pr: none   # publish runs on push to main only, not on PR events
+
+variables:
+  - group: btech-ds-secrets
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - checkout: self
+    persistCredentials: true
+    fetchDepth: 0
+
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+    displayName: Setup Node 20
+
+  - task: npmAuthenticate@0
+    inputs:
+      workingFile: .npmrc
+    displayName: Authenticate npm (Azure Artifacts)
+
+  - script: npm install -g pnpm@9 && pnpm install --frozen-lockfile
+    displayName: Install dependencies
+
+  # ── Detect which tenant(s) changed in this merge ─────────────────────────
+  - script: |
+      set -e
+      # Compare HEAD with its first parent (the merge base) to find changed paths
+      CHANGED=$(git diff --name-only HEAD~1 HEAD -- packages/tokens/sources/tenants/)
+      echo "Changed files under tenants/:"
+      echo "$CHANGED"
+
+      # Extract unique tenant IDs from paths like:
+      #   packages/tokens/sources/tenants/{id}/overrides.json
+      TENANT_IDS=$(echo "$CHANGED" \
+        | grep -oP 'sources/tenants/\K[^/]+' \
+        | sort -u \
+        | tr '\n' ' ')
+
+      if [ -z "$TENANT_IDS" ]; then
+        echo "No tenant sources changed — nothing to generate."
+        echo "##vso[task.setvariable variable=TENANT_IDS;isOutput=false]"
+        echo "##vso[task.complete result=Succeeded]"
+        exit 0
+      fi
+
+      echo "Tenants to regenerate: $TENANT_IDS"
+      echo "##vso[task.setvariable variable=TENANT_IDS]$TENANT_IDS"
+    displayName: Detect changed tenants
+    name: detect
+
+  # ── Generate isolated package for each changed tenant ────────────────────
+  - script: |
+      set -e
+      for TENANT_ID in $TENANT_IDS; do
+        echo ""
+        echo "==> Generating @btech/tokens-${TENANT_ID} ..."
+        pnpm exec tsx packages/tokens/sd.config.ts --tenant "$TENANT_ID"
+        echo "==> Done: @btech/tokens-${TENANT_ID}"
+      done
+    displayName: Generate per-tenant isolated packages
+    env:
+      TENANT_IDS: $(TENANT_IDS)
+    condition: ne(variables['TENANT_IDS'], '')
+
+  # ── Build JS/TS for each tenant package ─────────────────────────────────
+  - script: |
+      set -e
+      for TENANT_ID in $TENANT_IDS; do
+        PKG_DIR="packages/tokens-${TENANT_ID}"
+        if [ -f "${PKG_DIR}/package.json" ]; then
+          echo "==> Building @btech/tokens-${TENANT_ID} ..."
+          # Install deps for the tenant package (tsup, typescript)
+          pnpm --filter "@btech/tokens-${TENANT_ID}" install --frozen-lockfile || true
+          pnpm --filter "@btech/tokens-${TENANT_ID}" run build || echo "  (no build script, skipping)"
+        fi
+      done
+    displayName: Build tenant packages
+    env:
+      TENANT_IDS: $(TENANT_IDS)
+    condition: ne(variables['TENANT_IDS'], '')
+
+  # ── Publish to Azure Artifacts ───────────────────────────────────────────
+  - script: |
+      set -e
+      for TENANT_ID in $TENANT_IDS; do
+        PKG_DIR="packages/tokens-${TENANT_ID}"
+        echo "==> Publishing @btech/tokens-${TENANT_ID} ..."
+
+        # Auto-bump patch version before publishing
+        cd "$PKG_DIR"
+        npm version patch --no-git-tag-version
+        npm publish --access restricted
+        cd -
+
+        echo "==> Published @btech/tokens-${TENANT_ID}"
+      done
+    displayName: Publish tenant packages to Azure Artifacts
+    env:
+      TENANT_IDS: $(TENANT_IDS)
+    condition: ne(variables['TENANT_IDS'], '')
+
+  # ── Commit back updated package.json version bumps ───────────────────────
+  - script: |
+      set -e
+      git config user.name "Azure Pipelines"
+      git config user.email "azure-pipelines@users.noreply.azure.com"
+
+      for TENANT_ID in $TENANT_IDS; do
+        git add "packages/tokens-${TENANT_ID}/package.json" || true
+      done
+
+      if git diff --cached --quiet; then
+        echo "No version bump commits needed."
+        exit 0
+      fi
+
+      git commit -m "chore(release): bump tenant package versions ***NO_CI***
+
+Auto-bumped by Azure Pipelines after generating isolated tenant packages."
+      git push origin HEAD:main
+    displayName: Commit version bumps
+    env:
+      TENANT_IDS: $(TENANT_IDS)
+    condition: ne(variables['TENANT_IDS'], '')
