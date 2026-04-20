@@ -7,18 +7,18 @@
 library btech_tokens_bspace;
 
 import 'package:flutter/material.dart';
-import 'package:btech_tokens/btech_tokens.dart';
+import 'package:btech_tokens/btech_tokens.dart' as base;
 
 /// Design tokens for the bspace tenant.
 ///
-/// Extends [BtechToken] and overrides only the brand-specific values.
+/// Extends [base.BtechToken] and overrides only the brand-specific values.
 /// All non-overridden tokens are inherited from the base class.
 ///
 /// Usage:
-///   final token = BtechTokenBspace();
+///   final token = BtechToken();
 ///   token.backgroundPrimary   // #0066CC
-class BtechTokenBspace extends BtechToken {
-  const BtechTokenBspace();
+class BtechToken extends base.BtechToken {
+  const BtechToken();
 
   @override
   Color get backgroundPrimary => const Color(0xFF0066CC);

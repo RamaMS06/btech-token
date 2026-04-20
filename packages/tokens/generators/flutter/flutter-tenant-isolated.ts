@@ -34,15 +34,10 @@ export function generateFlutterTenantPackage(
     resolvedOverrides[k] = resolveRef(v, resolvedBaseMap);
   }
 
-  // Convert tenantId to PascalCase class suffix
-  //   bspace → Bspace   tenant-bjb → TenantBjb
-  const classSuffix = tenantId
-    .split(/[-_]/)
-    .map(s => s.charAt(0).toUpperCase() + s.slice(1))
-    .join('');
-  const className  = `BtechToken${classSuffix}`;
-  const pkgName    = `btech_tokens_${tenantId.replace(/-/g, '_')}`;
-  const libFile    = `${pkgName}.dart`;
+  const pkgName = `btech_tokens_${tenantId.replace(/-/g, '_')}`;
+  const libFile = `${pkgName}.dart`;
+  // Class is always BtechToken — package name is the differentiator
+  const className = 'BtechToken';
 
   // ── Build override getters ────────────────────────────────────────────────
   const seen = new Set<string>();
@@ -78,17 +73,17 @@ export function generateFlutterTenantPackage(
     `library ${pkgName};`,
     ``,
     `import 'package:flutter/material.dart';`,
-    `import 'package:btech_tokens/btech_tokens.dart';`,
+    `import 'package:btech_tokens/btech_tokens.dart' as base;`,
     ``,
     `/// Design tokens for the ${tenantId} tenant.`,
     `///`,
-    `/// Extends [BtechToken] and overrides only the brand-specific values.`,
+    `/// Extends [base.BtechToken] and overrides only the brand-specific values.`,
     `/// All non-overridden tokens are inherited from the base class.`,
     `///`,
     `/// Usage:`,
-    `///   final token = ${className}();`,
+    `///   final token = BtechToken();`,
     `///   token.backgroundPrimary   // ${resolvedOverrides['color.background.primary.default'] ?? '(base value)'}`,
-    `class ${className} extends BtechToken {`,
+    `class ${className} extends base.BtechToken {`,
     `  const ${className}();`,
     ``,
   ];
