@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "BTech Tenant Override Schema",
+  "description": "Defines which token paths a tenant is allowed to override.",
+  "type": "object",
+  "properties": {
+    "$description": { "type": "string" },
+    "color": {
+      "type": "object",
+      "properties": {
+        "background": { "$ref": "#/definitions/colorGroup" },
+        "stroke":     { "$ref": "#/definitions/colorGroup" },
+        "text":       { "$ref": "#/definitions/colorGroup" },
+        "icon":       { "$ref": "#/definitions/colorGroup" }
+      },
+      "additionalProperties": false
+    },
+    "typography": {
+      "type": "object",
+      "properties": {
+        "fontFamily": {
+          "type": "object",
+          "properties": {
+            "sans":  { "$ref": "#/definitions/fontFamilyToken" },
+            "serif": { "$ref": "#/definitions/fontFamilyToken" },
+            "mono":  { "$ref": "#/definitions/fontFamilyToken" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "radius": {
+      "type": "object",
+      "properties": {
+        "interactive": { "$ref": "#/definitions/dimensionToken" },
+        "card":        { "$ref": "#/definitions/dimensionToken" },
+        "pill":        { "$ref": "#/definitions/dimensionToken" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "colorToken": {
+      "type": "object",
+      "required": ["$value", "$type"],
+      "properties": {
+        "$value": {
+          "type": "string",
+          "description": "Hex color (#RRGGBB) or token reference ({color.blue.500})"
+        },
+        "$type": { "type": "string", "enum": ["color"] }
+      },
+      "additionalProperties": false
+    },
+    "dimensionToken": {
+      "type": "object",
+      "required": ["$value", "$type"],
+      "properties": {
+        "$value": {
+          "type": "string",
+          "pattern": "^[0-9]+(px|rem|em|%)$"
+        },
+        "$type": { "type": "string", "enum": ["dimension"] }
+      },
+      "additionalProperties": false
+    },
+    "fontFamilyToken": {
+      "type": "object",
+      "required": ["$value", "$type"],
+      "properties": {
+        "$value": { "type": "string" },
+        "$type": { "type": "string", "enum": ["fontFamily"] }
+      },
+      "additionalProperties": false
+    },
+    "colorGroup": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "$ref": "#/definitions/colorToken" }
+      }
+    }
+  }
+}
