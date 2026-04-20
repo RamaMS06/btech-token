@@ -40,13 +40,10 @@ steps:
   # ── Detect which tenant(s) changed in this merge ─────────────────────────
   - script: |
       set -e
-      # Compare HEAD with its first parent (the merge base) to find changed paths
       CHANGED=$(git diff --name-only HEAD~1 HEAD -- packages/tokens/sources/tenants/)
       echo "Changed files under tenants/:"
       echo "$CHANGED"
 
-      # Extract unique tenant IDs from paths like:
-      #   packages/tokens/sources/tenants/{id}/overrides.json
       TENANT_IDS=$(echo "$CHANGED" \
         | grep -oP 'sources/tenants/\K[^/]+' \
         | sort -u \
@@ -54,7 +51,6 @@ steps:
 
       if [ -z "$TENANT_IDS" ]; then
         echo "No tenant sources changed — nothing to generate."
-        echo "##vso[task.setvariable variable=TENANT_IDS;isOutput=false]"
         echo "##vso[task.complete result=Succeeded]"
         exit 0
       fi
@@ -78,14 +74,13 @@ steps:
       TENANT_IDS: $(TENANT_IDS)
     condition: ne(variables['TENANT_IDS'], '')
 
-  # ── Build JS/TS for each tenant package ─────────────────────────────────
+  # ── Build JS/TS for each tenant package ──────────────────────────────────
   - script: |
       set -e
       for TENANT_ID in $TENANT_IDS; do
-        PKG_DIR="packages/tokens-${TENANT_ID}"
+        PKG_DIR="packages/tenants/${TENANT_ID}"
         if [ -f "${PKG_DIR}/package.json" ]; then
           echo "==> Building @btech/tokens-${TENANT_ID} ..."
-          # Install deps for the tenant package (tsup, typescript)
           pnpm --filter "@btech/tokens-${TENANT_ID}" install --frozen-lockfile || true
           pnpm --filter "@btech/tokens-${TENANT_ID}" run build || echo "  (no build script, skipping)"
         fi
@@ -99,10 +94,9 @@ steps:
   - script: |
       set -e
       for TENANT_ID in $TENANT_IDS; do
-        PKG_DIR="packages/tokens-${TENANT_ID}"
+        PKG_DIR="packages/tenants/${TENANT_ID}"
         echo "==> Publishing @btech/tokens-${TENANT_ID} ..."
 
-        # Auto-bump patch version before publishing
         cd "$PKG_DIR"
         npm version patch --no-git-tag-version
         npm publish --access restricted
@@ -122,7 +116,7 @@ steps:
       git config user.email "azure-pipelines@users.noreply.azure.com"
 
       for TENANT_ID in $TENANT_IDS; do
-        git add "packages/tokens-${TENANT_ID}/package.json" || true
+        git add "packages/tenants/${TENANT_ID}/package.json" || true
       done
 
       if git diff --cached --quiet; then

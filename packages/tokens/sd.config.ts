@@ -155,8 +155,8 @@ function buildResolvedBaseMap(): Record<string, string> {
     ensureTenantPackageJson(tenantArg);
 
     console.log(`\n  ✅ @btech/tokens-${tenantArg} ready`);
-    console.log(`  Web  → packages/tokens-${tenantArg}/dist/styles.css`);
-    console.log(`  Pkg  → packages/tokens-${tenantArg}/package.json\n`);
+    console.log(`  Web  → packages/tenants/${tenantArg}/dist/styles.css`);
+    console.log(`  Pkg  → packages/tenants/${tenantArg}/package.json\n`);
 
   } else {
     // =========================================================================

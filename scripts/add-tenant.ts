@@ -67,7 +67,7 @@ async function main() {
     process.exit(1);
   }
 
-  const internalDir = resolve(ROOT, `packages/tokens/sources/tenants/${tenantId}`);
+  const internalDir = resolve(ROOT, 'packages', 'tokens', 'sources', 'tenants', tenantId);
   if (existsSync(internalDir)) {
     console.error(`❌  Tenant "${tenantId}" already exists at ${internalDir}`);
     process.exit(1);
@@ -137,7 +137,7 @@ async function main() {
   // ── Write to btech-ds internal path ───────────────────────────────────────
   mkdirSync(internalDir, { recursive: true });
   writeFileSync(resolve(internalDir, 'overrides.json'), overridesJson);
-  console.log(`\n  ✅  packages/tokens/sources/tenants/${tenantId}/overrides.json`);
+  console.log(`\n  ✅  packages/tokens/sources/tenants/${tenantId}/overrides.json (source of truth)`);
 
   // ── Scaffold full tenant repo at /tmp/btech-ds-{id}/ ─────────────────────
   const repoDir = `/tmp/btech-ds-${tenantId}`;
@@ -245,23 +245,21 @@ Questions or changes to the token boundary? Reach out to the **btech design-syst
 ║  Tenant "${tenantId}" scaffolded successfully!
 ╚══════════════════════════════════════════════════════════════╝
 
-  Internal source (btech-ds):
+  Source of truth (edit this file to update brand):
     packages/tokens/sources/tenants/${tenantId}/overrides.json
 
-  Tenant repo scaffold (push to btech-ds-${tenantId}):
-    ${repoDir}/
+  Generated outputs (after pnpm generate --tenant ${tenantId}):
+    packages/tenants/${tenantId}/dist/styles.css   ← web CSS (:root)
+    packages/tenants/${tenantId}/package.json       ← @btech/tokens-${tenantId}
+    platforms/flutter/tenants/${tenantId}/lib/      ← Dart package (coming soon)
 
 Next steps:
-  1. Review ${repoDir}/overrides.json
-  2. Create the Azure DevOps repo: btech-ds-${tenantId}
-  3. Push the scaffold:
-       cd ${repoDir}
-       git init && git add . && git commit -m "init: ${tenantId} tenant repo"
-       git remote add origin https://dev.azure.com/buma/BUMA%20-%20Bspace%20Design%20System/_git/btech-ds-${tenantId}
-       git push -u origin main
-  4. Trigger the sync-tenant pipeline in btech-ds (tenantId = ${tenantId})
-  5. Review + merge the generated PR
-  6. generate-tenant pipeline auto-runs → @btech/tokens-${tenantId} is published
+  1. Review packages/tokens/sources/tenants/${tenantId}/overrides.json
+  2. Open a PR in btech-ds with the new overrides.json
+  3. After merge → generate-tenant pipeline auto-runs
+     → @btech/tokens-${tenantId} published to Azure Artifacts
+  4. Web app:    npm install @btech/tokens-${tenantId}
+  5. Flutter app: git dependency on platforms/flutter/tenants/${tenantId}
 `);
 }
 

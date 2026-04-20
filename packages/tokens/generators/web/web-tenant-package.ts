@@ -9,7 +9,7 @@ import { ROOT } from '../utils.js';
 export function ensureTenantPackageJson(tenantId: string): void {
   // ROOT = packages/tokens/ → go up two levels to monorepo root
   const MONOREPO_ROOT = resolve(ROOT, '../..');
-  const pkgDir  = resolve(MONOREPO_ROOT, 'packages', `tokens-${tenantId}`);
+  const pkgDir  = resolve(MONOREPO_ROOT, 'packages', 'tenants', tenantId);
   const srcDir  = resolve(pkgDir, 'src');
   const distDir = resolve(pkgDir, 'dist');
 
@@ -50,7 +50,7 @@ export function ensureTenantPackageJson(tenantId: string): void {
       },
     };
     writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n');
-    console.log(`  Created packages/tokens-${tenantId}/package.json`);
+    console.log(`  Created packages/tenants/${tenantId}/package.json`);
   }
 
   // Create src/index.ts — re-exports everything from base @btech/tokens
@@ -65,6 +65,6 @@ export function ensureTenantPackageJson(tenantId: string): void {
         '',
       ].join('\n'),
     );
-    console.log(`  Created packages/tokens-${tenantId}/src/index.ts`);
+    console.log(`  Created packages/tenants/${tenantId}/src/index.ts`);
   }
 }
