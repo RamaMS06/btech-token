@@ -11,10 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   btech_tokens:
-    git:
-      url: https://github.com/RamaMS06/btech-token
-      ref: main
-      path: packages/tokens-dart
+    path: ../../packages/tokens/platforms/flutter
 
 dev_dependencies:
   flutter_test:

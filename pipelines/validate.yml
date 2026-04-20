@@ -1,0 +1,102 @@
+name: Validate Tokens
+
+# Runs on every PR to main AND on direct pushes to main.
+# Acts as the final gate before merge — generated files must be in sync.
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: validate
+    displayName: 'Schema · Contrast · Boundary · Sync check · Flutter analyze'
+
+    steps:
+      # ── Node / pnpm ─────────────────────────────────────────────────────
+      - task: NodeTool@0
+        displayName: 'Setup Node.js 20'
+        inputs:
+          versionSpec: '20.x'
+
+      - script: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+        displayName: 'Setup pnpm 9'
+
+      - script: pnpm install --frozen-lockfile
+        displayName: 'Install JS dependencies'
+
+      # ── Flutter ──────────────────────────────────────────────────────────
+      - script: |
+          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
+          echo "##vso[task.prependpath]$HOME/flutter/bin"
+        displayName: 'Setup Flutter (stable)'
+
+      - script: flutter --version
+        displayName: 'Flutter version check'
+
+      # ── Generate + sync check ────────────────────────────────────────────
+      # Re-run the generator directly (bypasses Turbo cache) so the sync check
+      # always compares committed files against a fresh generation from tokens/.
+      - script: pnpm exec tsx packages/tokens/sd.config.ts
+        displayName: 'Run token generator'
+
+      - script: pnpm --filter @btech/tokens build
+        displayName: 'Build @btech/tokens'
+
+      - script: |
+          CHANGED=$(git diff --name-only \
+            packages/tokens/platforms/flutter/lib/btech_tokens.dart \
+            packages/tokens/platforms/flutter/lib/src/color/ \
+            packages/tokens/platforms/flutter/lib/src/spacing/ \
+            packages/tokens/platforms/flutter/lib/src/radius/ \
+            packages/tokens/platforms/flutter/lib/src/typography/ \
+            packages/tokens/platforms/flutter/lib/src/tenant.dart \
+            packages/tokens/platforms/web/src/color/ \
+            packages/tokens/platforms/web/src/spacing/ \
+            packages/tokens/platforms/web/src/radius/ \
+            packages/tokens/platforms/web/src/typography/)
+
+          if [ -n "$CHANGED" ]; then
+            echo ""
+            echo "❌  Generated files are out of sync with tokens/:"
+            echo "$CHANGED"
+            echo ""
+            echo "    Fix: run 'pnpm generate' locally and commit the results,"
+            echo "    OR push a change to tokens/ — the generate pipeline"
+            echo "    will auto-commit the updated outputs to your branch."
+            exit 1
+          fi
+
+          echo "✅  All generated files are in sync."
+        displayName: 'Check generated files are in sync with tokens/'
+
+      # ── Token validators ─────────────────────────────────────────────────
+      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
+        displayName: 'Run JS validators (contrast + boundary)'
+
+      # ── Flutter: packages/tokens-flutter ────────────────────────────────
+      - script: flutter pub get
+        displayName: 'Flutter pub get (tokens-flutter)'
+        workingDirectory: packages/tokens/platforms/flutter
+
+      - script: flutter analyze --no-fatal-infos
+        displayName: 'Flutter analyze (tokens-flutter)'
+        workingDirectory: packages/tokens/platforms/flutter
+
+      # ── Flutter: apps/demo-flutter ────────────────────────────────────────
+      - script: flutter pub get
+        displayName: 'Flutter pub get (demo-flutter)'
+        workingDirectory: apps/demo-flutter
+
+      - script: flutter analyze --no-fatal-infos
+        displayName: 'Flutter analyze (demo-flutter)'
+        workingDirectory: apps/demo-flutter

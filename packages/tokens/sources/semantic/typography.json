@@ -1,0 +1,123 @@
+{
+  "typography": {
+    "body": {
+      "fontFamily": { "$value": "{typography.fontFamily.sans}", "$type": "fontFamily" },
+      "fontSize":   { "$value": "{typography.fontSize.base}",   "$type": "dimension" },
+      "fontWeight": { "$value": "{typography.fontWeight.regular}", "$type": "fontWeight" },
+      "lineHeight": { "$value": "{typography.lineHeight.normal}", "$type": "number" }
+    },
+    "label": {
+      "fontFamily": { "$value": "{typography.fontFamily.sans}", "$type": "fontFamily" },
+      "fontSize":   { "$value": "{typography.fontSize.sm}",    "$type": "dimension" },
+      "fontWeight": { "$value": "{typography.fontWeight.medium}", "$type": "fontWeight" },
+      "lineHeight": { "$value": "{typography.lineHeight.tight}", "$type": "number" }
+    },
+    "heading": {
+      "fontFamily": { "$value": "{typography.fontFamily.sans}", "$type": "fontFamily" },
+      "fontWeight": { "$value": "{typography.fontWeight.bold}", "$type": "fontWeight" },
+      "lineHeight": { "$value": "{typography.lineHeight.tight}", "$type": "number" }
+    },
+    "code": {
+      "fontFamily": { "$value": "{typography.fontFamily.mono}", "$type": "fontFamily" },
+      "fontSize":   { "$value": "{typography.fontSize.sm}",    "$type": "dimension" }
+    },
+    "typeScale": {
+      "heading": {
+        "h1": {
+          "fontSize":     { "$value": "35px", "$type": "dimension" },
+          "fontWeight":   { "$value": 700,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "40px", "$type": "dimension" }
+        },
+        "h2": {
+          "fontSize":     { "$value": "29px", "$type": "dimension" },
+          "fontWeight":   { "$value": 600,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "32px", "$type": "dimension" }
+        },
+        "h3": {
+          "fontSize":     { "$value": "24px", "$type": "dimension" },
+          "fontWeight":   { "$value": 700,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "28px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        },
+        "h4": {
+          "fontSize":     { "$value": "20px", "$type": "dimension" },
+          "fontWeight":   { "$value": 500,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "24px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        }
+      },
+      "subheading": {
+        "h5": {
+          "fontSize":     { "$value": "16px", "$type": "dimension" },
+          "fontWeight":   { "$value": 700,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "20px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        },
+        "h6": {
+          "fontSize":     { "$value": "14px", "$type": "dimension" },
+          "fontWeight":   { "$value": 600,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "16px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        },
+        "h7": {
+          "fontSize":     { "$value": "12px", "$type": "dimension" },
+          "fontWeight":   { "$value": 600,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "16px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        }
+      },
+      "body": {
+        "base": {
+          "fontSize":     { "$value": "12px", "$type": "dimension" },
+          "fontWeight":   { "$value": 500,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "16px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        },
+        "bold": {
+          "fontSize":     { "$value": "12px", "$type": "dimension" },
+          "fontWeight":   { "$value": 700,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "16px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        },
+        "small": {
+          "fontSize":     { "$value": "11px", "$type": "dimension" },
+          "fontWeight":   { "$value": 500,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "16px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        },
+        "medium": {
+          "fontSize":     { "$value": "14px", "$type": "dimension" },
+          "fontWeight":   { "$value": 500,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "18px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        },
+        "xstraSmall": {
+          "fontSize":     { "$value": "8px",  "$type": "dimension" },
+          "fontWeight":   { "$value": 500,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "12px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        },
+        "italic": {
+          "fontSize":     { "$value": "12px",   "$type": "dimension" },
+          "fontWeight":   { "$value": 500,       "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "16px",   "$type": "dimension" },
+          "withTextColor": { "$value": true,    "$type": "other" },
+          "fontStyle":    { "$value": "italic", "$type": "other" }
+        },
+        "underline": {
+          "fontSize":        { "$value": "12px",      "$type": "dimension" },
+          "fontWeight":      { "$value": 600,          "$type": "fontWeight" },
+          "lineHeightPx":    { "$value": "16px",      "$type": "dimension" },
+          "withTextColor":   { "$value": true,        "$type": "other" },
+          "textDecoration":  { "$value": "underline", "$type": "other" }
+        },
+        "paragraph": {
+          "fontSize":     { "$value": "12px", "$type": "dimension" },
+          "fontWeight":   { "$value": 500,    "$type": "fontWeight" },
+          "lineHeightPx": { "$value": "24px", "$type": "dimension" },
+          "withTextColor": { "$value": true,  "$type": "other" }
+        }
+      }
+    }
+  }
+}

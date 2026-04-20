@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+# pre-commit — auto-generate token outputs when tokens/ or the generator changes.
+#
+# Runs automatically before every commit.
+# Only re-generates if staged files include tokens/** or config/sd.config.ts.
+# Generated files are staged automatically so they land in the same commit.
+
+set -e
+
+# Check if any staged file touches tokens/ or the generator config
+STAGED=$(git diff --cached --name-only)
+
+NEEDS_GENERATE=$(echo "$STAGED" | grep -E '^(tokens/|config/sd\.config\.ts)' || true)
+
+if [ -z "$NEEDS_GENERATE" ]; then
+  exit 0  # nothing token-related staged — skip
+fi
+
+echo "🔄  Token source changed — regenerating packages..."
+
+# Run generator (tsx, no Turbo cache)
+pnpm exec tsx config/sd.config.ts
+
+# Stage all generated outputs so they land in the same commit
+git add \
+  packages/tokens-dart/lib/btech_tokens.dart \
+  packages/tokens-dart/lib/src/color/ \
+  packages/tokens-dart/lib/src/spacing/ \
+  packages/tokens-dart/lib/src/radius/ \
+  packages/tokens-dart/lib/src/typography/ \
+  packages/tokens-dart/lib/src/tenant.dart \
+  packages/tokens-web/src/color/ \
+  packages/tokens-web/src/spacing/ \
+  packages/tokens-web/src/radius/ \
+  packages/tokens-web/src/typography/ \
+  packages/tokens-web/dist/styles.css \
+  2>/dev/null || true
+
+echo "✅  Generated outputs staged."

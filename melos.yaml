@@ -2,20 +2,16 @@ name: btech_design_system
 repository: https://github.com/RamaMS06/btech-token
 
 packages:
-  - packages/tokens-dart
+  - packages/tokens/platforms/flutter
 
 ide:
   intellij: false
 
 scripts:
-  # ── Dependency management ─────────────────────────────────────────────────
-  # melos bootstrap already runs flutter pub get for all packages.
-  # This script is a manual convenience for re-running after code changes.
   get:
     exec: flutter pub get
     description: Install Flutter dependencies for all Dart packages.
 
-  # ── Quality ───────────────────────────────────────────────────────────────
   analyze:
     exec: flutter analyze --no-fatal-infos
     description: Static analysis for all Dart packages.
@@ -24,7 +20,6 @@ scripts:
     exec: flutter test
     description: Run Flutter tests for all Dart packages.
 
-  # ── CI convenience ────────────────────────────────────────────────────────
   ci:
     steps:
       - get

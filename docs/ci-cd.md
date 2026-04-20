@@ -58,7 +58,7 @@ from `tokens/`, then runs `contrast.ts`, `boundary.ts`, and `flutter analyze`.
 This is the final gate before merge to `main`.
 
 **publish.yml** — runs validators, `pnpm build`, then
-`changeset publish` → GitHub Packages for `@ramaMS06/tokens-web`. Dart
+`changeset publish` → GitHub Packages for `@btech/tokens`. Dart
 publication follows the synced version via `flutter pub publish` from the
 release runbook.
 

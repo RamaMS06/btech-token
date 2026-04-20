@@ -3,4 +3,12 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    exclude: ['@btech/tokens'],
+  },
+  server: {
+    watch: {
+      ignored: ['!**/packages/tokens/platforms/web/**'],
+    },
+  },
 });
