@@ -13,26 +13,13 @@ packages/**/src/**/*.js.map
 packages/**/src/**/*.d.ts
 *.tsbuildinfo
 
-# ── Vite / demo apps dev artifacts ───────────────────────────────────────────
-apps/**/.vite/
-apps/**/coverage/
-apps/**/*.local
-
-# ── Dart / Flutter — libraries (packages/) ────────────────────────────────────
+# ── Dart / Flutter — packages/ ────────────────────────────────────────────────
 # pubspec.lock for libraries is intentionally NOT committed (pub resolves at consumer side)
 packages/**/pubspec.lock
 packages/**/.dart_tool/
 packages/**/build/
 packages/**/.flutter-plugins
 packages/**/.flutter-plugins-dependencies
-
-# ── Dart / Flutter — apps (apps/) ─────────────────────────────────────────────
-# pubspec.lock for apps IS committed (reproducible builds) — do NOT add it here
-apps/**/.dart_tool/
-apps/**/build/
-apps/**/.flutter-plugins
-apps/**/.flutter-plugins-dependencies
-apps/**/.metadata
 
 # ── Root-level Dart tooling ────────────────────────────────────────────────────
 .dart_tool/
