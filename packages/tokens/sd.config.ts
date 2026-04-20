@@ -10,6 +10,8 @@ import { flutterTenantsFormat } from './generators/flutter/flutter-tenant-format
 import { generateTsFiles } from './generators/web/web-generator.js';
 import { generateTokenTypes } from './generators/web/web-token-types.js';
 import { appendTenantCSS } from './generators/web/web-tenant-css.js';
+import { generateTenantIsolatedCss } from './generators/web/web-tenant-isolated.js';
+import { ensureTenantPackageJson } from './generators/web/web-tenant-package.js';
 import {
   loadFontRegistry,
   generateFlutterFontRegistry,
@@ -163,10 +165,25 @@ const sd = new StyleDictionary({
   const resolvedBaseMap: Record<string, string> = {};
   for (const [k, v] of Object.entries(rawBaseMap)) resolvedBaseMap[k] = resolveRef(v, rawBaseMap);
   for (const [k, v] of Object.entries(resolvedBaseMap)) resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
-  appendTenantCSS(resolvedBaseMap);
+  // Parse --tenant flag
+  const tenantIdx = process.argv.indexOf('--tenant');
+  const tenantArg = tenantIdx !== -1
+    ? process.argv[tenantIdx + 1]
+    : process.argv.find(a => a.startsWith('--tenant='))?.split('=')[1];
 
-  console.log('\n pnpm generate complete\n');
-  console.log('  Flutter → packages/tokens/platforms/flutter/lib/src/');
-  console.log('  Web     → packages/tokens/platforms/web/src/ + dist/');
-  console.log('');
+  if (tenantArg) {
+    // Per-tenant mode: generate isolated package for one tenant only
+    console.log(`\n  Generating isolated package for tenant: ${tenantArg}\n`);
+    generateTenantIsolatedCss(tenantArg, resolvedBaseMap);
+    ensureTenantPackageJson(tenantArg);
+    console.log(`\n  ✅ @btech/tokens-${tenantArg} ready\n`);
+  } else {
+    // Default mode: existing full-generate behavior (unchanged)
+    appendTenantCSS(resolvedBaseMap);
+    console.log('\n pnpm generate complete\n');
+    console.log('  Flutter → packages/tokens/platforms/flutter/lib/src/');
+    console.log('  Web     → packages/tokens/platforms/web/src/ + dist/');
+    console.log('');
+  }
+
 })();
