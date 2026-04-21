@@ -1,228 +1,308 @@
+// AUTO-GENERATED helpers for per-tenant Flutter token packages.
+//
+// This file generates, for each tenant in `sources/tenants/{id}/`:
+//   packages/tokens/platforms/flutter/tenants/{id}/
+//     ├── pubspec.yaml
+//     └── lib/
+//         └── btech_tokens_{id_underscored}.dart
+//
+// The generated Dart file exposes:
+//   - const BTechColorTheme  btechColor         (light, public — Pattern B)
+//   - const BTechColorTheme  _btechColorDark    (dark, private — used by btechTheme)
+//   - const BTechRadiusTheme btechRadius
+//   - const BTechFontTheme   btechFont
+//   - ThemeData btechTheme({brightness, base})  — one-liner delegating to buildBtechTheme
+//
+// Field structure is entirely auto-derived from the source JSON — no hardcoded
+// TENANT_FIELD_MAP. Unknown/missing variants fall back to the subcategory's
+// default color.
+
 import { readFileSync, readdirSync, existsSync, mkdirSync, writeFileSync } from 'fs';
-import { ROOT, flattenDTCG, resolveRef } from '../utils.js';
+import { ROOT, flattenDTCG, resolveRef, hexToArgb } from '../utils.js';
+import {
+  buildColorTree,
+  buildRadiusFields,
+  buildFontSans,
+  type ColorTree,
+} from './flutter-theme-generator.js';
 
 // =============================================================================
-// Token field map — every semantic token that can differ per tenant.
-// path   = dot-notation key in the resolved token map
-// field  = Dart field name on BTechTenantTokens
-// type   = Dart type
+// Constants — kept in sync with flutter-theme-generator.ts
 // =============================================================================
-export const TENANT_FIELD_MAP: Array<{
-  path: string;
-  field: string;
-  type: 'Color' | 'double' | 'String';
-}> = [
-  // ── color.background ────────────────────────────────────────────────────────
-  { path: 'color.background.surface.default',   field: 'colorBackgroundSurface',          type: 'Color' },
-  { path: 'color.background.surface.subtle',    field: 'colorBackgroundSurfaceSubtle',    type: 'Color' },
-  { path: 'color.background.surface.raised',    field: 'colorBackgroundSurfaceRaised',    type: 'Color' },
-  { path: 'color.background.primary.default',   field: 'colorBackgroundPrimary',          type: 'Color' },
-  { path: 'color.background.primary.hover',     field: 'colorBackgroundPrimaryHover',     type: 'Color' },
-  { path: 'color.background.primary.pressed',   field: 'colorBackgroundPrimaryPressed',   type: 'Color' },
-  { path: 'color.background.primary.disable',   field: 'colorBackgroundPrimaryDisable',   type: 'Color' },
-  { path: 'color.background.primary.subtle',    field: 'colorBackgroundPrimarySubtle',    type: 'Color' },
-  { path: 'color.background.secondary.default', field: 'colorBackgroundSecondary',        type: 'Color' },
-  { path: 'color.background.secondary.hover',   field: 'colorBackgroundSecondaryHover',   type: 'Color' },
-  { path: 'color.background.secondary.pressed', field: 'colorBackgroundSecondaryPressed', type: 'Color' },
-  { path: 'color.background.secondary.disable', field: 'colorBackgroundSecondaryDisable', type: 'Color' },
-  { path: 'color.background.secondary.subtle',  field: 'colorBackgroundSecondarySubtle',  type: 'Color' },
-  { path: 'color.background.danger.default',    field: 'colorBackgroundDanger',           type: 'Color' },
-  { path: 'color.background.danger.hover',      field: 'colorBackgroundDangerHover',      type: 'Color' },
-  { path: 'color.background.danger.pressed',    field: 'colorBackgroundDangerPressed',    type: 'Color' },
-  { path: 'color.background.danger.disable',    field: 'colorBackgroundDangerDisable',    type: 'Color' },
-  { path: 'color.background.danger.subtle',     field: 'colorBackgroundDangerSubtle',     type: 'Color' },
-  { path: 'color.background.success.default',   field: 'colorBackgroundSuccess',          type: 'Color' },
-  { path: 'color.background.success.subtle',    field: 'colorBackgroundSuccessSubtle',    type: 'Color' },
-  { path: 'color.background.warning.default',   field: 'colorBackgroundWarning',          type: 'Color' },
-  { path: 'color.background.warning.subtle',    field: 'colorBackgroundWarningSubtle',    type: 'Color' },
-  { path: 'color.background.info.default',      field: 'colorBackgroundInfo',             type: 'Color' },
-  { path: 'color.background.info.subtle',       field: 'colorBackgroundInfoSubtle',       type: 'Color' },
-  { path: 'color.background.neutral.default',   field: 'colorBackgroundNeutral',          type: 'Color' },
-  { path: 'color.background.neutral.subtle',    field: 'colorBackgroundNeutralSubtle',    type: 'Color' },
-  // ── color.text ──────────────────────────────────────────────────────────────
-  { path: 'color.text.neutral.default',         field: 'colorTextNeutral',                type: 'Color' },
-  { path: 'color.text.neutral.subtle',          field: 'colorTextNeutralSubtle',          type: 'Color' },
-  { path: 'color.text.neutral.disabled',        field: 'colorTextNeutralDisabled',        type: 'Color' },
-  { path: 'color.text.neutral.inverse',         field: 'colorTextNeutralInverse',         type: 'Color' },
-  { path: 'color.text.on.primary',              field: 'colorTextOnPrimary',              type: 'Color' },
-  { path: 'color.text.on.secondary',            field: 'colorTextOnSecondary',            type: 'Color' },
-  { path: 'color.text.on.danger',               field: 'colorTextOnDanger',               type: 'Color' },
-  { path: 'color.text.on.info',                 field: 'colorTextOnInfo',                 type: 'Color' },
-  // ── color.icon ──────────────────────────────────────────────────────────────
-  { path: 'color.icon.neutral.default',         field: 'colorIconNeutral',                type: 'Color' },
-  { path: 'color.icon.neutral.subtle',          field: 'colorIconNeutralSubtle',          type: 'Color' },
-  { path: 'color.icon.neutral.disabled',        field: 'colorIconNeutralDisabled',        type: 'Color' },
-  { path: 'color.icon.neutral.inverse',         field: 'colorIconNeutralInverse',         type: 'Color' },
-  { path: 'color.icon.on.primary',              field: 'colorIconOnPrimary',              type: 'Color' },
-  { path: 'color.icon.on.danger',               field: 'colorIconOnDanger',               type: 'Color' },
-  // ── color.stroke ────────────────────────────────────────────────────────────
-  { path: 'color.stroke.neutral.default',       field: 'colorStrokeNeutral',              type: 'Color' },
-  { path: 'color.stroke.neutral.strong',        field: 'colorStrokeNeutralStrong',        type: 'Color' },
-  { path: 'color.stroke.neutral.subtle',        field: 'colorStrokeNeutralSubtle',        type: 'Color' },
-  { path: 'color.stroke.primary.default',       field: 'colorStrokePrimary',              type: 'Color' },
-  { path: 'color.stroke.primary.bolder',        field: 'colorStrokePrimaryBolder',        type: 'Color' },
-  { path: 'color.stroke.danger.default',        field: 'colorStrokeDanger',               type: 'Color' },
-  // ── radius ──────────────────────────────────────────────────────────────────
-  { path: 'radius.interactive',                 field: 'radiusInteractive',               type: 'double' },
-  { path: 'radius.card',                        field: 'radiusCard',                      type: 'double' },
-  { path: 'radius.badge',                       field: 'radiusBadge',                     type: 'double' },
-  // ── typography ──────────────────────────────────────────────────────────────
-  { path: 'typography.fontFamily.sans',         field: 'typographyFontFamilySans',        type: 'String' },
-];
+
+const CATEGORIES = ['background', 'text', 'icon', 'stroke'] as const;
+const VARIANT_FIELDS = [
+  'hover', 'pressed', 'subtle', 'raised',
+  'disable', 'bolder', 'inverse', 'strong', 'disabled',
+] as const;
 
 // =============================================================================
 // Helpers
 // =============================================================================
-function toColor(hex: string): string {
-  return `const Color(0xFF${hex.replace('#', '').toUpperCase()})`;
-}
-function toDim(px: string): string {
-  return String(parseFloat(String(px).replace('px', '')));
-}
-function toFont(s: string): string {
-  return `'${String(s).split(',')[0].trim().replace(/'/g, '')}'`;
-}
-function formatVal(val: string, type: 'Color' | 'double' | 'String'): string {
-  if (type === 'Color')  return toColor(val);
-  if (type === 'double') return toDim(val);
-  return toFont(val);
+
+/** `tenant-bjb` → `tenant_bjb`, `default` → `default`. */
+function toDartPackageName(tenantId: string): string {
+  return tenantId.replace(/-/g, '_');
 }
 
-/** tenant-id → Dart variable name: default → btechTenantDefault, tenant-bjb → btechTenantBjb */
-function toVarName(id: string): string {
-  const pascal = id === 'default'
-    ? 'Default'
-    : id.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
-  return `btechTenant${pascal}`;
+/** `'8px'` → `'8.0'`, `'9999px'` → `'9999.0'`. */
+function pxToDouble(value: string): string {
+  const n = parseFloat(String(value).replace('px', ''));
+  if (Number.isNaN(n)) return '0.0';
+  return Number.isInteger(n) ? `${n}.0` : String(n);
 }
 
-/** tenant-id → Dart file name: tenant-bjb → tenant_bjb.dart */
-function toFileName(id: string): string {
-  return `${id.replace(/-/g, '_')}.dart`;
+/** Given a resolved hex like `#3B82F6` return `0xFF3B82F6`; pass through `0x...` literals. */
+function argbFromHex(hex: string | undefined, fallback: string): string {
+  if (!hex) return fallback;
+  if (hex.startsWith('0x')) return hex;
+  if (hex.startsWith('#')) return hexToArgb(hex);
+  return fallback;
+}
+
+/** `background` → `Background`. */
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 // =============================================================================
-// generateFlutterTenantFiles
-//
-// Produces:
-//   platforms/flutter/lib/src/tenants/default.dart     ← const btechTenantDefault
-//   platforms/flutter/lib/src/tenants/tenant_a.dart    ← const btechTenantA
-//   platforms/flutter/lib/src/tenants/tenant_bjb.dart  ← const btechTenantBjb
-//   platforms/flutter/lib/src/tenant.dart              ← BTechTenantTokens class + registry
+// Tenant map construction
 // =============================================================================
-export function generateFlutterTenantFiles(baseMap: Record<string, string>): void {
-  const tenantsDir  = `${ROOT}/sources/tenants`;
-  const outSrc      = `${ROOT}/platforms/flutter/lib/src`;
-  const outTenants  = `${outSrc}/tenants`;
 
-  mkdirSync(outTenants, { recursive: true });
+/** Load an optional overrides file, merge into base map (refs resolved against base). */
+function buildTenantMap(
+  tenantId: string,
+  overrideFile: string,
+  resolvedBaseMap: Record<string, string>,
+): Record<string, string> {
+  const overridesPath = `${ROOT}/sources/tenants/${tenantId}/${overrideFile}`;
+  if (!existsSync(overridesPath)) return { ...resolvedBaseMap };
 
-  const tenantIds = readdirSync(tenantsDir)
-    .filter(d => existsSync(`${tenantsDir}/${d}/overrides.json`))
-    .sort((a, b) => (a === 'default' ? -1 : b === 'default' ? 1 : a.localeCompare(b)));
+  const rawOverrides = flattenDTCG(
+    JSON.parse(readFileSync(overridesPath, 'utf-8')) as Record<string, unknown>,
+  );
 
-  // ── 1. One file per tenant ─────────────────────────────────────────────────
+  const resolvedOverrides: Record<string, string> = {};
+  for (const [k, v] of Object.entries(rawOverrides)) {
+    resolvedOverrides[k] = resolveRef(v, resolvedBaseMap);
+  }
+
+  return { ...resolvedBaseMap, ...resolvedOverrides };
+}
+
+// =============================================================================
+// Color theme literal emitter
+// =============================================================================
+
+/**
+ * Emits the nested BTechColorTheme(...) const expression for a given resolved map.
+ * Indented so it sits nicely under `const BTechColorTheme xxx = ` (3-space inner indent).
+ */
+function emitColorThemeLiteral(
+  tree: ColorTree,
+  resolvedMap: Record<string, string>,
+): string {
+  const L: string[] = [];
+  L.push('BTechColorTheme(');
+  for (const category of CATEGORIES) {
+    const className = `BTechColor${cap(category)}`;
+    L.push(`  ${category}: ${className}(`);
+    for (const sub of tree[category]) {
+      const basePath = `color.${category}.${sub.name}.${sub.defaultKey}`;
+      const baseArgb = argbFromHex(resolvedMap[basePath], '0xFF000000');
+      L.push(`    ${sub.name}: BTechColorVariants(${baseArgb},`);
+      for (const field of VARIANT_FIELDS) {
+        let argb = baseArgb;
+        if (sub.variants.includes(field)) {
+          argb = argbFromHex(resolvedMap[`color.${category}.${sub.name}.${field}`], baseArgb);
+        }
+        L.push(`      ${field}: Color(${argb}),`);
+      }
+      L.push('    ),');
+    }
+    L.push('  ),');
+  }
+  L.push(')');
+  return L.join('\n');
+}
+
+// =============================================================================
+// Dart file emitter
+// =============================================================================
+
+function emitTenantDart(
+  tenantId: string,
+  tree: ColorTree,
+  lightMap: Record<string, string>,
+  darkMap: Record<string, string>,
+): string {
+  const pkgName = toDartPackageName(tenantId);
+
+  const radiusFields = buildRadiusFields(lightMap);
+  const fontSans = buildFontSans(lightMap);
+
+  const L: string[] = [];
+  L.push('// AUTO-GENERATED by @btech/design-system — do not edit manually.');
+  L.push(`// Source: packages/tokens/sources/tenants/${tenantId}/overrides.json`);
+  L.push('// Run `pnpm generate` to regenerate.');
+  L.push('// ignore_for_file: lines_longer_than_80_chars');
+  L.push('');
+  L.push(`library btech_tokens_${pkgName};`);
+  L.push('');
+  L.push("import 'package:flutter/material.dart';");
+  L.push("import 'package:btech_tokens/btech_tokens.dart';");
+  L.push('');
+  L.push("export 'package:btech_tokens/btech_tokens.dart';");
+  L.push('');
+
+  // ── Light theme (public — Pattern B) ────────────────────────────────────
+  L.push('// ── Light (public — Pattern B) ────────────────────────────────────────────');
+  L.push('');
+  L.push(`/// Light-mode BTech color tokens for the ${tenantId} tenant.`);
+  L.push(`const BTechColorTheme btechColor = ${emitColorThemeLiteral(tree, lightMap)};`);
+  L.push('');
+
+  // ── Dark theme (private) ────────────────────────────────────────────────
+  L.push('// ── Dark (private — used only by btechTheme(), not exported) ─────────────');
+  L.push('// Falls back to light values when no dark overrides exist.');
+  L.push('');
+  L.push(`const BTechColorTheme _btechColorDark = ${emitColorThemeLiteral(tree, darkMap)};`);
+  L.push('');
+
+  // ── Radius ──────────────────────────────────────────────────────────────
+  L.push('// ── Radius (mode-agnostic) ────────────────────────────────────────────────');
+  L.push('');
+  L.push('const BTechRadiusTheme btechRadius = BTechRadiusTheme(');
+  for (const f of radiusFields) {
+    L.push(`  ${f.name}: ${pxToDouble(f.value)},`);
+  }
+  L.push(');');
+  L.push('');
+
+  // ── Font ────────────────────────────────────────────────────────────────
+  L.push('// ── Font (mode-agnostic) ──────────────────────────────────────────────────');
+  L.push('');
+  L.push('const BTechFontTheme btechFont = BTechFontTheme(');
+  L.push(`  family: BTechFontFamily(sans: '${fontSans.replace(/'/g, "\\'")}'),`);
+  L.push(');');
+  L.push('');
+
+  // ── Theme builder ───────────────────────────────────────────────────────
+  L.push('// ── Theme builder — one line, logic lives in base ─────────────────────────');
+  L.push('');
+  L.push('/// Apply BTech tokens to [MaterialApp].');
+  L.push('///');
+  L.push('/// ```dart');
+  L.push('/// MaterialApp(');
+  L.push('///   theme:     btechTheme(),');
+  L.push('///   darkTheme: btechTheme(brightness: Brightness.dark),');
+  L.push('///   themeMode: ThemeMode.system,');
+  L.push('/// )');
+  L.push('/// ```');
+  L.push('ThemeData btechTheme({Brightness brightness = Brightness.light, ThemeData? base}) =>');
+  L.push('    buildBtechTheme(btechColor, _btechColorDark, btechRadius, btechFont,');
+  L.push('                    brightness: brightness, base: base);');
+  L.push('');
+
+  return L.join('\n');
+}
+
+// =============================================================================
+// pubspec.yaml emitter
+// =============================================================================
+
+function emitPubspec(tenantId: string): string {
+  const pkgName = toDartPackageName(tenantId);
+  return [
+    `name: btech_tokens_${pkgName}`,
+    `description: BTech design tokens for ${tenantId} tenant — generated by pnpm generate`,
+    'version: 1.0.0',
+    '',
+    'environment:',
+    "  sdk: '>=3.0.0 <4.0.0'",
+    "  flutter: '>=3.10.0'",
+    '',
+    'dependencies:',
+    '  flutter:',
+    '    sdk: flutter',
+    '  btech_tokens:',
+    '    path: ../../',
+    '',
+  ].join('\n');
+}
+
+// =============================================================================
+// Main entry
+// =============================================================================
+
+/**
+ * Generate a Flutter token package for every tenant found in `sources/tenants/`.
+ *
+ * Output layout per tenant:
+ *   packages/tokens/platforms/flutter/tenants/{id}/
+ *     ├── pubspec.yaml
+ *     └── lib/btech_tokens_{id_underscored}.dart
+ */
+export function generateFlutterTenantPackages(resolvedBaseMap: Record<string, string>): void {
+  const tenantsSrcDir = `${ROOT}/sources/tenants`;
+  const tenantsOutDir = `${ROOT}/platforms/flutter/tenants`;
+
+  if (!existsSync(tenantsSrcDir)) {
+    console.warn(`[flutter-tenant-format] No tenants directory at ${tenantsSrcDir}`);
+    return;
+  }
+
+  const tenantIds = readdirSync(tenantsSrcDir).filter((d) =>
+    existsSync(`${tenantsSrcDir}/${d}/overrides.json`),
+  );
+
+  const tree = buildColorTree();
+
   for (const tenantId of tenantIds) {
-    const overrides = flattenDTCG(
-      JSON.parse(readFileSync(`${tenantsDir}/${tenantId}/overrides.json`, 'utf-8'))
+    const lightMap = buildTenantMap(tenantId, 'overrides.json', resolvedBaseMap);
+    // If no dark overrides file exists, dark = light (matches spec).
+    const darkMap = buildTenantMap(tenantId, 'overrides.dark.json', lightMap);
+
+    const pkgName = toDartPackageName(tenantId);
+    const pkgDir = `${tenantsOutDir}/${tenantId}`;
+    const libDir = `${pkgDir}/lib`;
+    mkdirSync(libDir, { recursive: true });
+
+    const dartPath = `${libDir}/btech_tokens_${pkgName}.dart`;
+    const pubspecPath = `${pkgDir}/pubspec.yaml`;
+
+    writeFileSync(dartPath, emitTenantDart(tenantId, tree, lightMap, darkMap), 'utf-8');
+    writeFileSync(pubspecPath, emitPubspec(tenantId), 'utf-8');
+
+    console.log(
+      `  Flutter tenant pkg — platforms/flutter/tenants/${tenantId}/ (btech_tokens_${pkgName})`,
     );
+  }
+}
 
-    function getResolved(tokenPath: string): string {
-      return resolveRef(overrides[tokenPath] ?? baseMap[tokenPath] ?? '#000000', baseMap);
+// =============================================================================
+// Standalone CLI entry
+// Usage: pnpm exec tsx packages/tokens/generators/flutter/flutter-tenant-format.ts
+// =============================================================================
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  // Build a resolved base map the same way sd.config.ts does, so this file is
+  // independently runnable for smoke testing without touching base platforms.
+  const rawMap: Record<string, string> = {};
+  for (const dir of [`${ROOT}/sources/core`, `${ROOT}/sources/semantic`]) {
+    if (!existsSync(dir)) continue;
+    for (const f of readdirSync(dir).filter((x) => x.endsWith('.json'))) {
+      Object.assign(
+        rawMap,
+        flattenDTCG(JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'))),
+      );
     }
-
-    const varName = toVarName(tenantId);
-    const label   = tenantId === 'default' ? 'Default tenant.' : `Tenant: ${tenantId}.`;
-
-    const L: string[] = [
-      '// AUTO-GENERATED by @btech/design-system — do not edit manually.',
-      `// Source: packages/tokens/sources/tenants/${tenantId}/overrides.json`,
-      '// Run `pnpm generate` to regenerate.',
-      '',
-      '// ignore_for_file: lines_longer_than_80_chars',
-      '',
-      "import 'package:flutter/material.dart';",
-      "import '../tenant.dart';",
-      '',
-      `/// ${label}`,
-      `/// Auto-generated from sources/tenants/${tenantId}/overrides.json`,
-      `const BTechTenantTokens ${varName} = BTechTenantTokens(`,
-    ];
-
-    for (const f of TENANT_FIELD_MAP) {
-      L.push(`  ${f.field}: ${formatVal(getResolved(f.path), f.type)},`);
-    }
-    L.push(');', '');
-
-    writeFileSync(`${outTenants}/${toFileName(tenantId)}`, L.join('\n'), 'utf-8');
-    console.log(`  Flutter tenant  — platforms/flutter/lib/src/tenants/${toFileName(tenantId)}`);
   }
+  const resolved: Record<string, string> = {};
+  for (const [k, v] of Object.entries(rawMap)) resolved[k] = resolveRef(v, rawMap);
+  for (const [k, v] of Object.entries(resolved)) resolved[k] = resolveRef(v, resolved);
 
-  // ── 2. tenant.dart — class definition + registry ──────────────────────────
-  const imports = tenantIds.map(id => `import 'tenants/${toFileName(id)}';`);
-  const defaultVar = toVarName('default');
-
-  const T: string[] = [
-    '// AUTO-GENERATED by @btech/design-system — do not edit manually.',
-    '// Run `pnpm generate` to regenerate from sources/tenants/**.',
-    '',
-    '// ignore_for_file: lines_longer_than_80_chars',
-    '',
-    "import 'package:flutter/material.dart';",
-    ...imports,
-    '',
-    '/// Resolved semantic token set for a specific tenant.',
-    '/// Use [BTechTenantTokens.forTenant] to look up by tenant ID,',
-    '/// or reference a tenant directly: [BTechTenantTokens.defaultTokens].',
-    '///',
-    '/// In widgets, prefer the context extension:',
-    '///   context.btechColor.background.primary',
-    '///   context.btechRadius.interactive',
-    '///   context.btechFont.sans',
-    'class BTechTenantTokens {',
-    '',
-  ];
-
-  // Fields
-  for (const f of TENANT_FIELD_MAP) T.push(`  final ${f.type} ${f.field};`);
-  T.push('');
-
-  // Constructor
-  T.push('  const BTechTenantTokens({');
-  for (const f of TENANT_FIELD_MAP) T.push(`    required this.${f.field},`);
-  T.push('  });');
-  T.push('');
-
-  // Static const references (delegating to individual tenant files)
-  for (const tenantId of tenantIds) {
-    const varName = toVarName(tenantId);
-    const propName = tenantId === 'default'
-      ? 'defaultTokens'
-      : tenantId.replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase());
-    const label = tenantId === 'default' ? 'Default tenant.' : `Tenant: ${tenantId}.`;
-    T.push(`  /// ${label}`);
-    T.push(`  static const BTechTenantTokens ${propName} = ${varName};`);
-    T.push('');
-  }
-
-  // Registry
-  T.push('  /// Registry — add new tenants here after running `pnpm generate`.');
-  T.push('  static const Map<String, BTechTenantTokens> _registry = {');
-  for (const tenantId of tenantIds) {
-    const propName = tenantId === 'default'
-      ? 'defaultTokens'
-      : tenantId.replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase());
-    T.push(`    '${tenantId}': ${propName},`);
-  }
-  T.push('  };');
-  T.push('');
-
-  // forTenant()
-  T.push('  /// Resolve tokens for [tenantId]. Falls back to [defaultTokens] if unknown.');
-  T.push('  static BTechTenantTokens forTenant(String tenantId) =>');
-  T.push(`      _registry[tenantId] ?? ${defaultVar};`);
-  T.push('}', '');
-
-  writeFileSync(`${outSrc}/tenant.dart`, T.join('\n'), 'utf-8');
-  console.log(`  Flutter tenant  — platforms/flutter/lib/src/tenant.dart (${tenantIds.length} tenants)`);
+  generateFlutterTenantPackages(resolved);
+  // eslint-disable-next-line no-console
+  console.log('[flutter-tenant-format] Done.');
 }
