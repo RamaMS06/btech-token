@@ -13,12 +13,11 @@ class BTechFontTheme extends ThemeExtension<BTechFontTheme> {
   const BTechFontTheme({required this.family});
   final BTechFontFamily family;
 
-  @override
   BTechFontTheme copyWith({BTechFontFamily? family}) =>
       BTechFontTheme(family: family ?? this.family);
 
   @override
-  BTechFontTheme lerp(ThemeExtension<BTechFontTheme>? other, double t) => this;
+  BTechFontTheme lerp(covariant ThemeExtension<BTechFontTheme>? other, double t) => this;
 }
 
 /// Static access to the active font theme.

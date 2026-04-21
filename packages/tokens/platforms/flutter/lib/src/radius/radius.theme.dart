@@ -18,7 +18,6 @@ class BTechRadiusTheme extends ThemeExtension<BTechRadiusTheme> {
   final double badge;
   final double tooltip;
 
-  @override
   BTechRadiusTheme copyWith({
     double? interactive,
     double? card,
@@ -33,7 +32,7 @@ class BTechRadiusTheme extends ThemeExtension<BTechRadiusTheme> {
       );
 
   @override
-  BTechRadiusTheme lerp(ThemeExtension<BTechRadiusTheme>? other, double t) {
+  BTechRadiusTheme lerp(covariant ThemeExtension<BTechRadiusTheme>? other, double t) {
     if (other is! BTechRadiusTheme) return this;
     return BTechRadiusTheme(
       interactive: lerpDouble(interactive, other.interactive, t)!,

@@ -196,7 +196,6 @@ function emitColorThemeDart(tree: ColorTree, resolvedMap: Record<string, string>
   L.push('  final BTechColorIcon       icon;');
   L.push('  final BTechColorStroke     stroke;');
   L.push('');
-  L.push('  @override');
   L.push('  BTechColorTheme copyWith({');
   L.push('    BTechColorBackground? background,');
   L.push('    BTechColorText? text,');
@@ -211,7 +210,7 @@ function emitColorThemeDart(tree: ColorTree, resolvedMap: Record<string, string>
   L.push('      );');
   L.push('');
   L.push('  @override');
-  L.push('  BTechColorTheme lerp(ThemeExtension<BTechColorTheme>? other, double t) {');
+  L.push('  BTechColorTheme lerp(covariant ThemeExtension<BTechColorTheme>? other, double t) {');
   L.push('    if (other is! BTechColorTheme) return this;');
   L.push('    return this;');
   L.push('  }');
@@ -284,7 +283,6 @@ function emitRadiusThemeDart(fields: RadiusField[]): string {
   L.push('');
   for (const f of fields) L.push(`  final double ${f.name};`);
   L.push('');
-  L.push('  @override');
   L.push('  BTechRadiusTheme copyWith({');
   for (const f of fields) L.push(`    double? ${f.name},`);
   L.push('  }) =>');
@@ -293,7 +291,7 @@ function emitRadiusThemeDart(fields: RadiusField[]): string {
   L.push('      );');
   L.push('');
   L.push('  @override');
-  L.push('  BTechRadiusTheme lerp(ThemeExtension<BTechRadiusTheme>? other, double t) {');
+  L.push('  BTechRadiusTheme lerp(covariant ThemeExtension<BTechRadiusTheme>? other, double t) {');
   L.push('    if (other is! BTechRadiusTheme) return this;');
   L.push('    return BTechRadiusTheme(');
   for (const f of fields) L.push(`      ${f.name}: lerpDouble(${f.name}, other.${f.name}, t)!,`);
@@ -334,12 +332,11 @@ function emitFontThemeDart(sans: string): string {
   L.push('  const BTechFontTheme({required this.family});');
   L.push('  final BTechFontFamily family;');
   L.push('');
-  L.push('  @override');
   L.push('  BTechFontTheme copyWith({BTechFontFamily? family}) =>');
   L.push('      BTechFontTheme(family: family ?? this.family);');
   L.push('');
   L.push('  @override');
-  L.push('  BTechFontTheme lerp(ThemeExtension<BTechFontTheme>? other, double t) => this;');
+  L.push('  BTechFontTheme lerp(covariant ThemeExtension<BTechFontTheme>? other, double t) => this;');
   L.push('}\n');
 
   L.push('/// Static access to the active font theme.');

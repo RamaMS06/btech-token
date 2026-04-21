@@ -116,7 +116,6 @@ class BTechColorTheme extends ThemeExtension<BTechColorTheme> {
   final BTechColorIcon       icon;
   final BTechColorStroke     stroke;
 
-  @override
   BTechColorTheme copyWith({
     BTechColorBackground? background,
     BTechColorText? text,
@@ -131,7 +130,7 @@ class BTechColorTheme extends ThemeExtension<BTechColorTheme> {
       );
 
   @override
-  BTechColorTheme lerp(ThemeExtension<BTechColorTheme>? other, double t) {
+  BTechColorTheme lerp(covariant ThemeExtension<BTechColorTheme>? other, double t) {
     if (other is! BTechColorTheme) return this;
     return this;
   }
