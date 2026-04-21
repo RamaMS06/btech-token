@@ -6,8 +6,6 @@ import { mkdirSync, readFileSync, writeFileSync, readdirSync } from 'fs';
 import { ROOT, flattenDTCG, resolveRef, pathToCssVarStem } from './generators/utils.js';
 import { loadTokenData } from './generators/token-loader.js';
 import { generateFlutterFiles } from './generators/flutter/flutter-generator.js';
-import { generateFlutterBaseToken } from './generators/flutter/flutter-base-token.js';
-import { generateFlutterTenantPackage } from './generators/flutter/flutter-tenant-isolated.js';
 import { generateTsFiles } from './generators/web/web-generator.js';
 import { generateTokenTypes } from './generators/web/web-token-types.js';
 import { appendTenantCSS } from './generators/web/web-tenant-css.js';
@@ -20,7 +18,7 @@ import {
   prependGoogleFontsCssImport,
 } from './generators/font-registry-generator.js';
 import { generateUtilitiesCss } from './generators/web/web-utilities-generator.js';
-import { flutterTenantsFormat } from './generators/flutter/flutter-tenant-format.js';
+import { generateFlutterTenantFiles } from './generators/flutter/flutter-tenant-format.js';
 
 // =============================================================================
 // Register custom Style Dictionary transforms
@@ -79,10 +77,9 @@ mkdirSync(FLUTTER_OUT, { recursive: true });
 mkdirSync(WEB_OUT,     { recursive: true });
 mkdirSync(WEB_SRC,     { recursive: true });
 
-StyleDictionary.registerFormat(flutterTenantsFormat);
-
 // =============================================================================
-// Style Dictionary — CSS custom properties + tenant.dart
+// Style Dictionary — CSS custom properties only
+// Flutter outputs are generated via custom generators, not SD platforms.
 // =============================================================================
 const BASE_SOURCE = [
   `${ROOT}/sources/core/**/*.json`,
@@ -102,17 +99,6 @@ const sd = new StyleDictionary({
         destination: 'styles.css',
         format: 'css/variables',
         options: { outputReferences: true, selector: ':root' },
-      }],
-    },
-    // Note: Flutter tokens are generated via custom generators (flutter-generator.ts
-    // and flutter-base-token.ts), not Style Dictionary platforms. tenant.dart is
-    // removed — per-tenant packages extend BTechToken via flutter-tenant-isolated.ts.
-    flutter: {
-      transformGroup: 'css/btech',
-      buildPath: `${ROOT}/platforms/flutter/lib/src/`,
-      files: [{
-        destination: 'tenant.dart',
-        format: 'custom/flutter-tenants',
       }],
     },
   },
@@ -178,14 +164,17 @@ function buildResolvedBaseMap(): Record<string, string> {
     const data = loadTokenData();
     const fontRegistry = loadFontRegistry();
 
-    // Generate multi-file Flutter output (base package)
+    // Generate multi-file Flutter output (color, spacing, radius, typography)
     generateFlutterFiles(data);
     generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
+    console.log('  Flutter — multi-file token output generated');
 
-    // Generate BtechToken base class (for tenant extends)
-    const resolvedBaseMapForFlutter = buildResolvedBaseMap();
-    generateFlutterBaseToken(resolvedBaseMapForFlutter);
-    console.log('  Flutter — multi-file token output + BtechToken base class generated');
+    // Generate per-tenant Dart files:
+    //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
+    //   src/tenant.dart (BTechTenantTokens class + registry)
+    const resolvedBaseMap = buildResolvedBaseMap();
+    generateFlutterTenantFiles(resolvedBaseMap);
+    console.log('  Flutter — tenant files generated');
 
     // Generate multi-file TypeScript output (framework-agnostic, in platforms/web/src/)
     generateTsFiles(data, WEB_SRC);
@@ -214,7 +203,6 @@ function buildResolvedBaseMap(): Record<string, string> {
     generateUtilitiesCss(`${WEB_OUT}utilities.css`, data);
 
     // Post-build: append [data-tenant="*"] overrides to styles.css
-    const resolvedBaseMap = buildResolvedBaseMap();
     appendTenantCSS(resolvedBaseMap);
 
     console.log('\n pnpm generate complete\n');
