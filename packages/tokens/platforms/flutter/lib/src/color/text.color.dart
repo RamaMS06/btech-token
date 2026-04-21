@@ -51,17 +51,6 @@ class BTechTextSecondaryColor extends Color {
   final Color bolder;
 }
 
-class BTechTextOnColor extends Color {
-  const BTechTextOnColor()
-    : secondary = const Color(0xFF166534),
-      danger = const Color(0xFFFFFFFF),
-      info = const Color(0xFFFFFFFF),
-      super(0xFFFFFFFF);
-  final Color secondary;
-  final Color danger;
-  final Color info;
-}
-
 /// Semantic text color tokens.
 /// Each property IS a [Color] directly; variants are sub-fields.
 /// Example: BTechTextColor.neutral → Color
@@ -72,14 +61,12 @@ class BTechTextColor {
       success = const BTechTextSuccessColor(),
       warning = const BTechTextWarningColor(),
       info = const BTechTextInfoColor(),
-      secondary = const BTechTextSecondaryColor(),
-      on = const BTechTextOnColor();
+      secondary = const BTechTextSecondaryColor();
   final BTechTextNeutralColor neutral;
   final BTechTextDangerColor danger;
   final BTechTextSuccessColor success;
   final BTechTextWarningColor warning;
   final BTechTextInfoColor info;
   final BTechTextSecondaryColor secondary;
-  final BTechTextOnColor on;
 }
 

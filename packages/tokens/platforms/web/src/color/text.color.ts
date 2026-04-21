@@ -16,9 +16,5 @@ export class BTechTextColor {
   readonly infoBolder = '#1e40af' as const;
   readonly secondary = '#9333ea' as const;
   readonly secondaryBolder = '#6b21a8' as const;
-  readonly on = '#ffffff' as const;
-  readonly onSecondary = '#166534' as const;
-  readonly onDanger = '#ffffff' as const;
-  readonly onInfo = '#ffffff' as const;
 }
 
