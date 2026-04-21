@@ -8,7 +8,7 @@ library btech_tokens_default;
 import 'package:flutter/material.dart';
 import 'package:btech_tokens/btech_tokens.dart';
 
-export 'package:btech_tokens/btech_tokens.dart';
+export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, btechFont, btechTheme;
 
 // ── Light (public — Pattern B) ────────────────────────────────────────────
 

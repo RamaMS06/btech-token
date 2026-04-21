@@ -1,0 +1,30 @@
+{
+  "$description": "bspace tenant — official brand configuration",
+  "color": {
+    "background": {
+      "primary": {
+        "default": { "$value": "#0066CC", "$type": "color" },
+        "hover":   { "$value": "#004EA3", "$type": "color" }
+      }
+    },
+    "stroke": {
+      "primary": {
+        "default": { "$value": "#0066CC", "$type": "color" }
+      }
+    },
+    "text": {
+      "neutral": {
+        "inverse": { "$value": "#FFFFFF", "$type": "color" }
+      }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "sans": { "$value": "Inter, system-ui", "$type": "fontFamily" }
+    }
+  },
+  "radius": {
+    "interactive": { "$value": "6px", "$type": "dimension" },
+    "card":        { "$value": "8px", "$type": "dimension" }
+  }
+}

@@ -25,5 +25,7 @@ export 'src/radius/radius.dart' hide BTechRadius;
 export 'src/radius/radius.theme.dart';
 export 'src/font/font.theme.dart';
 export 'src/typography/typography.dart' hide BTechFontFamily, BTechFont;
+// Default tokens (no tenant) — btechColor, btechRadius, btechFont, btechTheme().
+export 'src/defaults.dart';
 export 'src/theme_builder.dart';
 export 'src/context.dart';
