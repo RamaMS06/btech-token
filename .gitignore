@@ -44,8 +44,12 @@ Thumbs.db
 *.swp
 *.swo
 
-# ── Demo apps — local only, not published ─────────────────────────────────────
-apps/
+# ── Demo apps — generated / runtime files only (source files ARE committed) ───
+apps/**/.flutter-plugins
+apps/**/.flutter-plugins-dependencies
+apps/**/.dart_tool/
+apps/**/build/
+apps/**/.flutter-plugins-dependencies.json
 
 # ── Changesets ────────────────────────────────────────────────────────────────
 .changeset/*.js
