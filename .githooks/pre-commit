@@ -32,4 +32,12 @@ git add \
   packages/tokens/platforms/web/dist/styles.css \
   2>/dev/null || true
 
+# Resolve tenant package dependencies so IDEs can find btech_tokens.
+FLUTTER_TENANTS="packages/tokens/platforms/flutter/tenants"
+if [ -d "$FLUTTER_TENANTS" ]; then
+  for tenant_dir in "$FLUTTER_TENANTS"/*/; do
+    [ -f "$tenant_dir/pubspec.yaml" ] && (cd "$tenant_dir" && flutter pub get --no-example 2>/dev/null || true)
+  done
+fi
+
 echo "✅  Generated outputs staged."
