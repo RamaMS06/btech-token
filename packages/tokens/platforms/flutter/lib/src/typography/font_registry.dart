@@ -3,7 +3,6 @@
 
 // ignore_for_file: lines_longer_than_80_chars
 
-import 'package:flutter/material.dart';
 
 /// Font source registry — generated from sources/core/font-registry.json.
 ///
