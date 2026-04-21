@@ -1,39 +1,35 @@
 #!/usr/bin/env sh
-# pre-commit — auto-generate token outputs when tokens/ or the generator changes.
+# pre-commit — auto-generate token outputs when tokens/ sources or generators change.
 #
 # Runs automatically before every commit.
-# Only re-generates if staged files include tokens/** or config/sd.config.ts.
+# Only re-generates if staged files include packages/tokens/sources/, generators/, or sd.config.ts.
 # Generated files are staged automatically so they land in the same commit.
 
 set -e
 
-# Check if any staged file touches tokens/ or the generator config
 STAGED=$(git diff --cached --name-only)
-
-NEEDS_GENERATE=$(echo "$STAGED" | grep -E '^(tokens/|config/sd\.config\.ts)' || true)
+NEEDS_GENERATE=$(echo "$STAGED" | grep -E '^packages/tokens/(sources|generators|sd\.config\.ts)' || true)
 
 if [ -z "$NEEDS_GENERATE" ]; then
-  exit 0  # nothing token-related staged — skip
+  exit 0
 fi
 
 echo "🔄  Token source changed — regenerating packages..."
 
-# Run generator (tsx, no Turbo cache)
-pnpm exec tsx config/sd.config.ts
+pnpm exec tsx packages/tokens/sd.config.ts
 
-# Stage all generated outputs so they land in the same commit
 git add \
-  packages/tokens-dart/lib/btech_tokens.dart \
-  packages/tokens-dart/lib/src/color/ \
-  packages/tokens-dart/lib/src/spacing/ \
-  packages/tokens-dart/lib/src/radius/ \
-  packages/tokens-dart/lib/src/typography/ \
-  packages/tokens-dart/lib/src/tenant.dart \
-  packages/tokens-web/src/color/ \
-  packages/tokens-web/src/spacing/ \
-  packages/tokens-web/src/radius/ \
-  packages/tokens-web/src/typography/ \
-  packages/tokens-web/dist/styles.css \
+  packages/tokens/platforms/flutter/lib/btech_tokens.dart \
+  packages/tokens/platforms/flutter/lib/src/color/ \
+  packages/tokens/platforms/flutter/lib/src/spacing/ \
+  packages/tokens/platforms/flutter/lib/src/radius/ \
+  packages/tokens/platforms/flutter/lib/src/font/ \
+  packages/tokens/platforms/flutter/lib/src/typography/ \
+  packages/tokens/platforms/flutter/lib/src/theme_builder.dart \
+  packages/tokens/platforms/flutter/lib/src/context.dart \
+  packages/tokens/platforms/flutter/tenants/ \
+  packages/tokens/platforms/web/src/ \
+  packages/tokens/platforms/web/dist/styles.css \
   2>/dev/null || true
 
 echo "✅  Generated outputs staged."
