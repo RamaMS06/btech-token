@@ -18,7 +18,7 @@ import {
   prependGoogleFontsCssImport,
 } from './generators/font-registry-generator.js';
 import { generateUtilitiesCss } from './generators/web/web-utilities-generator.js';
-import { generateFlutterTenantFiles } from './generators/flutter/flutter-tenant-format.js';
+import { generateFlutterTenantPackages } from './generators/flutter/flutter-tenant-format.js';
 
 // =============================================================================
 // Register custom Style Dictionary transforms
@@ -149,12 +149,12 @@ function buildResolvedBaseMap(): Record<string, string> {
     generateTenantIsolatedCss(tenantArg, resolvedBaseMap);
     ensureTenantPackageJson(tenantArg);
 
-    // Flutter — BtechToken{Id} extends BtechToken + pubspec.yaml
-    generateFlutterTenantPackage(tenantArg, resolvedBaseMap);
+    // Flutter — generate all tenant packages
+    generateFlutterTenantPackages(resolvedBaseMap);
 
-    console.log(`\n  ✅ tenant packages ready for: ${tenantArg}`);
+    console.log(`\n  tenant packages ready for: ${tenantArg}`);
     console.log(`  Web     → packages/platforms/web/tenants/${tenantArg}/dist/styles.css`);
-    console.log(`  Flutter → packages/tokens/platforms/flutter/tenants/${tenantArg}/lib/btech_tokens_${tenantArg}.dart\n`);
+    console.log(`  Flutter → packages/tokens/platforms/flutter/tenants/\n`);
 
   } else {
     // =========================================================================
@@ -173,8 +173,8 @@ function buildResolvedBaseMap(): Record<string, string> {
     //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
     //   src/tenant.dart (BTechTenantTokens class + registry)
     const resolvedBaseMap = buildResolvedBaseMap();
-    generateFlutterTenantFiles(resolvedBaseMap);
-    console.log('  Flutter — tenant files generated');
+    generateFlutterTenantPackages(resolvedBaseMap);
+    console.log('  Flutter — tenant packages generated');
 
     // Generate multi-file TypeScript output (framework-agnostic, in platforms/web/src/)
     generateTsFiles(data, WEB_SRC);
