@@ -1,58 +1,43 @@
-#!/usr/bin/env bash
-# pre-commit — auto-generate token outputs when sources change
+#!/usr/bin/env sh
+# pre-commit — auto-generate token outputs when tokens/ sources or generators change.
 #
-# Triggers when any staged file matches:
-#   packages/tokens/sources/**   — token source JSON
-#   packages/tokens/sd.config.ts — generator config
-#
-# On match:
-#   1. Runs the token generator
-#   2. Builds @btech/tokens (web)
-#   3. Stages all generated output files
-#   4. Continues the commit (includes generated files automatically)
+# Runs automatically before every commit.
+# Only re-generates if staged files include packages/tokens/sources/, generators/, or sd.config.ts.
+# Generated files are staged automatically so they land in the same commit.
 
 set -e
 
 STAGED=$(git diff --cached --name-only)
+NEEDS_GENERATE=$(echo "$STAGED" | grep -E '^packages/tokens/(sources|generators|sd\.config\.ts)' || true)
 
-SOURCES_CHANGED=$(echo "$STAGED" | grep -E '^packages/tokens/(sources/|sd\.config\.ts)' || true)
-
-if [ -z "$SOURCES_CHANGED" ]; then
-  exit 0  # nothing to generate
+if [ -z "$NEEDS_GENERATE" ]; then
+  exit 0
 fi
 
-echo ""
-echo "🎨  Token sources changed — running generator..."
-echo ""
-echo "$SOURCES_CHANGED" | sed 's/^/   /'
-echo ""
+echo "🔄  Token source changed — regenerating packages..."
 
-if ! pnpm exec tsx packages/tokens/sd.config.ts; then
-  echo ""
-  echo "❌  Token generation failed. Fix the errors above and try again."
-  exit 1
-fi
-
-if ! pnpm --filter @btech/tokens build; then
-  echo ""
-  echo "❌  @btech/tokens build failed. Fix the errors above and try again."
-  exit 1
-fi
+pnpm exec tsx packages/tokens/sd.config.ts
 
 git add \
   packages/tokens/platforms/flutter/lib/btech_tokens.dart \
   packages/tokens/platforms/flutter/lib/src/color/ \
   packages/tokens/platforms/flutter/lib/src/spacing/ \
   packages/tokens/platforms/flutter/lib/src/radius/ \
+  packages/tokens/platforms/flutter/lib/src/font/ \
   packages/tokens/platforms/flutter/lib/src/typography/ \
-  packages/tokens/platforms/flutter/lib/src/tenant.dart \
-  packages/tokens/platforms/web/src/color/ \
-  packages/tokens/platforms/web/src/spacing/ \
-  packages/tokens/platforms/web/src/radius/ \
-  packages/tokens/platforms/web/src/typography/ \
+  packages/tokens/platforms/flutter/lib/src/theme_builder.dart \
+  packages/tokens/platforms/flutter/lib/src/context.dart \
+  packages/tokens/platforms/flutter/tenants/ \
+  packages/tokens/platforms/web/src/ \
   packages/tokens/platforms/web/dist/styles.css \
   2>/dev/null || true
 
-echo ""
-echo "✅  Generated outputs staged and ready to commit."
-echo ""
+# Resolve tenant package dependencies so IDEs can find btech_tokens.
+FLUTTER_TENANTS="packages/tokens/platforms/flutter/tenants"
+if [ -d "$FLUTTER_TENANTS" ]; then
+  for tenant_dir in "$FLUTTER_TENANTS"/*/; do
+    [ -f "$tenant_dir/pubspec.yaml" ] && (cd "$tenant_dir" && flutter pub get --no-example 2>/dev/null || true)
+  done
+fi
+
+echo "✅  Generated outputs staged."

@@ -51,15 +51,6 @@ class BTechIconSecondaryColor extends Color {
   final Color bolder;
 }
 
-class BTechIconOnColor extends Color {
-  const BTechIconOnColor()
-    : secondary = const Color(0xFF166534),
-      danger = const Color(0xFFFFFFFF),
-      super(0xFFFFFFFF);
-  final Color secondary;
-  final Color danger;
-}
-
 /// Semantic icon color tokens.
 /// Each property IS a [Color] directly; variants are sub-fields.
 /// Example: BTechIconColor.neutral → Color
@@ -70,14 +61,12 @@ class BTechIconColor {
       success = const BTechIconSuccessColor(),
       warning = const BTechIconWarningColor(),
       info = const BTechIconInfoColor(),
-      secondary = const BTechIconSecondaryColor(),
-      on = const BTechIconOnColor();
+      secondary = const BTechIconSecondaryColor();
   final BTechIconNeutralColor neutral;
   final BTechIconDangerColor danger;
   final BTechIconSuccessColor success;
   final BTechIconWarningColor warning;
   final BTechIconInfoColor info;
   final BTechIconSecondaryColor secondary;
-  final BTechIconOnColor on;
 }
 

@@ -3,6 +3,7 @@ repository: https://github.com/RamaMS06/btech-token
 
 packages:
   - packages/tokens/platforms/flutter
+  - packages/tokens/platforms/flutter/tenants/*
 
 ide:
   intellij: false

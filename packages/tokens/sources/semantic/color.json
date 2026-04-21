@@ -26,12 +26,6 @@
       "secondary": {
         "base":   { "$value": "{color.purple.600}",  "$type": "color" },
         "bolder": { "$value": "{color.purple.800}",  "$type": "color" }
-      },
-      "on": {
-        "primary":   { "$value": "{color.neutral.0}",   "$type": "color" },
-        "secondary": { "$value": "{color.green.800}",   "$type": "color" },
-        "danger":    { "$value": "{color.neutral.0}",   "$type": "color" },
-        "info":      { "$value": "{color.neutral.0}",   "$type": "color" }
       }
     },
 
@@ -61,11 +55,6 @@
       "secondary": {
         "base":   { "$value": "{color.purple.600}",  "$type": "color" },
         "bolder": { "$value": "{color.purple.800}",  "$type": "color" }
-      },
-      "on": {
-        "primary":   { "$value": "{color.neutral.0}",   "$type": "color" },
-        "secondary": { "$value": "{color.green.800}",   "$type": "color" },
-        "danger":    { "$value": "{color.neutral.0}",   "$type": "color" }
       }
     },
 

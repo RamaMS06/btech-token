@@ -1,18 +1,31 @@
 /// btech_tokens — Multi-tenant design tokens for Flutter (BTech Design System).
 ///
-/// Usage:
-/// ```dart
-/// MaterialApp(
-///   theme: BTechTheme.forTenant('tenant-a', Brightness.light),
-///   home: MyApp(),
-/// )
-/// ```
+/// Setup with btechTheme() from your tenant package:
+///   MaterialApp(
+///     theme:     btechTheme(),
+///     darkTheme: btechTheme(brightness: Brightness.dark),
+///     themeMode: ThemeMode.system,
+///   )
+///
+/// Access tokens in widgets via context extensions (Pattern C — reactive):
+///   context.btechColor.background.primary   // Color
+///   context.btechColor.text.neutral.subtle  // Color
+///   context.btechRadius.interactive         // double
+///   context.btechFont.family.sans           // String
+///
+/// Or use static classes when context is unavailable (Pattern A — always light):
+///   BTechColor.background.primary           // Color
+///   BTechRadius.interactive                 // double
 library btech_tokens;
 
-export 'src/color/color.dart';
+export 'src/color/color.dart' hide BTechColor;
+export 'src/color/color.theme.dart';
 export 'src/spacing/spacing.dart';
-export 'src/radius/radius.dart';
-export 'src/typography/typography.dart';
-export 'src/theme.dart';
-export 'src/tenant.dart';
+export 'src/radius/radius.dart' hide BTechRadius;
+export 'src/radius/radius.theme.dart';
+export 'src/font/font.theme.dart';
+export 'src/typography/typography.dart' hide BTechFontFamily, BTechFont;
+// Default tokens (no tenant) — btechColor, btechRadius, btechFont, btechTheme().
+export 'src/defaults.dart';
+export 'src/theme_builder.dart';
 export 'src/context.dart';
