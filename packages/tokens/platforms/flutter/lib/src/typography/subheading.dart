@@ -4,39 +4,43 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../color/color.theme.dart';
+import 'font.theme.dart';
 
-/// Subheading text styles (h5 – h7).
-/// For tenant-aware font switching, use context.btechFont.subheading instead.
+/// Subheading text styles (h5–h8).
+/// Font family is tenant-aware — driven by BTechTypography.fontFamily.
 ///
 /// ```dart
-/// Text('Section', style: BTechFont.subheading.h5)
-/// Text('Label',   style: BTechFont.subheading.h6)
+/// Text('Section', style: BTechTypography.subheading.h5)
+/// Text('Label',   style: BTechTypography.subheading.h6)
 /// ```
-class BTechFontSubHeading extends TextStyle {
-  BTechFontSubHeading()
+class BTechTypographySubHeading extends TextStyle {
+  BTechTypographySubHeading()
       : super(
-          fontSize: 16,
-          height: 20 / 16,
-          fontFamily: GoogleFonts.getFont('Inter',
-            fontWeight: FontWeight.w700).fontFamily,
+          fontFamily: BTechTypography.fontFamily,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          height: 24 / 18,
         );
 
-  /// H5 — 16px · w700 · lineHeight: 20/16 = 1.250
-  final TextStyle h5 = GoogleFonts.getFont('Inter',
-      fontSize: 16, fontWeight: FontWeight.w700, height: 20 / 16,
-      color: BTechColor.text.primary);
+  /// H5 — 18px · w600 · lineHeight: 24/18 = 1.333
+  final TextStyle h5 = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 18, fontWeight: FontWeight.w600, height: 24 / 18);
 
-  /// H6 — 14px · w600 · lineHeight: 16/14 = 1.143
-  final TextStyle h6 = GoogleFonts.getFont('Inter',
-      fontSize: 14, fontWeight: FontWeight.w600, height: 16 / 14,
-      color: BTechColor.text.primary);
+  /// H6 — 16px · w600 · lineHeight: 20/16 = 1.250
+  final TextStyle h6 = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 16, fontWeight: FontWeight.w600, height: 20 / 16);
 
-  /// H7 — 12px · w600 · lineHeight: 16/12 = 1.333
-  final TextStyle h7 = GoogleFonts.getFont('Inter',
-      fontSize: 12, fontWeight: FontWeight.w600, height: 16 / 12,
-      color: BTechColor.text.primary);
+  /// H7 — 14px · w600 · lineHeight: 16/14 = 1.143
+  final TextStyle h7 = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 14, fontWeight: FontWeight.w600, height: 16 / 14);
+
+  /// H8 — 12px · w600 · lineHeight: 16/12 = 1.333
+  final TextStyle h8 = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 12, fontWeight: FontWeight.w600, height: 16 / 12);
 
 }
 

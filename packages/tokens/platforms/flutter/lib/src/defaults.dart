@@ -5,7 +5,6 @@
 import 'package:flutter/material.dart';
 import 'color/color.theme.dart';
 import 'radius/radius.theme.dart';
-import 'typography/font.theme.dart';
 import 'theme_builder.dart';
 
 // ── Light (public — Pattern B) ─────────────────────────────────────────────
@@ -163,13 +162,6 @@ const BTechRadiusTheme btechRadius = BTechRadiusTheme(
   tooltip: 2.0,
 );
 
-// ── Font ────────────────────────────────────────────────────────────────────
-
-/// Default font tokens.
-const BTechFontTheme btechFont = BTechFontTheme(
-  family: BTechFontFamily(sans: 'Inter'),
-);
-
 // ── Theme builder ───────────────────────────────────────────────────────────
 
 /// Build a default BTech [ThemeData]. Use when no tenant package is needed.
@@ -182,5 +174,5 @@ const BTechFontTheme btechFont = BTechFontTheme(
 /// )
 /// ```
 ThemeData btechTheme({Brightness brightness = Brightness.light, ThemeData? base}) =>
-    buildBtechTheme(btechColor, _btechColorDark, btechRadius, btechFont,
+    buildBtechTheme(btechColor, _btechColorDark, btechRadius, 'packages/btech_tokens/Geist',
                     brightness: brightness, base: base);

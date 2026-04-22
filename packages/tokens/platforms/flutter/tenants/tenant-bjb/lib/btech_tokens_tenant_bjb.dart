@@ -8,7 +8,7 @@ library btech_tokens_tenant_bjb;
 import 'package:flutter/material.dart';
 import 'package:btech_tokens/btech_tokens.dart';
 
-export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, btechFont, btechTheme;
+export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, btechTheme;
 
 // ── Light (public — Pattern B) ────────────────────────────────────────────
 
@@ -46,13 +46,13 @@ const BTechColorTheme btechColor = BTechColorTheme(
     disabled: Color(0xFFC1C6CD),
   ),
   bg: BTechColorBg(
-    primary: Color(0xFFFFFFFF),
-    secondary: Color(0xFFECEDEE),
-    tertiary: Color(0xFF64748B),
-    inverse: Color(0xFF181C20),
-    subtle: Color(0xFFF4F5F6),
-    subtler: Color(0xFFDBDDE1),
-    subtlest: Color(0xFFC1C6CD),
+    primary: Color(0xFF145BC3),
+    secondary: Color(0xFF8A59C2),
+    tertiary: Color(0xFF6E479B),
+    inverse: Color(0xFFFFFFFF),
+    subtle: Color(0xFFF3EEF9),
+    subtler: Color(0xFFE7EFF9),
+    subtlest: Color(0xFFD1D5DB),
     overlay: Color(0xFF181C20CC),
   ),
   brand: BTechColorBrand(
@@ -165,12 +165,6 @@ const BTechRadiusTheme btechRadius = BTechRadiusTheme(
   tooltip: 2.0,
 );
 
-// ── Font (mode-agnostic) ──────────────────────────────────────────────────
-
-const BTechFontTheme btechFont = BTechFontTheme(
-  family: BTechFontFamily(sans: 'Poppins'),
-);
-
 // ── Theme builder — one line, logic lives in base ─────────────────────────
 
 /// Apply BTech tokens to [MaterialApp].
@@ -183,5 +177,5 @@ const BTechFontTheme btechFont = BTechFontTheme(
 /// )
 /// ```
 ThemeData btechTheme({Brightness brightness = Brightness.light, ThemeData? base}) =>
-    buildBtechTheme(btechColor, _btechColorDark, btechRadius, btechFont,
+    buildBtechTheme(btechColor, _btechColorDark, btechRadius, 'packages/btech_tokens_tenant_bjb/Poppins',
                     brightness: brightness, base: base);

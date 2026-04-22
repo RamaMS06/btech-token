@@ -4,69 +4,75 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../color/color.theme.dart';
+import 'font.theme.dart';
 
 /// Body text styles.
-/// For tenant-aware font switching, use context.btechFont.body instead.
+/// Instance itself IS the regular (14px/w400) style.
+/// Font family is tenant-aware — driven by BTechTypography.fontFamily.
 ///
 /// ```dart
-/// Text('Body copy',  style: BTechFont.body)
-/// Text('Bold label', style: BTechFont.body.bold)
-/// Text('Small hint', style: BTechFont.body.small)
+/// Text('Body',  style: BTechTypography.body.regular)
+/// Text('Bold',  style: BTechTypography.body.regularB)
+/// Text('Small', style: BTechTypography.body.small)
 /// ```
-class BTechFontBody extends TextStyle {
-  BTechFontBody()
+class BTechTypographyBody extends TextStyle {
+  BTechTypographyBody()
       : super(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          fontFamily: GoogleFonts.getFont('Inter',
-            fontSize: 12, fontWeight: FontWeight.w500,
-            color: BTechColor.text.primary,
-            height: 16 / 12).fontFamily,
+          fontFamily: BTechTypography.fontFamily,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          height: 16 / 14,
         );
 
-  /// base — 12px · w500 · lineHeight: 16/12 = 1.333
-  final TextStyle base = GoogleFonts.getFont('Inter',
-      fontSize: 12, fontWeight: FontWeight.w500, height: 16 / 12,
-      color: BTechColor.text.primary);
+  /// large — 16px · w400 · lineHeight: 20/16 = 1.250
+  final TextStyle large = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 16, fontWeight: FontWeight.w400, height: 20 / 16);
 
-  /// bold — 12px · w700 · lineHeight: 16/12 = 1.333
-  final TextStyle bold = GoogleFonts.getFont('Inter',
-      fontSize: 12, fontWeight: FontWeight.w700, height: 16 / 12,
-      color: BTechColor.text.primary);
+  /// regular — 14px · w400 · lineHeight: 16/14 = 1.143
+  final TextStyle regular = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 14, fontWeight: FontWeight.w400, height: 16 / 14);
 
-  /// small — 11px · w500 · lineHeight: 16/11 = 1.455
-  final TextStyle small = GoogleFonts.getFont('Inter',
-      fontSize: 11, fontWeight: FontWeight.w500, height: 16 / 11,
-      color: BTechColor.text.primary);
+  /// small — 12px · w400 · lineHeight: 16/12 = 1.333
+  final TextStyle small = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 12, fontWeight: FontWeight.w400, height: 16 / 12);
 
-  /// medium — 14px · w500 · lineHeight: 18/14 = 1.286
-  final TextStyle medium = GoogleFonts.getFont('Inter',
-      fontSize: 14, fontWeight: FontWeight.w500, height: 18 / 14,
-      color: BTechColor.text.primary);
+  /// xtrasmall — 10px · w400 · lineHeight: 16/10 = 1.600
+  final TextStyle xtrasmall = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 10, fontWeight: FontWeight.w400, height: 16 / 10);
 
-  /// xstraSmall — 8px · w500 · lineHeight: 12/8 = 1.500
-  final TextStyle xstraSmall = GoogleFonts.getFont('Inter',
-      fontSize: 8, fontWeight: FontWeight.w500, height: 12 / 8,
-      color: BTechColor.text.primary);
+  /// micro — 8px · w400 · lineHeight: 12/8 = 1.500
+  final TextStyle micro = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 8, fontWeight: FontWeight.w400, height: 12 / 8);
 
-  /// italic — 12px · w500 · lineHeight: 16/12 = 1.333
-  final TextStyle italic = GoogleFonts.getFont('Inter',
-      fontSize: 12, fontWeight: FontWeight.w500, height: 16 / 12,
-      fontStyle: FontStyle.italic,
-      color: BTechColor.text.primary);
+  /// largeB — 16px · w700 · lineHeight: 20/16 = 1.250
+  final TextStyle largeB = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 16, fontWeight: FontWeight.w700, height: 20 / 16);
 
-  /// underline — 12px · w600 · lineHeight: 16/12 = 1.333
-  final TextStyle underline = GoogleFonts.getFont('Inter',
-      fontSize: 12, fontWeight: FontWeight.w600, height: 16 / 12,
-      decoration: TextDecoration.underline,
-      color: BTechColor.text.primary);
+  /// regularB — 14px · w700 · lineHeight: 16/14 = 1.143
+  final TextStyle regularB = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 14, fontWeight: FontWeight.w700, height: 16 / 14);
 
-  /// paragraph — 12px · w500 · lineHeight: 24/12 = 2.000
-  final TextStyle paragraph = GoogleFonts.getFont('Inter',
-      fontSize: 12, fontWeight: FontWeight.w500, height: 24 / 12,
-      color: BTechColor.text.primary);
+  /// smallB — 12px · w700 · lineHeight: 16/12 = 1.333
+  final TextStyle smallB = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 12, fontWeight: FontWeight.w700, height: 16 / 12);
+
+  /// xtrasmallB — 10px · w700 · lineHeight: 16/10 = 1.600
+  final TextStyle xtrasmallB = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 10, fontWeight: FontWeight.w700, height: 16 / 10);
+
+  /// microB — 8px · w700 · lineHeight: 12/8 = 1.500
+  final TextStyle microB = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 8, fontWeight: FontWeight.w700, height: 12 / 8);
 
 }
 

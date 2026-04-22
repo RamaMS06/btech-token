@@ -25,12 +25,8 @@ pnpm exec tsx packages/tokens/sd.config.ts
 # platforms/ is 100% generated — no hand-edited files live here.
 git add packages/tokens/platforms/ 2>/dev/null || true
 
-# Resolve tenant package dependencies so IDEs can find btech_tokens.
-FLUTTER_TENANTS="packages/tokens/platforms/flutter/tenants"
-if [ -d "$FLUTTER_TENANTS" ]; then
-  for tenant_dir in "$FLUTTER_TENANTS"/*/; do
-    [ -f "$tenant_dir/pubspec.yaml" ] && (cd "$tenant_dir" && flutter pub get --no-example 2>/dev/null || true)
-  done
-fi
+# Resolve dependencies for ALL Flutter packages (base + every tenant, including newly generated ones).
+# melos discovers packages via the glob in melos.yaml — no need to manually loop tenant dirs.
+dart run melos get --no-select 2>/dev/null || true
 
 echo "✅  Generated outputs staged."

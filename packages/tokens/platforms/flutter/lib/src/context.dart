@@ -5,7 +5,6 @@
 import 'package:flutter/material.dart';
 import 'color/color.theme.dart';
 import 'radius/radius.theme.dart';
-import 'typography/font.theme.dart';
 
 /// Context extensions for reactive access to BTech design tokens.
 ///
@@ -13,13 +12,13 @@ import 'typography/font.theme.dart';
 /// so [btechColor] automatically returns the correct theme for the current brightness.
 ///
 /// Always use these in [btech_ui] components — reactive to both tenant AND light/dark mode.
+///
+/// For typography, use the static [BTechTypography] class directly — font family does not
+/// change at runtime and needs no reactive context access.
 extension BTechContextExtension on BuildContext {
   /// Active color theme — auto switches light/dark based on [ThemeMode].
   BTechColorTheme  get btechColor  => Theme.of(this).extension<BTechColorTheme>()!;
 
   /// Active radius theme.
   BTechRadiusTheme get btechRadius => Theme.of(this).extension<BTechRadiusTheme>()!;
-
-  /// Active font theme.
-  BTechFontTheme   get btechFont   => Theme.of(this).extension<BTechFontTheme>()!;
 }

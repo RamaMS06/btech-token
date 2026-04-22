@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:btech_tokens/btech_tokens.dart';
+import 'package:btech_tokens_tenant_bjb/btech_tokens_tenant_bjb.dart';
 
 void main() => runApp(const DemoApp());
 
@@ -97,22 +97,17 @@ class ShowcasePage extends StatelessWidget {
     final c =
         context.btechColor; // BTechColorTheme — reactive, tenant + dark mode
     final r = context.btechRadius; // BTechRadiusTheme
-    final f = context.btechFont; // BTechFontTheme (.family.sans)
 
     // Semantic font styles — instantiated after theme is active
-    final heading = BTechFontHeading();
-    final subheading = BTechFontSubHeading();
-    final body = BTechFontBody();
+    final heading = BTechTypographyHeading();
+    final subheading = BTechTypographySubHeading();
+    final body = BTechTypographyBody();
 
     return Scaffold(
       backgroundColor: c.bg.primary,
       appBar: AppBar(
         backgroundColor: c.bg.primary,
         elevation: 0,
-        title: Text(
-          'BTech Token Showcase',
-          style: TextStyle(color: c.text.primary, fontSize: BTechFontSize.md),
-        ),
         actions: [
           IconButton(
             icon: Icon(
@@ -139,7 +134,17 @@ class ShowcasePage extends StatelessWidget {
                 Text(
                   'BTech Design System · Token Showcase · Flutter',
                   textAlign: TextAlign.center,
-                  style: heading.h4.copyWith(color: c.text.primary),
+                  style: TextStyle(
+                      fontFamily: 'System',
+                      fontSize: 40,
+                      fontWeight: FontWeight.w700,
+                      height: 48 / 40),
+                ),
+                const SizedBox(height: BTechSpacing.sm),
+                Text(
+                  'BTech Design System · Token Showcase · Flutter',
+                  textAlign: TextAlign.center,
+                  style: BTechTypography.heading.display,
                 ),
                 const SizedBox(height: BTechSpacing.sm),
                 Text(
@@ -193,22 +198,22 @@ class ShowcasePage extends StatelessWidget {
                       spacing: BTechSpacing.sm,
                       runSpacing: BTechSpacing.sm,
                       children: [
-                        _ColorSwatch('primary', BTechColor.bg.primary, c.text.primary,
-                            'c.bg.primary', w),
+                        _ColorSwatch('primary', BTechColor.bg.primary,
+                            c.text.primary, 'c.bg.primary', w),
                         _ColorSwatch('secondary', BTechColor.bg.secondary,
                             c.text.secondary, 'c.bg.secondary', w),
-                        _ColorSwatch('tertiary', BTechColor.bg.tertiary, c.text.primary,
-                            'c.bg.tertiary', w),
-                        _ColorSwatch('inverse', BTechColor.bg.inverse, c.text.primary,
-                            'c.bg.inverse', w),
-                        _ColorSwatch('subtle', BTechColor.bg.subtle, c.text.primary,
-                            'c.bg.subtle', w),
-                        _ColorSwatch('subtler', BTechColor.bg.subtler, c.text.primary,
-                            'c.bg.subtler', w),
-                        _ColorSwatch('subtlest', BTechColor.bg.subtlest, c.text.primary,
-                            'c.bg.subtlest', w),
-                        _ColorSwatch('overlay', BTechColor.bg.overlay, c.text.primary,
-                            'c.bg.overlay', w),
+                        _ColorSwatch('tertiary', BTechColor.bg.tertiary,
+                            c.text.primary, 'c.bg.tertiary', w),
+                        _ColorSwatch('inverse', BTechColor.bg.inverse,
+                            c.text.primary, 'c.bg.inverse', w),
+                        _ColorSwatch('subtle', BTechColor.bg.subtle,
+                            c.text.primary, 'c.bg.subtle', w),
+                        _ColorSwatch('subtler', BTechColor.bg.subtler,
+                            c.text.primary, 'c.bg.subtler', w),
+                        _ColorSwatch('subtlest', BTechColor.bg.subtlest,
+                            c.text.primary, 'c.bg.subtlest', w),
+                        _ColorSwatch('overlay', BTechColor.bg.overlay,
+                            c.text.primary, 'c.bg.overlay', w),
                       ],
                     );
                   }),
@@ -226,7 +231,7 @@ class ShowcasePage extends StatelessWidget {
                           style: TextStyle(
                             color: c.text.primary,
                             fontSize: BTechFontSize.md,
-                            fontFamily: f.family.sans,
+                            fontFamily: BTechTypography.fontFamily,
                           ),
                         )),
                     _TokenRow(
@@ -235,70 +240,70 @@ class ShowcasePage extends StatelessWidget {
                             style: TextStyle(
                                 color: c.text.secondary,
                                 fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                                fontFamily: BTechTypography.fontFamily))),
                     _TokenRow(
                         code: 'c.text.tertiary',
                         child: Text('The quick brown fox — tertiary',
                             style: TextStyle(
                                 color: c.text.tertiary,
                                 fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                                fontFamily: BTechTypography.fontFamily))),
                     _TokenRow(
                         code: 'c.text.inverse',
                         child: Text('The quick brown fox — inverse',
                             style: TextStyle(
                                 color: c.text.inverse,
                                 fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                                fontFamily: BTechTypography.fontFamily))),
                     _TokenRow(
                         code: 'c.text.disabled',
                         child: Text('The quick brown fox — disabled',
                             style: TextStyle(
                                 color: c.text.disabled,
                                 fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                                fontFamily: BTechTypography.fontFamily))),
                     _TokenRow(
                         code: 'c.text.link',
                         child: Text('The quick brown fox — link',
                             style: TextStyle(
                                 color: c.text.link,
                                 fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                                fontFamily: BTechTypography.fontFamily))),
                     _TokenRow(
                         code: 'c.text.disabled',
                         child: Text('The quick brown fox — disabled',
                             style: TextStyle(
                                 color: c.text.disabled,
                                 fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                                fontFamily: BTechTypography.fontFamily))),
                     _TokenRow(
                         code: 'c.text.success',
                         child: Text('The quick brown fox — success',
                             style: TextStyle(
                                 color: c.text.success,
                                 fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                                fontFamily: BTechTypography.fontFamily))),
                     _TokenRow(
                         code: 'c.text.error',
                         child: Text('The quick brown fox — error',
                             style: TextStyle(
                                 color: c.text.error,
                                 fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                                fontFamily: BTechTypography.fontFamily))),
                     _TokenRow(
                         code: 'c.text.warning',
                         child: Text('The quick brown fox — warning',
                             style: TextStyle(
                                 color: c.text.warning,
                                 fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                                fontFamily: BTechTypography.fontFamily))),
                     _TokenRow(
                         code: 'c.text.info',
                         child: Text('The quick brown fox — info',
                             style: TextStyle(
                                 color: c.text.info,
                                 fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                                fontFamily: BTechTypography.fontFamily))),
                   ]),
                 ),
                 const SizedBox(height: BTechSpacing.lg),
@@ -309,20 +314,20 @@ class ShowcasePage extends StatelessWidget {
                   child: Column(children: [
                     _TokenRow(
                         code: 'c.border.primary',
-                        child: _StrokePill(
-                            'neutral', c.border.primary, c, f.family.sans)),
+                        child: _StrokePill('neutral', c.border.primary, c,
+                            BTechTypography.fontFamily)),
                     _TokenRow(
                         code: 'c.border.primary.strong',
                         child: _StrokePill('neutral.strong', c.border.primary,
-                            c, f.family.sans)),
+                            c, BTechTypography.fontFamily)),
                     _TokenRow(
                         code: 'c.border.primary',
-                        child: _StrokePill(
-                            'primary', c.border.primary, c, f.family.sans)),
+                        child: _StrokePill('primary', c.border.primary, c,
+                            BTechTypography.fontFamily)),
                     _TokenRow(
                         code: 'c.border.danger',
-                        child: _StrokePill(
-                            'danger', c.border.secondary, c, f.family.sans)),
+                        child: _StrokePill('danger', c.border.secondary, c,
+                            BTechTypography.fontFamily)),
                   ]),
                 ),
                 const SizedBox(height: BTechSpacing.lg),
@@ -350,11 +355,12 @@ class ShowcasePage extends StatelessWidget {
                   title: 'TYPOGRAPHY · FONT FAMILY',
                   child: Column(children: [
                     _TokenRow(
-                        code: 'btechFont.family.sans → ${f.family.sans}',
+                        code:
+                            'BTechTypography.fontFamily → ${BTechTypography.fontFamily}',
                         child: Text(
                             'Sans: The quick brown fox jumps over the lazy dog',
                             style: TextStyle(
-                                fontFamily: f.family.sans,
+                                fontFamily: BTechTypography.fontFamily,
                                 fontSize: BTechFontSize.md,
                                 color: c.text.primary))),
                     _TokenRow(
@@ -388,7 +394,7 @@ class ShowcasePage extends StatelessWidget {
                               style: TextStyle(
                                   fontSize: s.$2,
                                   color: c.text.primary,
-                                  fontFamily: f.family.sans))),
+                                  fontFamily: BTechTypography.fontFamily))),
                   ]),
                 ),
                 const SizedBox(height: BTechSpacing.lg),
@@ -410,7 +416,7 @@ class ShowcasePage extends StatelessWidget {
                                   fontWeight: w.$2,
                                   fontSize: BTechFontSize.md,
                                   color: c.text.primary,
-                                  fontFamily: f.family.sans))),
+                                  fontFamily: BTechTypography.fontFamily))),
                   ]),
                 ),
                 const SizedBox(height: BTechSpacing.lg),
@@ -420,59 +426,69 @@ class ShowcasePage extends StatelessWidget {
                   title: 'TYPOGRAPHY · SEMANTIC STYLES',
                   child: Column(children: [
                     _TokenRow(
-                        code: 'BTechFontHeading().h1',
-                        child:
-                            Text('Heading H1 — 35px bold', style: heading.h1)),
+                        code: 'BTechTypographyHeading().display',
+                        child: Text('Display — 40px w700',
+                            style: heading.display)),
                     _TokenRow(
-                        code: 'BTechFontHeading().h2',
+                        code: 'BTechTypographyHeading().h1',
                         child:
-                            Text('Heading H2 — 29px w600', style: heading.h2)),
+                            Text('Heading H1 — 32px w700', style: heading.h1)),
                     _TokenRow(
-                        code: 'BTechFontHeading().h3',
-                        child: Text('Heading H3 — 24px bold',
+                        code: 'BTechTypographyHeading().h2',
+                        child:
+                            Text('Heading H2 — 28px w700', style: heading.h2)),
+                    _TokenRow(
+                        code: 'BTechTypographyHeading().h3',
+                        child: Text('Heading H3 — 24px w600',
                             style: heading.h3.copyWith(color: c.text.primary))),
                     _TokenRow(
-                        code: 'BTechFontHeading().h4',
-                        child: Text('Heading H4 — 20px w500',
+                        code: 'BTechTypographyHeading().h4',
+                        child: Text('Heading H4 — 20px w600',
                             style: heading.h4.copyWith(color: c.text.primary))),
                     _TokenRow(
-                        code: 'BTechFontSubHeading().h5',
-                        child: Text('Subheading H5 — 16px bold',
+                        code: 'BTechTypographySubHeading().h5',
+                        child: Text('Subheading H5 — 18px w600',
                             style: subheading.h5)),
                     _TokenRow(
-                        code: 'BTechFontSubHeading().h6',
-                        child: Text('Subheading H6 — 14px w600',
+                        code: 'BTechTypographySubHeading().h6',
+                        child: Text('Subheading H6 — 16px w600',
                             style: subheading.h6)),
                     _TokenRow(
-                        code: 'BTechFontSubHeading().h7',
-                        child: Text('Subheading H7 — 12px w600',
+                        code: 'BTechTypographySubHeading().h7',
+                        child: Text('Subheading H7 — 14px w600',
                             style: subheading.h7)),
                     _TokenRow(
-                        code: 'BTechFontBody().base',
-                        child: Text('Body base — 12px w500', style: body.base)),
+                        code: 'BTechTypographySubHeading().h8',
+                        child: Text('Subheading H8 — 12px w600',
+                            style: subheading.h8)),
                     _TokenRow(
-                        code: 'BTechFontBody().bold',
-                        child: Text('Body bold — 12px bold', style: body.bold)),
-                    _TokenRow(
-                        code: 'BTechFontBody().medium',
-                        child: Text('Body medium — 14px w500',
-                            style: body.medium)),
-                    _TokenRow(
-                        code: 'BTechFontBody().small',
+                        code: 'BTechTypographyBody().large',
                         child:
-                            Text('Body small — 11px w500', style: body.small)),
+                            Text('Body large — 16px w400', style: body.large)),
                     _TokenRow(
-                        code: 'BTechFontBody().italic',
-                        child: Text('Body italic — 12px italic',
-                            style: body.italic)),
+                        code: 'BTechTypographyBody().regular',
+                        child: Text('Body regular — 14px w400',
+                            style: body.regular)),
                     _TokenRow(
-                        code: 'BTechFontBody().underline',
-                        child: Text('Body underline — 12px w600',
-                            style: body.underline)),
+                        code: 'BTechTypographyBody().small',
+                        child:
+                            Text('Body small — 12px w400', style: body.small)),
                     _TokenRow(
-                        code: 'BTechFontBody().paragraph',
-                        child: Text('Body paragraph — relaxed lh',
-                            style: body.paragraph)),
+                        code: 'BTechTypographyBody().xtrasmall',
+                        child: Text('Body xtrasmall — 10px w400',
+                            style: body.xtrasmall)),
+                    _TokenRow(
+                        code: 'BTechTypographyBody().micro',
+                        child:
+                            Text('Body micro — 8px w400', style: body.micro)),
+                    _TokenRow(
+                        code: 'BTechTypographyBody().regularB',
+                        child: Text('Body regular bold — 14px w700',
+                            style: body.regularB)),
+                    _TokenRow(
+                        code: 'BTechTypographyBody().smallB',
+                        child: Text('Body small bold — 12px w700',
+                            style: body.smallB)),
                   ]),
                 ),
                 const SizedBox(height: BTechSpacing.lg),
@@ -556,7 +572,7 @@ class ShowcasePage extends StatelessWidget {
                     border: Border.all(color: c.border.primary),
                   ),
                   child: Text(
-                    'btech_tokens_bspace · btechTheme() · font: ${f.family.sans}',
+                    'btech_tokens_bspace · btechTheme() · font: ${BTechTypography.fontFamily}',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: BTechFontSize.xs,

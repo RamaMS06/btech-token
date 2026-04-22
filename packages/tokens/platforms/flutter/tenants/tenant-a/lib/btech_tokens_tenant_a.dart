@@ -8,7 +8,7 @@ library btech_tokens_tenant_a;
 import 'package:flutter/material.dart';
 import 'package:btech_tokens/btech_tokens.dart';
 
-export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, btechFont, btechTheme;
+export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, btechTheme;
 
 // ── Light (public — Pattern B) ────────────────────────────────────────────
 
@@ -165,12 +165,6 @@ const BTechRadiusTheme btechRadius = BTechRadiusTheme(
   tooltip: 2.0,
 );
 
-// ── Font (mode-agnostic) ──────────────────────────────────────────────────
-
-const BTechFontTheme btechFont = BTechFontTheme(
-  family: BTechFontFamily(sans: 'Inter'),
-);
-
 // ── Theme builder — one line, logic lives in base ─────────────────────────
 
 /// Apply BTech tokens to [MaterialApp].
@@ -183,5 +177,5 @@ const BTechFontTheme btechFont = BTechFontTheme(
 /// )
 /// ```
 ThemeData btechTheme({Brightness brightness = Brightness.light, ThemeData? base}) =>
-    buildBtechTheme(btechColor, _btechColorDark, btechRadius, btechFont,
+    buildBtechTheme(btechColor, _btechColorDark, btechRadius, 'packages/btech_tokens/Geist',
                     brightness: brightness, base: base);

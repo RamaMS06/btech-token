@@ -2,7 +2,7 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export const BTechFontFamily = {
-  sans: 'Inter',
+  sans: 'Geist',
   mono: 'JetBrains Mono',
 } as const;
 
@@ -41,12 +41,12 @@ export const BTechLineHeight = {
 
 export const BTechFont = {
   heading: {
-    fontFamily: 'Inter',
+    fontFamily: 'Geist',
     fontWeight: 700,
     lineHeight: NaN,
   },
   body: {
-    fontFamily: 'Inter',
+    fontFamily: 'Geist',
     fontSize: 16,
     fontWeight: 400,
     lineHeight: NaN,

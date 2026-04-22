@@ -2,44 +2,34 @@
 // Run `pnpm generate` to regenerate.
 // ignore_for_file: lines_longer_than_80_chars
 
-import 'package:flutter/material.dart';
 import 'heading.dart';
 import 'subheading.dart';
 import 'body.dart';
 
-/// Font-family data class — holds the active sans-serif family name.
-class BTechFontFamily {
-  const BTechFontFamily({required this.sans});
-  final String sans;
-}
+/// Static access to BTech typography tokens.
+///
+/// Font family is tenant-aware: each tenant's btechTheme() calls
+/// BTechTypography.activate(fontSans) before any widget builds.
+///
+/// ```dart
+/// Text('Hero',   style: BTechTypography.heading.display)
+/// Text('Body',   style: BTechTypography.body.regular)
+/// Text('Bold',   style: BTechTypography.body.regularB)
+/// Text('Label',  style: BTechTypography.subheading.h6)
+/// ```
+abstract class BTechTypography {
+  static String _fontFamily = 'packages/btech_tokens/Geist';
 
-class BTechFontTheme extends ThemeExtension<BTechFontTheme> {
-  const BTechFontTheme({required this.family});
-  final BTechFontFamily family;
+  /// The active sans-serif font family name (set by btechTheme()).
+  static String get fontFamily => _fontFamily;
 
-  BTechFontTheme copyWith({BTechFontFamily? family}) =>
-      BTechFontTheme(family: family ?? this.family);
+  /// Heading text styles (display, h1–h4).
+  static final BTechTypographyHeading    heading    = BTechTypographyHeading();
+  /// Subheading text styles (h5–h8).
+  static final BTechTypographySubHeading subheading = BTechTypographySubHeading();
+  /// Body text styles (large/regular/small/xtrasmall/micro + bold variants).
+  static final BTechTypographyBody       body       = BTechTypographyBody();
 
-  @override
-  BTechFontTheme lerp(covariant ThemeExtension<BTechFontTheme>? other, double t) => this;
-}
-
-/// Static access to the active font theme.
-/// - BTechFont.family.sans         — active sans-serif family name (tenant-switchable)
-/// - BTechFont.heading.h1          — TextStyle (always uses active font family)
-/// - BTechFont.body.medium         — TextStyle
-/// For reactive dark/light font colours in widgets, prefer context.btechFont.
-abstract class BTechFont {
-  static BTechFontTheme _active = const BTechFontTheme(
-    family: BTechFontFamily(sans: 'Inter'),
-  );
-
-  static BTechFontFamily get family => _active.family;
-
-  /// Semantic typography scale — TextStyle instances derived from the active font.
-  static final BTechFontHeading    heading    = BTechFontHeading();
-  static final BTechFontSubHeading subheading = BTechFontSubHeading();
-  static final BTechFontBody       body       = BTechFontBody();
-
-  static void activate(BTechFontTheme t) => _active = t;
+  /// Called by [buildBtechTheme] — do not call directly.
+  static void activate(String fontFamily) => _fontFamily = fontFamily;
 }

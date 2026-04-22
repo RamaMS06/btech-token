@@ -1,7 +1,7 @@
 {
   "typography": {
     "fontFamily": {
-      "sans": { "$value": "Inter, system-ui, -apple-system, sans-serif", "$type": "fontFamily" },
+      "sans": { "$value": "Geist, system-ui, -apple-system, sans-serif", "$type": "fontFamily" },
       "mono": { "$value": "'JetBrains Mono', 'Fira Code', monospace",   "$type": "fontFamily" }
     },
     "fontSize": {

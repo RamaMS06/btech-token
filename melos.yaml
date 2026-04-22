@@ -8,6 +8,14 @@ packages:
 ide:
   intellij: false
 
+command:
+  version:
+    # Automatically update pubspec.yaml versions and create git tags.
+    updateGitTagRefs: true
+    branch: main
+    # Commit message when melos version bumps packages.
+    message: "chore(release): publish packages\n\n{new_package_versions}"
+
 scripts:
   get:
     exec: flutter pub get

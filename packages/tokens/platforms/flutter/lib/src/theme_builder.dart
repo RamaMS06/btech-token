@@ -21,14 +21,14 @@ ThemeData buildBtechTheme(
   BTechColorTheme colorLight,
   BTechColorTheme colorDark,
   BTechRadiusTheme radius,
-  BTechFontTheme font, {
+  String fontSans, {
   Brightness brightness = Brightness.light,
   ThemeData? base,
 }) {
   BTechColor.activateBoth(colorLight, colorDark);
   BTechRadius.activate(radius);
-  BTechFont.activate(font);
+  BTechTypography.activate(fontSans);
   final activeColor = brightness == Brightness.dark ? colorDark : colorLight;
-  return (base ?? ThemeData(brightness: brightness))
-      .copyWith(extensions: [activeColor, radius, font]);
+  return (base ?? ThemeData(brightness: brightness, fontFamily: fontSans))
+      .copyWith(extensions: [activeColor, radius]);
 }

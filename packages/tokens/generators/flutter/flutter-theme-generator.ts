@@ -295,50 +295,44 @@ function emitRadiusThemeDart(fields: RadiusField[]): string {
 // Font theme dart emitter
 // =============================================================================
 
+/** Emit font.theme.dart — the BTechTypography static facade.
+ *  No ThemeExtension: font family is a plain static String, set once at app startup.
+ *  Heading/subheading/body classes read BTechTypography.fontFamily at construction time. */
 function emitFontThemeDart(sans: string): string {
   const L: string[] = [];
   L.push(HEADER);
-  L.push("import 'package:flutter/material.dart';");
-  // Typography instances for BTechFont.heading / .subheading / .body
+  // No flutter/material.dart needed — BTechTypography only uses its own subclasses.
   L.push("import 'heading.dart';");
   L.push("import 'subheading.dart';");
   L.push("import 'body.dart';\n");
 
-  L.push('/// Font-family data class — holds the active sans-serif family name.');
-  L.push('class BTechFontFamily {');
-  L.push('  const BTechFontFamily({required this.sans});');
-  L.push('  final String sans;');
-  L.push('}\n');
-
-  L.push('class BTechFontTheme extends ThemeExtension<BTechFontTheme> {');
-  L.push('  const BTechFontTheme({required this.family});');
-  L.push('  final BTechFontFamily family;');
+  L.push('/// Static access to BTech typography tokens.');
+  L.push('///');
+  L.push('/// Font family is tenant-aware: each tenant\'s btechTheme() calls');
+  L.push('/// BTechTypography.activate(fontSans) before any widget builds.');
+  L.push('///');
+  L.push('/// ```dart');
+  L.push("/// Text('Hero',   style: BTechTypography.heading.display)");
+  L.push("/// Text('Body',   style: BTechTypography.body.regular)");
+  L.push("/// Text('Bold',   style: BTechTypography.body.regularB)");
+  L.push("/// Text('Label',  style: BTechTypography.subheading.h6)");
+  L.push('/// ```');
+  L.push('abstract class BTechTypography {');
+  // Flutter registers package fonts under 'packages/{package}/{family}' — not the bare family name.
+  L.push(`  static String _fontFamily = 'packages/btech_tokens/${sans.replace(/'/g, "\\'")}';`);
   L.push('');
-  L.push('  BTechFontTheme copyWith({BTechFontFamily? family}) =>');
-  L.push('      BTechFontTheme(family: family ?? this.family);');
+  L.push('  /// The active sans-serif font family name (set by btechTheme()).');
+  L.push('  static String get fontFamily => _fontFamily;');
   L.push('');
-  L.push('  @override');
-  L.push('  BTechFontTheme lerp(covariant ThemeExtension<BTechFontTheme>? other, double t) => this;');
-  L.push('}\n');
-
-  L.push('/// Static access to the active font theme.');
-  L.push('/// - BTechFont.family.sans         — active sans-serif family name (tenant-switchable)');
-  L.push('/// - BTechFont.heading.h1          — TextStyle (always uses active font family)');
-  L.push('/// - BTechFont.body.medium         — TextStyle');
-  L.push('/// For reactive dark/light font colours in widgets, prefer context.btechFont.');
-  L.push('abstract class BTechFont {');
-  L.push('  static BTechFontTheme _active = const BTechFontTheme(');
-  L.push(`    family: BTechFontFamily(sans: '${sans.replace(/'/g, "\\'")}'),`);
-  L.push('  );');
+  L.push('  /// Heading text styles (display, h1–h4).');
+  L.push('  static final BTechTypographyHeading    heading    = BTechTypographyHeading();');
+  L.push('  /// Subheading text styles (h5–h8).');
+  L.push('  static final BTechTypographySubHeading subheading = BTechTypographySubHeading();');
+  L.push('  /// Body text styles (large/regular/small/xtrasmall/micro + bold variants).');
+  L.push('  static final BTechTypographyBody       body       = BTechTypographyBody();');
   L.push('');
-  L.push('  static BTechFontFamily get family => _active.family;');
-  L.push('');
-  L.push('  /// Semantic typography scale — TextStyle instances derived from the active font.');
-  L.push('  static final BTechFontHeading    heading    = BTechFontHeading();');
-  L.push('  static final BTechFontSubHeading subheading = BTechFontSubHeading();');
-  L.push('  static final BTechFontBody       body       = BTechFontBody();');
-  L.push('');
-  L.push('  static void activate(BTechFontTheme t) => _active = t;');
+  L.push('  /// Called by [buildBtechTheme] — do not call directly.');
+  L.push('  static void activate(String fontFamily) => _fontFamily = fontFamily;');
   L.push('}');
   L.push('');
 
@@ -371,16 +365,16 @@ function emitThemeBuilderDart(): string {
     '  BTechColorTheme colorLight,',
     '  BTechColorTheme colorDark,',
     '  BTechRadiusTheme radius,',
-    '  BTechFontTheme font, {',
+    '  String fontSans, {',
     '  Brightness brightness = Brightness.light,',
     '  ThemeData? base,',
     '}) {',
     '  BTechColor.activateBoth(colorLight, colorDark);',
     '  BTechRadius.activate(radius);',
-    '  BTechFont.activate(font);',
+    '  BTechTypography.activate(fontSans);',
     '  final activeColor = brightness == Brightness.dark ? colorDark : colorLight;',
-    '  return (base ?? ThemeData(brightness: brightness))',
-    '      .copyWith(extensions: [activeColor, radius, font]);',
+    '  return (base ?? ThemeData(brightness: brightness, fontFamily: fontSans))',
+    '      .copyWith(extensions: [activeColor, radius]);',
     '}',
     '',
   ].join('\n');
@@ -392,7 +386,6 @@ function emitContextDart(): string {
     "import 'package:flutter/material.dart';",
     "import 'color/color.theme.dart';",
     "import 'radius/radius.theme.dart';",
-    "import 'typography/font.theme.dart';",
     '',
     '/// Context extensions for reactive access to BTech design tokens.',
     '///',
@@ -400,15 +393,15 @@ function emitContextDart(): string {
     '/// so [btechColor] automatically returns the correct theme for the current brightness.',
     '///',
     '/// Always use these in [btech_ui] components — reactive to both tenant AND light/dark mode.',
+    '///',
+    '/// For typography, use the static [BTechTypography] class directly — font family does not',
+    '/// change at runtime and needs no reactive context access.',
     'extension BTechContextExtension on BuildContext {',
     '  /// Active color theme — auto switches light/dark based on [ThemeMode].',
     '  BTechColorTheme  get btechColor  => Theme.of(this).extension<BTechColorTheme>()!;',
     '',
     '  /// Active radius theme.',
     '  BTechRadiusTheme get btechRadius => Theme.of(this).extension<BTechRadiusTheme>()!;',
-    '',
-    '  /// Active font theme.',
-    '  BTechFontTheme   get btechFont   => Theme.of(this).extension<BTechFontTheme>()!;',
     '}',
     '',
   ].join('\n');

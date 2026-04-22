@@ -1,4 +1,4 @@
-import 'package:btech_tokens/btech_tokens.dart';
+import 'package:btech_tokens_tenant_bjb/btech_tokens_tenant_bjb.dart';
 import 'package:flutter/material.dart';
 
 class TenantCard extends StatelessWidget {
@@ -17,7 +17,7 @@ class TenantCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.btechColor;
     final r = context.btechRadius;
-    final heading = BTechFontHeading();
+    final heading = BTechTypographyHeading();
 
     return Container(
       decoration: BoxDecoration(

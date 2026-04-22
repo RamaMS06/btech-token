@@ -21,7 +21,10 @@ packages/**/build/
 packages/**/.flutter-plugins
 packages/**/.flutter-plugins-dependencies
 
-# ── Root-level Dart tooling ────────────────────────────────────────────────────
+
+# ── Root-level Dart tooling (Melos workspace) ─────────────────────────────────
+# pubspec.lock at root is for the Melos workspace — not a published package, not committed.
+pubspec.lock
 .dart_tool/
 build/
 

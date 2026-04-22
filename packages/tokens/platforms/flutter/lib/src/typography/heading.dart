@@ -4,42 +4,48 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../color/color.theme.dart';
+import 'font.theme.dart';
 
-/// Heading text styles (h1 – h4).
-/// For tenant-aware font switching, use context.btechFont.heading instead.
+/// Heading text styles (display, h1–h4).
+/// Font family is tenant-aware — driven by BTechTypography.fontFamily.
 ///
 /// ```dart
-/// Text('Title',      style: BTechFont.heading.h1)
-/// Text('Card title', style: BTechFont.heading.h3)
+/// Text('Hero',  style: BTechTypography.heading.display)
+/// Text('Title', style: BTechTypography.heading.h1)
 /// ```
-class BTechFontHeading extends TextStyle {
-  BTechFontHeading()
+class BTechTypographyHeading extends TextStyle {
+  BTechTypographyHeading()
       : super(
-          fontSize: 35,
-          height: 40 / 35,
-          fontFamily: GoogleFonts.getFont('Inter',
-            fontWeight: FontWeight.w700).fontFamily,
+          fontFamily: BTechTypography.fontFamily,
+          fontSize: 40,
+          fontWeight: FontWeight.w700,
+          height: 48 / 40,
         );
 
-  /// H1 — 35px · w700 · lineHeight: 40/35 = 1.143
-  final TextStyle h1 = GoogleFonts.getFont('Inter',
-      fontSize: 35, fontWeight: FontWeight.w700, height: 40 / 35);
+  /// DISPLAY — 40px · w700 · lineHeight: 48/40 = 1.200
+  final TextStyle display = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 40, fontWeight: FontWeight.w700, height: 48 / 40);
 
-  /// H2 — 29px · w600 · lineHeight: 32/29 = 1.103
-  final TextStyle h2 = GoogleFonts.getFont('Inter',
-      fontSize: 29, fontWeight: FontWeight.w600, height: 32 / 29);
+  /// H1 — 32px · w700 · lineHeight: 40/32 = 1.250
+  final TextStyle h1 = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 32, fontWeight: FontWeight.w700, height: 40 / 32);
 
-  /// H3 — 24px · w700 · lineHeight: 28/24 = 1.167
-  final TextStyle h3 = GoogleFonts.getFont('Inter',
-      fontSize: 24, fontWeight: FontWeight.w700, height: 28 / 24,
-      color: BTechColor.text.primary);
+  /// H2 — 28px · w700 · lineHeight: 36/28 = 1.286
+  final TextStyle h2 = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 28, fontWeight: FontWeight.w700, height: 36 / 28);
 
-  /// H4 — 20px · w500 · lineHeight: 24/20 = 1.200
-  final TextStyle h4 = GoogleFonts.getFont('Inter',
-      fontSize: 20, fontWeight: FontWeight.w500, height: 24 / 20,
-      color: BTechColor.text.primary);
+  /// H3 — 24px · w600 · lineHeight: 32/24 = 1.333
+  final TextStyle h3 = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 24, fontWeight: FontWeight.w600, height: 32 / 24);
+
+  /// H4 — 20px · w600 · lineHeight: 28/20 = 1.400
+  final TextStyle h4 = TextStyle(
+      fontFamily: BTechTypography.fontFamily,
+      fontSize: 20, fontWeight: FontWeight.w600, height: 28 / 20);
 
 }
 
