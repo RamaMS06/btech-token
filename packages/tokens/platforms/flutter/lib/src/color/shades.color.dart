@@ -5,54 +5,157 @@
 
 import 'package:flutter/material.dart';
 
-/// Blue color swatch — BTechColor.shades.blue[500]
-final MaterialColor btechShadesBlue = MaterialColor(
-  0xFF3B82F6,
+/// Green color swatch — BTechColor.shades.green[500]
+final MaterialColor btechShadesGreen = MaterialColor(
+  0xFF08A94C,
   <int, Color>{
-      50: Color(0xFFEFF6FF),
-      100: Color(0xFFDBEAFE),
-      200: Color(0xFFBFDBFE),
-      300: Color(0xFF93C5FD),
-      400: Color(0xFF60A5FA),
-      500: Color(0xFF3B82F6),
-      600: Color(0xFF2563EB),
-      700: Color(0xFF1D4ED8),
-      800: Color(0xFF1E40AF),
-      900: Color(0xFF1E3A8A),
+      50: Color(0xFFF0F8F4),
+      100: Color(0xFFE2F3E9),
+      200: Color(0xFFC5EAD5),
+      300: Color(0xFF94E2B5),
+      400: Color(0xFF41E084),
+      500: Color(0xFF08A94C),
+      600: Color(0xFF0A853E),
+      700: Color(0xFF0A632F),
+      800: Color(0xFF094623),
+      900: Color(0xFF072D17),
   },
 );
 
-/// Green color swatch — BTechColor.shades.green[500]
-final MaterialColor btechShadesGreen = MaterialColor(
-  0xFF22C55E,
+/// Lightblue color swatch — BTechColor.shades.lightblue[500]
+final MaterialColor btechShadesLightblue = MaterialColor(
+  0xFF30AEE1,
   <int, Color>{
-      50: Color(0xFFF0FDF4),
-      100: Color(0xFFDCFCE7),
-      200: Color(0xFFBBF7D0),
-      300: Color(0xFF86EFAC),
-      400: Color(0xFF4ADE80),
-      500: Color(0xFF22C55E),
-      600: Color(0xFF16A34A),
-      700: Color(0xFF15803D),
-      800: Color(0xFF166534),
-      900: Color(0xFF14532D),
+      50: Color(0xFFF2F6F8),
+      100: Color(0xFFE9F1F4),
+      200: Color(0xFFD6E6ED),
+      300: Color(0xFFB6D7E4),
+      400: Color(0xFF80C3DE),
+      500: Color(0xFF30AEE1),
+      600: Color(0xFF1F8CB8),
+      700: Color(0xFF1A6583),
+      800: Color(0xFF134357),
+      900: Color(0xFF0B2530),
   },
 );
 
 /// Orange color swatch — BTechColor.shades.orange[500]
 final MaterialColor btechShadesOrange = MaterialColor(
-  0xFFF97316,
+  0xFFF8981D,
   <int, Color>{
-      50: Color(0xFFFFF7ED),
-      100: Color(0xFFFFEDD5),
-      200: Color(0xFFFED7AA),
-      300: Color(0xFFFDBA74),
-      400: Color(0xFFFB923C),
-      500: Color(0xFFF97316),
-      600: Color(0xFFEA580C),
-      700: Color(0xFFC2410C),
-      800: Color(0xFF9A3412),
-      900: Color(0xFF7C2D12),
+      50: Color(0xFFF9F6F1),
+      100: Color(0xFFF6EFE8),
+      200: Color(0xFFF0E3D3),
+      300: Color(0xFFEBD2B1),
+      400: Color(0xFFEBB876),
+      500: Color(0xFFF8981D),
+      600: Color(0xFFCE790C),
+      700: Color(0xFF93580C),
+      800: Color(0xFF603B0A),
+      900: Color(0xFF352107),
+  },
+);
+
+/// Blue color swatch — BTechColor.shades.blue[500]
+final MaterialColor btechShadesBlue = MaterialColor(
+  0xFF145BC3,
+  <int, Color>{
+      50: Color(0xFFE7EFF9),
+      100: Color(0xFFD0DEF3),
+      200: Color(0xFFA1BDE7),
+      300: Color(0xFF729DDB),
+      400: Color(0xFF437CCF),
+      500: Color(0xFF145BC3),
+      600: Color(0xFF10499C),
+      700: Color(0xFF0C3775),
+      800: Color(0xFF08244E),
+      900: Color(0xFF041227),
+  },
+);
+
+/// Purple color swatch — BTechColor.shades.purple[500]
+final MaterialColor btechShadesPurple = MaterialColor(
+  0xFF8A59C2,
+  <int, Color>{
+      50: Color(0xFFF3EEF9),
+      100: Color(0xFFE8DEF3),
+      200: Color(0xFFD0BDE7),
+      300: Color(0xFFB99BDA),
+      400: Color(0xFFA17ACE),
+      500: Color(0xFF8A59C2),
+      600: Color(0xFF6E479B),
+      700: Color(0xFF533574),
+      800: Color(0xFF37244E),
+      900: Color(0xFF1C1227),
+  },
+);
+
+/// Teal color swatch — BTechColor.shades.teal[500]
+final MaterialColor btechShadesTeal = MaterialColor(
+  0xFF0D9488,
+  <int, Color>{
+      50: Color(0xFFF0F8F7),
+      100: Color(0xFFE2F2F0),
+      200: Color(0xFFC4E8E5),
+      300: Color(0xFF93DDD7),
+      400: Color(0xFF3ED8CA),
+      500: Color(0xFF0D9488),
+      600: Color(0xFF0D766C),
+      700: Color(0xFF0C5852),
+      800: Color(0xFF0A403B),
+      900: Color(0xFF082A27),
+  },
+);
+
+/// Indigo color swatch — BTechColor.shades.indigo[500]
+final MaterialColor btechShadesIndigo = MaterialColor(
+  0xFF6366F1,
+  <int, Color>{
+      50: Color(0xFFF3F3F9),
+      100: Color(0xFFECECF6),
+      200: Color(0xFFDEDEF2),
+      300: Color(0xFFC7C7ED),
+      400: Color(0xFF9FA0EB),
+      500: Color(0xFF6366F1),
+      600: Color(0xFF2328E6),
+      700: Color(0xFF181BA7),
+      800: Color(0xFF12146B),
+      900: Color(0xFF0A0B36),
+  },
+);
+
+/// Rose color swatch — BTechColor.shades.rose[500]
+final MaterialColor btechShadesRose = MaterialColor(
+  0xFFE11D48,
+  <int, Color>{
+      50: Color(0xFFF8F2F3),
+      100: Color(0xFFF4E8EA),
+      200: Color(0xFFECD3D8),
+      300: Color(0xFFE3B0BB),
+      400: Color(0xFFDE758C),
+      500: Color(0xFFE11D48),
+      600: Color(0xFFAE1B3B),
+      700: Color(0xFF7D162D),
+      800: Color(0xFF531120),
+      900: Color(0xFF2F0B13),
+  },
+);
+
+/// Neutral color swatch — BTechColor.shades.neutral[500]
+final MaterialColor btechShadesNeutral = MaterialColor(
+  0xFF64748B,
+  <int, Color>{
+      50: Color(0xFFF4F5F6),
+      100: Color(0xFFECEDEE),
+      200: Color(0xFFDBDDE1),
+      300: Color(0xFFC1C6CD),
+      400: Color(0xFF98A2B0),
+      500: Color(0xFF64748B),
+      600: Color(0xFF505C6D),
+      700: Color(0xFF3C4450),
+      800: Color(0xFF292F37),
+      900: Color(0xFF181C20),
+      1000: Color(0xFF000000),
   },
 );
 
@@ -60,102 +163,50 @@ final MaterialColor btechShadesOrange = MaterialColor(
 final MaterialColor btechShadesRed = MaterialColor(
   0xFFEF4444,
   <int, Color>{
-      50: Color(0xFFFEF2F2),
-      100: Color(0xFFFEE2E2),
-      200: Color(0xFFFECACA),
-      300: Color(0xFFFCA5A5),
-      400: Color(0xFFF87171),
+      50: Color(0xFFF9F2F2),
+      100: Color(0xFFF6EAEA),
+      200: Color(0xFFF0D9D9),
+      300: Color(0xFFEBBDBD),
+      400: Color(0xFFE88D8D),
       500: Color(0xFFEF4444),
-      600: Color(0xFFDC2626),
-      700: Color(0xFFB91C1C),
-      800: Color(0xFF991B1B),
-      900: Color(0xFF7F1D1D),
+      600: Color(0xFFD81818),
+      700: Color(0xFF991515),
+      800: Color(0xFF631010),
+      900: Color(0xFF340A0A),
   },
 );
 
-/// Yellow color swatch — BTechColor.shades.yellow[500]
-final MaterialColor btechShadesYellow = MaterialColor(
-  0xFFEAB308,
+/// Amber color swatch — BTechColor.shades.amber[500]
+final MaterialColor btechShadesAmber = MaterialColor(
+  0xFFF59E0B,
   <int, Color>{
-      50: Color(0xFFFEFCE8),
-      100: Color(0xFFFEF9C3),
-      200: Color(0xFFFEF08A),
-      300: Color(0xFFFDE047),
-      400: Color(0xFFFACC15),
-      500: Color(0xFFEAB308),
-      600: Color(0xFFCA8A04),
-      700: Color(0xFFA16207),
-      800: Color(0xFF854D0E),
-      900: Color(0xFF713F12),
+      50: Color(0xFFF9F6F1),
+      100: Color(0xFFF5F0E7),
+      200: Color(0xFFEFE3D0),
+      300: Color(0xFFE9D2AB),
+      400: Color(0xFFE8BA6C),
+      500: Color(0xFFF59E0B),
+      600: Color(0xFFBD7C0C),
+      700: Color(0xFF885A0D),
+      800: Color(0xFF5A3D0B),
+      900: Color(0xFF332307),
   },
 );
 
-/// Pink color swatch — BTechColor.shades.pink[500]
-final MaterialColor btechShadesPink = MaterialColor(
-  0xFFEC4899,
+/// Sky color swatch — BTechColor.shades.sky[500]
+final MaterialColor btechShadesSky = MaterialColor(
+  0xFF0EA5E9,
   <int, Color>{
-      50: Color(0xFFFDF2F8),
-      100: Color(0xFFFCE7F3),
-      200: Color(0xFFFBCFE8),
-      300: Color(0xFFF9A8D4),
-      400: Color(0xFFF472B6),
-      500: Color(0xFFEC4899),
-      600: Color(0xFFDB2777),
-      700: Color(0xFFBE185D),
-      800: Color(0xFF9D174D),
-      900: Color(0xFF831843),
-  },
-);
-
-/// Purple color swatch — BTechColor.shades.purple[500]
-final MaterialColor btechShadesPurple = MaterialColor(
-  0xFFA855F7,
-  <int, Color>{
-      50: Color(0xFFFAF5FF),
-      100: Color(0xFFF3E8FF),
-      200: Color(0xFFE9D5FF),
-      300: Color(0xFFD8B4FE),
-      400: Color(0xFFC084FC),
-      500: Color(0xFFA855F7),
-      600: Color(0xFF9333EA),
-      700: Color(0xFF7E22CE),
-      800: Color(0xFF6B21A8),
-      900: Color(0xFF581C87),
-  },
-);
-
-/// Teal color swatch — BTechColor.shades.teal[500]
-final MaterialColor btechShadesTeal = MaterialColor(
-  0xFF14B8A6,
-  <int, Color>{
-      50: Color(0xFFF0FDFA),
-      100: Color(0xFFCCFBF1),
-      200: Color(0xFF99F6E4),
-      300: Color(0xFF5EEAD4),
-      400: Color(0xFF2DD4BF),
-      500: Color(0xFF14B8A6),
-      600: Color(0xFF0D9488),
-      700: Color(0xFF0F766E),
-      800: Color(0xFF115E59),
-      900: Color(0xFF134E4A),
-  },
-);
-
-/// Neutral color swatch — BTechColor.shades.neutral[500]
-final MaterialColor btechShadesNeutral = MaterialColor(
-  0xFF6B7280,
-  <int, Color>{
-      50: Color(0xFFF9FAFB),
-      100: Color(0xFFF3F4F6),
-      200: Color(0xFFE5E7EB),
-      300: Color(0xFFD1D5DB),
-      400: Color(0xFF9CA3AF),
-      500: Color(0xFF6B7280),
-      600: Color(0xFF4B5563),
-      700: Color(0xFF374151),
-      800: Color(0xFF1F2937),
-      900: Color(0xFF111827),
-      1000: Color(0xFF000000),
+      50: Color(0xFFF1F6F9),
+      100: Color(0xFFE7F0F4),
+      200: Color(0xFFD0E4ED),
+      300: Color(0xFFAAD4E7),
+      400: Color(0xFF69BEE4),
+      500: Color(0xFF0EA5E9),
+      600: Color(0xFF0F81B4),
+      700: Color(0xFF0F5E81),
+      800: Color(0xFF0C3F57),
+      900: Color(0xFF082431),
   },
 );
 
@@ -165,14 +216,17 @@ final MaterialColor btechShadesNeutral = MaterialColor(
 ///         BTechColor.shades.green.shade700
 class BTechShadesColor {
   const BTechShadesColor();
-  MaterialColor get blue => btechShadesBlue;
   MaterialColor get green => btechShadesGreen;
+  MaterialColor get lightblue => btechShadesLightblue;
   MaterialColor get orange => btechShadesOrange;
-  MaterialColor get red => btechShadesRed;
-  MaterialColor get yellow => btechShadesYellow;
-  MaterialColor get pink => btechShadesPink;
+  MaterialColor get blue => btechShadesBlue;
   MaterialColor get purple => btechShadesPurple;
   MaterialColor get teal => btechShadesTeal;
+  MaterialColor get indigo => btechShadesIndigo;
+  MaterialColor get rose => btechShadesRose;
   MaterialColor get neutral => btechShadesNeutral;
+  MaterialColor get red => btechShadesRed;
+  MaterialColor get amber => btechShadesAmber;
+  MaterialColor get sky => btechShadesSky;
 }
 

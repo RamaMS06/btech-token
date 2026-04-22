@@ -2,17 +2,20 @@
   "typography": {
     "fontFamily": {
       "sans": { "$value": "Inter, system-ui, -apple-system, sans-serif", "$type": "fontFamily" },
-      "mono": { "$value": "'JetBrains Mono', 'Fira Code', monospace", "$type": "fontFamily" }
+      "mono": { "$value": "'JetBrains Mono', 'Fira Code', monospace",   "$type": "fontFamily" }
     },
     "fontSize": {
-      "xs":   { "$value": "12px", "$type": "dimension" },
-      "sm":   { "$value": "14px", "$type": "dimension" },
-      "base": { "$value": "16px", "$type": "dimension" },
-      "lg":   { "$value": "18px", "$type": "dimension" },
-      "xl":   { "$value": "20px", "$type": "dimension" },
-      "2xl":  { "$value": "24px", "$type": "dimension" },
-      "3xl":  { "$value": "30px", "$type": "dimension" },
-      "4xl":  { "$value": "36px", "$type": "dimension" }
+      "3xs": { "$value": "8px",  "$type": "dimension" },
+      "2xs": { "$value": "10px", "$type": "dimension" },
+      "xs":  { "$value": "12px", "$type": "dimension" },
+      "sm":  { "$value": "14px", "$type": "dimension" },
+      "md":  { "$value": "16px", "$type": "dimension" },
+      "lg":  { "$value": "18px", "$type": "dimension" },
+      "xl":  { "$value": "20px", "$type": "dimension" },
+      "2xl": { "$value": "24px", "$type": "dimension" },
+      "3xl": { "$value": "28px", "$type": "dimension" },
+      "4xl": { "$value": "32px", "$type": "dimension" },
+      "5xl": { "$value": "40px", "$type": "dimension" }
     },
     "fontWeight": {
       "regular":  { "$value": 400, "$type": "fontWeight" },
@@ -21,14 +24,22 @@
       "bold":     { "$value": 700, "$type": "fontWeight" }
     },
     "lineHeight": {
-      "tight":   { "$value": 1.25, "$type": "number" },
-      "normal":  { "$value": 1.5,  "$type": "number" },
-      "relaxed": { "$value": 1.75, "$type": "number" }
+      "2xs": { "$value": "12px", "$type": "dimension" },
+      "xs":  { "$value": "16px", "$type": "dimension" },
+      "sm":  { "$value": "20px", "$type": "dimension" },
+      "md":  { "$value": "24px", "$type": "dimension" },
+      "lg":  { "$value": "28px", "$type": "dimension" },
+      "xl":  { "$value": "32px", "$type": "dimension" },
+      "2xl": { "$value": "36px", "$type": "dimension" },
+      "3xl": { "$value": "40px", "$type": "dimension" },
+      "4xl": { "$value": "48px", "$type": "dimension" }
     },
     "letterSpacing": {
-      "tight":  { "$value": "-0.025em", "$type": "dimension" },
-      "normal": { "$value": "0em",      "$type": "dimension" },
-      "wide":   { "$value": "0.025em",  "$type": "dimension" }
+      "tighter": { "$value": "-0.5px", "$type": "dimension" },
+      "tight":   { "$value": "-0.3px", "$type": "dimension" },
+      "snug":    { "$value": "-0.2px", "$type": "dimension" },
+      "wide":    { "$value": "0.2px",  "$type": "dimension" },
+      "wider":   { "$value": "1.5px",  "$type": "dimension" }
     }
   }
 }

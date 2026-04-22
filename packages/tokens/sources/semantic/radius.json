@@ -1,8 +1,8 @@
 {
   "radius": {
-    "interactive": { "$value": "{radius.md}", "$type": "dimension", "$description": "Buttons, inputs, cards — overridable per tenant" },
-    "card":        { "$value": "{radius.lg}", "$type": "dimension" },
-    "badge":       { "$value": "{radius.full}", "$type": "dimension" },
-    "tooltip":     { "$value": "{radius.sm}", "$type": "dimension" }
+    "interactive": { "$value": "{radius.sm}",  "$type": "dimension", "$description": "Buttons, inputs — overridable per tenant" },
+    "card":        { "$value": "{radius.md}",  "$type": "dimension" },
+    "badge":       { "$value": "{radius.rd}",  "$type": "dimension" },
+    "tooltip":     { "$value": "{radius.2xs}", "$type": "dimension" }
   }
 }

@@ -1,5 +1,5 @@
+import 'package:btech_tokens/btech_tokens.dart';
 import 'package:flutter/material.dart';
-import 'package:btech_tokens_bspace/btech_tokens_bspace.dart';
 
 class TenantCard extends StatelessWidget {
   final String tenantId;

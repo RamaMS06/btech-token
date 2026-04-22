@@ -1,12 +1,12 @@
 {
   "spacing": {
-    "xs": { "$value": "4px", "$type": "dimension" },
-    "sm": { "$value": "8px", "$type": "dimension" },
-    "md": { "$value": "16px", "$type": "dimension" },
-    "lg": { "$value": "24px", "$type": "dimension" },
-    "xl": { "$value": "32px", "$type": "dimension" },
-    "xl2": { "$value": "40px", "$type": "dimension" },
-    "xl3": { "$value": "48px", "$type": "dimension" },
-    "xl4": { "$value": "64px", "$type": "dimension" }
+    "2xs": { "$value": "2px",  "$type": "dimension" },
+    "xs":  { "$value": "4px",  "$type": "dimension" },
+    "sm":  { "$value": "8px",  "$type": "dimension" },
+    "md":  { "$value": "12px", "$type": "dimension" },
+    "lg":  { "$value": "16px", "$type": "dimension" },
+    "xl":  { "$value": "24px", "$type": "dimension" },
+    "2xl": { "$value": "32px", "$type": "dimension" },
+    "3xl": { "$value": "48px", "$type": "dimension" }
   }
 }

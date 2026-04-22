@@ -5,16 +5,18 @@
 
 /// Radius tokens. Access: BTechRadius.interactive
 abstract class BTechRadius {
-  static const double none = 0;
-  static const double sm = 2;
-  static const double md = 8;
-  static const double lg = 14;
-  static const double xl = 20;
-  static const double full = 9999;
+  static const double s2xs = 2;
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
+  static const double s2xl = 32;
+  static const double rd = 9999;
 
   // Semantic radius aliases
   static const double interactive = 8;
-  static const double card = 14;
+  static const double card = 12;
   static const double badge = 9999;
   static const double tooltip = 2;
 }

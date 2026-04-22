@@ -47,7 +47,7 @@ class BTechRadiusTheme extends ThemeExtension<BTechRadiusTheme> {
 abstract class BTechRadius {
   static BTechRadiusTheme _active = const BTechRadiusTheme(
     interactive: 8.0,
-    card: 14.0,
+    card: 12.0,
     badge: 9999.0,
     tooltip: 2.0,
   );

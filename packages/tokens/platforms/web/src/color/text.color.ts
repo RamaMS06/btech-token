@@ -2,19 +2,21 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export class BTechTextColor {
-  readonly neutral = '#111827' as const;
-  readonly neutralSubtle = '#6b7280' as const;
-  readonly neutralDisabled = '#d1d5db' as const;
-  readonly neutralInverse = '#f9fafb' as const;
-  readonly danger = '#dc2626' as const;
-  readonly dangerBolder = '#991b1b' as const;
-  readonly success = '#16a34a' as const;
-  readonly successBolder = '#166534' as const;
-  readonly warning = '#ea580c' as const;
-  readonly warningBolder = '#9a3412' as const;
-  readonly info = '#2563eb' as const;
-  readonly infoBolder = '#1e40af' as const;
-  readonly secondary = '#9333ea' as const;
-  readonly secondaryBolder = '#6b21a8' as const;
+  readonly neutral = '#181c20' as const;
+  readonly neutralSubtle = '#64748b' as const;
+  readonly neutralTertiary = '#98a2b0' as const;
+  readonly neutralDisabled = '#c1c6cd' as const;
+  readonly neutralInverse = '#ffffff' as const;
+  readonly neutralLink = '#0d766c' as const;
+  readonly danger = '#991515' as const;
+  readonly dangerBolder = '#631010' as const;
+  readonly success = '#0a632f' as const;
+  readonly successBolder = '#094623' as const;
+  readonly warning = '#885a0d' as const;
+  readonly warningBolder = '#5a3d0b' as const;
+  readonly info = '#0f5e81' as const;
+  readonly infoBolder = '#0c3f57' as const;
+  readonly secondary = '#6e479b' as const;
+  readonly secondaryBolder = '#37244e' as const;
 }
 

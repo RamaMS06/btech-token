@@ -7,14 +7,17 @@ export const BTechFontFamily = {
 } as const;
 
 export const BTechFontSize = {
+  s3xs: 8,
+  s2xs: 10,
   xs: 12,
   sm: 14,
-  base: 16,
+  md: 16,
   lg: 18,
   xl: 20,
   s2xl: 24,
-  s3xl: 30,
-  s4xl: 36,
+  s3xl: 28,
+  s4xl: 32,
+  s5xl: 40,
 } as const;
 
 export const BTechFontWeight = {
@@ -25,22 +28,28 @@ export const BTechFontWeight = {
 } as const;
 
 export const BTechLineHeight = {
-  tight: 1.25,
-  normal: 1.5,
-  relaxed: 1.75,
+  2xs: NaN,
+  xs: NaN,
+  sm: NaN,
+  md: NaN,
+  lg: NaN,
+  xl: NaN,
+  2xl: NaN,
+  3xl: NaN,
+  4xl: NaN,
 } as const;
 
 export const BTechFont = {
   heading: {
     fontFamily: 'Inter',
     fontWeight: 700,
-    lineHeight: 1.25,
+    lineHeight: NaN,
   },
   body: {
     fontFamily: 'Inter',
     fontSize: 16,
     fontWeight: 400,
-    lineHeight: 1.5,
+    lineHeight: NaN,
   },
 } as const;
 

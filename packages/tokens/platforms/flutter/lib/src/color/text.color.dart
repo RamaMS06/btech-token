@@ -7,47 +7,51 @@ import 'package:flutter/material.dart';
 
 class BTechTextNeutralColor extends Color {
   const BTechTextNeutralColor()
-    : subtle = const Color(0xFF6B7280),
-      disabled = const Color(0xFFD1D5DB),
-      inverse = const Color(0xFFF9FAFB),
-      super(0xFF111827);
+    : subtle = const Color(0xFF64748B),
+      tertiary = const Color(0xFF98A2B0),
+      disabled = const Color(0xFFC1C6CD),
+      inverse = const Color(0xFFFFFFFF),
+      link = const Color(0xFF0D766C),
+      super(0xFF181C20);
   final Color subtle;
+  final Color tertiary;
   final Color disabled;
   final Color inverse;
+  final Color link;
 }
 
 class BTechTextDangerColor extends Color {
   const BTechTextDangerColor()
-    : bolder = const Color(0xFF991B1B),
-      super(0xFFDC2626);
+    : bolder = const Color(0xFF631010),
+      super(0xFF991515);
   final Color bolder;
 }
 
 class BTechTextSuccessColor extends Color {
   const BTechTextSuccessColor()
-    : bolder = const Color(0xFF166534),
-      super(0xFF16A34A);
+    : bolder = const Color(0xFF094623),
+      super(0xFF0A632F);
   final Color bolder;
 }
 
 class BTechTextWarningColor extends Color {
   const BTechTextWarningColor()
-    : bolder = const Color(0xFF9A3412),
-      super(0xFFEA580C);
+    : bolder = const Color(0xFF5A3D0B),
+      super(0xFF885A0D);
   final Color bolder;
 }
 
 class BTechTextInfoColor extends Color {
   const BTechTextInfoColor()
-    : bolder = const Color(0xFF1E40AF),
-      super(0xFF2563EB);
+    : bolder = const Color(0xFF0C3F57),
+      super(0xFF0F5E81);
   final Color bolder;
 }
 
 class BTechTextSecondaryColor extends Color {
   const BTechTextSecondaryColor()
-    : bolder = const Color(0xFF6B21A8),
-      super(0xFF9333EA);
+    : bolder = const Color(0xFF37244E),
+      super(0xFF6E479B);
   final Color bolder;
 }
 

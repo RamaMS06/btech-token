@@ -13,8 +13,7 @@ class DemoApp extends StatelessWidget {
       title: 'BTech Token Showcase — Flutter',
       debugShowCheckedModeBanner: false,
       theme: btechTheme(),
-      darkTheme: btechTheme(brightness: Brightness.dark),
-      themeMode: ThemeMode.light,
+      darkTheme: btechTheme(brightness: Brightness.light),
       home: const ShowcasePage(),
     );
   }
@@ -235,8 +234,8 @@ class ShowcasePage extends StatelessWidget {
                       ('md', BTechSpacing.md),
                       ('lg', BTechSpacing.lg),
                       ('xl', BTechSpacing.xl),
-                      ('xl2', BTechSpacing.xl2),
-                      ('xl3', BTechSpacing.xl3),
+                      ('2xl', BTechSpacing.s2xl),
+                      ('3xl', BTechSpacing.s3xl),
                     ])
                       _SpacingRow(s.$1, s.$2, c),
                   ]),

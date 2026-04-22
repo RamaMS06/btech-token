@@ -2,14 +2,16 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export const BTechRadius = {
-  none: 0,
-  sm: 2,
-  md: 8,
-  lg: 14,
-  xl: 20,
-  full: 9999,
+  2xs: 2,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  2xl: 32,
+  rd: 9999,
   interactive: 8,
-  card: 14,
+  card: 12,
   badge: 9999,
   tooltip: 2,
 } as const;

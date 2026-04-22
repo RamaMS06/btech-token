@@ -127,7 +127,8 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
 
   const spacingLines = [HEADER, '/// Spacing tokens. Access: BTechSpacing.md', 'abstract class BTechSpacing {'];
   for (const [name, value] of Object.entries(data.spacing)) {
-    spacingLines.push(`  static const double ${name} = ${parseFloat(String(value).replace('px', ''))};`);
+    const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+    spacingLines.push(`  static const double ${safeName} = ${parseFloat(String(value).replace('px', ''))};`);
   }
   spacingLines.push('}\n');
   writeFileSync(`${spacingDir}/spacing.token.dart`, spacingLines.join('\n') + '\n');
@@ -149,7 +150,8 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
 
   const radiusLines = [HEADER, '/// Radius tokens. Access: BTechRadius.interactive', 'abstract class BTechRadius {'];
   for (const [name, value] of Object.entries(data.radius.core)) {
-    radiusLines.push(`  static const double ${name} = ${parseFloat(String(value).replace('px', ''))};`);
+    const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+    radiusLines.push(`  static const double ${safeName} = ${parseFloat(String(value).replace('px', ''))};`);
   }
   radiusLines.push('');
   radiusLines.push('  // Semantic radius aliases');
@@ -301,10 +303,11 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
     }
     L.push('}\n');
 
-    L.push('/// Primitive line height tokens (ratio, not pixels).');
+    L.push('/// Primitive line height tokens (pixels).');
     L.push('abstract class BTechLineHeight {');
     for (const [name, value] of Object.entries(data.typography.lineHeights)) {
-      L.push(`  static const double ${name} = ${Number(value)};`);
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  static const double ${safeName} = ${parseFloat(String(value).replace('px', ''))};`);
     }
     L.push('}\n');
 

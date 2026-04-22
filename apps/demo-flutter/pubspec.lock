@@ -18,19 +18,12 @@ packages:
     source: hosted
     version: "2.1.1"
   btech_tokens:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../../packages/tokens/platforms/flutter"
       relative: true
     source: path
     version: "1.0.1"
-  btech_tokens_bspace:
-    dependency: "direct main"
-    description:
-      path: "../../packages/tokens/platforms/flutter/tenants/bspace"
-      relative: true
-    source: path
-    version: "1.0.0"
   characters:
     dependency: transitive
     description:

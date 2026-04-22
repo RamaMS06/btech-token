@@ -16,14 +16,17 @@ abstract class BTechFontFamily {
 
 /// Primitive font size tokens.
 abstract class BTechFontSize {
+  static const double s3xs = 8;
+  static const double s2xs = 10;
   static const double xs = 12;
   static const double sm = 14;
-  static const double base = 16;
+  static const double md = 16;
   static const double lg = 18;
   static const double xl = 20;
   static const double s2xl = 24;
-  static const double s3xl = 30;
-  static const double s4xl = 36;
+  static const double s3xl = 28;
+  static const double s4xl = 32;
+  static const double s5xl = 40;
 }
 
 /// Primitive font weight tokens.
@@ -34,11 +37,17 @@ abstract class BTechFontWeight {
   static const FontWeight bold = FontWeight.w700;
 }
 
-/// Primitive line height tokens (ratio, not pixels).
+/// Primitive line height tokens (pixels).
 abstract class BTechLineHeight {
-  static const double tight = 1.25;
-  static const double normal = 1.5;
-  static const double relaxed = 1.75;
+  static const double s2xs = 12;
+  static const double xs = 16;
+  static const double sm = 20;
+  static const double md = 24;
+  static const double lg = 28;
+  static const double xl = 32;
+  static const double s2xl = 36;
+  static const double s3xl = 40;
+  static const double s4xl = 48;
 }
 
 /// Root static font namespace — always uses the default sans font family.

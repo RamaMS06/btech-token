@@ -7,52 +7,58 @@ import 'package:flutter/material.dart';
 
 class BTechStrokeNeutralColor extends Color {
   const BTechStrokeNeutralColor()
-    : strong = const Color(0xFF9CA3AF),
-      subtle = const Color(0xFFF3F4F6),
-      super(0xFFE5E7EB);
+    : strong = const Color(0xFF98A2B0),
+      subtle = const Color(0xFFECEDEE),
+      tertiary = const Color(0xFFC1C6CD),
+      inverse = const Color(0xFF292F37),
+      disabled = const Color(0xFFC1C6CD),
+      super(0xFFDBDDE1);
   final Color strong;
   final Color subtle;
+  final Color tertiary;
+  final Color inverse;
+  final Color disabled;
 }
 
 class BTechStrokePrimaryColor extends Color {
   const BTechStrokePrimaryColor()
-    : bolder = const Color(0xFF14532D),
-      super(0xFF15803D);
+    : bolder = const Color(0xFF0A632F),
+      super(0xFF08A94C);
   final Color bolder;
 }
 
 class BTechStrokeDangerColor extends Color {
   const BTechStrokeDangerColor()
-    : bolder = const Color(0xFF991B1B),
-      super(0xFFDC2626);
+    : bolder = const Color(0xFF991515),
+      super(0xFFEF4444);
   final Color bolder;
 }
 
 class BTechStrokeSuccessColor extends Color {
   const BTechStrokeSuccessColor()
-    : bolder = const Color(0xFF15803D),
-      super(0xFF22C55E);
+    : bolder = const Color(0xFF0A632F),
+      super(0xFF08A94C);
   final Color bolder;
 }
 
 class BTechStrokeWarningColor extends Color {
   const BTechStrokeWarningColor()
-    : bolder = const Color(0xFFEA580C),
-      super(0xFFFB923C);
+    : bolder = const Color(0xFF885A0D),
+      super(0xFFF59E0B);
   final Color bolder;
 }
 
 class BTechStrokeInfoColor extends Color {
   const BTechStrokeInfoColor()
-    : bolder = const Color(0xFF1D4ED8),
-      super(0xFF3B82F6);
+    : bolder = const Color(0xFF0F5E81),
+      super(0xFF0EA5E9);
   final Color bolder;
 }
 
 class BTechStrokeSecondaryColor extends Color {
   const BTechStrokeSecondaryColor()
-    : bolder = const Color(0xFF7E22CE),
-      super(0xFFA855F7);
+    : bolder = const Color(0xFF533574),
+      super(0xFF8A59C2);
   final Color bolder;
 }
 

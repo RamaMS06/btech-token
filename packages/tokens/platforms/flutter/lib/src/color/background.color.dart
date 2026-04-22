@@ -7,21 +7,29 @@ import 'package:flutter/material.dart';
 
 class BTechBackgroundSurfaceColor extends Color {
   const BTechBackgroundSurfaceColor()
-    : subtle = const Color(0xFFF3F4F6),
+    : subtle = const Color(0xFFECEDEE),
       raised = const Color(0xFFFFFFFF),
-      super(0xFFF9FAFB);
+      subtler = const Color(0xFFDBDDE1),
+      tertiary = const Color(0xFF64748B),
+      inverse = const Color(0xFF181C20),
+      overlay = const Color(0xFFRGBA(24,28,32,0.8)),
+      super(0xFFF4F5F6);
   final Color subtle;
   final Color raised;
+  final Color subtler;
+  final Color tertiary;
+  final Color inverse;
+  final Color overlay;
 }
 
 class BTechBackgroundPrimaryColor extends Color {
   const BTechBackgroundPrimaryColor()
-    : hover = const Color(0xFF166534),
-      pressed = const Color(0xFF14532D),
-      disable = const Color(0xFFE5E7EB),
-      subtle = const Color(0xFFF0FDF4),
-      bolder = const Color(0xFF166534),
-      super(0xFF15803D);
+    : hover = const Color(0xFF0A853E),
+      pressed = const Color(0xFF0A632F),
+      disable = const Color(0xFFDBDDE1),
+      subtle = const Color(0xFFF0F8F4),
+      bolder = const Color(0xFF0A853E),
+      super(0xFF08A94C);
   final Color hover;
   final Color pressed;
   final Color disable;
@@ -31,12 +39,12 @@ class BTechBackgroundPrimaryColor extends Color {
 
 class BTechBackgroundSecondaryColor extends Color {
   const BTechBackgroundSecondaryColor()
-    : hover = const Color(0xFFDCFCE7),
-      pressed = const Color(0xFFBBF7D0),
-      disable = const Color(0xFFF3F4F6),
-      subtle = const Color(0xFFF9FAFB),
-      bolder = const Color(0xFFBBF7D0),
-      super(0xFFF0FDF4);
+    : hover = const Color(0xFFE2F3E9),
+      pressed = const Color(0xFFC5EAD5),
+      disable = const Color(0xFFECEDEE),
+      subtle = const Color(0xFFF4F5F6),
+      bolder = const Color(0xFFC5EAD5),
+      super(0xFFF0F8F4);
   final Color hover;
   final Color pressed;
   final Color disable;
@@ -46,12 +54,12 @@ class BTechBackgroundSecondaryColor extends Color {
 
 class BTechBackgroundDangerColor extends Color {
   const BTechBackgroundDangerColor()
-    : hover = const Color(0xFFB91C1C),
-      pressed = const Color(0xFF991B1B),
-      disable = const Color(0xFFE5E7EB),
-      subtle = const Color(0xFFFEF2F2),
-      bolder = const Color(0xFF991B1B),
-      super(0xFFDC2626);
+    : hover = const Color(0xFFD81818),
+      pressed = const Color(0xFF991515),
+      disable = const Color(0xFFDBDDE1),
+      subtle = const Color(0xFFF9F2F2),
+      bolder = const Color(0xFF991515),
+      super(0xFFEF4444);
   final Color hover;
   final Color pressed;
   final Color disable;
@@ -61,12 +69,12 @@ class BTechBackgroundDangerColor extends Color {
 
 class BTechBackgroundSuccessColor extends Color {
   const BTechBackgroundSuccessColor()
-    : hover = const Color(0xFF16A34A),
-      pressed = const Color(0xFF15803D),
-      disable = const Color(0xFFE5E7EB),
-      subtle = const Color(0xFFF0FDF4),
-      bolder = const Color(0xFF15803D),
-      super(0xFF22C55E);
+    : hover = const Color(0xFF0A853E),
+      pressed = const Color(0xFF0A632F),
+      disable = const Color(0xFFDBDDE1),
+      subtle = const Color(0xFFF0F8F4),
+      bolder = const Color(0xFF0A632F),
+      super(0xFF08A94C);
   final Color hover;
   final Color pressed;
   final Color disable;
@@ -76,12 +84,12 @@ class BTechBackgroundSuccessColor extends Color {
 
 class BTechBackgroundWarningColor extends Color {
   const BTechBackgroundWarningColor()
-    : hover = const Color(0xFFF97316),
-      pressed = const Color(0xFFEA580C),
-      disable = const Color(0xFFE5E7EB),
-      subtle = const Color(0xFFFFF7ED),
-      bolder = const Color(0xFFEA580C),
-      super(0xFFFB923C);
+    : hover = const Color(0xFFBD7C0C),
+      pressed = const Color(0xFF885A0D),
+      disable = const Color(0xFFDBDDE1),
+      subtle = const Color(0xFFF9F6F1),
+      bolder = const Color(0xFF885A0D),
+      super(0xFFF59E0B);
   final Color hover;
   final Color pressed;
   final Color disable;
@@ -91,12 +99,12 @@ class BTechBackgroundWarningColor extends Color {
 
 class BTechBackgroundInfoColor extends Color {
   const BTechBackgroundInfoColor()
-    : hover = const Color(0xFF1D4ED8),
-      pressed = const Color(0xFF1E40AF),
-      disable = const Color(0xFFE5E7EB),
-      subtle = const Color(0xFFEFF6FF),
-      bolder = const Color(0xFF1E40AF),
-      super(0xFF2563EB);
+    : hover = const Color(0xFF0F81B4),
+      pressed = const Color(0xFF0F5E81),
+      disable = const Color(0xFFDBDDE1),
+      subtle = const Color(0xFFF1F6F9),
+      bolder = const Color(0xFF0F5E81),
+      super(0xFF0EA5E9);
   final Color hover;
   final Color pressed;
   final Color disable;
@@ -106,9 +114,9 @@ class BTechBackgroundInfoColor extends Color {
 
 class BTechBackgroundNeutralColor extends Color {
   const BTechBackgroundNeutralColor()
-    : subtle = const Color(0xFFF9FAFB),
-      bolder = const Color(0xFFE5E7EB),
-      super(0xFFF3F4F6);
+    : subtle = const Color(0xFFF4F5F6),
+      bolder = const Color(0xFFDBDDE1),
+      super(0xFFECEDEE);
   final Color subtle;
   final Color bolder;
 }

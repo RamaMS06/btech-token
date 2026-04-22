@@ -30,7 +30,7 @@
       "md": {
         "paddingX":  { "$value": "{spacing.md}",                       "$type": "dimension" },
         "paddingY":  { "$value": "{spacing.sm}",                       "$type": "dimension" },
-        "fontSize":  { "$value": "{typography.fontSize.base}",         "$type": "dimension" }
+        "fontSize":  { "$value": "{typography.fontSize.md}",           "$type": "dimension" }
       },
       "lg": {
         "paddingX":  { "$value": "{spacing.lg}",                       "$type": "dimension" },
