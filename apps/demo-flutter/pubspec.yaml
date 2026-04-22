@@ -10,8 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  btech_tokens_bspace:
-    path: ../../packages/tokens/platforms/flutter/tenants/bspace
+  btech_tokens:
+    path: ../../packages/tokens/platforms/flutter
 
 dev_dependencies:
   flutter_test:
