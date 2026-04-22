@@ -1,16 +1,7 @@
 {
   "$description": "Tenant BJB — green brand, custom font, tight radius",
   "color": {
-    "bg": {
-      "primary": { "$value": "#145bc3", "$type": "color" },
-      "secondary": { "$value": "#8a59c2", "$type": "color" },
-      "tertiary": { "$value": "#6e479b", "$type": "color" },
-      "inverse": { "$value": "#ffffff", "$type": "color" },
-      "subtle": { "$value": "#f3eef9", "$type": "color" },
-      "subtler": { "$value": "#e7eff9", "$type": "color" },
-      "subtlest": { "$value": "#d1d5db", "$type": "color" },
-      "overlay": { "$value": "#181c20cc", "$type": "color" }
-    },
+    
     "brand": {
       "primary-subtle":   { "$value": "#f0f8f4", "$type": "color" },
       "primary":          { "$value": "#0a853e", "$type": "color" },
