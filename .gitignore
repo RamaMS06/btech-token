@@ -53,3 +53,5 @@ apps/**/.flutter-plugins-dependencies.json
 
 # ── Changesets ────────────────────────────────────────────────────────────────
 .changeset/*.js
+# Added by code-review-graph
+.code-review-graph/
