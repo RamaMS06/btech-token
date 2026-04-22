@@ -368,8 +368,12 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
     "export 'src/spacing/spacing.dart';",
     "export 'src/radius/radius.dart' hide BTechRadius;",
     "export 'src/radius/radius.theme.dart';",
-    "export 'src/font/font.theme.dart';",
-    "export 'src/typography/typography.dart' hide BTechFontFamily, BTechFont;",
+    // BTechFont (static accessor) conflicts with btech/fonts/ canonical BTechFont — hide it.
+    "export 'src/font/font.theme.dart' hide BTechFont;",
+    // BTechFont, BTechFontFamily, BTechFontSize all re-defined in btech/fonts/ — hide them.
+    "export 'src/typography/typography.dart' hide BTechFontFamily, BTechFont, BTechFontSize;",
+    "// BTech semantic typography (Poppins) — BTechFont.heading.h1, BTechFont.body.small, etc.",
+    "export 'src/btech/tokens/fonts/font.dart';",
     // Default tokens — btechColor, btechRadius, btechFont, btechTheme() with base values.
     "// Default tokens (no tenant) — btechColor, btechRadius, btechFont, btechTheme().",
     "export 'src/defaults.dart';",

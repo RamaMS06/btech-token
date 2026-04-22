@@ -53,17 +53,8 @@ jobs:
         displayName: 'Build @btech/tokens'
 
       - script: |
-          CHANGED=$(git diff --name-only \
-            packages/tokens/platforms/flutter/lib/btech_tokens.dart \
-            packages/tokens/platforms/flutter/lib/src/color/ \
-            packages/tokens/platforms/flutter/lib/src/spacing/ \
-            packages/tokens/platforms/flutter/lib/src/radius/ \
-            packages/tokens/platforms/flutter/lib/src/typography/ \
-            packages/tokens/platforms/flutter/lib/src/tenant.dart \
-            packages/tokens/platforms/web/src/color/ \
-            packages/tokens/platforms/web/src/spacing/ \
-            packages/tokens/platforms/web/src/radius/ \
-            packages/tokens/platforms/web/src/typography/)
+          # Check all platform outputs at once — framework-agnostic.
+          CHANGED=$(git diff --name-only packages/tokens/platforms/)
 
           if [ -n "$CHANGED" ]; then
             echo ""

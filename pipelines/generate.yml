@@ -9,6 +9,7 @@ trigger:
   paths:
     include:
       - packages/tokens/sources/**
+      - packages/tokens/generators/**
       - packages/tokens/sd.config.ts
 
 pr: none   # generate runs on push only, not on PR events
@@ -78,18 +79,9 @@ jobs:
           git config user.name "Azure Pipelines"
           git config user.email "azure-pipelines@users.noreply.azure.com"
 
-          git add \
-            packages/tokens/platforms/flutter/lib/btech_tokens.dart \
-            packages/tokens/platforms/flutter/lib/src/color/ \
-            packages/tokens/platforms/flutter/lib/src/spacing/ \
-            packages/tokens/platforms/flutter/lib/src/radius/ \
-            packages/tokens/platforms/flutter/lib/src/typography/ \
-            packages/tokens/platforms/flutter/lib/src/tenant.dart \
-            packages/tokens/platforms/web/src/color/ \
-            packages/tokens/platforms/web/src/spacing/ \
-            packages/tokens/platforms/web/src/radius/ \
-            packages/tokens/platforms/web/src/typography/ \
-            packages/tokens/platforms/web/dist/styles.css
+          # Stage all generated platform outputs.
+          # platforms/ is 100% generated — framework-agnostic, no path maintenance needed.
+          git add packages/tokens/platforms/
 
           if git diff --cached --quiet; then
             echo "No generated files changed — nothing to commit."
