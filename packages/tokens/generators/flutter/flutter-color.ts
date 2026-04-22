@@ -56,21 +56,19 @@ export function generateDartSemanticColorGroup(
   writeFileSync(`${dir}/${groupName}.color.dart`, L.join('\n') + '\n');
 }
 
-/** Generate tokens.meta.yaml sidecar for a semantic color group. */
+/** Generate tokens.meta.yaml sidecar for a semantic color group (flat 2-level model). */
 export function generateTokensMeta(
   dir: string,
   category: string,
-  semanticColors: Record<string, Record<string, Record<string, string>>>,
+  semanticColors: Record<string, Record<string, string>>,
 ): void {
   const tokens: Array<{ path: string; figmaVariable: string }> = [];
-  for (const [group, categories] of Object.entries(semanticColors)) {
-    for (const [cat, toks] of Object.entries(categories)) {
-      for (const name of Object.keys(toks)) {
-        tokens.push({
-          path: `color.${group}.${cat}.${name}`,
-          figmaVariable: `${toPascalCase(group)}/${toPascalCase(cat)}/${toPascalCase(name)}`,
-        });
-      }
+  for (const [group, fields] of Object.entries(semanticColors)) {
+    for (const name of Object.keys(fields)) {
+      tokens.push({
+        path: `color.${group}.${name}`,
+        figmaVariable: `${toPascalCase(group)}/${toPascalCase(name.replace(/-/g, ' '))}`,
+      });
     }
   }
   const meta = { category, figma: { collection: `BTech/${toPascalCase(category)}`, tokens } };

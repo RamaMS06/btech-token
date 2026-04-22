@@ -34,12 +34,12 @@ class BTechFontHeading extends TextStyle {
   /// H3 — 24px · w700 · lineHeight: 28/24 = 1.167
   final TextStyle h3 = GoogleFonts.getFont('Inter',
       fontSize: 24, fontWeight: FontWeight.w700, height: 28 / 24,
-      color: BTechColor.text.neutral);
+      color: BTechColor.text.primary);
 
   /// H4 — 20px · w500 · lineHeight: 24/20 = 1.200
   final TextStyle h4 = GoogleFonts.getFont('Inter',
       fontSize: 20, fontWeight: FontWeight.w500, height: 24 / 20,
-      color: BTechColor.text.neutral);
+      color: BTechColor.text.primary);
 
 }
 

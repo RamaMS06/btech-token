@@ -23,17 +23,11 @@ import {
   buildColorTree,
   buildRadiusFields,
   buildFontSans,
+  buildDarkResolvedBaseMap,
+  dashToCamel,
+  rgbaToArgb,
   type ColorTree,
 } from './flutter-theme-generator.js';
-
-// =============================================================================
-// Constants
-// =============================================================================
-
-const VARIANT_FIELDS = [
-  'hover', 'pressed', 'subtle', 'raised',
-  'disable', 'bolder', 'inverse', 'strong', 'disabled',
-] as const;
 
 // =============================================================================
 // Helpers
@@ -51,11 +45,12 @@ function pxToDouble(value: string): string {
   return Number.isInteger(n) ? `${n}.0` : String(n);
 }
 
-/** Given a resolved hex like `#3B82F6` return `0xFF3B82F6`; pass through `0x...` literals. */
-function argbFromHex(hex: string | undefined, fallback: string): string {
-  if (!hex) return fallback;
-  if (hex.startsWith('0x')) return hex;
-  if (hex.startsWith('#')) return hexToArgb(hex);
+/** Resolve a color value (hex, rgba, or 0x literal) to a Dart ARGB literal. */
+function resolveArgb(val: string | undefined, fallback: string): string {
+  if (!val) return fallback;
+  if (val.startsWith('0x')) return val;
+  if (val.startsWith('rgba(') || val.startsWith('rgba (')) return rgbaToArgb(val);
+  if (val.startsWith('#')) return hexToArgb(val);
   return fallback;
 }
 
@@ -95,7 +90,7 @@ function buildTenantMap(
 
 /**
  * Emits the nested BTechColorTheme(...) const expression for a given resolved map.
- * Indented so it sits nicely under `const BTechColorTheme xxx = ` (3-space inner indent).
+ * Flat model: each field in a category is a plain Color (no sub-variants).
  */
 function emitColorThemeLiteral(
   tree: ColorTree,
@@ -103,21 +98,12 @@ function emitColorThemeLiteral(
 ): string {
   const L: string[] = [];
   L.push('BTechColorTheme(');
-  for (const category of Object.keys(tree)) {
+  for (const [category, fields] of Object.entries(tree)) {
     const className = `BTechColor${cap(category)}`;
     L.push(`  ${category}: ${className}(`);
-    for (const sub of tree[category]) {
-      const basePath = `color.${category}.${sub.name}.${sub.defaultKey}`;
-      const baseArgb = argbFromHex(resolvedMap[basePath], '0xFF000000');
-      L.push(`    ${sub.name}: BTechColorVariants(${baseArgb},`);
-      for (const field of VARIANT_FIELDS) {
-        let argb = baseArgb;
-        if (sub.variants.includes(field)) {
-          argb = argbFromHex(resolvedMap[`color.${category}.${sub.name}.${field}`], baseArgb);
-        }
-        L.push(`      ${field}: Color(${argb}),`);
-      }
-      L.push('    ),');
+    for (const f of fields) {
+      const argb = resolveArgb(resolvedMap[`color.${category}.${f}`], '0xFF000000');
+      L.push(`    ${dashToCamel(f)}: Color(${argb}),`);
     }
     L.push('  ),');
   }
@@ -258,10 +244,13 @@ export function generateFlutterTenantPackages(resolvedBaseMap: Record<string, st
 
   const tree = buildColorTree();
 
+  // Build the semantic dark base once — reused for every tenant.
+  const darkBaseMap = buildDarkResolvedBaseMap();
+
   for (const tenantId of tenantIds) {
     const lightMap = buildTenantMap(tenantId, 'overrides.json', resolvedBaseMap);
-    // If no dark overrides file exists, dark = light (matches spec).
-    const darkMap = buildTenantMap(tenantId, 'overrides.dark.json', lightMap);
+    // Dark map = semantic dark base + optional per-tenant dark overrides.
+    const darkMap = buildTenantMap(tenantId, 'overrides.dark.json', darkBaseMap);
 
     const pkgName = toDartPackageName(tenantId);
     const pkgDir = `${tenantsOutDir}/${tenantId}`;
@@ -295,10 +284,10 @@ function generateBaseDefaults(resolvedBaseMap: Record<string, string>): void {
   const dartLibDir = `${ROOT}/platforms/flutter/lib/src`;
   const tree = buildColorTree();
 
-  // Default tenant has no overrides — lightMap equals resolvedBaseMap.
+  // Default package has no tenant overrides — lightMap equals resolvedBaseMap.
   const lightMap = buildTenantMap('default', 'overrides.json', resolvedBaseMap);
-  // Dark = same as light until a dark overrides file is added.
-  const darkMap = buildTenantMap('default', 'overrides.dark.json', lightMap);
+  // Dark = semantic dark base (color.dark.json applied on top of light values).
+  const darkMap = buildDarkResolvedBaseMap();
 
   const radiusFields = buildRadiusFields(lightMap);
   const fontSans = buildFontSans(lightMap);
@@ -311,7 +300,7 @@ function generateBaseDefaults(resolvedBaseMap: Record<string, string>): void {
   L.push("import 'package:flutter/material.dart';");
   L.push("import 'color/color.theme.dart';");
   L.push("import 'radius/radius.theme.dart';");
-  L.push("import 'font/font.theme.dart';");
+  L.push("import 'typography/font.theme.dart';");
   L.push("import 'theme_builder.dart';");
   L.push('');
   L.push('// ── Light (public — Pattern B) ─────────────────────────────────────────────');

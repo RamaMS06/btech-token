@@ -3,7 +3,11 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:flutter/material.dart';
+import 'heading.dart';
+import 'subheading.dart';
+import 'body.dart';
 
+/// Font-family data class — holds the active sans-serif family name.
 class BTechFontFamily {
   const BTechFontFamily({required this.sans});
   final String sans;
@@ -21,12 +25,21 @@ class BTechFontTheme extends ThemeExtension<BTechFontTheme> {
 }
 
 /// Static access to the active font theme.
+/// - BTechFont.family.sans         — active sans-serif family name (tenant-switchable)
+/// - BTechFont.heading.h1          — TextStyle (always uses active font family)
+/// - BTechFont.body.medium         — TextStyle
+/// For reactive dark/light font colours in widgets, prefer context.btechFont.
 abstract class BTechFont {
   static BTechFontTheme _active = const BTechFontTheme(
     family: BTechFontFamily(sans: 'Inter'),
   );
 
   static BTechFontFamily get family => _active.family;
+
+  /// Semantic typography scale — TextStyle instances derived from the active font.
+  static final BTechFontHeading    heading    = BTechFontHeading();
+  static final BTechFontSubHeading subheading = BTechFontSubHeading();
+  static final BTechFontBody       body       = BTechFontBody();
 
   static void activate(BTechFontTheme t) => _active = t;
 }

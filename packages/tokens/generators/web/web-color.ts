@@ -1,11 +1,13 @@
 import { writeFileSync } from 'fs';
 import { toPascalCase, dartSafeName } from '../utils.js';
 
-/** Generate a semantic color group file for TypeScript. */
+/** Generate a semantic color group file for TypeScript (flat model).
+ *  Each group (text, icon, border, bg, brand, ext) maps to a TS class
+ *  with one readonly field per token (dash-keys converted to camelCase). */
 export function generateTsSemanticColorGroup(
   dir: string,
   groupName: string,
-  categories: Record<string, Record<string, string>>,
+  tokens: Record<string, string>,
   header: string,
 ): void {
   const groupPascal = toPascalCase(groupName);
@@ -13,16 +15,10 @@ export function generateTsSemanticColorGroup(
   const groupClassName = `BTech${groupPascal}Color`;
 
   L.push(`export class ${groupClassName} {`);
-  for (const [category, tokens] of Object.entries(categories)) {
-    const entries = Object.entries(tokens);
-    const defaultKey = entries.find(([k]) => k === 'default' || k === 'base')?.[0] ?? entries[0][0];
-    for (const [name, hex] of entries) {
-      if (name === defaultKey) {
-        L.push(`  readonly ${dartSafeName(category)} = '${hex}' as const;`);
-      } else {
-        L.push(`  readonly ${dartSafeName(category)}${toPascalCase(name)} = '${hex}' as const;`);
-      }
-    }
+  for (const [name, hex] of Object.entries(tokens)) {
+    // 'primary-subtle' → 'primarySubtle'
+    const field = name.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
+    L.push(`  readonly ${field} = '${hex}' as const;`);
   }
   L.push('}\n');
 

@@ -4,8 +4,21 @@ import 'package:btech_tokens/btech_tokens.dart';
 void main() => runApp(const DemoApp());
 
 // ── App shell ─────────────────────────────────────────────────────────────────
-class DemoApp extends StatelessWidget {
+class DemoApp extends StatefulWidget {
   const DemoApp({super.key});
+
+  @override
+  State<DemoApp> createState() => _DemoAppState();
+}
+
+class _DemoAppState extends State<DemoApp> {
+  ThemeMode _mode = ThemeMode.system;
+
+  void _toggle() {
+    setState(() {
+      _mode = _mode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,8 +26,9 @@ class DemoApp extends StatelessWidget {
       title: 'BTech Token Showcase — Flutter',
       debugShowCheckedModeBanner: false,
       theme: btechTheme(),
-      darkTheme: btechTheme(brightness: Brightness.dark),
-      home: const ShowcasePage(),
+      darkTheme: btechTheme(brightness: Brightness.light),
+      themeMode: _mode,
+      home: ShowcasePage(onToggleTheme: _toggle, themeMode: _mode),
     );
   }
 }
@@ -70,7 +84,13 @@ abstract class _Shadow {
 
 // ── Showcase page ─────────────────────────────────────────────────────────────
 class ShowcasePage extends StatelessWidget {
-  const ShowcasePage({super.key});
+  final VoidCallback onToggleTheme;
+  final ThemeMode themeMode;
+  const ShowcasePage({
+    super.key,
+    required this.onToggleTheme,
+    required this.themeMode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +105,28 @@ class ShowcasePage extends StatelessWidget {
     final body = BTechFontBody();
 
     return Scaffold(
-      backgroundColor: c.background.surface,
+      backgroundColor: c.bg.primary,
+      appBar: AppBar(
+        backgroundColor: c.bg.primary,
+        elevation: 0,
+        title: Text(
+          'BTech Token Showcase',
+          style: TextStyle(color: c.text.primary, fontSize: BTechFontSize.md),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+              color: c.text.primary,
+            ),
+            tooltip: themeMode == ThemeMode.dark
+                ? 'Switch to Light'
+                : 'Switch to Dark',
+            onPressed: onToggleTheme,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(BTechSpacing.xl),
         child: Center(
@@ -98,12 +139,46 @@ class ShowcasePage extends StatelessWidget {
                 Text(
                   'BTech Design System · Token Showcase · Flutter',
                   textAlign: TextAlign.center,
-                  style: heading.h4.copyWith(color: c.text.neutral),
+                  style: heading.h4.copyWith(color: c.text.primary),
                 ),
                 const SizedBox(height: BTechSpacing.sm),
                 Text(
                   'Every style below is driven by btech_tokens_bspace — type-safe, tenant-aware, dark-mode ready',
                   textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: BTechSpacing.sm),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: BTechSpacing.md, vertical: BTechSpacing.xs),
+                    decoration: BoxDecoration(
+                      color: c.bg.secondary,
+                      borderRadius: BorderRadius.circular(r.badge),
+                      border: Border.all(color: c.border.primary),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          themeMode == ThemeMode.dark
+                              ? Icons.dark_mode
+                              : Icons.light_mode,
+                          size: 14,
+                          color: c.text.secondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          themeMode == ThemeMode.dark
+                              ? 'Dark mode active'
+                              : 'Light mode active',
+                          style: TextStyle(
+                            fontSize: BTechFontSize.xs,
+                            color: c.text.secondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: BTechSpacing.xl),
 
@@ -118,20 +193,20 @@ class ShowcasePage extends StatelessWidget {
                       spacing: BTechSpacing.sm,
                       runSpacing: BTechSpacing.sm,
                       children: [
-                        _ColorSwatch('primary', BTechColor.background.primary,
-                            c.text.neutral.inverse, 'c.background.primary', w),
-                        _ColorSwatch('secondary', c.background.secondary,
-                            c.text.neutral, 'c.background.secondary', w),
-                        _ColorSwatch('danger', c.background.danger,
-                            c.text.neutral.inverse, 'c.background.danger', w),
-                        _ColorSwatch('success', c.background.success,
-                            c.text.neutral.inverse, 'c.background.success', w),
-                        _ColorSwatch('warning', c.background.warning,
-                            c.text.neutral, 'c.background.warning', w),
-                        _ColorSwatch('surface', c.background.surface,
-                            c.text.neutral, 'c.background.surface', w),
-                        _ColorSwatch('raised', c.background.surface.raised,
-                            c.text.neutral, 'c.background.surface.raised', w),
+                        _ColorSwatch('primary', c.bg.primary,
+                            c.text.primary, 'c.bg.primary', w),
+                        _ColorSwatch('secondary', c.bg.secondary,
+                            c.text.secondary, 'c.bg.secondary', w),
+                        _ColorSwatch('danger', c.bg.tertiary, c.text.primary,
+                            'c.bg.danger', w),
+                        _ColorSwatch('success', c.bg.inverse, c.text.primary,
+                            'c.bg.success', w),
+                        _ColorSwatch('warning', c.bg.subtle, c.text.primary,
+                            'c.bg.warning', w),
+                        _ColorSwatch('surface', c.bg.subtler, c.text.primary,
+                            'c.bg.secondary', w),
+                        _ColorSwatch('raised', c.bg.subtle, c.text.primary,
+                            'c.bg.secondary.raised', w),
                       ],
                     );
                   }),
@@ -143,58 +218,58 @@ class ShowcasePage extends StatelessWidget {
                   title: 'COLOR · TEXT',
                   child: Column(children: [
                     _TokenRow(
-                        code: 'c.text.neutral',
+                        code: 'c.text.primary',
                         child: Text('The quick brown fox — neutral',
                             style: TextStyle(
-                                color: c.text.neutral,
-                                fontSize: BTechFontSize.base,
+                                color: c.text.primary,
+                                fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                     _TokenRow(
-                        code: 'c.text.neutral.subtle',
-                        child: Text('The quick brown fox — subtle',
+                        code: 'c.text.secondary',
+                        child: Text('The quick brown fox — secondary',
                             style: TextStyle(
-                                color: c.text.neutral.subtle,
-                                fontSize: BTechFontSize.base,
+                                color: c.text.secondary,
+                                fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                     _TokenRow(
-                        code: 'c.text.neutral.disabled',
+                        code: 'c.text.disabled',
                         child: Text('The quick brown fox — disabled',
                             style: TextStyle(
-                                color: c.text.neutral.disabled,
-                                fontSize: BTechFontSize.base,
+                                color: c.text.disabled,
+                                fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                     _TokenRow(
-                        code: 'c.text.neutral.inverse',
+                        code: 'c.text.primary',
                         child: Container(
-                            color: c.background.neutral,
+                            color: c.bg.primary,
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             child: Text(
                                 'The quick brown fox — inverse (on neutral bg)',
                                 style: TextStyle(
-                                    color: c.text.neutral.inverse,
-                                    fontSize: BTechFontSize.base,
+                                    color: c.text.primary,
+                                    fontSize: BTechFontSize.md,
                                     fontFamily: f.family.sans)))),
                     _TokenRow(
                         code: 'c.text.danger',
                         child: Text('The quick brown fox — danger',
                             style: TextStyle(
-                                color: c.text.danger,
-                                fontSize: BTechFontSize.base,
+                                color: c.text.error,
+                                fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                     _TokenRow(
                         code: 'c.text.success',
                         child: Text('The quick brown fox — success',
                             style: TextStyle(
                                 color: c.text.success,
-                                fontSize: BTechFontSize.base,
+                                fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                     _TokenRow(
                         code: 'c.text.warning',
                         child: Text('The quick brown fox — warning',
                             style: TextStyle(
                                 color: c.text.warning,
-                                fontSize: BTechFontSize.base,
+                                fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                   ]),
                 ),
@@ -205,21 +280,21 @@ class ShowcasePage extends StatelessWidget {
                   title: 'COLOR · BORDER / STROKE',
                   child: Column(children: [
                     _TokenRow(
-                        code: 'c.stroke.neutral',
+                        code: 'c.border.primary',
                         child: _StrokePill(
-                            'neutral', c.stroke.neutral, c, f.family.sans)),
+                            'neutral', c.border.primary, c, f.family.sans)),
                     _TokenRow(
-                        code: 'c.stroke.neutral.strong',
-                        child: _StrokePill('neutral.strong',
-                            c.stroke.neutral.strong, c, f.family.sans)),
+                        code: 'c.border.primary.strong',
+                        child: _StrokePill('neutral.strong', c.border.primary,
+                            c, f.family.sans)),
                     _TokenRow(
-                        code: 'c.stroke.primary',
+                        code: 'c.border.primary',
                         child: _StrokePill(
-                            'primary', c.stroke.primary, c, f.family.sans)),
+                            'primary', c.border.primary, c, f.family.sans)),
                     _TokenRow(
-                        code: 'c.stroke.danger',
+                        code: 'c.border.danger',
                         child: _StrokePill(
-                            'danger', c.stroke.danger, c, f.family.sans)),
+                            'danger', c.border.secondary, c, f.family.sans)),
                   ]),
                 ),
                 const SizedBox(height: BTechSpacing.lg),
@@ -252,15 +327,15 @@ class ShowcasePage extends StatelessWidget {
                             'Sans: The quick brown fox jumps over the lazy dog',
                             style: TextStyle(
                                 fontFamily: f.family.sans,
-                                fontSize: BTechFontSize.base,
-                                color: c.text.neutral))),
+                                fontSize: BTechFontSize.md,
+                                color: c.text.primary))),
                     _TokenRow(
                         code: "'JetBrains Mono'",
                         child: Text(
-                            "Mono: const c = context.btechColor.background.primary",
+                            "Mono: const c = context.btechColor.bg.primary",
                             style: const TextStyle(
                                 fontFamily: 'JetBrains Mono',
-                                fontSize: BTechFontSize.base,
+                                fontSize: BTechFontSize.md,
                                 color: Color(0xFF374151)))),
                   ]),
                 ),
@@ -273,7 +348,7 @@ class ShowcasePage extends StatelessWidget {
                     for (final s in [
                       ('xs', BTechFontSize.xs),
                       ('sm', BTechFontSize.sm),
-                      ('base', BTechFontSize.base),
+                      ('base', BTechFontSize.md),
                       ('lg', BTechFontSize.lg),
                       ('xl', BTechFontSize.xl),
                       ('2xl', BTechFontSize.s2xl),
@@ -284,7 +359,7 @@ class ShowcasePage extends StatelessWidget {
                           child: Text('Aa — ${s.$1}',
                               style: TextStyle(
                                   fontSize: s.$2,
-                                  color: c.text.neutral,
+                                  color: c.text.primary,
                                   fontFamily: f.family.sans))),
                   ]),
                 ),
@@ -305,8 +380,8 @@ class ShowcasePage extends StatelessWidget {
                           child: Text('The quick brown fox — ${w.$1}',
                               style: TextStyle(
                                   fontWeight: w.$2,
-                                  fontSize: BTechFontSize.base,
-                                  color: c.text.neutral,
+                                  fontSize: BTechFontSize.md,
+                                  color: c.text.primary,
                                   fontFamily: f.family.sans))),
                   ]),
                 ),
@@ -327,11 +402,11 @@ class ShowcasePage extends StatelessWidget {
                     _TokenRow(
                         code: 'BTechFontHeading().h3',
                         child: Text('Heading H3 — 24px bold',
-                            style: heading.h3.copyWith(color: c.text.neutral))),
+                            style: heading.h3.copyWith(color: c.text.primary))),
                     _TokenRow(
                         code: 'BTechFontHeading().h4',
                         child: Text('Heading H4 — 20px w500',
-                            style: heading.h4.copyWith(color: c.text.neutral))),
+                            style: heading.h4.copyWith(color: c.text.primary))),
                     _TokenRow(
                         code: 'BTechFontSubHeading().h5',
                         child: Text('Subheading H5 — 16px bold',
@@ -448,16 +523,16 @@ class ShowcasePage extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(BTechSpacing.md),
                   decoration: BoxDecoration(
-                    color: c.background.surface.subtle,
+                    color: c.bg.secondary,
                     borderRadius: BorderRadius.circular(r.card),
-                    border: Border.all(color: c.stroke.neutral),
+                    border: Border.all(color: c.border.primary),
                   ),
                   child: Text(
                     'btech_tokens_bspace · btechTheme() · font: ${f.family.sans}',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: BTechFontSize.xs,
-                        color: c.text.neutral.subtle,
+                        color: c.text.primary,
                         fontFamily: 'monospace'),
                   ),
                 ),
@@ -483,9 +558,9 @@ class _Section extends StatelessWidget {
     final r = context.btechRadius;
     return Container(
       decoration: BoxDecoration(
-        color: c.background.surface.raised,
+        color: c.bg.secondary,
         borderRadius: BorderRadius.circular(r.card),
-        border: Border.all(color: c.stroke.neutral),
+        border: Border.all(color: c.border.primary),
         boxShadow: _Shadow.sm,
       ),
       padding: const EdgeInsets.all(BTechSpacing.lg),
@@ -497,10 +572,10 @@ class _Section extends StatelessWidget {
                 fontSize: BTechFontSize.xs,
                 fontWeight: BTechFontWeight.semibold,
                 letterSpacing: 0.07 * BTechFontSize.xs,
-                color: c.text.neutral.subtle,
+                color: c.text.primary,
               )),
           const SizedBox(height: BTechSpacing.sm),
-          Divider(color: c.stroke.neutral, height: 1),
+          Divider(color: c.border.primary, height: 1),
           const SizedBox(height: BTechSpacing.md),
           child,
         ],
@@ -561,7 +636,7 @@ class _TokenRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: BTechSpacing.xs),
       decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: c.stroke.neutral))),
+          border: Border(bottom: BorderSide(color: c.border.primary))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -596,7 +671,7 @@ class _StrokePill extends StatelessWidget {
           style: TextStyle(
             fontSize: BTechFontSize.sm,
             fontWeight: BTechFontWeight.medium,
-            color: c.text.neutral,
+            color: c.text.primary,
             fontFamily: fontFamily,
           )),
     );
@@ -619,7 +694,7 @@ class _SpacingRow extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: c.background.primary,
+            color: c.bg.primary,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -627,8 +702,8 @@ class _SpacingRow extends StatelessWidget {
         _CodeChip('BTechSpacing.$lbl', c),
         const SizedBox(width: BTechSpacing.sm),
         Text('→ ${size.toInt()}px',
-            style: TextStyle(
-                fontSize: BTechFontSize.xs, color: c.text.neutral.subtle)),
+            style:
+                TextStyle(fontSize: BTechFontSize.xs, color: c.text.primary)),
       ]),
     );
   }
@@ -650,9 +725,9 @@ class _RadiusBox extends StatelessWidget {
       width: width,
       height: width,
       decoration: BoxDecoration(
-        color: c.background.secondary,
+        color: c.bg.secondary,
         borderRadius: BorderRadius.circular(radius.clamp(0, width / 2)),
-        border: Border.all(color: c.stroke.primary, width: 1.5),
+        border: Border.all(color: c.border.primary, width: 1.5),
       ),
       padding: const EdgeInsets.all(6),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -661,11 +736,11 @@ class _RadiusBox extends StatelessWidget {
             style: TextStyle(
                 fontSize: 11,
                 fontWeight: BTechFontWeight.semibold,
-                color: c.text.neutral)),
+                color: c.text.primary)),
         const SizedBox(height: 2),
         Text('${radius >= 9999 ? '∞' : radius.toInt()}${tenant ? ' ✦' : ''}',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 8, color: c.text.neutral.subtle)),
+            style: TextStyle(fontSize: 8, color: c.text.primary)),
       ]),
     );
   }
@@ -686,7 +761,7 @@ class _ShadowCard extends StatelessWidget {
       width: width,
       height: 80,
       decoration: BoxDecoration(
-        color: c.background.surface.raised,
+        color: c.bg.secondary,
         borderRadius: BorderRadius.circular(r.card),
         boxShadow: shadows,
       ),
@@ -699,9 +774,9 @@ class _ShadowCard extends StatelessWidget {
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: BTechFontWeight.semibold,
-                  color: c.text.neutral)),
+                  color: c.text.primary)),
           Text('shadow.$lbl',
-              style: TextStyle(fontSize: 9, color: c.text.neutral.subtle)),
+              style: TextStyle(fontSize: 9, color: c.text.primary)),
         ],
       ),
     );
@@ -742,7 +817,7 @@ class _MotionBarState extends State<_MotionBar> {
               width: _active ? 180 : 80,
               height: 24,
               decoration: BoxDecoration(
-                color: c.background.primary,
+                color: c.bg.primary,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -768,15 +843,13 @@ class _CodeChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: c.background.surface.subtle,
+        color: c.bg.secondary,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: c.stroke.neutral),
+        border: Border.all(color: c.border.primary),
       ),
       child: Text(text,
           style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 10,
-              color: c.text.neutral.subtle)),
+              fontFamily: 'monospace', fontSize: 10, color: c.text.primary)),
     );
   }
 }

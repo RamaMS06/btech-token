@@ -1,16 +1,13 @@
 {
   "$description": "Tenant A — blue primary brand, tighter radius",
   "color": {
-    "background": {
-      "primary": {
-        "default": { "$value": "{color.blue.700}", "$type": "color" },
-        "hover":   { "$value": "#123101", "$type": "color" }
-      }
-    },
-    "stroke": {
-      "primary": {
-        "default": { "$value": "{color.blue.700}", "$type": "color" }
-      }
+    "brand": {
+      "primary-subtle":   { "$value": "#e7eff9", "$type": "color" },
+      "primary":          { "$value": "#0c3775", "$type": "color" },
+      "primary-bold":     { "$value": "#08244e", "$type": "color" },
+      "secondary-subtle": { "$value": "#f3eef9", "$type": "color" },
+      "secondary":        { "$value": "#8a59c2", "$type": "color" },
+      "secondary-bold":   { "$value": "#6e479b", "$type": "color" }
     }
   },
   "radius": {

@@ -2,13 +2,13 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export const BTechRadius = {
-  2xs: 2,
+  s2xs: 2,
   xs: 4,
   sm: 8,
   md: 12,
   lg: 16,
   xl: 24,
-  2xl: 32,
+  s2xl: 32,
   rd: 9999,
   interactive: 8,
   card: 12,

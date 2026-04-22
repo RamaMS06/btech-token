@@ -13,7 +13,8 @@ export interface TypeScaleEntry {
 export interface ResolvedTokenMap {
   baseMap: Record<string, string>;
   coreColors: Record<string, Record<string, string>>;
-  semanticColors: Record<string, Record<string, Record<string, string>>>;
+  /** Flat 2-level: group (text/icon/border/bg/brand/ext) → field-name → resolved hex */
+  semanticColors: Record<string, Record<string, string>>;
   spacing: Record<string, string>;
   radius: { core: Record<string, string>; semantic: Record<string, string> };
   typography: {
@@ -56,18 +57,14 @@ export function loadTokenData(): ResolvedTokenMap {
     }
   }
 
-  // Semantic colors (3-level: group → category → variant)
+  // Semantic colors — flat 2-level: group → field-name → hex
   const semanticColorJson = JSON.parse(readFileSync(`${semanticDir}/color.json`, 'utf-8'));
-  const semanticColors: Record<string, Record<string, Record<string, string>>> = {};
-  for (const [group, categories] of Object.entries(semanticColorJson.color as Record<string, unknown>)) {
+  const semanticColors: Record<string, Record<string, string>> = {};
+  for (const [group, fields] of Object.entries(semanticColorJson.color as Record<string, unknown>)) {
     semanticColors[group] = {};
-    for (const [category, tokens] of Object.entries(categories as Record<string, unknown>)) {
-      if (category.startsWith('$')) continue;
-      semanticColors[group][category] = {};
-      for (const [tokenName, tokenDef] of Object.entries(tokens as Record<string, unknown>)) {
-        if (tokenName.startsWith('$')) continue;
-        semanticColors[group][category][tokenName] = resolveRef((tokenDef as any).$value, resolvedBaseMap);
-      }
+    for (const [fieldName, tokenDef] of Object.entries(fields as Record<string, unknown>)) {
+      if (fieldName.startsWith('$')) continue;
+      semanticColors[group][fieldName] = resolveRef((tokenDef as any).$value, resolvedBaseMap);
     }
   }
 

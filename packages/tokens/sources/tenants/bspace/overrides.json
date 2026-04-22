@@ -1,21 +1,13 @@
 {
-  "$description": "bspace tenant — official brand configuration",
+  "$description": "bspace tenant — blue brand",
   "color": {
-    "background": {
-      "primary": {
-        "default": { "$value": "#0066CC", "$type": "color" },
-        "hover":   { "$value": "#004EA3", "$type": "color" }
-      }
-    },
-    "stroke": {
-      "primary": {
-        "default": { "$value": "#0066CC", "$type": "color" }
-      }
-    },
-    "text": {
-      "neutral": {
-        "inverse": { "$value": "#FFFFFF", "$type": "color" }
-      }
+    "brand": {
+      "primary-subtle":   { "$value": "#e7eff9", "$type": "color" },
+      "primary":          { "$value": "#145bc3", "$type": "color" },
+      "primary-bold":     { "$value": "#10499c", "$type": "color" },
+      "secondary-subtle": { "$value": "#f3eef9", "$type": "color" },
+      "secondary":        { "$value": "#8a59c2", "$type": "color" },
+      "secondary-bold":   { "$value": "#6e479b", "$type": "color" }
     }
   },
   "typography": {

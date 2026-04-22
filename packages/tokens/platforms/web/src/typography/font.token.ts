@@ -28,15 +28,15 @@ export const BTechFontWeight = {
 } as const;
 
 export const BTechLineHeight = {
-  2xs: NaN,
-  xs: NaN,
-  sm: NaN,
-  md: NaN,
-  lg: NaN,
-  xl: NaN,
-  2xl: NaN,
-  3xl: NaN,
-  4xl: NaN,
+  s2xs: 12,
+  xs: 16,
+  sm: 20,
+  md: 24,
+  lg: 28,
+  xl: 32,
+  s2xl: 36,
+  s3xl: 40,
+  s4xl: 48,
 } as const;
 
 export const BTechFont = {

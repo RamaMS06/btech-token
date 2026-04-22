@@ -21,8 +21,8 @@ class TenantCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: c.background.primary,
-        border: Border.all(color: c.stroke.primary.bolder),
+        color: c.bg.primary,
+        border: Border.all(color: c.border.primary),
         borderRadius: BorderRadius.circular(r.card),
       ),
       padding: const EdgeInsets.all(20),
@@ -35,19 +35,19 @@ class TenantCard extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: heading.h4.copyWith(color: c.text.neutral.inverse),
+                style: heading.h4.copyWith(color: c.text.primary),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: c.background.surface.subtle,
+                  color: c.bg.secondary,
                   borderRadius: BorderRadius.circular(r.badge),
                 ),
                 child: Text(
                   tenantId,
                   style: TextStyle(
                     fontSize: 11,
-                    color: c.text.neutral.subtle,
+                    color: c.text.primary,
                   ),
                 ),
               ),
@@ -60,7 +60,7 @@ class TenantCard extends StatelessWidget {
             subtitle,
             style: TextStyle(
               fontSize: 13,
-              color: c.text.neutral.inverse,
+              color: c.text.primary,
             ),
           ),
           const SizedBox(height: 4),
@@ -69,7 +69,7 @@ class TenantCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: c.background.surface.subtle,
+              color: c.bg.secondary,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -77,7 +77,7 @@ class TenantCard extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 11,
-                color: c.text.neutral.subtle,
+                color: c.text.primary,
               ),
             ),
           ),
@@ -98,8 +98,8 @@ class TenantCard extends StatelessWidget {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: c.background.danger,
-                  foregroundColor: c.text.neutral.inverse,
+                  backgroundColor: c.bg.secondary,
+                  foregroundColor: c.text.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(r.interactive),
                   ),

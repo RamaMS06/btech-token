@@ -33,22 +33,25 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     writeFileSync(`${colorDir}/shades.color.ts`, L.join('\n') + '\n');
   }
 
-  // text.color.ts, background.color.ts, stroke.color.ts
-  for (const groupName of ['text', 'background', 'stroke'] as const) {
+  // Per-group color files (text, icon, border, bg, brand, ext)
+  const semanticGroups = Object.keys(data.semanticColors);
+  for (const groupName of semanticGroups) {
     generateTsSemanticColorGroup(colorDir, groupName, data.semanticColors[groupName], HEADER);
   }
 
-  // color.token.ts
+  // color.token.ts — dynamic, driven by semanticGroups
   {
     const L = [HEADER];
-    L.push("import { BTechTextColor } from './text.color';");
-    L.push("import { BTechBackgroundColor } from './background.color';");
-    L.push("import { BTechStrokeColor } from './stroke.color';");
+    for (const g of semanticGroups) {
+      const cls = `BTech${toPascalCase(g)}Color`;
+      L.push(`import { ${cls} } from './${g}.color';`);
+    }
     L.push("import { BTechShadesColor } from './shades.color';\n");
     L.push('export const BTechColor = {');
-    L.push('  text: new BTechTextColor(),');
-    L.push('  background: new BTechBackgroundColor(),');
-    L.push('  stroke: new BTechStrokeColor(),');
+    for (const g of semanticGroups) {
+      const cls = `BTech${toPascalCase(g)}Color`;
+      L.push(`  ${g}: new ${cls}(),`);
+    }
     L.push('  shades: new BTechShadesColor(),');
     L.push('} as const;\n');
     writeFileSync(`${colorDir}/color.token.ts`, L.join('\n') + '\n');
@@ -56,15 +59,13 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
 
   // index.ts (barrel)
   {
-    const L = [
+    const exports = [
+      ...semanticGroups.map(g => `export * from './${g}.color';`),
       "export * from './shades.color';",
-      "export * from './text.color';",
-      "export * from './background.color';",
-      "export * from './stroke.color';",
       "export { BTechColor } from './color.token';",
       '',
     ];
-    writeFileSync(`${colorDir}/index.ts`, L.join('\n'));
+    writeFileSync(`${colorDir}/index.ts`, exports.join('\n'));
   }
 
   // tokens.meta.yaml
@@ -78,7 +79,8 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     const L = [HEADER];
     L.push('export const BTechSpacing = {');
     for (const [name, value] of Object.entries(data.spacing)) {
-      L.push(`  ${name}: ${parseFloat(String(value).replace('px', ''))},`);
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
     }
     L.push('} as const;\n');
     writeFileSync(`${spacingDir}/spacing.token.ts`, L.join('\n') + '\n');
@@ -106,10 +108,12 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     const L = [HEADER];
     L.push('export const BTechRadius = {');
     for (const [name, value] of Object.entries(data.radius.core)) {
-      L.push(`  ${name}: ${parseFloat(String(value).replace('px', ''))},`);
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
     }
     for (const [name, value] of Object.entries(data.radius.semantic)) {
-      L.push(`  ${name}: ${parseFloat(String(value).replace('px', ''))},`);
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
     }
     L.push('} as const;\n');
     writeFileSync(`${radiusDir}/radius.token.ts`, L.join('\n') + '\n');
@@ -159,7 +163,8 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
 
     L.push('export const BTechLineHeight = {');
     for (const [name, value] of Object.entries(data.typography.lineHeights)) {
-      L.push(`  ${name}: ${Number(value)},`);
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
     }
     L.push('} as const;\n');
 

@@ -2,14 +2,20 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 import { BTechTextColor } from './text.color';
-import { BTechBackgroundColor } from './background.color';
-import { BTechStrokeColor } from './stroke.color';
+import { BTechIconColor } from './icon.color';
+import { BTechBorderColor } from './border.color';
+import { BTechBgColor } from './bg.color';
+import { BTechBrandColor } from './brand.color';
+import { BTechExtColor } from './ext.color';
 import { BTechShadesColor } from './shades.color';
 
 export const BTechColor = {
   text: new BTechTextColor(),
-  background: new BTechBackgroundColor(),
-  stroke: new BTechStrokeColor(),
+  icon: new BTechIconColor(),
+  border: new BTechBorderColor(),
+  bg: new BTechBgColor(),
+  brand: new BTechBrandColor(),
+  ext: new BTechExtColor(),
   shades: new BTechShadesColor(),
 } as const;
 

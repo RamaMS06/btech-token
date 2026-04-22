@@ -22,11 +22,7 @@ export 'src/color/color.dart';
 export 'src/spacing/spacing.dart';
 export 'src/radius/radius.dart' hide BTechRadius;
 export 'src/radius/radius.theme.dart';
-export 'src/font/font.theme.dart' hide BTechFont;
-export 'src/typography/typography.dart' hide BTechFontFamily, BTechFont, BTechFontSize;
-// BTech semantic typography (Poppins) — BTechFont.heading.h1, BTechFont.body.small, etc.
-export 'src/btech/tokens/fonts/font.dart';
-// Default tokens (no tenant) — btechColor, btechRadius, btechFont, btechTheme().
+export 'src/typography/typography.dart';
 export 'src/defaults.dart';
 export 'src/theme_builder.dart';
 export 'src/context.dart';

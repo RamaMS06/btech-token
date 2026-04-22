@@ -4,15 +4,6 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:flutter/material.dart';
-import 'heading.dart';
-import 'subheading.dart';
-import 'body.dart';
-
-/// Primitive font family tokens.
-abstract class BTechFontFamily {
-  static const String sans = 'Inter';
-  static const String mono = 'JetBrains Mono';
-}
 
 /// Primitive font size tokens.
 abstract class BTechFontSize {
@@ -48,13 +39,5 @@ abstract class BTechLineHeight {
   static const double s2xl = 36;
   static const double s3xl = 40;
   static const double s4xl = 48;
-}
-
-/// Root static font namespace — always uses the default sans font family.
-/// For tenant-aware fonts in widgets, prefer [context.btechFont].
-abstract class BTechFont {
-  static final BTechFontHeading    heading    = BTechFontHeading();
-  static final BTechFontSubHeading subheading = BTechFontSubHeading();
-  static final BTechFontBody       body       = BTechFontBody();
 }
 

@@ -5,7 +5,7 @@
 import 'package:flutter/material.dart';
 import 'color/color.theme.dart';
 import 'radius/radius.theme.dart';
-import 'font/font.theme.dart';
+import 'typography/font.theme.dart';
 
 /// Context extensions for reactive access to BTech design tokens.
 ///

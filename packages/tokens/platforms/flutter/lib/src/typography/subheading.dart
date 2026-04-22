@@ -26,17 +26,17 @@ class BTechFontSubHeading extends TextStyle {
   /// H5 — 16px · w700 · lineHeight: 20/16 = 1.250
   final TextStyle h5 = GoogleFonts.getFont('Inter',
       fontSize: 16, fontWeight: FontWeight.w700, height: 20 / 16,
-      color: BTechColor.text.neutral);
+      color: BTechColor.text.primary);
 
   /// H6 — 14px · w600 · lineHeight: 16/14 = 1.143
   final TextStyle h6 = GoogleFonts.getFont('Inter',
       fontSize: 14, fontWeight: FontWeight.w600, height: 16 / 14,
-      color: BTechColor.text.neutral);
+      color: BTechColor.text.primary);
 
   /// H7 — 12px · w600 · lineHeight: 16/12 = 1.333
   final TextStyle h7 = GoogleFonts.getFont('Inter',
       fontSize: 12, fontWeight: FontWeight.w600, height: 16 / 12,
-      color: BTechColor.text.neutral);
+      color: BTechColor.text.primary);
 
 }
 
