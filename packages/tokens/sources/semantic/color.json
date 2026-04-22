@@ -136,7 +136,7 @@
         "$type": "color"
       },
       "overlay": {
-        "$value": "rgba(24,28,32,0.8)",
+        "$value": "#181c20cc",
         "$type": "color"
       }
     },

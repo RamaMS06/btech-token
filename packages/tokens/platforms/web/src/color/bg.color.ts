@@ -9,6 +9,6 @@ export class BTechBgColor {
   readonly subtle = '#f4f5f6' as const;
   readonly subtler = '#dbdde1' as const;
   readonly subtlest = '#C1C6CD' as const;
-  readonly overlay = 'rgba(24,28,32,0.8)' as const;
+  readonly overlay = '#181c20cc' as const;
 }
 

@@ -205,8 +205,10 @@ class ShowcasePage extends StatelessWidget {
                             'c.bg.warning', w),
                         _ColorSwatch('surface', c.bg.subtler, c.text.primary,
                             'c.bg.secondary', w),
-                        _ColorSwatch('raised', c.bg.subtle, c.text.primary,
+                        _ColorSwatch('raised', c.bg.subtlest, c.text.primary,
                             'c.bg.secondary.raised', w),
+                        _ColorSwatch('overlay', c.bg.overlay, c.text.primary,
+                            'c.bg.overlay', w),
                       ],
                     );
                   }),
