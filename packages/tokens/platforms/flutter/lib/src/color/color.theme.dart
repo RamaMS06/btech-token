@@ -3,6 +3,7 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:flutter/material.dart';
+import 'shades.color.dart';
 
 /// A [Color] that also exposes named variants (hover, pressed, etc.).
 /// Every leaf in the color token tree IS a [Color] (default value)
@@ -23,28 +24,6 @@ class BTechColorVariants extends Color {
   });
 
   final Color hover, pressed, subtle, raised, disable, bolder, inverse, strong, disabled;
-}
-
-class BTechColorBackground {
-  const BTechColorBackground({
-    required this.surface,
-    required this.primary,
-    required this.secondary,
-    required this.danger,
-    required this.success,
-    required this.warning,
-    required this.info,
-    required this.neutral,
-  });
-
-  final BTechColorVariants surface;
-  final BTechColorVariants primary;
-  final BTechColorVariants secondary;
-  final BTechColorVariants danger;
-  final BTechColorVariants success;
-  final BTechColorVariants warning;
-  final BTechColorVariants info;
-  final BTechColorVariants neutral;
 }
 
 class BTechColorText {
@@ -83,6 +62,28 @@ class BTechColorIcon {
   final BTechColorVariants secondary;
 }
 
+class BTechColorBackground {
+  const BTechColorBackground({
+    required this.surface,
+    required this.primary,
+    required this.secondary,
+    required this.danger,
+    required this.success,
+    required this.warning,
+    required this.info,
+    required this.neutral,
+  });
+
+  final BTechColorVariants surface;
+  final BTechColorVariants primary;
+  final BTechColorVariants secondary;
+  final BTechColorVariants danger;
+  final BTechColorVariants success;
+  final BTechColorVariants warning;
+  final BTechColorVariants info;
+  final BTechColorVariants neutral;
+}
+
 class BTechColorStroke {
   const BTechColorStroke({
     required this.neutral,
@@ -103,30 +104,62 @@ class BTechColorStroke {
   final BTechColorVariants secondary;
 }
 
-class BTechColorTheme extends ThemeExtension<BTechColorTheme> {
-  const BTechColorTheme({
-    required this.background,
-    required this.text,
-    required this.icon,
-    required this.stroke,
+class BTechColorBrand {
+  const BTechColorBrand({
+    required this.primary,
+    required this.secondary,
   });
 
+  final BTechColorVariants primary;
+  final BTechColorVariants secondary;
+}
+
+class BTechColorExtended {
+  const BTechColorExtended({
+    required this.success,
+    required this.info,
+    required this.warning,
+    required this.error,
+  });
+
+  final BTechColorVariants success;
+  final BTechColorVariants info;
+  final BTechColorVariants warning;
+  final BTechColorVariants error;
+}
+
+class BTechColorTheme extends ThemeExtension<BTechColorTheme> {
+  const BTechColorTheme({
+    required this.text,
+    required this.icon,
+    required this.background,
+    required this.stroke,
+    required this.brand,
+    required this.extended,
+  });
+
+  final BTechColorText text;
+  final BTechColorIcon icon;
   final BTechColorBackground background;
-  final BTechColorText       text;
-  final BTechColorIcon       icon;
-  final BTechColorStroke     stroke;
+  final BTechColorStroke stroke;
+  final BTechColorBrand brand;
+  final BTechColorExtended extended;
 
   BTechColorTheme copyWith({
-    BTechColorBackground? background,
     BTechColorText? text,
     BTechColorIcon? icon,
+    BTechColorBackground? background,
     BTechColorStroke? stroke,
+    BTechColorBrand? brand,
+    BTechColorExtended? extended,
   }) =>
       BTechColorTheme(
+        text: text ?? this.text,
+        icon: icon ?? this.icon,
         background: background ?? this.background,
-        text:       text       ?? this.text,
-        icon:       icon       ?? this.icon,
-        stroke:     stroke     ?? this.stroke,
+        stroke: stroke ?? this.stroke,
+        brand: brand ?? this.brand,
+        extended: extended ?? this.extended,
       );
 
   @override
@@ -138,96 +171,6 @@ class BTechColorTheme extends ThemeExtension<BTechColorTheme> {
 
 // ── Default light theme (resolved from semantic/color.json) ─────
 const BTechColorTheme _defaultLight = BTechColorTheme(
-  background: BTechColorBackground(
-    surface: BTechColorVariants(0xFF292F37,
-      hover: Color(0xFF292F37),
-      pressed: Color(0xFF292F37),
-      subtle: Color(0xFF3C4450),
-      raised: Color(0xFF181C20),
-      disable: Color(0xFF292F37),
-      bolder: Color(0xFF292F37),
-      inverse: Color(0xFFECEDEE),
-      strong: Color(0xFF292F37),
-      disabled: Color(0xFF292F37),
-    ),
-    primary: BTechColorVariants(0xFF41E084,
-      hover: Color(0xFF08A94C),
-      pressed: Color(0xFF0A853E),
-      subtle: Color(0xFF072D17),
-      raised: Color(0xFF41E084),
-      disable: Color(0xFFDBDDE1),
-      bolder: Color(0xFF0A853E),
-      inverse: Color(0xFF41E084),
-      strong: Color(0xFF41E084),
-      disabled: Color(0xFF41E084),
-    ),
-    secondary: BTechColorVariants(0xFFF0F8F4,
-      hover: Color(0xFFE2F3E9),
-      pressed: Color(0xFFC5EAD5),
-      subtle: Color(0xFFF4F5F6),
-      raised: Color(0xFFF0F8F4),
-      disable: Color(0xFFECEDEE),
-      bolder: Color(0xFFC5EAD5),
-      inverse: Color(0xFFF0F8F4),
-      strong: Color(0xFFF0F8F4),
-      disabled: Color(0xFFF0F8F4),
-    ),
-    danger: BTechColorVariants(0xFFEF4444,
-      hover: Color(0xFFD81818),
-      pressed: Color(0xFF991515),
-      subtle: Color(0xFFF9F2F2),
-      raised: Color(0xFFEF4444),
-      disable: Color(0xFFDBDDE1),
-      bolder: Color(0xFF991515),
-      inverse: Color(0xFFEF4444),
-      strong: Color(0xFFEF4444),
-      disabled: Color(0xFFEF4444),
-    ),
-    success: BTechColorVariants(0xFF08A94C,
-      hover: Color(0xFF0A853E),
-      pressed: Color(0xFF0A632F),
-      subtle: Color(0xFFF0F8F4),
-      raised: Color(0xFF08A94C),
-      disable: Color(0xFFDBDDE1),
-      bolder: Color(0xFF0A632F),
-      inverse: Color(0xFF08A94C),
-      strong: Color(0xFF08A94C),
-      disabled: Color(0xFF08A94C),
-    ),
-    warning: BTechColorVariants(0xFFF59E0B,
-      hover: Color(0xFFBD7C0C),
-      pressed: Color(0xFF885A0D),
-      subtle: Color(0xFFF9F6F1),
-      raised: Color(0xFFF59E0B),
-      disable: Color(0xFFDBDDE1),
-      bolder: Color(0xFF885A0D),
-      inverse: Color(0xFFF59E0B),
-      strong: Color(0xFFF59E0B),
-      disabled: Color(0xFFF59E0B),
-    ),
-    info: BTechColorVariants(0xFF0EA5E9,
-      hover: Color(0xFF0F81B4),
-      pressed: Color(0xFF0F5E81),
-      subtle: Color(0xFFF1F6F9),
-      raised: Color(0xFF0EA5E9),
-      disable: Color(0xFFDBDDE1),
-      bolder: Color(0xFF0F5E81),
-      inverse: Color(0xFF0EA5E9),
-      strong: Color(0xFF0EA5E9),
-      disabled: Color(0xFF0EA5E9),
-    ),
-    neutral: BTechColorVariants(0xFFECEDEE,
-      hover: Color(0xFFECEDEE),
-      pressed: Color(0xFFECEDEE),
-      subtle: Color(0xFFF4F5F6),
-      raised: Color(0xFFECEDEE),
-      disable: Color(0xFFECEDEE),
-      bolder: Color(0xFFDBDDE1),
-      inverse: Color(0xFFECEDEE),
-      strong: Color(0xFFECEDEE),
-      disabled: Color(0xFFECEDEE),
-    ),
-  ),
   text: BTechColorText(
     neutral: BTechColorVariants(0xFFECEDEE,
       hover: Color(0xFFECEDEE),
@@ -364,6 +307,96 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
       disabled: Color(0xFF6E479B),
     ),
   ),
+  background: BTechColorBackground(
+    surface: BTechColorVariants(0xFF292F37,
+      hover: Color(0xFF292F37),
+      pressed: Color(0xFF292F37),
+      subtle: Color(0xFF3C4450),
+      raised: Color(0xFF181C20),
+      disable: Color(0xFF292F37),
+      bolder: Color(0xFF292F37),
+      inverse: Color(0xFFECEDEE),
+      strong: Color(0xFF292F37),
+      disabled: Color(0xFF292F37),
+    ),
+    primary: BTechColorVariants(0xFF41E084,
+      hover: Color(0xFF08A94C),
+      pressed: Color(0xFF0A853E),
+      subtle: Color(0xFF072D17),
+      raised: Color(0xFF41E084),
+      disable: Color(0xFFDBDDE1),
+      bolder: Color(0xFF0A853E),
+      inverse: Color(0xFF41E084),
+      strong: Color(0xFF41E084),
+      disabled: Color(0xFF41E084),
+    ),
+    secondary: BTechColorVariants(0xFFF0F8F4,
+      hover: Color(0xFFE2F3E9),
+      pressed: Color(0xFFC5EAD5),
+      subtle: Color(0xFFF4F5F6),
+      raised: Color(0xFFF0F8F4),
+      disable: Color(0xFFECEDEE),
+      bolder: Color(0xFFC5EAD5),
+      inverse: Color(0xFFF0F8F4),
+      strong: Color(0xFFF0F8F4),
+      disabled: Color(0xFFF0F8F4),
+    ),
+    danger: BTechColorVariants(0xFFEF4444,
+      hover: Color(0xFFD81818),
+      pressed: Color(0xFF991515),
+      subtle: Color(0xFFF9F2F2),
+      raised: Color(0xFFEF4444),
+      disable: Color(0xFFDBDDE1),
+      bolder: Color(0xFF991515),
+      inverse: Color(0xFFEF4444),
+      strong: Color(0xFFEF4444),
+      disabled: Color(0xFFEF4444),
+    ),
+    success: BTechColorVariants(0xFF08A94C,
+      hover: Color(0xFF0A853E),
+      pressed: Color(0xFF0A632F),
+      subtle: Color(0xFFF0F8F4),
+      raised: Color(0xFF08A94C),
+      disable: Color(0xFFDBDDE1),
+      bolder: Color(0xFF0A632F),
+      inverse: Color(0xFF08A94C),
+      strong: Color(0xFF08A94C),
+      disabled: Color(0xFF08A94C),
+    ),
+    warning: BTechColorVariants(0xFFF59E0B,
+      hover: Color(0xFFBD7C0C),
+      pressed: Color(0xFF885A0D),
+      subtle: Color(0xFFF9F6F1),
+      raised: Color(0xFFF59E0B),
+      disable: Color(0xFFDBDDE1),
+      bolder: Color(0xFF885A0D),
+      inverse: Color(0xFFF59E0B),
+      strong: Color(0xFFF59E0B),
+      disabled: Color(0xFFF59E0B),
+    ),
+    info: BTechColorVariants(0xFF0EA5E9,
+      hover: Color(0xFF0F81B4),
+      pressed: Color(0xFF0F5E81),
+      subtle: Color(0xFFF1F6F9),
+      raised: Color(0xFF0EA5E9),
+      disable: Color(0xFFDBDDE1),
+      bolder: Color(0xFF0F5E81),
+      inverse: Color(0xFF0EA5E9),
+      strong: Color(0xFF0EA5E9),
+      disabled: Color(0xFF0EA5E9),
+    ),
+    neutral: BTechColorVariants(0xFFECEDEE,
+      hover: Color(0xFFECEDEE),
+      pressed: Color(0xFFECEDEE),
+      subtle: Color(0xFFF4F5F6),
+      raised: Color(0xFFECEDEE),
+      disable: Color(0xFFECEDEE),
+      bolder: Color(0xFFDBDDE1),
+      inverse: Color(0xFFECEDEE),
+      strong: Color(0xFFECEDEE),
+      disabled: Color(0xFFECEDEE),
+    ),
+  ),
   stroke: BTechColorStroke(
     neutral: BTechColorVariants(0xFF505C6D,
       hover: Color(0xFF505C6D),
@@ -443,20 +476,94 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
       disabled: Color(0xFF8A59C2),
     ),
   ),
+  brand: BTechColorBrand(
+    primary: BTechColorVariants(0xFF41E084,
+      hover: Color(0xFF41E084),
+      pressed: Color(0xFF41E084),
+      subtle: Color(0xFF072D17),
+      raised: Color(0xFF41E084),
+      disable: Color(0xFF41E084),
+      bolder: Color(0xFF41E084),
+      inverse: Color(0xFF41E084),
+      strong: Color(0xFF41E084),
+      disabled: Color(0xFF41E084),
+    ),
+    secondary: BTechColorVariants(0xFF3ED8CA,
+      hover: Color(0xFF3ED8CA),
+      pressed: Color(0xFF3ED8CA),
+      subtle: Color(0xFF082A27),
+      raised: Color(0xFF3ED8CA),
+      disable: Color(0xFF3ED8CA),
+      bolder: Color(0xFF3ED8CA),
+      inverse: Color(0xFF3ED8CA),
+      strong: Color(0xFF3ED8CA),
+      disabled: Color(0xFF3ED8CA),
+    ),
+  ),
+  extended: BTechColorExtended(
+    success: BTechColorVariants(0xFF41E084,
+      hover: Color(0xFF41E084),
+      pressed: Color(0xFF41E084),
+      subtle: Color(0xFF0A632F),
+      raised: Color(0xFF41E084),
+      disable: Color(0xFF41E084),
+      bolder: Color(0xFF41E084),
+      inverse: Color(0xFF41E084),
+      strong: Color(0xFF41E084),
+      disabled: Color(0xFF41E084),
+    ),
+    info: BTechColorVariants(0xFF69BEE4,
+      hover: Color(0xFF69BEE4),
+      pressed: Color(0xFF69BEE4),
+      subtle: Color(0xFF0F5E81),
+      raised: Color(0xFF69BEE4),
+      disable: Color(0xFF69BEE4),
+      bolder: Color(0xFF69BEE4),
+      inverse: Color(0xFF69BEE4),
+      strong: Color(0xFF69BEE4),
+      disabled: Color(0xFF69BEE4),
+    ),
+    warning: BTechColorVariants(0xFFE8BA6C,
+      hover: Color(0xFFE8BA6C),
+      pressed: Color(0xFFE8BA6C),
+      subtle: Color(0xFF885A0D),
+      raised: Color(0xFFE8BA6C),
+      disable: Color(0xFFE8BA6C),
+      bolder: Color(0xFFE8BA6C),
+      inverse: Color(0xFFE8BA6C),
+      strong: Color(0xFFE8BA6C),
+      disabled: Color(0xFFE8BA6C),
+    ),
+    error: BTechColorVariants(0xFFE88D8D,
+      hover: Color(0xFFE88D8D),
+      pressed: Color(0xFFE88D8D),
+      subtle: Color(0xFF991515),
+      raised: Color(0xFFE88D8D),
+      disable: Color(0xFFE88D8D),
+      bolder: Color(0xFFE88D8D),
+      inverse: Color(0xFFE88D8D),
+      strong: Color(0xFFE88D8D),
+      disabled: Color(0xFFE88D8D),
+    ),
+  ),
 );
 
 /// Static access to the active color theme (always light values).
 /// For reactive light/dark switching, use `context.btechColor` instead.
 abstract class BTechColor {
   static BTechColorTheme _light = _defaultLight;
-  // Dark defaults to same as light until dark tokens exist.
+  // Dark defaults to same as light until btechTheme(brightness: dark) activates it.
   // ignore: unused_field
   static BTechColorTheme _dark  = _defaultLight;
 
+  static BTechColorText get text => _light.text;
+  static BTechColorIcon get icon => _light.icon;
   static BTechColorBackground get background => _light.background;
-  static BTechColorText       get text       => _light.text;
-  static BTechColorIcon       get icon       => _light.icon;
-  static BTechColorStroke     get stroke     => _light.stroke;
+  static BTechColorStroke get stroke => _light.stroke;
+  static BTechColorBrand get brand => _light.brand;
+  static BTechColorExtended get extended => _light.extended;
+  // Raw primitive color swatches — BTechColor.shades.green[500]
+  static const BTechShadesColor shades = BTechShadesColor();
 
   /// Called by [buildBtechTheme] — do not call directly.
   static void activateBoth(BTechColorTheme light, BTechColorTheme dark) {

@@ -18,8 +18,7 @@
 ///   BTechRadius.interactive                 // double
 library btech_tokens;
 
-export 'src/color/color.dart' hide BTechColor;
-export 'src/color/color.theme.dart';
+export 'src/color/color.dart';
 export 'src/spacing/spacing.dart';
 export 'src/radius/radius.dart' hide BTechRadius;
 export 'src/radius/radius.theme.dart';

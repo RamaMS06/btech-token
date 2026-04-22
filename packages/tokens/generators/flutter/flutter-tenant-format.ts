@@ -27,10 +27,9 @@ import {
 } from './flutter-theme-generator.js';
 
 // =============================================================================
-// Constants — kept in sync with flutter-theme-generator.ts
+// Constants
 // =============================================================================
 
-const CATEGORIES = ['background', 'text', 'icon', 'stroke'] as const;
 const VARIANT_FIELDS = [
   'hover', 'pressed', 'subtle', 'raised',
   'disable', 'bolder', 'inverse', 'strong', 'disabled',
@@ -104,7 +103,7 @@ function emitColorThemeLiteral(
 ): string {
   const L: string[] = [];
   L.push('BTechColorTheme(');
-  for (const category of CATEGORIES) {
+  for (const category of Object.keys(tree)) {
     const className = `BTechColor${cap(category)}`;
     L.push(`  ${category}: ${className}(`);
     for (const sub of tree[category]) {

@@ -18,12 +18,10 @@ export interface SubcategoryEntry {
   variants: string[];
 }
 
-export interface ColorTree {
-  background: SubcategoryEntry[];
-  text: SubcategoryEntry[];
-  icon: SubcategoryEntry[];
-  stroke: SubcategoryEntry[];
-}
+/** Dynamic map of category name → subcategory entries.
+ *  Derived from the top-level keys of semantic/color.json (background, text, icon, stroke,
+ *  brand, extended, …) so new groups auto-generate without code changes. */
+export type ColorTree = Record<string, SubcategoryEntry[]>;
 
 export interface RadiusField {
   /** e.g. 'interactive' */
@@ -36,7 +34,6 @@ export interface RadiusField {
 // Constants
 // =============================================================================
 
-const CATEGORIES = ['background', 'text', 'icon', 'stroke'] as const;
 const DEFAULT_KEYS = new Set(['default', 'base']);
 /** The full list of variant field names on BTechColorVariants. */
 const VARIANT_FIELDS = [
@@ -53,17 +50,18 @@ const HEADER =
 // Tree derivation
 // =============================================================================
 
-/** Derive the color access tree from the semantic color JSON (structure only, no values). */
+/** Derive the color access tree from the semantic color JSON (structure only, no values).
+ *  Iterates all top-level keys so new categories (brand, extended, …) are included
+ *  automatically without changing this file. */
 export function buildColorTree(): ColorTree {
   const colorJson = JSON.parse(
     readFileSync(`${ROOT}/sources/semantic/color.json`, 'utf-8'),
   ) as { color: Record<string, Record<string, Record<string, unknown>>> };
 
-  const tree: ColorTree = { background: [], text: [], icon: [], stroke: [] };
+  const tree: ColorTree = {};
 
-  for (const category of CATEGORIES) {
-    const categoryNode = colorJson.color[category];
-    if (!categoryNode) continue;
+  for (const [category, categoryNode] of Object.entries(colorJson.color)) {
+    tree[category] = [];
     for (const [subcatName, subcatNode] of Object.entries(categoryNode)) {
       const childKeys = Object.keys(subcatNode as object).filter(k => !k.startsWith('$'));
       const defaultKey = childKeys.find(k => DEFAULT_KEYS.has(k));
@@ -149,7 +147,8 @@ function cap(s: string): string {
 function emitColorThemeDart(tree: ColorTree, resolvedMap: Record<string, string>): string {
   const L: string[] = [];
   L.push(HEADER);
-  L.push("import 'package:flutter/material.dart';\n");
+  L.push("import 'package:flutter/material.dart';");
+  L.push("import 'shades.color.dart';\n");
 
   // ── BTechColorVariants ────────────────────────────────────────────────────
   L.push('/// A [Color] that also exposes named variants (hover, pressed, etc.).');
@@ -167,8 +166,8 @@ function emitColorThemeDart(tree: ColorTree, resolvedMap: Record<string, string>
   L.push(`  final Color ${VARIANT_FIELDS.join(', ')};`);
   L.push('}\n');
 
-  // ── Per-category accessor classes + default const instances ──────────────
-  const emitCategoryClass = (category: typeof CATEGORIES[number]) => {
+  // ── Per-category accessor classes ─────────────────────────────────────────
+  const emitCategoryClass = (category: string) => {
     const subcats = tree[category];
     const className = `BTechColor${cap(category)}`;
     L.push(`class ${className} {`);
@@ -180,33 +179,25 @@ function emitColorThemeDart(tree: ColorTree, resolvedMap: Record<string, string>
     L.push('}\n');
   };
 
-  for (const category of CATEGORIES) emitCategoryClass(category);
+  for (const category of Object.keys(tree)) emitCategoryClass(category);
 
   // ── BTechColorTheme (ThemeExtension) ──────────────────────────────────────
+  // All fields are derived dynamically from the color.json top-level keys.
+  const categories = Object.keys(tree);
   L.push('class BTechColorTheme extends ThemeExtension<BTechColorTheme> {');
   L.push('  const BTechColorTheme({');
-  L.push('    required this.background,');
-  L.push('    required this.text,');
-  L.push('    required this.icon,');
-  L.push('    required this.stroke,');
+  for (const category of categories) L.push(`    required this.${category},`);
   L.push('  });');
   L.push('');
-  L.push('  final BTechColorBackground background;');
-  L.push('  final BTechColorText       text;');
-  L.push('  final BTechColorIcon       icon;');
-  L.push('  final BTechColorStroke     stroke;');
+  for (const category of categories) {
+    L.push(`  final BTechColor${cap(category)} ${category};`);
+  }
   L.push('');
   L.push('  BTechColorTheme copyWith({');
-  L.push('    BTechColorBackground? background,');
-  L.push('    BTechColorText? text,');
-  L.push('    BTechColorIcon? icon,');
-  L.push('    BTechColorStroke? stroke,');
+  for (const category of categories) L.push(`    BTechColor${cap(category)}? ${category},`);
   L.push('  }) =>');
   L.push('      BTechColorTheme(');
-  L.push('        background: background ?? this.background,');
-  L.push('        text:       text       ?? this.text,');
-  L.push('        icon:       icon       ?? this.icon,');
-  L.push('        stroke:     stroke     ?? this.stroke,');
+  for (const category of categories) L.push(`        ${category}: ${category} ?? this.${category},`);
   L.push('      );');
   L.push('');
   L.push('  @override');
@@ -219,7 +210,7 @@ function emitColorThemeDart(tree: ColorTree, resolvedMap: Record<string, string>
   // ── Emit default light values as nested const instances ──────────────────
   L.push('// ── Default light theme (resolved from semantic/color.json) ─────');
   L.push('const BTechColorTheme _defaultLight = BTechColorTheme(');
-  for (const category of CATEGORIES) {
+  for (const category of categories) {
     const className = `BTechColor${cap(category)}`;
     L.push(`  ${category}: ${className}(`);
     for (const sub of tree[category]) {
@@ -246,14 +237,15 @@ function emitColorThemeDart(tree: ColorTree, resolvedMap: Record<string, string>
   L.push('/// For reactive light/dark switching, use `context.btechColor` instead.');
   L.push('abstract class BTechColor {');
   L.push('  static BTechColorTheme _light = _defaultLight;');
-  L.push('  // Dark defaults to same as light until dark tokens exist.');
+  L.push('  // Dark defaults to same as light until btechTheme(brightness: dark) activates it.');
   L.push('  // ignore: unused_field');
   L.push('  static BTechColorTheme _dark  = _defaultLight;');
   L.push('');
-  L.push('  static BTechColorBackground get background => _light.background;');
-  L.push('  static BTechColorText       get text       => _light.text;');
-  L.push('  static BTechColorIcon       get icon       => _light.icon;');
-  L.push('  static BTechColorStroke     get stroke     => _light.stroke;');
+  for (const category of categories) {
+    L.push(`  static BTechColor${cap(category)} get ${category} => _light.${category};`);
+  }
+  L.push('  // Raw primitive color swatches — BTechColor.shades.green[500]');
+  L.push('  static const BTechShadesColor shades = BTechShadesColor();');
   L.push('');
   L.push('  /// Called by [buildBtechTheme] — do not call directly.');
   L.push('  static void activateBoth(BTechColorTheme light, BTechColorTheme dark) {');

@@ -5,7 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../color/color.token.dart';
+import '../color/color.theme.dart';
 
 /// Heading text styles (h1 – h4).
 /// For tenant-aware font switching, use context.btechFont.heading instead.

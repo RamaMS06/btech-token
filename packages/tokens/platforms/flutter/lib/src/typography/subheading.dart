@@ -5,7 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../color/color.token.dart';
+import '../color/color.theme.dart';
 
 /// Subheading text styles (h5 – h7).
 /// For tenant-aware font switching, use context.btechFont.subheading instead.
