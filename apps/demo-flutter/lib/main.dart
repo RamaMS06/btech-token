@@ -193,21 +193,21 @@ class ShowcasePage extends StatelessWidget {
                       spacing: BTechSpacing.sm,
                       runSpacing: BTechSpacing.sm,
                       children: [
-                        _ColorSwatch('primary', c.bg.primary,
-                            c.text.primary, 'c.bg.primary', w),
-                        _ColorSwatch('secondary', c.bg.secondary,
+                        _ColorSwatch('primary', BTechColor.bg.primary, c.text.primary,
+                            'c.bg.primary', w),
+                        _ColorSwatch('secondary', BTechColor.bg.secondary,
                             c.text.secondary, 'c.bg.secondary', w),
-                        _ColorSwatch('danger', c.bg.tertiary, c.text.primary,
-                            'c.bg.danger', w),
-                        _ColorSwatch('success', c.bg.inverse, c.text.primary,
-                            'c.bg.success', w),
-                        _ColorSwatch('warning', c.bg.subtle, c.text.primary,
-                            'c.bg.warning', w),
-                        _ColorSwatch('surface', c.bg.subtler, c.text.primary,
-                            'c.bg.secondary', w),
-                        _ColorSwatch('raised', c.bg.subtlest, c.text.primary,
-                            'c.bg.secondary.raised', w),
-                        _ColorSwatch('overlay', c.bg.overlay, c.text.primary,
+                        _ColorSwatch('tertiary', BTechColor.bg.tertiary, c.text.primary,
+                            'c.bg.tertiary', w),
+                        _ColorSwatch('inverse', BTechColor.bg.inverse, c.text.primary,
+                            'c.bg.inverse', w),
+                        _ColorSwatch('subtle', BTechColor.bg.subtle, c.text.primary,
+                            'c.bg.subtle', w),
+                        _ColorSwatch('subtler', BTechColor.bg.subtler, c.text.primary,
+                            'c.bg.subtler', w),
+                        _ColorSwatch('subtlest', BTechColor.bg.subtlest, c.text.primary,
+                            'c.bg.subtlest', w),
+                        _ColorSwatch('overlay', BTechColor.bg.overlay, c.text.primary,
                             'c.bg.overlay', w),
                       ],
                     );
@@ -221,16 +221,33 @@ class ShowcasePage extends StatelessWidget {
                   child: Column(children: [
                     _TokenRow(
                         code: 'c.text.primary',
-                        child: Text('The quick brown fox — neutral',
-                            style: TextStyle(
-                                color: c.text.primary,
-                                fontSize: BTechFontSize.md,
-                                fontFamily: f.family.sans))),
+                        child: Text(
+                          'The quick brown fox — neutral',
+                          style: TextStyle(
+                            color: c.text.primary,
+                            fontSize: BTechFontSize.md,
+                            fontFamily: f.family.sans,
+                          ),
+                        )),
                     _TokenRow(
                         code: 'c.text.secondary',
                         child: Text('The quick brown fox — secondary',
                             style: TextStyle(
                                 color: c.text.secondary,
+                                fontSize: BTechFontSize.md,
+                                fontFamily: f.family.sans))),
+                    _TokenRow(
+                        code: 'c.text.tertiary',
+                        child: Text('The quick brown fox — tertiary',
+                            style: TextStyle(
+                                color: c.text.tertiary,
+                                fontSize: BTechFontSize.md,
+                                fontFamily: f.family.sans))),
+                    _TokenRow(
+                        code: 'c.text.inverse',
+                        child: Text('The quick brown fox — inverse',
+                            style: TextStyle(
+                                color: c.text.inverse,
                                 fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                     _TokenRow(
@@ -241,22 +258,17 @@ class ShowcasePage extends StatelessWidget {
                                 fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                     _TokenRow(
-                        code: 'c.text.primary',
-                        child: Container(
-                            color: c.bg.primary,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            child: Text(
-                                'The quick brown fox — inverse (on neutral bg)',
-                                style: TextStyle(
-                                    color: c.text.primary,
-                                    fontSize: BTechFontSize.md,
-                                    fontFamily: f.family.sans)))),
-                    _TokenRow(
-                        code: 'c.text.danger',
-                        child: Text('The quick brown fox — danger',
+                        code: 'c.text.link',
+                        child: Text('The quick brown fox — link',
                             style: TextStyle(
-                                color: c.text.error,
+                                color: c.text.link,
+                                fontSize: BTechFontSize.md,
+                                fontFamily: f.family.sans))),
+                    _TokenRow(
+                        code: 'c.text.disabled',
+                        child: Text('The quick brown fox — disabled',
+                            style: TextStyle(
+                                color: c.text.disabled,
                                 fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                     _TokenRow(
@@ -267,10 +279,24 @@ class ShowcasePage extends StatelessWidget {
                                 fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                     _TokenRow(
+                        code: 'c.text.error',
+                        child: Text('The quick brown fox — error',
+                            style: TextStyle(
+                                color: c.text.error,
+                                fontSize: BTechFontSize.md,
+                                fontFamily: f.family.sans))),
+                    _TokenRow(
                         code: 'c.text.warning',
                         child: Text('The quick brown fox — warning',
                             style: TextStyle(
                                 color: c.text.warning,
+                                fontSize: BTechFontSize.md,
+                                fontFamily: f.family.sans))),
+                    _TokenRow(
+                        code: 'c.text.info',
+                        child: Text('The quick brown fox — info',
+                            style: TextStyle(
+                                color: c.text.info,
                                 fontSize: BTechFontSize.md,
                                 fontFamily: f.family.sans))),
                   ]),
