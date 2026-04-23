@@ -48,7 +48,7 @@ Thumbs.db
 *.swo
 
 # ── Demo apps — entirely local, never committed to git ────────────────────────
-apps/
+# apps/
 
 # ── Changesets ────────────────────────────────────────────────────────────────
 .changeset/*.js
