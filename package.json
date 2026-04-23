@@ -7,6 +7,7 @@
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
     "generate": "pnpm exec tsx packages/tokens/sd.config.ts && pnpm --filter @btech/tokens build",
+    "generate:web": "pnpm exec tsx packages/tokens/sd.config.ts --skip-flutter && pnpm --filter @btech/tokens build",
     "build": "pnpm generate && turbo run build",
     "validate": "pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts",
     "add-tenant": "pnpm exec tsx scripts/add-tenant.ts",

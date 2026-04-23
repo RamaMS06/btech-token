@@ -166,17 +166,24 @@ function buildResolvedBaseMap(): Record<string, string> {
     const data = loadTokenData();
     const fontRegistry = loadFontRegistry();
 
-    // Generate multi-file Flutter output (color, spacing, radius, typography)
-    generateFlutterFiles(data);
-    generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
-    console.log('  Flutter — multi-file token output generated');
+    // Pass --skip-flutter to skip Flutter generation (web-only mode for local dev).
+    // Used by `pnpm generate:web` so demo apps can build styles.css without
+    // touching Dart files and causing unwanted git changes.
+    const skipFlutter = process.argv.includes('--skip-flutter');
 
-    // Generate per-tenant Dart files:
-    //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
-    //   src/tenant.dart (BTechTenantTokens class + registry)
-    const resolvedBaseMap = buildResolvedBaseMap();
-    generateFlutterTenantPackages(resolvedBaseMap);
-    console.log('  Flutter — tenant packages generated');
+    if (!skipFlutter) {
+      // Generate multi-file Flutter output (color, spacing, radius, typography)
+      generateFlutterFiles(data);
+      generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
+      console.log('  Flutter — multi-file token output generated');
+
+      // Generate per-tenant Dart files:
+      //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
+      //   src/tenant.dart (BTechTenantTokens class + registry)
+      const resolvedBaseMap = buildResolvedBaseMap();
+      generateFlutterTenantPackages(resolvedBaseMap);
+      console.log('  Flutter — tenant packages generated');
+    }
 
     // Generate multi-file TypeScript output (framework-agnostic, in platforms/web/src/)
     generateTsFiles(data, WEB_SRC);
