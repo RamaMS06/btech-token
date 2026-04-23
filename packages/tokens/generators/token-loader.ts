@@ -16,7 +16,8 @@ export interface ResolvedTokenMap {
   /** Flat 2-level: group (text/icon/border/bg/brand/ext) → field-name → resolved hex */
   semanticColors: Record<string, Record<string, string>>;
   spacing: Record<string, string>;
-  radius: { core: Record<string, string>; semantic: Record<string, string> };
+  stroke: Record<string, string>;
+  radius: Record<string, string>;
   typography: {
     fontFamilies: Record<string, string>;
     fontSizes: Record<string, string>;
@@ -76,18 +77,20 @@ export function loadTokenData(): ResolvedTokenMap {
     spacing[k] = (v as any).$value;
   }
 
-  // Radius
-  const coreRadius: Record<string, string> = {};
+  // Stroke
+  const strokePrimitive = JSON.parse(readFileSync(`${coreDir}/stroke.primitive.json`, 'utf-8'));
+  const stroke: Record<string, string> = {};
+  for (const [k, v] of Object.entries(strokePrimitive.stroke as Record<string, unknown>)) {
+    if (k.startsWith('$')) continue;
+    stroke[k] = (v as any).$value;
+  }
+
+  // Radius — core primitives only (semantic aliases removed)
+  const radius: Record<string, string> = {};
   const radiusPrimitive = JSON.parse(readFileSync(`${coreDir}/radius.primitive.json`, 'utf-8'));
   for (const [k, v] of Object.entries(radiusPrimitive.radius as Record<string, unknown>)) {
     if (k.startsWith('$')) continue;
-    coreRadius[k] = (v as any).$value;
-  }
-  const semRadius: Record<string, string> = {};
-  const radiusSemantic = JSON.parse(readFileSync(`${semanticDir}/radius.json`, 'utf-8'));
-  for (const [k, v] of Object.entries(radiusSemantic.radius as Record<string, unknown>)) {
-    if (k.startsWith('$')) continue;
-    semRadius[k] = resolveRef((v as any).$value, resolvedBaseMap);
+    radius[k] = (v as any).$value;
   }
 
   // Typography primitives
@@ -144,7 +147,8 @@ export function loadTokenData(): ResolvedTokenMap {
     coreColors,
     semanticColors,
     spacing,
-    radius: { core: coreRadius, semantic: semRadius },
+    stroke,
+    radius,
     typography: { fontFamilies, fontSizes, fontWeights, lineHeights, semantic: semanticTypo, typeScale },
   };
 }

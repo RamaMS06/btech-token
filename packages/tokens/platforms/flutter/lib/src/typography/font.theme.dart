@@ -24,11 +24,11 @@ abstract class BTechTypography {
   static String get fontFamily => _fontFamily;
 
   /// Heading text styles (display, h1–h4).
-  static final BTechTypographyHeading    heading    = BTechTypographyHeading();
+  static BTechTypographyHeading    get heading    => BTechTypographyHeading();
   /// Subheading text styles (h5–h8).
-  static final BTechTypographySubHeading subheading = BTechTypographySubHeading();
+  static BTechTypographySubHeading get subheading => BTechTypographySubHeading();
   /// Body text styles (large/regular/small/xtrasmall/micro + bold variants).
-  static final BTechTypographyBody       body       = BTechTypographyBody();
+  static BTechTypographyBody       get body       => BTechTypographyBody();
 
   /// Called by [buildBtechTheme] — do not call directly.
   static void activate(String fontFamily) => _fontFamily = fontFamily;

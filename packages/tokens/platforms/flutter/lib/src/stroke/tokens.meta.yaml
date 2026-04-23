@@ -1,0 +1,14 @@
+category: "stroke"
+figma:
+  collection: "BTech/Stroke"
+  tokens:
+    - path: "stroke.xs"
+      figmaVariable: "Stroke/Xs"
+    - path: "stroke.sm"
+      figmaVariable: "Stroke/Sm"
+    - path: "stroke.md"
+      figmaVariable: "Stroke/Md"
+    - path: "stroke.lg"
+      figmaVariable: "Stroke/Lg"
+    - path: "stroke.xl"
+      figmaVariable: "Stroke/Xl"

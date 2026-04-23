@@ -159,10 +159,14 @@ const BTechColorTheme _btechColorDark = BTechColorTheme(
 // ── Radius (mode-agnostic) ────────────────────────────────────────────────
 
 const BTechRadiusTheme btechRadius = BTechRadiusTheme(
-  interactive: 6.0,
-  card: 8.0,
-  badge: 9999.0,
-  tooltip: 2.0,
+  s2xs: 2.0,
+  xs: 4.0,
+  sm: 6.0,
+  md: 8.0,
+  lg: 16.0,
+  xl: 24.0,
+  s2xl: 32.0,
+  rd: 9999.0,
 );
 
 // ── Theme builder — one line, logic lives in base ─────────────────────────
@@ -177,5 +181,5 @@ const BTechRadiusTheme btechRadius = BTechRadiusTheme(
 /// )
 /// ```
 ThemeData btechTheme({Brightness brightness = Brightness.light, ThemeData? base}) =>
-    buildBtechTheme(btechColor, _btechColorDark, btechRadius, 'packages/btech_tokens_bspace/Inter',
+    buildBtechTheme(btechColor, _btechColorDark, btechRadius, 'packages/btech_tokens_bspace/Rubik Storm',
                     brightness: brightness, base: base);

@@ -156,10 +156,14 @@ const BTechColorTheme _btechColorDark = BTechColorTheme(
 
 /// Default radius tokens.
 const BTechRadiusTheme btechRadius = BTechRadiusTheme(
-  interactive: 8.0,
-  card: 12.0,
-  badge: 9999.0,
-  tooltip: 2.0,
+  s2xs: 2.0,
+  xs: 4.0,
+  sm: 8.0,
+  md: 12.0,
+  lg: 16.0,
+  xl: 24.0,
+  s2xl: 32.0,
+  rd: 9999.0,
 );
 
 // ── Theme builder ───────────────────────────────────────────────────────────

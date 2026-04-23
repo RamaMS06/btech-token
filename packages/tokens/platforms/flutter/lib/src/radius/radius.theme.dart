@@ -7,38 +7,59 @@ import 'package:flutter/material.dart';
 
 class BTechRadiusTheme extends ThemeExtension<BTechRadiusTheme> {
   const BTechRadiusTheme({
-    required this.interactive,
-    required this.card,
-    required this.badge,
-    required this.tooltip,
+    required this.s2xs,
+    required this.xs,
+    required this.sm,
+    required this.md,
+    required this.lg,
+    required this.xl,
+    required this.s2xl,
+    required this.rd,
   });
 
-  final double interactive;
-  final double card;
-  final double badge;
-  final double tooltip;
+  final double s2xs;
+  final double xs;
+  final double sm;
+  final double md;
+  final double lg;
+  final double xl;
+  final double s2xl;
+  final double rd;
 
+  @override
   BTechRadiusTheme copyWith({
-    double? interactive,
-    double? card,
-    double? badge,
-    double? tooltip,
+    double? s2xs,
+    double? xs,
+    double? sm,
+    double? md,
+    double? lg,
+    double? xl,
+    double? s2xl,
+    double? rd,
   }) =>
       BTechRadiusTheme(
-        interactive: interactive ?? this.interactive,
-        card: card ?? this.card,
-        badge: badge ?? this.badge,
-        tooltip: tooltip ?? this.tooltip,
+        s2xs: s2xs ?? this.s2xs,
+        xs: xs ?? this.xs,
+        sm: sm ?? this.sm,
+        md: md ?? this.md,
+        lg: lg ?? this.lg,
+        xl: xl ?? this.xl,
+        s2xl: s2xl ?? this.s2xl,
+        rd: rd ?? this.rd,
       );
 
   @override
   BTechRadiusTheme lerp(covariant ThemeExtension<BTechRadiusTheme>? other, double t) {
     if (other is! BTechRadiusTheme) return this;
     return BTechRadiusTheme(
-      interactive: lerpDouble(interactive, other.interactive, t)!,
-      card: lerpDouble(card, other.card, t)!,
-      badge: lerpDouble(badge, other.badge, t)!,
-      tooltip: lerpDouble(tooltip, other.tooltip, t)!,
+      s2xs: lerpDouble(s2xs, other.s2xs, t)!,
+      xs: lerpDouble(xs, other.xs, t)!,
+      sm: lerpDouble(sm, other.sm, t)!,
+      md: lerpDouble(md, other.md, t)!,
+      lg: lerpDouble(lg, other.lg, t)!,
+      xl: lerpDouble(xl, other.xl, t)!,
+      s2xl: lerpDouble(s2xl, other.s2xl, t)!,
+      rd: lerpDouble(rd, other.rd, t)!,
     );
   }
 }
@@ -46,16 +67,24 @@ class BTechRadiusTheme extends ThemeExtension<BTechRadiusTheme> {
 /// Static access to the active radius theme.
 abstract class BTechRadius {
   static BTechRadiusTheme _active = const BTechRadiusTheme(
-    interactive: 8.0,
-    card: 12.0,
-    badge: 9999.0,
-    tooltip: 2.0,
+    s2xs: 2.0,
+    xs: 4.0,
+    sm: 8.0,
+    md: 12.0,
+    lg: 16.0,
+    xl: 24.0,
+    s2xl: 32.0,
+    rd: 9999.0,
   );
 
-  static double get interactive => _active.interactive;
-  static double get card => _active.card;
-  static double get badge => _active.badge;
-  static double get tooltip => _active.tooltip;
+  static double get s2xs => _active.s2xs;
+  static double get xs => _active.xs;
+  static double get sm => _active.sm;
+  static double get md => _active.md;
+  static double get lg => _active.lg;
+  static double get xl => _active.xl;
+  static double get s2xl => _active.s2xl;
+  static double get rd => _active.rd;
 
   static void activate(BTechRadiusTheme t) => _active = t;
 }

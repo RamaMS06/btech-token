@@ -2,8 +2,8 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export const BTechFontFamily = {
-  sans: 'Geist',
-  mono: 'JetBrains Mono',
+  sans: 'var(--btech-font-family-sans)',
+  mono: 'var(--btech-font-family-mono)',
 } as const;
 
 export const BTechFontSize = {
@@ -41,12 +41,12 @@ export const BTechLineHeight = {
 
 export const BTechFont = {
   heading: {
-    fontFamily: 'Geist',
+    fontFamily: 'var(--btech-font-family-sans)',
     fontWeight: 700,
     lineHeight: NaN,
   },
   body: {
-    fontFamily: 'Geist',
+    fontFamily: 'var(--btech-font-family-sans)',
     fontSize: 16,
     fontWeight: 400,
     lineHeight: NaN,

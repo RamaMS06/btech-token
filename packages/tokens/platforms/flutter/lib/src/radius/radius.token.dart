@@ -3,7 +3,7 @@
 
 // ignore_for_file: lines_longer_than_80_chars
 
-/// Radius tokens. Access: BTechRadius.interactive
+/// Radius tokens. Access: BTechRadius.sm
 abstract class BTechRadius {
   static const double s2xs = 2;
   static const double xs = 4;
@@ -13,11 +13,5 @@ abstract class BTechRadius {
   static const double xl = 24;
   static const double s2xl = 32;
   static const double rd = 9999;
-
-  // Semantic radius aliases
-  static const double interactive = 8;
-  static const double card = 12;
-  static const double badge = 9999;
-  static const double tooltip = 2;
 }
 

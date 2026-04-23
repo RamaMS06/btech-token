@@ -49,16 +49,19 @@ export function buildColorTree(): ColorTree {
   return tree;
 }
 
-/** Get resolved radius fields from the base map. */
+/** Get radius fields from core primitives (no semantic layer).
+ *  Applies Dart-safe naming: numeric-starting names get an 's' prefix (2xs → s2xs). */
 export function buildRadiusFields(resolvedMap: Record<string, string>): RadiusField[] {
   const radiusJson = JSON.parse(
-    readFileSync(`${ROOT}/sources/semantic/radius.json`, 'utf-8'),
-  ) as { radius: Record<string, unknown> };
+    readFileSync(`${ROOT}/sources/core/radius.primitive.json`, 'utf-8'),
+  ) as { radius: Record<string, { $value: string }> };
   const out: RadiusField[] = [];
   for (const name of Object.keys(radiusJson.radius)) {
+    if (name.startsWith('$')) continue;
+    const dartName = /^[0-9]/.test(name) ? `s${name}` : name;
     const key = `radius.${name}`;
-    const resolved = resolvedMap[key] ?? '0px';
-    out.push({ name, value: resolved });
+    const resolved = resolvedMap[key] ?? radiusJson.radius[name].$value ?? '0px';
+    out.push({ name: dartName, value: resolved });
   }
   return out;
 }
@@ -85,8 +88,9 @@ function resolveMap(rawMap: Record<string, string>): Record<string, string> {
  * Build the resolved LIGHT base map from core + semantic sources.
  * Dark-override files (*.dark.json) are intentionally excluded so this map
  * contains only light-mode values — use buildDarkResolvedBaseMap() for dark.
+ * Exported so web-tenant-format.ts can reuse it.
  */
-function buildResolvedBaseMap(): Record<string, string> {
+export function buildResolvedBaseMap(): Record<string, string> {
   const rawMap: Record<string, string> = {};
   for (const dir of [`${ROOT}/sources/core`, `${ROOT}/sources/semantic`]) {
     if (!existsSync(dir)) continue;
@@ -260,6 +264,7 @@ function emitRadiusThemeDart(fields: RadiusField[]): string {
   L.push('');
   for (const f of fields) L.push(`  final double ${f.name};`);
   L.push('');
+  L.push('  @override');
   L.push('  BTechRadiusTheme copyWith({');
   for (const f of fields) L.push(`    double? ${f.name},`);
   L.push('  }) =>');
@@ -296,8 +301,9 @@ function emitRadiusThemeDart(fields: RadiusField[]): string {
 // =============================================================================
 
 /** Emit font.theme.dart — the BTechTypography static facade.
- *  No ThemeExtension: font family is a plain static String, set once at app startup.
- *  Heading/subheading/body classes read BTechTypography.fontFamily at construction time. */
+ *  No ThemeExtension: font family is a plain static String updated by activate().
+ *  heading/subheading/body are getters (not static final) — fresh instance on every
+ *  access ensures the current _fontFamily is always used. */
 function emitFontThemeDart(sans: string): string {
   const L: string[] = [];
   L.push(HEADER);
@@ -324,12 +330,15 @@ function emitFontThemeDart(sans: string): string {
   L.push('  /// The active sans-serif font family name (set by btechTheme()).');
   L.push('  static String get fontFamily => _fontFamily;');
   L.push('');
+  // Getters (not static final) so every access returns a fresh instance using the
+  // current _fontFamily. static final would bake the fontFamily at first access and
+  // never reflect subsequent activate() calls (hot reload, tenant switch).
   L.push('  /// Heading text styles (display, h1–h4).');
-  L.push('  static final BTechTypographyHeading    heading    = BTechTypographyHeading();');
+  L.push('  static BTechTypographyHeading    get heading    => BTechTypographyHeading();');
   L.push('  /// Subheading text styles (h5–h8).');
-  L.push('  static final BTechTypographySubHeading subheading = BTechTypographySubHeading();');
+  L.push('  static BTechTypographySubHeading get subheading => BTechTypographySubHeading();');
   L.push('  /// Body text styles (large/regular/small/xtrasmall/micro + bold variants).');
-  L.push('  static final BTechTypographyBody       body       = BTechTypographyBody();');
+  L.push('  static BTechTypographyBody       get body       => BTechTypographyBody();');
   L.push('');
   L.push('  /// Called by [buildBtechTheme] — do not call directly.');
   L.push('  static void activate(String fontFamily) => _fontFamily = fontFamily;');

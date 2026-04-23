@@ -2,10 +2,10 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export class BTechBorderColor {
-  readonly primary = '#dbdde1' as const;
-  readonly secondary = '#98a2b0' as const;
-  readonly tertiary = '#c1c6cd' as const;
-  readonly inverse = '#292f37' as const;
-  readonly disabled = '#c1c6cd' as const;
+  readonly primary = 'var(--btech-border-primary)' as const;
+  readonly secondary = 'var(--btech-border-secondary)' as const;
+  readonly tertiary = 'var(--btech-border-tertiary)' as const;
+  readonly inverse = 'var(--btech-border-inverse)' as const;
+  readonly disabled = 'var(--btech-border-disabled)' as const;
 }
 

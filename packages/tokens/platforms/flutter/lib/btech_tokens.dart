@@ -20,6 +20,7 @@ library btech_tokens;
 
 export 'src/color/color.dart';
 export 'src/spacing/spacing.dart';
+export 'src/stroke/stroke.dart';
 export 'src/radius/radius.dart' hide BTechRadius;
 export 'src/radius/radius.theme.dart';
 export 'src/typography/typography.dart';

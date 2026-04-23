@@ -2,13 +2,13 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export class BTechBgColor {
-  readonly primary = '#ffffff' as const;
-  readonly secondary = '#ecedee' as const;
-  readonly tertiary = '#64748b' as const;
-  readonly inverse = '#181c20' as const;
-  readonly subtle = '#f4f5f6' as const;
-  readonly subtler = '#dbdde1' as const;
-  readonly subtlest = '#C1C6CD' as const;
-  readonly overlay = '#181c20cc' as const;
+  readonly primary = 'var(--btech-bg-primary)' as const;
+  readonly secondary = 'var(--btech-bg-secondary)' as const;
+  readonly tertiary = 'var(--btech-bg-tertiary)' as const;
+  readonly inverse = 'var(--btech-bg-inverse)' as const;
+  readonly subtle = 'var(--btech-bg-subtle)' as const;
+  readonly subtler = 'var(--btech-bg-subtler)' as const;
+  readonly subtlest = 'var(--btech-bg-subtlest)' as const;
+  readonly overlay = 'var(--btech-bg-overlay)' as const;
 }
 

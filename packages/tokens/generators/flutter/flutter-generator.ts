@@ -122,29 +122,46 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
     },
   }) + '\n');
 
+  // ── stroke/ ─────────────────────────────────────────────────────────────────
+  const strokeDir = `${DART_SRC}/stroke`;
+  mkdirSync(strokeDir, { recursive: true });
+
+  const strokeLines = [HEADER, '/// Stroke (border-width) tokens. Access: BTechStroke.md', 'abstract class BTechStroke {'];
+  for (const [name, value] of Object.entries(data.stroke)) {
+    const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+    strokeLines.push(`  static const double ${safeName} = ${parseFloat(String(value).replace('px', ''))};`);
+  }
+  strokeLines.push('}\n');
+  writeFileSync(`${strokeDir}/stroke.token.dart`, strokeLines.join('\n') + '\n');
+  writeFileSync(`${strokeDir}/stroke.dart`, "export 'stroke.token.dart';\n");
+  writeFileSync(`${strokeDir}/tokens.meta.yaml`, toYaml({
+    category: 'stroke',
+    figma: {
+      collection: 'BTech/Stroke',
+      tokens: Object.keys(data.stroke).map(name => ({
+        path: `stroke.${name}`,
+        figmaVariable: `Stroke/${toPascalCase(name)}`,
+      })),
+    },
+  }) + '\n');
+
   // ── radius/ ─────────────────────────────────────────────────────────────────
   const radiusDir = `${DART_SRC}/radius`;
   mkdirSync(radiusDir, { recursive: true });
 
-  const radiusLines = [HEADER, '/// Radius tokens. Access: BTechRadius.interactive', 'abstract class BTechRadius {'];
-  for (const [name, value] of Object.entries(data.radius.core)) {
+  const radiusLines = [HEADER, '/// Radius tokens. Access: BTechRadius.sm', 'abstract class BTechRadius {'];
+  for (const [name, value] of Object.entries(data.radius)) {
     const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
     radiusLines.push(`  static const double ${safeName} = ${parseFloat(String(value).replace('px', ''))};`);
-  }
-  radiusLines.push('');
-  radiusLines.push('  // Semantic radius aliases');
-  for (const [name, value] of Object.entries(data.radius.semantic)) {
-    radiusLines.push(`  static const double ${name} = ${parseFloat(String(value).replace('px', ''))};`);
   }
   radiusLines.push('}\n');
   writeFileSync(`${radiusDir}/radius.token.dart`, radiusLines.join('\n') + '\n');
   writeFileSync(`${radiusDir}/radius.dart`, "export 'radius.token.dart';\n");
-  const allRadiusKeys = [...Object.keys(data.radius.core), ...Object.keys(data.radius.semantic)];
   writeFileSync(`${radiusDir}/tokens.meta.yaml`, toYaml({
     category: 'radius',
     figma: {
       collection: 'BTech/Radius',
-      tokens: allRadiusKeys.map(name => ({ path: `radius.${name}`, figmaVariable: `Radius/${toPascalCase(name)}` })),
+      tokens: Object.keys(data.radius).map(name => ({ path: `radius.${name}`, figmaVariable: `Radius/${toPascalCase(name)}` })),
     },
   }) + '\n');
 
@@ -328,6 +345,7 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
     // color.dart re-exports shades.color.dart + color.theme.dart (BTechColor, BTechColorTheme, etc.)
     "export 'src/color/color.dart';",
     "export 'src/spacing/spacing.dart';",
+    "export 'src/stroke/stroke.dart';",
     "export 'src/radius/radius.dart' hide BTechRadius;",
     "export 'src/radius/radius.theme.dart';",
     // All typography + font theme live under a single src/typography/ folder.

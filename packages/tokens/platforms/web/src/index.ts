@@ -69,3 +69,6 @@ export function getActiveTenant(root = document.documentElement): {
     mode: (root.getAttribute('data-mode') as ColorMode) ?? 'light',
   };
 }
+
+// Token exports (auto-generated)
+export * from './stroke/index';

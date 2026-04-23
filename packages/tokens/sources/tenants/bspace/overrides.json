@@ -22,11 +22,11 @@
   },
   "typography": {
     "fontFamily": {
-      "sans": { "$value": "Inter, system-ui", "$type": "fontFamily" }
+      "sans": { "$value": "Rubik Storm, system-ui", "$type": "fontFamily" }
     }
   },
   "radius": {
-    "interactive": { "$value": "6px", "$type": "dimension" },
-    "card":        { "$value": "8px", "$type": "dimension" }
+    "sm": { "$value": "6px", "$type": "dimension" },
+    "md": { "$value": "8px", "$type": "dimension" }
   }
 }

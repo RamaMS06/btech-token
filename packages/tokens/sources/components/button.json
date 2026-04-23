@@ -5,21 +5,21 @@
       "bgHover":  { "$value": "{color.brand.primary-bold}",  "$type": "color" },
       "fg":       { "$value": "{color.text.inverse}",        "$type": "color" },
       "border":   { "$value": "{color.brand.primary}",       "$type": "color" },
-      "radius":   { "$value": "{radius.interactive}",        "$type": "dimension" }
+      "radius":   { "$value": "{radius.sm}",        "$type": "dimension" }
     },
     "secondary": {
       "bg":       { "$value": "{color.brand.primary-subtle}", "$type": "color" },
       "bgHover":  { "$value": "{color.bg.secondary}",         "$type": "color" },
       "fg":       { "$value": "{color.text.primary}",         "$type": "color" },
       "border":   { "$value": "{color.border.primary}",       "$type": "color" },
-      "radius":   { "$value": "{radius.interactive}",         "$type": "dimension" }
+      "radius":   { "$value": "{radius.sm}",         "$type": "dimension" }
     },
     "danger": {
       "bg":       { "$value": "{color.ext.error}",           "$type": "color" },
       "bgHover":  { "$value": "{color.ext.error-bold}",      "$type": "color" },
       "fg":       { "$value": "{color.text.inverse}",        "$type": "color" },
       "border":   { "$value": "{color.ext.error}",           "$type": "color" },
-      "radius":   { "$value": "{radius.interactive}",        "$type": "dimension" }
+      "radius":   { "$value": "{radius.sm}",        "$type": "dimension" }
     },
     "size": {
       "sm": {

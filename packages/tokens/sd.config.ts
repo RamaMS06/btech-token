@@ -11,6 +11,8 @@ import { generateTokenTypes } from './generators/web/web-token-types.js';
 import { appendTenantCSS } from './generators/web/web-tenant-css.js';
 import { generateTenantIsolatedCss } from './generators/web/web-tenant-isolated.js';
 import { ensureTenantPackageJson } from './generators/web/web-tenant-package.js';
+import { appendDarkModeCss } from './generators/web/web-dark-generator.js';
+import { generateWebTenantPackages } from './generators/web/web-tenant-format.js';
 import {
   loadFontRegistry,
   generateFlutterFontRegistry,
@@ -204,6 +206,12 @@ function buildResolvedBaseMap(): Record<string, string> {
 
     // Post-build: append [data-tenant="*"] overrides to styles.css
     appendTenantCSS(resolvedBaseMap);
+
+    // Post-build: append [data-mode="dark"] color overrides to styles.css
+    appendDarkModeCss(`${WEB_OUT}styles.css`);
+
+    // Post-build: generate per-tenant web packages (platforms/web/tenants/{id}/)
+    generateWebTenantPackages();
 
     console.log('\n pnpm generate complete\n');
     console.log('  Flutter → packages/tokens/platforms/flutter/lib/src/');

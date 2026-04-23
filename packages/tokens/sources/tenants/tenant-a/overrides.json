@@ -11,7 +11,7 @@
     }
   },
   "radius": {
-    "interactive": { "$value": "4px", "$type": "dimension" },
-    "card":        { "$value": "6px", "$type": "dimension" }
+    "sm": { "$value": "4px", "$type": "dimension" },
+    "md": { "$value": "6px", "$type": "dimension" }
   }
 }

@@ -1,5 +1,5 @@
 import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'fs';
-import { toPascalCase, toYaml, dartSafeName } from '../utils.js';
+import { toPascalCase, toYaml, dartSafeName, pathToCssVar } from '../utils.js';
 import type { ResolvedTokenMap } from '../token-loader.js';
 import { generateTsSemanticColorGroup } from './web-color.js';
 import { generateTokensMeta } from '../flutter/flutter-color.js';
@@ -100,6 +100,35 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     writeFileSync(`${spacingDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
   }
 
+  // ── stroke/ ───────────────────────────────────────────────────────────────
+  const strokeDir = `${outDir}/stroke`;
+  mkdirSync(strokeDir, { recursive: true });
+
+  {
+    const L = [HEADER];
+    L.push('export const BTechStroke = {');
+    for (const [name, value] of Object.entries(data.stroke)) {
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
+    }
+    L.push('} as const;\n');
+    writeFileSync(`${strokeDir}/stroke.token.ts`, L.join('\n') + '\n');
+  }
+  writeFileSync(`${strokeDir}/index.ts`, "export { BTechStroke } from './stroke.token';\n");
+  {
+    const meta = {
+      category: 'stroke',
+      figma: {
+        collection: 'BTech/Stroke',
+        tokens: Object.keys(data.stroke).map(name => ({
+          path: `stroke.${name}`,
+          figmaVariable: `Stroke/${toPascalCase(name)}`,
+        })),
+      },
+    };
+    writeFileSync(`${strokeDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
+  }
+
   // ── radius/ ───────────────────────────────────────────────────────────────
   const radiusDir = `${outDir}/radius`;
   mkdirSync(radiusDir, { recursive: true });
@@ -107,11 +136,7 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   {
     const L = [HEADER];
     L.push('export const BTechRadius = {');
-    for (const [name, value] of Object.entries(data.radius.core)) {
-      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
-      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
-    }
-    for (const [name, value] of Object.entries(data.radius.semantic)) {
+    for (const [name, value] of Object.entries(data.radius)) {
       const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
       L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
     }
@@ -120,12 +145,11 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   }
   writeFileSync(`${radiusDir}/index.ts`, "export { BTechRadius } from './radius.token';\n");
   {
-    const allKeys = [...Object.keys(data.radius.core), ...Object.keys(data.radius.semantic)];
     const meta = {
       category: 'radius',
       figma: {
         collection: 'BTech/Radius',
-        tokens: allKeys.map(name => ({
+        tokens: Object.keys(data.radius).map(name => ({
           path: `radius.${name}`,
           figmaVariable: `Radius/${toPascalCase(name)}`,
         })),
@@ -141,10 +165,12 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   {
     const L = [HEADER];
     // Primitive font data
+    // BTechFontFamily — returns CSS var strings so tenant font overrides cascade automatically.
+    // e.g. BTechFontFamily.sans === 'var(--btech-font-family-sans)'
     L.push('export const BTechFontFamily = {');
-    for (const [name, value] of Object.entries(data.typography.fontFamilies)) {
-      const fam = String(value).split(',')[0].trim().replace(/'/g, '');
-      L.push(`  ${name}: '${fam}',`);
+    for (const [name] of Object.entries(data.typography.fontFamilies)) {
+      const cssVar = pathToCssVar(['typography', 'fontFamily', name]);
+      L.push(`  ${name}: 'var(${cssVar})',`);
     }
     L.push('} as const;\n');
 
@@ -173,7 +199,7 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     L.push('  heading: {');
     const heading = data.typography.semantic.heading;
     if (heading) {
-      if (heading.fontFamily) L.push(`    fontFamily: '${String(heading.fontFamily).split(',')[0].trim().replace(/'/g, '')}',`);
+      if (heading.fontFamily) L.push(`    fontFamily: 'var(${pathToCssVar(['typography', 'fontFamily', 'sans'])})',`);
       if (heading.fontWeight) L.push(`    fontWeight: ${Number(heading.fontWeight)},`);
       if (heading.lineHeight) L.push(`    lineHeight: ${Number(heading.lineHeight)},`);
     }
@@ -181,7 +207,7 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     L.push('  body: {');
     const body = data.typography.semantic.body;
     if (body) {
-      if (body.fontFamily) L.push(`    fontFamily: '${String(body.fontFamily).split(',')[0].trim().replace(/'/g, '')}',`);
+      if (body.fontFamily) L.push(`    fontFamily: 'var(${pathToCssVar(['typography', 'fontFamily', 'sans'])})',`);
       if (body.fontSize) L.push(`    fontSize: ${parseFloat(String(body.fontSize).replace('px', ''))},`);
       if (body.fontWeight) L.push(`    fontWeight: ${Number(body.fontWeight)},`);
       if (body.lineHeight) L.push(`    lineHeight: ${Number(body.lineHeight)},`);
@@ -222,6 +248,7 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   const newExports = [
     "export * from './color/index';",
     "export * from './spacing/index';",
+    "export * from './stroke/index';",
     "export * from './radius/index';",
     "export * from './typography/index';",
   ];

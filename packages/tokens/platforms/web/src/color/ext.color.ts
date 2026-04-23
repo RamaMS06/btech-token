@@ -2,21 +2,21 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export class BTechExtColor {
-  readonly successSubtler = '#e2f3e9' as const;
-  readonly successSubtle = '#c5ead5' as const;
-  readonly success = '#08a94c' as const;
-  readonly successBold = '#0a853e' as const;
-  readonly infoSubtler = '#e7f0f4' as const;
-  readonly infoSubtle = '#d0e4ed' as const;
-  readonly info = '#0ea5e9' as const;
-  readonly infoBold = '#0f81b4' as const;
-  readonly warningSubtler = '#f5f0e7' as const;
-  readonly warningSubtle = '#efe3d0' as const;
-  readonly warning = '#f59e0b' as const;
-  readonly warningBold = '#bd7c0c' as const;
-  readonly errorSubtler = '#f6eaea' as const;
-  readonly errorSubtle = '#f0d9d9' as const;
-  readonly error = '#ef4444' as const;
-  readonly errorBold = '#d81818' as const;
+  readonly successSubtler = 'var(--btech-ext-success-subtler)' as const;
+  readonly successSubtle = 'var(--btech-ext-success-subtle)' as const;
+  readonly success = 'var(--btech-ext-success)' as const;
+  readonly successBold = 'var(--btech-ext-success-bold)' as const;
+  readonly infoSubtler = 'var(--btech-ext-info-subtler)' as const;
+  readonly infoSubtle = 'var(--btech-ext-info-subtle)' as const;
+  readonly info = 'var(--btech-ext-info)' as const;
+  readonly infoBold = 'var(--btech-ext-info-bold)' as const;
+  readonly warningSubtler = 'var(--btech-ext-warning-subtler)' as const;
+  readonly warningSubtle = 'var(--btech-ext-warning-subtle)' as const;
+  readonly warning = 'var(--btech-ext-warning)' as const;
+  readonly warningBold = 'var(--btech-ext-warning-bold)' as const;
+  readonly errorSubtler = 'var(--btech-ext-error-subtler)' as const;
+  readonly errorSubtle = 'var(--btech-ext-error-subtle)' as const;
+  readonly error = 'var(--btech-ext-error)' as const;
+  readonly errorBold = 'var(--btech-ext-error-bold)' as const;
 }
 

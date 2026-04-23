@@ -191,6 +191,24 @@ function emitTenantDart(
 // =============================================================================
 
 /**
+ * Normalises a font family name to CamelCase with no spaces — used for folder
+ * names and file names to match Google Fonts' own naming convention.
+ *
+ *   "Rubik Storm"  → "RubikStorm"
+ *   "Open Sans"    → "OpenSans"
+ *   "Geist"        → "Geist"   (no-op for single-word names)
+ *
+ * The original spaced name is kept for the pubspec `family:` declaration and
+ * the Dart `fontFamily` string — Flutter needs it to match the family key.
+ */
+function toFontKey(fontFamily: string): string {
+  return fontFamily
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join('');
+}
+
+/**
  * Attempts to auto-download a Google Fonts typeface (4 weights) from the
  * google/fonts GitHub repository into `destDir`.
  *
@@ -198,17 +216,23 @@ function emitTenantDart(
  * Google Fonts. Returns true if at least one weight was downloaded.
  *
  * Fonts NOT hosted on Google Fonts (e.g. Geist, custom brand fonts) will
- * return false; those must be placed manually in `sources/fonts/{Family}/`.
+ * return false; add the TTF files manually to the destination directory.
+ *
+ * File naming follows Google Fonts convention: CamelCase with no spaces.
+ *   "Rubik Storm" → RubikStorm-Regular.ttf, RubikStorm-Medium.ttf, …
+ *   "Open Sans"   → OpenSans-Regular.ttf, OpenSans-Medium.ttf, …
  */
 function tryDownloadGoogleFont(fontFamily: string, destDir: string): boolean {
-  // Google Fonts GitHub uses lowercase, no spaces: 'Open Sans' → 'opensans'
+  // Google Fonts GitHub uses lowercase, no spaces for the directory slug.
   const familySlug = fontFamily.toLowerCase().replace(/\s+/g, '');
+  // File names use CamelCase (no spaces): "Rubik Storm" → "RubikStorm-Regular.ttf"
+  const familyKey  = toFontKey(fontFamily);
 
   const weights: string[] = [
-    `${fontFamily}-Regular.ttf`,
-    `${fontFamily}-Medium.ttf`,
-    `${fontFamily}-SemiBold.ttf`,
-    `${fontFamily}-Bold.ttf`,
+    `${familyKey}-Regular.ttf`,
+    `${familyKey}-Medium.ttf`,
+    `${familyKey}-SemiBold.ttf`,
+    `${familyKey}-Bold.ttf`,
   ];
 
   // Try both licence directories in order
@@ -241,23 +265,24 @@ function tryDownloadGoogleFont(fontFamily: string, destDir: string): boolean {
 }
 
 /**
- * Ensures TTF font files for `fontFamily` exist at `{destFontsDir}/{fontFamily}/`
+ * Ensures TTF font files for `fontFamily` exist at `{destFontsDir}/{FamilyKey}/`
  * and returns the pubspec asset lines.
  *
- * If the fonts are already present (previously committed to git), they are used
- * as-is — no download needed. If missing, attempts an auto-download from the
- * Google Fonts GitHub repository directly into the destination directory.
+ * Folder and file names use CamelCase (no spaces) to match Google Fonts convention:
+ *   "Rubik Storm" → fonts/RubikStorm/RubikStorm-Regular.ttf
  *
- * Expected file names (naming convention):
- *   {FontFamily}-Regular.ttf   → weight unspecified (400)
- *   {FontFamily}-Medium.ttf    → weight 500
- *   {FontFamily}-SemiBold.ttf  → weight 600
- *   {FontFamily}-Bold.ttf      → weight 700
+ * The pubspec `family:` and Dart fontFamily string keep the original spaced name
+ * so Flutter can match the family key correctly.
+ *
+ * If the fonts are already present (committed in git), they are used as-is.
+ * If missing, attempts an auto-download from the Google Fonts GitHub repository.
  *
  * Returns [] if fonts cannot be found or downloaded.
  */
 function copyFontsForPackage(fontFamily: string, destFontsDir: string): string[] {
-  const dest = `${destFontsDir}/${fontFamily}`;
+  // Folder and file prefix: CamelCase, no spaces ("Rubik Storm" → "RubikStorm")
+  const familyKey = toFontKey(fontFamily);
+  const dest = `${destFontsDir}/${familyKey}`;
 
   // If fonts already exist at the destination (committed in git), use them directly.
   const alreadyPresent =
@@ -270,19 +295,19 @@ function copyFontsForPackage(fontFamily: string, destFontsDir: string): string[]
     if (!ok) {
       console.warn(
         `  [fonts] Could not auto-download '${fontFamily}'. ` +
-        `Place TTF files manually in ${destFontsDir}/${fontFamily}/ ` +
-        `(naming: ${fontFamily}-Regular.ttf, -Medium.ttf, -SemiBold.ttf, -Bold.ttf).`,
+        `Place TTF files manually in ${destFontsDir}/${familyKey}/ ` +
+        `(naming: ${familyKey}-Regular.ttf, -Medium.ttf, -SemiBold.ttf, -Bold.ttf).`,
       );
       return [];
     }
-    console.log(`  [fonts] Downloaded '${fontFamily}' → ${destFontsDir}/${fontFamily}/`);
+    console.log(`  [fonts] Downloaded '${fontFamily}' → ${destFontsDir}/${familyKey}/`);
   }
 
   const weightDefs: [string, number | undefined][] = [
-    [`${fontFamily}-Regular.ttf`,  undefined],
-    [`${fontFamily}-Medium.ttf`,   500],
-    [`${fontFamily}-SemiBold.ttf`, 600],
-    [`${fontFamily}-Bold.ttf`,     700],
+    [`${familyKey}-Regular.ttf`,  undefined],
+    [`${familyKey}-Medium.ttf`,   500],
+    [`${familyKey}-SemiBold.ttf`, 600],
+    [`${familyKey}-Bold.ttf`,     700],
   ];
 
   const found = weightDefs.filter(([f]) => existsSync(`${dest}/${f}`));
@@ -290,8 +315,8 @@ function copyFontsForPackage(fontFamily: string, destFontsDir: string): string[]
 
   return found.map(([f, w]) =>
     w === undefined
-      ? `        - asset: fonts/${fontFamily}/${f}`
-      : `        - asset: fonts/${fontFamily}/${f}\n          weight: ${w}`,
+      ? `        - asset: fonts/${familyKey}/${f}`
+      : `        - asset: fonts/${familyKey}/${f}\n          weight: ${w}`,
   );
 }
 
