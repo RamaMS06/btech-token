@@ -181,38 +181,63 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
     return `0x${a}${r}${g}${b}`;
   }
 
+  // Helper: emit BoxShadow layers
+  function emitLayers(lines: string[], layers: import('../token-loader.js').ShadowLayer[], indent: string): void {
+    for (const l of layers) {
+      const argb = rgbaToArgbHex(l.color);
+      const blurStyle = l.inset ? `\n${indent}  blurStyle: BlurStyle.inner,` : '';
+      lines.push(
+        `${indent}BoxShadow(`,
+        `${indent}  color: Color(${argb}),`,
+        `${indent}  offset: Offset(${l.offsetX}, ${l.offsetY}),`,
+        `${indent}  blurRadius: ${l.blur},`,
+        `${indent}  spreadRadius: ${l.spread},${blurStyle}`,
+        `${indent}),`,
+      );
+    }
+  }
+
   const shadowLines = [
     HEADER,
     "import 'package:flutter/material.dart';\n",
-    '/// Shadow tokens. Access: BTechShadow.elevationMd',
-    '/// Each token is a List<BoxShadow> — use inside BoxDecoration.boxShadow.',
+    '/// Shadow tokens.',
+    '/// Access: BTechShadow.button.pressed  BTechShadow.elevation.md',
+    '/// Each getter returns List<BoxShadow> — use inside BoxDecoration.boxShadow.',
     '///',
     '/// ```dart',
     '/// Container(',
-    "///   decoration: BoxDecoration(boxShadow: BTechShadow.elevationMd),",
+    "///   decoration: BoxDecoration(boxShadow: BTechShadow.elevation.md),",
     '/// )',
     '/// ```',
-    'abstract class BTechShadow {',
   ];
-  for (const [name, layers] of Object.entries(data.shadow)) {
-    shadowLines.push(`  static const List<BoxShadow> ${name} = [`);
-    for (const l of layers) {
-      const argb = rgbaToArgbHex(l.color);
-      const blurStyle = l.inset ? '\n      blurStyle: BlurStyle.inner,' : '';
-      shadowLines.push(
-        `    BoxShadow(`,
-        `      color: Color(${argb}),`,
-        `      offset: Offset(${l.offsetX}, ${l.offsetY}),`,
-        `      blurRadius: ${l.blur},`,
-        `      spreadRadius: ${l.spread},${blurStyle}`,
-        `    ),`,
-      );
+
+  // Emit one group class per top-level key (button, table, elevation, …)
+  for (const [group, variants] of Object.entries(data.shadow)) {
+    const className = `_BTechShadow${toPascalCase(group)}Group`;
+    shadowLines.push(`class ${className} {`);
+    shadowLines.push(`  const ${className}();\n`);
+    for (const [variant, layers] of Object.entries(variants)) {
+      shadowLines.push(`  List<BoxShadow> get ${variant} => const [`);
+      emitLayers(shadowLines, layers, '    ');
+      shadowLines.push('  ];\n');
     }
-    shadowLines.push('  ];');
+    shadowLines.push('}\n');
+  }
+
+  // Emit root BTechShadow class with one const field per group
+  shadowLines.push('abstract class BTechShadow {');
+  for (const group of Object.keys(data.shadow)) {
+    const className = `_BTechShadow${toPascalCase(group)}Group`;
+    shadowLines.push(`  static const ${group} = ${className}();`);
   }
   shadowLines.push('}\n');
+
   writeFileSync(`${shadowDir}/shadow.token.dart`, shadowLines.join('\n') + '\n');
-  writeFileSync(`${shadowDir}/shadow.dart`, "export 'shadow.token.dart';\n");
+  writeFileSync(`${shadowDir}/shadow.dart`, [
+    "export 'shadow.token.dart';",
+    "export 'inner_shadow.dart';",
+    '',
+  ].join('\n'));
 
   // ── typography/ ─────────────────────────────────────────────────────────────
   const typoDir = `${DART_SRC}/typography`;

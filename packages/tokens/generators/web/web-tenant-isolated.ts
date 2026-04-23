@@ -71,7 +71,7 @@ export function generateTenantIsolatedCss(
     const parts = cleanPath.split('.');
     const stem = pathToCssVarStem(parts)
       .replace(/([A-Z])/g, m => `-${m.toLowerCase()}`);
-    const cssVar = `--btech-${stem}`;
+    const cssVar = `--${stem}`;
     lines.push(`  ${cssVar}: ${value};`);
   }
 

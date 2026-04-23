@@ -26,7 +26,7 @@ export function appendTenantCSS(baseMap: Record<string, string>): void {
       const resolved = resolveRef(rawVal, baseMap);
       const cleanPath = tokenPath.replace(/\.default$/, '');
       const stem = pathToCssVarStem(cleanPath.split('.')).replace(/([A-Z])/g, m => `-${m.toLowerCase()}`);
-      const cssVar = `--btech-${stem}`;
+      const cssVar = `--${stem}`;
       blocks.push(`  ${cssVar}: ${resolved};`);
     }
     blocks.push('}');

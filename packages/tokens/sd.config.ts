@@ -20,6 +20,7 @@ import {
   prependGoogleFontsCssImport,
 } from './generators/font-registry-generator.js';
 import { generateUtilitiesCss } from './generators/web/web-utilities-generator.js';
+import { appendTypographyCompositesCss } from './generators/web/web-typography-composites.js';
 import { generateFlutterTenantPackages } from './generators/flutter/flutter-tenant-format.js';
 
 // =============================================================================
@@ -95,7 +96,7 @@ const sd = new StyleDictionary({
     // CSS custom properties → platforms/web/dist/styles.css (:root block)
     css: {
       transformGroup: 'css/btech',
-      prefix: 'btech',
+      prefix: '',
       buildPath: WEB_OUT,
       files: [{
         destination: 'styles.css',
@@ -194,14 +195,14 @@ function buildResolvedBaseMap(): Record<string, string> {
     const cssPath = `${WEB_OUT}styles.css`;
     const rawCss  = readFileSync(cssPath, 'utf8');
     const cleanedCss = rawCss
-      .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2')
-      .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2');
+      .replace(/(--[a-z][a-z0-9-]+)-default([\s:);,])/g, '$1$2')
+      .replace(/(--[a-z][a-z0-9-]+)-default([\s:);,])/g, '$1$2');
 
     // Post-build: SD4's shadow/css/shorthand omits the `inset` keyword.
     // Fix: prepend `inset ` to the buttonPressed shadow value.
     const fixedCss = cleanedCss
       .replace(
-        /(--btech-shadow-button-pressed:\s*)(0px)/g,
+        /(--shadow-button-pressed:\s*)(0px)/g,
         '$1inset $2',
       );
     writeFileSync(cssPath, fixedCss, 'utf8');
@@ -211,6 +212,9 @@ function buildResolvedBaseMap(): Record<string, string> {
 
     // Generate utility CSS (bg-*, text-*, mt-*, rounded-*, etc.)
     generateUtilitiesCss(`${WEB_OUT}utilities.css`, data);
+
+    // Append composite typography CSS vars + utility classes to styles.css
+    appendTypographyCompositesCss(`${WEB_OUT}styles.css`);
 
     // Post-build: append [data-tenant="*"] overrides to styles.css
     appendTenantCSS(resolvedBaseMap);

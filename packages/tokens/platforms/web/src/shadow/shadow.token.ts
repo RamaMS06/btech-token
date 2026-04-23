@@ -2,13 +2,19 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export const BTechShadow = {
-  buttonPressed: 'inset 0px 4px 4px 0px rgba(0,0,0,0.25)',
-  tableLeft: '4px 0px 4px 0px rgba(0,0,0,0.15)',
-  tableRight: '-4px 0px 4px 0px rgba(0,0,0,0.15)',
-  elevationXs: '0px 1px 2px 0px rgba(0,0,0,0.05)',
-  elevationSm: '0px 1px 2px -1px rgba(0,0,0,0.06), 0px 1px 3px 0px rgba(0,0,0,0.10)',
-  elevationMd: '0px 2px 4px -2px rgba(0,0,0,0.06), 0px 4px 6px -1px rgba(0,0,0,0.10)',
-  elevationLg: '0px 4px 6px -4px rgba(0,0,0,0.05), 0px 10px 15px -3px rgba(0,0,0,0.10)',
-  elevationXl: '0px 8px 10px -6px rgba(0,0,0,0.04), 0px 20px 25px -5px rgba(0,0,0,0.10)',
+  button: {
+    pressed: 'inset 0px 4px 4px 0px rgba(0,0,0,0.25)',
+  },
+  table: {
+    left: '4px 0px 4px 0px rgba(0,0,0,0.15)',
+    right: '-4px 0px 4px 0px rgba(0,0,0,0.15)',
+  },
+  elevation: {
+    xs: '0px 1px 2px 0px rgba(0,0,0,0.05)',
+    sm: '0px 1px 2px -1px rgba(0,0,0,0.06), 0px 1px 3px 0px rgba(0,0,0,0.10)',
+    md: '0px 2px 4px -2px rgba(0,0,0,0.06), 0px 4px 6px -1px rgba(0,0,0,0.10)',
+    lg: '0px 4px 6px -4px rgba(0,0,0,0.05), 0px 10px 15px -3px rgba(0,0,0,0.10)',
+    xl: '0px 8px 10px -6px rgba(0,0,0,0.04), 0px 20px 25px -5px rgba(0,0,0,0.10)',
+  },
 } as const;
 

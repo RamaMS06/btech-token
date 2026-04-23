@@ -27,8 +27,9 @@ export interface ResolvedTokenMap {
   spacing: Record<string, string>;
   stroke: Record<string, string>;
   radius: Record<string, string>;
-  /** Flat map: camelCase token name → ordered array of shadow layers */
-  shadow: Record<string, ShadowLayer[]>;
+  /** 2-level map: group → variant → ordered array of shadow layers.
+   *  Mirrors the Figma "/" separator: button/pressed → shadow.button.pressed */
+  shadow: Record<string, Record<string, ShadowLayer[]>>;
   typography: {
     fontFamilies: Record<string, string>;
     fontSizes: Record<string, string>;
@@ -104,8 +105,9 @@ export function loadTokenData(): ResolvedTokenMap {
     radius[k] = (v as any).$value;
   }
 
-  // Shadow — parse DTCG shadow objects into flat camelCase map
-  const shadow: Record<string, ShadowLayer[]> = {};
+  // Shadow — parse DTCG shadow objects into 2-level group→variant map.
+  // Preserves the Figma "/" separator hierarchy: button/pressed → shadow.button.pressed.
+  const shadow: Record<string, Record<string, ShadowLayer[]>> = {};
   const shadowPrimitive = JSON.parse(readFileSync(`${coreDir}/shadow.primitive.json`, 'utf-8'));
 
   function parsePx(v: string | number): number {
@@ -121,22 +123,17 @@ export function loadTokenData(): ResolvedTokenMap {
       inset:   Boolean(obj.inset),
     };
   }
-  function collectShadow(node: Record<string, unknown>, prefix: string): void {
-    if ('$value' in node) {
-      const raw = node.$value;
-      const layers = Array.isArray(raw)
+  for (const [group, variants] of Object.entries(shadowPrimitive.shadow as Record<string, unknown>)) {
+    if (group.startsWith('$')) continue;
+    shadow[group] = {};
+    for (const [variant, tokenDef] of Object.entries(variants as Record<string, unknown>)) {
+      if (variant.startsWith('$')) continue;
+      const raw = (tokenDef as any).$value;
+      shadow[group][variant] = Array.isArray(raw)
         ? (raw as Record<string, unknown>[]).map(parseShadowObj)
         : [parseShadowObj(raw as Record<string, unknown>)];
-      shadow[prefix] = layers;
-    } else {
-      for (const [key, child] of Object.entries(node)) {
-        if (key.startsWith('$')) continue;
-        const camelKey = prefix ? `${prefix}${key.charAt(0).toUpperCase()}${key.slice(1)}` : key;
-        collectShadow(child as Record<string, unknown>, camelKey);
-      }
     }
   }
-  collectShadow(shadowPrimitive.shadow, '');
 
   // Typography primitives
   const fontPrimitive = JSON.parse(readFileSync(`${coreDir}/font.primitive.json`, 'utf-8'));

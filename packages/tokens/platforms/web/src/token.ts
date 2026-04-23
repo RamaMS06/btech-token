@@ -6,10 +6,10 @@
  * Grammar: [category].[property].[role].[emphasis].[state]
  *
  * @example
- * 'color.background.primary'        — primary brand background
- * 'color.text.neutral.subtle'       — secondary text color
- * 'spacing.md'                      — medium spacing (16px)
- * 'radius.interactive'              — button/input border radius
+ * 'color.bg.primary'                — primary background color
+ * 'color.text.secondary'           — secondary text color
+ * 'spacing.md'                      — medium spacing (12px)
+ * 'radius.sm'                       — small border radius (8px)
  */
 export type TokenPath =
   | 'button.danger.bg'
@@ -245,7 +245,17 @@ export type TokenPath =
   | 'typography.body.fontFamily'
   | 'typography.body.fontSize'
   | 'typography.body.fontWeight'
+  | 'typography.body.large'
+  | 'typography.body.largeB'
   | 'typography.body.lineHeight'
+  | 'typography.body.micro'
+  | 'typography.body.microB'
+  | 'typography.body.regular'
+  | 'typography.body.regularB'
+  | 'typography.body.small'
+  | 'typography.body.smallB'
+  | 'typography.body.xtrasmall'
+  | 'typography.body.xtrasmallB'
   | 'typography.code.fontFamily'
   | 'typography.code.fontSize'
   | 'typography.fontFamily.mono'
@@ -265,8 +275,13 @@ export type TokenPath =
   | 'typography.fontWeight.medium'
   | 'typography.fontWeight.regular'
   | 'typography.fontWeight.semibold'
+  | 'typography.heading.display'
   | 'typography.heading.fontFamily'
   | 'typography.heading.fontWeight'
+  | 'typography.heading.h1'
+  | 'typography.heading.h2'
+  | 'typography.heading.h3'
+  | 'typography.heading.h4'
   | 'typography.heading.lineHeight'
   | 'typography.label.fontFamily'
   | 'typography.label.fontSize'
@@ -286,6 +301,10 @@ export type TokenPath =
   | 'typography.lineHeight.sm'
   | 'typography.lineHeight.xl'
   | 'typography.lineHeight.xs'
+  | 'typography.subheading.h5'
+  | 'typography.subheading.h6'
+  | 'typography.subheading.h7'
+  | 'typography.subheading.h8'
   | 'typography.typeScale.body.large.fontSize'
   | 'typography.typeScale.body.large.fontWeight'
   | 'typography.typeScale.body.large.lineHeightPx'
@@ -345,20 +364,20 @@ export type TokenPath =
   | 'typography.typeScale.subheading.h8.lineHeightPx'
 
 // =============================================================================
-// Atlassian-aligned CSS variable naming (mirrors --ds-* with --btech-* prefix)
+// CSS variable naming (no vendor prefix)
 // =============================================================================
 // styles.css defines every token as a CSS custom property:
 //   :root {
-//     --btech-background-primary: #...;   (was --btech-color-background-primary)
-//     --btech-space-md: 16px;             (was --btech-spacing-md)
-//     --btech-font-family-sans: ...;      (was --btech-typography-font-family-sans)
-//     --btech-border-neutral: #...;       (was --btech-color-stroke-neutral)
-//     --btech-duration-fast: 100ms;       (was --btech-motion-duration-fast)
-//     --btech-z-modal: 400;               (was --btech-z-index-modal)
+//     --bg-primary: #...;                  (color — category dropped)
+//     --space-md: 16px;                    (spacing → space)
+//     --typography-font-family-sans: ...;  (typography — category kept)
+//     --border-neutral: #...;              (color.stroke → border)
+//     --duration-fast: 100ms;              (motion — category dropped)
+//     --z-modal: 400;                      (zIndex → z)
 //   }
 //
 // token() returns the identical var() — same as writing it by hand in CSS.
-// Tenant switching via [data-tenant="bjb"] works automatically for both.
+// Dark mode via [data-mode="dark"] works automatically for both.
 // =============================================================================
 
 // Internal: same logic as pathToCssVarStem() in config/generators/utils.ts
@@ -374,7 +393,7 @@ function _pathToVarName(dotPath: string): string {
       stem = rest.join('-'); break;
     }
     case 'spacing': stem = ['space', ...rest].join('-'); break;
-    case 'typography': stem = rest.join('-'); break;
+    case 'typography': stem = [cat, ...rest].join('-'); break;
     case 'zIndex': stem = ['z', ...rest].join('-'); break;
     case 'motion': stem = rest.join('-'); break;
     default: stem = [cat, ...rest].join('-');
@@ -387,37 +406,38 @@ function _pathToVarName(dotPath: string): string {
  * Atlassian-aligned: category is dropped from the var name.
  *
  * ── Color ────────────────────────────────────────────────────────────────────
- * token('color.background.primary')        → var(--btech-background-primary)
- * token('color.background.primary.hover')  → var(--btech-background-primary-hover)
- * token('color.text.on.primary')           → var(--btech-text-on-primary)
- * token('color.icon.neutral.subtle')       → var(--btech-icon-neutral-subtle)
- * token('color.stroke.primary')            → var(--btech-border-primary)
- * token('color.blue.500')                  → var(--btech-color-blue-500)
+ * token('color.bg.primary')           → var(--bg-primary)
+ * token('color.text.primary')         → var(--text-primary)
+ * token('color.icon.success')         → var(--icon-success)
+ * token('color.border.primary')       → var(--border-primary)
+ * token('color.brand.primary')        → var(--brand-primary)
+ * token('color.ext.success-subtler')  → var(--ext-success-subtler)
+ * token('color.blue.500')             → var(--color-blue-500)
  *
  * ── Spacing ─────────────────────────────────────────────────────────────────
- * token('spacing.xs')   → var(--btech-space-xs)
- * token('spacing.md')   → var(--btech-space-md)
+ * token('spacing.xs')   → var(--space-xs)
+ * token('spacing.md')   → var(--space-md)
  *
  * ── Radius / Shadow ─────────────────────────────────────────────────────────
- * token('radius.interactive') → var(--btech-radius-interactive)
- * token('shadow.md')          → var(--btech-shadow-md)
+ * token('radius.sm')              → var(--radius-sm)
+ * token('shadow.elevation.md')    → var(--shadow-elevation-md)
  *
  * ── Typography ─────────────────────────────────────────────────────────────
- * token('typography.fontFamily.sans')     → var(--btech-font-family-sans)
- * token('typography.fontSize.sm')         → var(--btech-font-size-sm)
- * token('typography.fontWeight.semibold') → var(--btech-font-weight-semibold)
- * token('typography.lineHeight.normal')   → var(--btech-line-height-normal)
+ * token('typography.fontFamily.sans')     → var(--typography-font-family-sans)
+ * token('typography.fontSize.sm')         → var(--typography-font-size-sm)
+ * token('typography.heading.h1')          → var(--typography-heading-h1)
+ * token('typography.body.regular')        → var(--typography-body-regular)
  *
  * ── Motion / Z-Index ───────────────────────────────────────────────────────
- * token('motion.duration.fast')  → var(--btech-duration-fast)
- * token('motion.easing.ease')    → var(--btech-easing-ease)
- * token('zIndex.modal')          → var(--btech-z-modal)
+ * token('motion.duration.fast')  → var(--duration-fast)
+ * token('motion.easing.ease')    → var(--easing-ease)
+ * token('zIndex.modal')          → var(--z-modal)
  *
  * ── With fallback ───────────────────────────────────────────────────────────
- * token('color.background.primary', '#15803d') → var(--btech-background-primary, #15803d)
+ * token('color.bg.primary', '#fff') → var(--bg-primary, #fff)
  */
 export function token(path: TokenPath, fallback?: string): string {
-  const varName = `--btech-${_pathToVarName(path)}`;
+  const varName = `--${_pathToVarName(path)}`;
   return fallback ? `var(${varName}, ${fallback})` : `var(${varName})`;
 }
 
@@ -425,18 +445,19 @@ export function token(path: TokenPath, fallback?: string): string {
  * Raw CSS variable name — no var() wrapper.
  * Use for setProperty(), CSS-in-JS that wraps var() itself, or calc().
  *
- * cssVar('color.background.primary') → '--btech-background-primary'
- * element.style.setProperty(cssVar('color.background.primary'), '#0057b7');
+ * cssVar('color.bg.primary')              → '--bg-primary'
+ * cssVar('typography.fontFamily.sans')    → '--typography-font-family-sans'
+ * element.style.setProperty(cssVar('color.bg.primary'), '#0057b7');
  */
 export function cssVar(path: TokenPath): string {
-  return `--btech-${_pathToVarName(path)}`;
+  return `--${_pathToVarName(path)}`;
 }
 
 /**
  * Wraps a token in calc().
  *
- * tokenCalc('spacing.md', '* 2')    → 'calc(var(--btech-space-md) * 2)'
- * tokenCalc('spacing.sm', '+ 4px')  → 'calc(var(--btech-space-sm) + 4px)'
+ * tokenCalc('spacing.md', '* 2')    → 'calc(var(--space-md) * 2)'
+ * tokenCalc('spacing.sm', '+ 4px')  → 'calc(var(--space-sm) + 4px)'
  */
 export function tokenCalc(path: TokenPath, expression: string): string {
   return `calc(${token(path)} ${expression})`;

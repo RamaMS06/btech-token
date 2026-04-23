@@ -2,15 +2,15 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export class BTechTextColor {
-  readonly primary = 'var(--btech-text-primary)' as const;
-  readonly secondary = 'var(--btech-text-secondary)' as const;
-  readonly tertiary = 'var(--btech-text-tertiary)' as const;
-  readonly inverse = 'var(--btech-text-inverse)' as const;
-  readonly disabled = 'var(--btech-text-disabled)' as const;
-  readonly link = 'var(--btech-text-link)' as const;
-  readonly success = 'var(--btech-text-success)' as const;
-  readonly error = 'var(--btech-text-error)' as const;
-  readonly warning = 'var(--btech-text-warning)' as const;
-  readonly info = 'var(--btech-text-info)' as const;
+  readonly primary = 'var(--text-primary)' as const;
+  readonly secondary = 'var(--text-secondary)' as const;
+  readonly tertiary = 'var(--text-tertiary)' as const;
+  readonly inverse = 'var(--text-inverse)' as const;
+  readonly disabled = 'var(--text-disabled)' as const;
+  readonly link = 'var(--text-link)' as const;
+  readonly success = 'var(--text-success)' as const;
+  readonly error = 'var(--text-error)' as const;
+  readonly warning = 'var(--text-warning)' as const;
+  readonly info = 'var(--text-info)' as const;
 }
 

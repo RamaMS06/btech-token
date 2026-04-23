@@ -140,9 +140,13 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     }
     const L = [HEADER];
     L.push('export const BTechShadow = {');
-    for (const [name, layers] of Object.entries(data.shadow)) {
-      const css = layers.map(layerToCss).join(', ');
-      L.push(`  ${name}: '${css}',`);
+    for (const [group, variants] of Object.entries(data.shadow)) {
+      L.push(`  ${group}: {`);
+      for (const [variant, layers] of Object.entries(variants)) {
+        const css = layers.map(layerToCss).join(', ');
+        L.push(`    ${variant}: '${css}',`);
+      }
+      L.push('  },');
     }
     L.push('} as const;\n');
     writeFileSync(`${shadowDir}/shadow.token.ts`, L.join('\n') + '\n');

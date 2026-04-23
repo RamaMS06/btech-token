@@ -2,15 +2,15 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export class BTechIconColor {
-  readonly primary = 'var(--btech-icon-primary)' as const;
-  readonly secondary = 'var(--btech-icon-secondary)' as const;
-  readonly tertiary = 'var(--btech-icon-tertiary)' as const;
-  readonly inverse = 'var(--btech-icon-inverse)' as const;
-  readonly disabled = 'var(--btech-icon-disabled)' as const;
-  readonly link = 'var(--btech-icon-link)' as const;
-  readonly success = 'var(--btech-icon-success)' as const;
-  readonly error = 'var(--btech-icon-error)' as const;
-  readonly warning = 'var(--btech-icon-warning)' as const;
-  readonly info = 'var(--btech-icon-info)' as const;
+  readonly primary = 'var(--icon-primary)' as const;
+  readonly secondary = 'var(--icon-secondary)' as const;
+  readonly tertiary = 'var(--icon-tertiary)' as const;
+  readonly inverse = 'var(--icon-inverse)' as const;
+  readonly disabled = 'var(--icon-disabled)' as const;
+  readonly link = 'var(--icon-link)' as const;
+  readonly success = 'var(--icon-success)' as const;
+  readonly error = 'var(--icon-error)' as const;
+  readonly warning = 'var(--icon-warning)' as const;
+  readonly info = 'var(--icon-info)' as const;
 }
 

@@ -78,14 +78,14 @@ function generateWebTenantPackage(
     JSON.parse(readFileSync(overridePath, 'utf-8')),
   );
 
-  // Build CSS var → override value map (e.g. '--btech-brand-primary' → '#145bc3')
+  // Build CSS var → override value map (e.g. '--brand-primary' → '#145bc3')
   const cssVarOverrides: Record<string, string> = {};
   for (const [tokenPath, rawVal] of Object.entries(rawOverrides)) {
     const cleanPath = tokenPath.replace(/\.default$/, '');
     const resolved  = resolveRef(rawVal, lightBaseMap);
     const stem      = pathToCssVarStem(cleanPath.split('.'))
       .replace(/([A-Z])/g, (m: string) => `-${m.toLowerCase()}`);
-    cssVarOverrides[`--btech-${stem}`] = resolved;
+    cssVarOverrides[`--${stem}`] = resolved;
   }
 
   // ── styles.css ────────────────────────────────────────────────────────────

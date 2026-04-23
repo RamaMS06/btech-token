@@ -5,16 +5,19 @@
 
 import 'package:flutter/material.dart';
 
-/// Shadow tokens. Access: BTechShadow.elevationMd
-/// Each token is a List<BoxShadow> — use inside BoxDecoration.boxShadow.
+/// Shadow tokens.
+/// Access: BTechShadow.button.pressed  BTechShadow.elevation.md
+/// Each getter returns List<BoxShadow> — use inside BoxDecoration.boxShadow.
 ///
 /// ```dart
 /// Container(
-///   decoration: BoxDecoration(boxShadow: BTechShadow.elevationMd),
+///   decoration: BoxDecoration(boxShadow: BTechShadow.elevation.md),
 /// )
 /// ```
-abstract class BTechShadow {
-  static const List<BoxShadow> buttonPressed = [
+class _BTechShadowButtonGroup {
+  const _BTechShadowButtonGroup();
+
+  List<BoxShadow> get pressed => const [
     BoxShadow(
       color: Color(0x40000000),
       offset: Offset(0, 4),
@@ -23,7 +26,13 @@ abstract class BTechShadow {
       blurStyle: BlurStyle.inner,
     ),
   ];
-  static const List<BoxShadow> tableLeft = [
+
+}
+
+class _BTechShadowTableGroup {
+  const _BTechShadowTableGroup();
+
+  List<BoxShadow> get left => const [
     BoxShadow(
       color: Color(0x26000000),
       offset: Offset(4, 0),
@@ -31,7 +40,8 @@ abstract class BTechShadow {
       spreadRadius: 0,
     ),
   ];
-  static const List<BoxShadow> tableRight = [
+
+  List<BoxShadow> get right => const [
     BoxShadow(
       color: Color(0x26000000),
       offset: Offset(-4, 0),
@@ -39,7 +49,13 @@ abstract class BTechShadow {
       spreadRadius: 0,
     ),
   ];
-  static const List<BoxShadow> elevationXs = [
+
+}
+
+class _BTechShadowElevationGroup {
+  const _BTechShadowElevationGroup();
+
+  List<BoxShadow> get xs => const [
     BoxShadow(
       color: Color(0x0D000000),
       offset: Offset(0, 1),
@@ -47,7 +63,8 @@ abstract class BTechShadow {
       spreadRadius: 0,
     ),
   ];
-  static const List<BoxShadow> elevationSm = [
+
+  List<BoxShadow> get sm => const [
     BoxShadow(
       color: Color(0x0F000000),
       offset: Offset(0, 1),
@@ -61,7 +78,8 @@ abstract class BTechShadow {
       spreadRadius: 0,
     ),
   ];
-  static const List<BoxShadow> elevationMd = [
+
+  List<BoxShadow> get md => const [
     BoxShadow(
       color: Color(0x0F000000),
       offset: Offset(0, 2),
@@ -75,7 +93,8 @@ abstract class BTechShadow {
       spreadRadius: -1,
     ),
   ];
-  static const List<BoxShadow> elevationLg = [
+
+  List<BoxShadow> get lg => const [
     BoxShadow(
       color: Color(0x0D000000),
       offset: Offset(0, 4),
@@ -89,7 +108,8 @@ abstract class BTechShadow {
       spreadRadius: -3,
     ),
   ];
-  static const List<BoxShadow> elevationXl = [
+
+  List<BoxShadow> get xl => const [
     BoxShadow(
       color: Color(0x0A000000),
       offset: Offset(0, 8),
@@ -103,5 +123,12 @@ abstract class BTechShadow {
       spreadRadius: -5,
     ),
   ];
+
+}
+
+abstract class BTechShadow {
+  static const button = _BTechShadowButtonGroup();
+  static const table = _BTechShadowTableGroup();
+  static const elevation = _BTechShadowElevationGroup();
 }
 

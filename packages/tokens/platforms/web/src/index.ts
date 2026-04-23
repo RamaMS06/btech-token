@@ -13,61 +13,55 @@ export * from './typography/index';
 export { token, cssVar, tokenCalc } from './token';
 export type { TokenPath } from './token';
 
-// ── Vanilla JS tenant API ─────────────────────────────────────────────────────
+// ── Vanilla JS mode API ───────────────────────────────────────────────────────
+// Tenant is activated by importing the tenant's CSS package statically:
+//   import '@btech/tokens/styles.css';         // base (default) tenant
+//   import '@btech/tokens-bspace/styles.css';  // bspace tenant
+//
+// Mode (light/dark) is controlled at runtime via setMode() or followSystemMode().
 
 export type ColorMode = 'light' | 'dark';
 
-export interface ActivateOptions {
-  tenant: string;
-  mode?: ColorMode;
-  root?: HTMLElement;
-}
-
 /**
- * Activates a tenant's token set by setting data attributes on the root element.
- * CSS custom properties defined in styles.css target these attributes.
+ * Sets the color mode (light or dark) on the root element.
+ * CSS custom properties in styles.css switch via the [data-mode="dark"] block.
  *
  * @example
- * import { activateTenant } from '@btech/tokens';
- * import '@btech/tokens/styles.css';
+ * import { setMode } from '@btech/tokens';
  *
- * activateTenant({ tenant: 'tenant-a', mode: 'light' });
+ * setMode('dark');                        // enable dark mode globally
+ * setMode('light');                       // switch back to light
+ * setMode('dark', document.getElementById('panel')); // scope to one element
  */
-export function activateTenant({
-  tenant,
-  mode = 'light',
-  root = document.documentElement,
-}: ActivateOptions): () => void {
-  root.setAttribute('data-tenant', tenant);
-  root.setAttribute('data-mode', mode);
-
-  if (
-    typeof process !== 'undefined' &&
-    process.env?.NODE_ENV === 'development' &&
-    tenant === 'default'
-  ) {
-    console.warn(
-      '[tokens-web] Using "default" tenant. Pass a specific tenant ID for branded theming.'
-    );
-  }
-
-  return () => {
-    root.removeAttribute('data-tenant');
-    root.removeAttribute('data-mode');
-  };
+export function setMode(
+  mode: ColorMode,
+  root: HTMLElement = document.documentElement,
+): void {
+  root.dataset.mode = mode;
 }
 
 /**
- * Returns the currently active tenant and mode from DOM attributes.
+ * Auto-syncs the color mode with the user's OS preference (prefers-color-scheme).
+ * Calls setMode() immediately with the current system preference, then listens
+ * for future changes.
+ *
+ * Returns a cleanup function — call it to remove the listener.
+ *
+ * @example
+ * import { followSystemMode } from '@btech/tokens';
+ *
+ * const stop = followSystemMode();
+ * // …later, in cleanup:
+ * stop();
  */
-export function getActiveTenant(root = document.documentElement): {
-  tenant: string;
-  mode: ColorMode;
-} {
-  return {
-    tenant: root.getAttribute('data-tenant') ?? 'default',
-    mode: (root.getAttribute('data-mode') as ColorMode) ?? 'light',
-  };
+export function followSystemMode(
+  root: HTMLElement = document.documentElement,
+): () => void {
+  const mq = window.matchMedia('(prefers-color-scheme: dark)');
+  const apply = (): void => setMode(mq.matches ? 'dark' : 'light', root);
+  apply();
+  mq.addEventListener('change', apply);
+  return () => mq.removeEventListener('change', apply);
 }
 
 // Token exports (auto-generated)

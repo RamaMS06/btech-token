@@ -2,11 +2,11 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export class BTechBrandColor {
-  readonly primarySubtle = 'var(--btech-brand-primary-subtle)' as const;
-  readonly primary = 'var(--btech-brand-primary)' as const;
-  readonly primaryBold = 'var(--btech-brand-primary-bold)' as const;
-  readonly secondarySubtle = 'var(--btech-brand-secondary-subtle)' as const;
-  readonly secondary = 'var(--btech-brand-secondary)' as const;
-  readonly secondaryBold = 'var(--btech-brand-secondary-bold)' as const;
+  readonly primarySubtle = 'var(--brand-primary-subtle)' as const;
+  readonly primary = 'var(--brand-primary)' as const;
+  readonly primaryBold = 'var(--brand-primary-bold)' as const;
+  readonly secondarySubtle = 'var(--brand-secondary-subtle)' as const;
+  readonly secondary = 'var(--brand-secondary)' as const;
+  readonly secondaryBold = 'var(--brand-secondary-bold)' as const;
 }
 

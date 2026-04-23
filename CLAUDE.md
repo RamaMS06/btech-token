@@ -100,6 +100,62 @@ Reference: `docs/architecture/flutter-token-architecture.md` for the approved Fl
 
 ---
 
+## Demo App Sync Rule (MANDATORY)
+
+**Every change to design tokens MUST be reflected in all three demo apps.**
+
+This is a hard rule — token changes are not complete until the demos are updated.
+
+### Scope
+
+| Token change | What to update in demos |
+|---|---|
+| New token added | Add entry to token list in all 3 demos |
+| Token renamed | Update name + usage string in all 3 demos |
+| Token removed | Remove entry from all 3 demos |
+| Token category added | Add badge colour mapping in all 3 demos |
+| New token group (e.g. motion, z-index) | Add tab + entries in all 3 demos |
+| Shadow token changed | Update `BTechShadow.*` references + CSS var strings |
+| Radius / spacing changed | Update value display if hardcoded |
+
+### Demo app locations
+
+| App | File |
+|---|---|
+| Flutter | `apps/demo-flutter/lib/main.dart` |
+| Vue | `apps/demo-vue/src/App.vue` |
+| React | `apps/demo-react/src/App.tsx` |
+
+### Shadow token naming rule
+
+Figma uses `/` separator → implementation uses `.` separator.
+
+| Figma | Flutter | Web (CSS var) | Web (TS) |
+|---|---|---|---|
+| `button/pressed` | `BTechShadow.button.pressed` | `var(--btech-shadow-button-pressed)` | `BTechShadow.button.pressed` |
+| `elevation/md` | `BTechShadow.elevation.md` | `var(--btech-shadow-elevation-md)` | `BTechShadow.elevation.md` |
+
+### Inner shadow (Flutter)
+
+Use `InnerShadowDecoration` (not `BoxDecoration`) for inset shadows.
+Available via `import 'package:btech_tokens/btech_tokens.dart'`.
+
+```dart
+// Normal shadow
+Container(decoration: BoxDecoration(boxShadow: BTechShadow.elevation.md))
+
+// Inner / inset shadow
+Container(
+  decoration: InnerShadowDecoration(
+    color: context.btechColor.background.primary,
+    borderRadius: BorderRadius.circular(BTechRadius.sm),
+    boxShadow: BTechShadow.button.pressed,
+  ),
+)
+```
+
+---
+
 ## CI / Azure DevOps
 
 - **Repo:** `https://dev.azure.com/buma/BUMA%20-%20Bspace%20Design%20System/_git/btech-ds`

@@ -30,7 +30,7 @@ function toVar(tokenPath: string): string {
   const clean = tokenPath.replace(/\.default$/, '').replace(/\.base$/, '');
   const stem = pathToCssVarStem(clean.split('.'))
     .replace(/([A-Z])/g, m => `-${m.toLowerCase()}`);
-  return `var(--btech-${stem})`;
+  return `var(--${stem})`;
 }
 
 /**
