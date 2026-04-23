@@ -1,6 +1,15 @@
 import { readFileSync, readdirSync } from 'fs';
 import { ROOT, flattenDTCG, resolveRef } from './utils.js';
 
+export interface ShadowLayer {
+  color: string;    // e.g. "rgba(0,0,0,0.25)"
+  offsetX: number;  // px as number
+  offsetY: number;
+  blur: number;
+  spread: number;
+  inset: boolean;
+}
+
 export interface TypeScaleEntry {
   fontSize: number;
   fontWeight: number;
@@ -18,6 +27,8 @@ export interface ResolvedTokenMap {
   spacing: Record<string, string>;
   stroke: Record<string, string>;
   radius: Record<string, string>;
+  /** Flat map: camelCase token name → ordered array of shadow layers */
+  shadow: Record<string, ShadowLayer[]>;
   typography: {
     fontFamilies: Record<string, string>;
     fontSizes: Record<string, string>;
@@ -93,6 +104,40 @@ export function loadTokenData(): ResolvedTokenMap {
     radius[k] = (v as any).$value;
   }
 
+  // Shadow — parse DTCG shadow objects into flat camelCase map
+  const shadow: Record<string, ShadowLayer[]> = {};
+  const shadowPrimitive = JSON.parse(readFileSync(`${coreDir}/shadow.primitive.json`, 'utf-8'));
+
+  function parsePx(v: string | number): number {
+    return parseFloat(String(v).replace('px', '')) || 0;
+  }
+  function parseShadowObj(obj: Record<string, unknown>): ShadowLayer {
+    return {
+      color:   String(obj.color ?? 'rgba(0,0,0,0)'),
+      offsetX: parsePx(obj.offsetX as string),
+      offsetY: parsePx(obj.offsetY as string),
+      blur:    parsePx(obj.blur as string),
+      spread:  parsePx(obj.spread as string),
+      inset:   Boolean(obj.inset),
+    };
+  }
+  function collectShadow(node: Record<string, unknown>, prefix: string): void {
+    if ('$value' in node) {
+      const raw = node.$value;
+      const layers = Array.isArray(raw)
+        ? (raw as Record<string, unknown>[]).map(parseShadowObj)
+        : [parseShadowObj(raw as Record<string, unknown>)];
+      shadow[prefix] = layers;
+    } else {
+      for (const [key, child] of Object.entries(node)) {
+        if (key.startsWith('$')) continue;
+        const camelKey = prefix ? `${prefix}${key.charAt(0).toUpperCase()}${key.slice(1)}` : key;
+        collectShadow(child as Record<string, unknown>, camelKey);
+      }
+    }
+  }
+  collectShadow(shadowPrimitive.shadow, '');
+
   // Typography primitives
   const fontPrimitive = JSON.parse(readFileSync(`${coreDir}/font.primitive.json`, 'utf-8'));
   const fontFamilies: Record<string, string> = {};
@@ -149,6 +194,7 @@ export function loadTokenData(): ResolvedTokenMap {
     spacing,
     stroke,
     radius,
+    shadow,
     typography: { fontFamilies, fontSizes, fontWeights, lineHeights, semantic: semanticTypo, typeScale },
   };
 }

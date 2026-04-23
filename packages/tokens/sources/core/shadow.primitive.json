@@ -1,9 +1,82 @@
 {
   "shadow": {
-    "sm": { "$value": "0 1px 2px 0 rgba(0,0,0,0.05)", "$type": "shadow" },
-    "md": { "$value": "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)", "$type": "shadow" },
-    "lg": { "$value": "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)", "$type": "shadow" },
-    "xl": { "$value": "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)", "$type": "shadow" },
-    "none": { "$value": "none", "$type": "shadow" }
+    "button": {
+      "pressed": {
+        "$type": "shadow",
+        "$description": "Inner shadow for pressed button state",
+        "$value": {
+          "color": "rgba(0,0,0,0.25)",
+          "offsetX": "0px",
+          "offsetY": "4px",
+          "blur": "4px",
+          "spread": "0px",
+          "inset": true
+        }
+      }
+    },
+    "table": {
+      "left": {
+        "$type": "shadow",
+        "$description": "Left-edge shadow for sticky table columns",
+        "$value": {
+          "color": "rgba(0,0,0,0.15)",
+          "offsetX": "4px",
+          "offsetY": "0px",
+          "blur": "4px",
+          "spread": "0px"
+        }
+      },
+      "right": {
+        "$type": "shadow",
+        "$description": "Right-edge shadow for sticky table columns",
+        "$value": {
+          "color": "rgba(0,0,0,0.15)",
+          "offsetX": "-4px",
+          "offsetY": "0px",
+          "blur": "4px",
+          "spread": "0px"
+        }
+      }
+    },
+    "elevation": {
+      "xs": {
+        "$type": "shadow",
+        "$value": {
+          "color": "rgba(0,0,0,0.05)",
+          "offsetX": "0px",
+          "offsetY": "1px",
+          "blur": "2px",
+          "spread": "0px"
+        }
+      },
+      "sm": {
+        "$type": "shadow",
+        "$value": [
+          { "color": "rgba(0,0,0,0.06)", "offsetX": "0px", "offsetY": "1px", "blur": "2px",  "spread": "-1px" },
+          { "color": "rgba(0,0,0,0.10)", "offsetX": "0px", "offsetY": "1px", "blur": "3px",  "spread": "0px"  }
+        ]
+      },
+      "md": {
+        "$type": "shadow",
+        "$value": [
+          { "color": "rgba(0,0,0,0.06)", "offsetX": "0px", "offsetY": "2px",  "blur": "4px",  "spread": "-2px" },
+          { "color": "rgba(0,0,0,0.10)", "offsetX": "0px", "offsetY": "4px",  "blur": "6px",  "spread": "-1px" }
+        ]
+      },
+      "lg": {
+        "$type": "shadow",
+        "$value": [
+          { "color": "rgba(0,0,0,0.05)", "offsetX": "0px", "offsetY": "4px",  "blur": "6px",  "spread": "-4px" },
+          { "color": "rgba(0,0,0,0.10)", "offsetX": "0px", "offsetY": "10px", "blur": "15px", "spread": "-3px" }
+        ]
+      },
+      "xl": {
+        "$type": "shadow",
+        "$value": [
+          { "color": "rgba(0,0,0,0.04)", "offsetX": "0px", "offsetY": "8px",  "blur": "10px", "spread": "-6px" },
+          { "color": "rgba(0,0,0,0.10)", "offsetX": "0px", "offsetY": "20px", "blur": "25px", "spread": "-5px" }
+        ]
+      }
+    }
   }
 }

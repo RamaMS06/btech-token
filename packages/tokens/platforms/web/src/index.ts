@@ -72,3 +72,6 @@ export function getActiveTenant(root = document.documentElement): {
 
 // Token exports (auto-generated)
 export * from './stroke/index';
+
+// Token exports (auto-generated)
+export * from './shadow/index';

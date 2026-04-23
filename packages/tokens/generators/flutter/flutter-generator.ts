@@ -165,6 +165,55 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
     },
   }) + '\n');
 
+  // ── shadow/ ─────────────────────────────────────────────────────────────
+  const shadowDir = `${DART_SRC}/shadow`;
+  mkdirSync(shadowDir, { recursive: true });
+
+  function rgbaToArgbHex(rgba: string): string {
+    const m = rgba.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+))?\s*\)/);
+    if (!m) return '0xFF000000';
+    const r = Math.round(Number(m[1])).toString(16).padStart(2, '0').toUpperCase();
+    const g = Math.round(Number(m[2])).toString(16).padStart(2, '0').toUpperCase();
+    const b = Math.round(Number(m[3])).toString(16).padStart(2, '0').toUpperCase();
+    const a = m[4] !== undefined
+      ? Math.round(parseFloat(m[4]) * 255).toString(16).padStart(2, '0').toUpperCase()
+      : 'FF';
+    return `0x${a}${r}${g}${b}`;
+  }
+
+  const shadowLines = [
+    HEADER,
+    "import 'package:flutter/material.dart';\n",
+    '/// Shadow tokens. Access: BTechShadow.elevationMd',
+    '/// Each token is a List<BoxShadow> — use inside BoxDecoration.boxShadow.',
+    '///',
+    '/// ```dart',
+    '/// Container(',
+    "///   decoration: BoxDecoration(boxShadow: BTechShadow.elevationMd),",
+    '/// )',
+    '/// ```',
+    'abstract class BTechShadow {',
+  ];
+  for (const [name, layers] of Object.entries(data.shadow)) {
+    shadowLines.push(`  static const List<BoxShadow> ${name} = [`);
+    for (const l of layers) {
+      const argb = rgbaToArgbHex(l.color);
+      const blurStyle = l.inset ? '\n      blurStyle: BlurStyle.inner,' : '';
+      shadowLines.push(
+        `    BoxShadow(`,
+        `      color: Color(${argb}),`,
+        `      offset: Offset(${l.offsetX}, ${l.offsetY}),`,
+        `      blurRadius: ${l.blur},`,
+        `      spreadRadius: ${l.spread},${blurStyle}`,
+        `    ),`,
+      );
+    }
+    shadowLines.push('  ];');
+  }
+  shadowLines.push('}\n');
+  writeFileSync(`${shadowDir}/shadow.token.dart`, shadowLines.join('\n') + '\n');
+  writeFileSync(`${shadowDir}/shadow.dart`, "export 'shadow.token.dart';\n");
+
   // ── typography/ ─────────────────────────────────────────────────────────────
   const typoDir = `${DART_SRC}/typography`;
   mkdirSync(typoDir, { recursive: true });
@@ -345,6 +394,7 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
     // color.dart re-exports shades.color.dart + color.theme.dart (BTechColor, BTechColorTheme, etc.)
     "export 'src/color/color.dart';",
     "export 'src/spacing/spacing.dart';",
+    "export 'src/shadow/shadow.dart';",
     "export 'src/stroke/stroke.dart';",
     "export 'src/radius/radius.dart' hide BTechRadius;",
     "export 'src/radius/radius.theme.dart';",

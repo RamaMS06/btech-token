@@ -129,6 +129,26 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     writeFileSync(`${strokeDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
   }
 
+  // ── shadow/ ───────────────────────────────────────────────────────────
+  const shadowDir = `${outDir}/shadow`;
+  mkdirSync(shadowDir, { recursive: true });
+
+  {
+    function layerToCss(l: { color: string; offsetX: number; offsetY: number; blur: number; spread: number; inset: boolean }): string {
+      const inset = l.inset ? 'inset ' : '';
+      return `${inset}${l.offsetX}px ${l.offsetY}px ${l.blur}px ${l.spread}px ${l.color}`;
+    }
+    const L = [HEADER];
+    L.push('export const BTechShadow = {');
+    for (const [name, layers] of Object.entries(data.shadow)) {
+      const css = layers.map(layerToCss).join(', ');
+      L.push(`  ${name}: '${css}',`);
+    }
+    L.push('} as const;\n');
+    writeFileSync(`${shadowDir}/shadow.token.ts`, L.join('\n') + '\n');
+  }
+  writeFileSync(`${shadowDir}/index.ts`, "export { BTechShadow } from './shadow.token';\n");
+
   // ── radius/ ───────────────────────────────────────────────────────────────
   const radiusDir = `${outDir}/radius`;
   mkdirSync(radiusDir, { recursive: true });
@@ -248,6 +268,7 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   const newExports = [
     "export * from './color/index';",
     "export * from './spacing/index';",
+    "export * from './shadow/index';",
     "export * from './stroke/index';",
     "export * from './radius/index';",
     "export * from './typography/index';",

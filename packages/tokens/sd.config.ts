@@ -196,7 +196,15 @@ function buildResolvedBaseMap(): Record<string, string> {
     const cleanedCss = rawCss
       .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2')
       .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2');
-    writeFileSync(cssPath, cleanedCss, 'utf8');
+
+    // Post-build: SD4's shadow/css/shorthand omits the `inset` keyword.
+    // Fix: prepend `inset ` to the buttonPressed shadow value.
+    const fixedCss = cleanedCss
+      .replace(
+        /(--btech-shadow-button-pressed:\s*)(0px)/g,
+        '$1inset $2',
+      );
+    writeFileSync(cssPath, fixedCss, 'utf8');
 
     // Post-build: prepend Google Fonts @import to styles.css
     prependGoogleFontsCssImport(cssPath, fontRegistry);
