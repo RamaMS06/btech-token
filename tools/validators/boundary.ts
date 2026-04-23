@@ -8,7 +8,7 @@ import { resolve, join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const TENANTS_DIR = resolve(ROOT, 'tokens/tenants');
+const TENANTS_DIR = resolve(ROOT, 'packages/tokens/sources/tenants');
 
 // Paths prefixes tenants ARE allowed to override
 const ALLOWED_PREFIXES: string[] = [

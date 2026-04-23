@@ -56,8 +56,8 @@ function loadJson(path: string): TokenNode {
   return JSON.parse(readFileSync(resolve(ROOT, path), 'utf-8'));
 }
 
-const baseColor = loadJson('tokens/core/color.primitive.json');
-const semanticColor = loadJson('tokens/semantic/color.json') as TokenNode;
+const baseColor = loadJson('packages/tokens/sources/core/color.primitive.json');
+const semanticColor = loadJson('packages/tokens/sources/semantic/color.json') as TokenNode;
 
 // Pairs to check: [fg token path, bg token path, context]
 const pairs: Array<[string[], string[], string]> = [
