@@ -6,26 +6,21 @@
   "description": "Multi-tenant design token source of truth — React, Vue, Flutter",
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
-    "tokens:watch": "node scripts/watch-tokens.mjs",
     "generate": "pnpm exec tsx packages/tokens/sd.config.ts && pnpm --filter @btech/tokens build",
     "build": "pnpm generate && turbo run build",
     "validate": "pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts",
     "add-tenant": "pnpm exec tsx scripts/add-tenant.ts",
+    "tokens:watch": "node scripts/watch-tokens.mjs",
     "bootstrap": "pnpm install && melos bootstrap",
     "flutter:get": "melos run get",
     "flutter:analyze": "melos run analyze",
     "flutter:test": "melos run test",
-    "sync-flutter-version": "pnpm exec tsx scripts/sync-flutter-version.ts",
     "bump": "pnpm exec tsx scripts/bump-version.ts",
     "bump:minor": "pnpm exec tsx scripts/bump-version.ts minor",
     "bump:major": "pnpm exec tsx scripts/bump-version.ts major",
-    "changeset": "changeset",
-    "version": "changeset version && pnpm sync-flutter-version",
-    "release": "turbo run build && changeset publish"
+    "bump:rc": "pnpm exec tsx scripts/bump-version.ts rc"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^0.6.0",
-    "@changesets/cli": "^2.27.1",
     "@types/node": "^20.0.0",
     "style-dictionary": "^4.3.0",
     "tsx": "^4.7.2",

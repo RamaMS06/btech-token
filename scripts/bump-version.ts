@@ -5,26 +5,29 @@
  * packages/tokens/platforms/flutter/pubspec.yaml to the same version (mirror versioning).
  *
  * Usage:
- *   pnpm bump patch     ← default, e.g. 1.0.1 → 1.0.2
+ *   pnpm bump           ← patch (default), e.g. 1.0.1 → 1.0.2
+ *   pnpm bump patch     ← e.g. 1.0.1 → 1.0.2  (stable, strips rc suffix)
  *   pnpm bump minor     ← e.g. 1.0.1 → 1.1.0
  *   pnpm bump major     ← e.g. 1.0.1 → 2.0.0
+ *   pnpm bump rc        ← e.g. 1.0.1 → 1.0.1-rc.1  OR  1.0.1-rc.1 → 1.0.1-rc.2
  *
- * Called automatically by auto-version.yml on every PR merge to main.
- * The bump type is determined by PR labels:
+ * Called automatically by auto-version.yml when a PR is merged to main.
+ * The bump type is determined by PR labels set before merging:
  *   release:patch  → patch (default)
  *   release:minor  → minor
  *   release:major  → major
+ *   release:rc     → rc
  */
 
-import { readFileSync, writeFileSync, appendFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 
 // ── Parse bump type ────────────────────────────────────────────────────────
-const bumpType = (process.argv[2] ?? 'patch') as 'patch' | 'minor' | 'major';
-if (!['patch', 'minor', 'major'].includes(bumpType)) {
-  console.error(`❌  Invalid bump type: "${bumpType}". Use patch | minor | major.`);
+const bumpType = (process.argv[2] ?? 'patch') as 'patch' | 'minor' | 'major' | 'rc';
+if (!['patch', 'minor', 'major', 'rc'].includes(bumpType)) {
+  console.error(`❌  Invalid bump type: "${bumpType}". Use patch | minor | major | rc.`);
   process.exit(1);
 }
 
@@ -33,18 +36,34 @@ const webPkgPath = resolve(ROOT, 'packages/tokens/platforms/web/package.json');
 const webPkg = JSON.parse(readFileSync(webPkgPath, 'utf8'));
 const currentVersion: string = webPkg.version;
 
-if (!currentVersion || !/^\d+\.\d+\.\d+$/.test(currentVersion)) {
+if (!currentVersion || !/^\d+\.\d+\.\d+(-rc\.\d+)?$/.test(currentVersion)) {
   console.error(`❌  Invalid version in tokens-web/package.json: "${currentVersion}"`);
   process.exit(1);
 }
 
 // ── Compute new version ───────────────────────────────────────────────────
-const [major, minor, patch] = currentVersion.split('.').map(Number);
+// Split off any pre-release suffix: "1.0.1-rc.2" → base="1.0.1", pre="rc.2"
+const [baseVersion, preRelease] = currentVersion.split('-');
+const [major, minor, patch] = baseVersion.split('.').map(Number);
 
 let newVersion: string;
-if (bumpType === 'major') newVersion = `${major + 1}.0.0`;
-else if (bumpType === 'minor') newVersion = `${major}.${minor + 1}.0`;
-else newVersion = `${major}.${minor}.${patch + 1}`;
+if (bumpType === 'rc') {
+  if (preRelease?.startsWith('rc.')) {
+    // Already an RC — increment the counter: rc.1 → rc.2
+    const rcNum = parseInt(preRelease.split('.')[1], 10) + 1;
+    newVersion = `${baseVersion}-rc.${rcNum}`;
+  } else {
+    // Stable → first RC of the same base version: 1.0.1 → 1.0.1-rc.1
+    newVersion = `${baseVersion}-rc.1`;
+  }
+} else if (bumpType === 'major') {
+  newVersion = `${major + 1}.0.0`;
+} else if (bumpType === 'minor') {
+  newVersion = `${major}.${minor + 1}.0`;
+} else {
+  // patch — always stable, strips any rc suffix
+  newVersion = `${major}.${minor}.${patch + 1}`;
+}
 
 // ── Write tokens-web/package.json ────────────────────────────────────────
 webPkg.version = newVersion;
@@ -63,9 +82,4 @@ if (updatedPubspec === pubspec) {
   console.log(`✅  btech_tokens          ${currentVersion} → ${newVersion}`);
 }
 
-// ── Print new version for CI (captured via $GITHUB_OUTPUT) ───────────────
 console.log(`\n📦  New version: ${newVersion}`);
-// Write to GITHUB_OUTPUT if running in CI
-if (process.env.GITHUB_OUTPUT) {
-  appendFileSync(process.env.GITHUB_OUTPUT, `version=${newVersion}\n`);
-}
