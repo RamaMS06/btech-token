@@ -5,9 +5,6 @@ node_modules/
 # ── Build outputs ─────────────────────────────────────────────────────────────
 dist/
 **/dist/
-# Un-ignore web platform dist — these are the primary artifacts (styles.css, index.js)
-# and must be committed so consumers (demo apps, external installs) work without generating.
-!packages/tokens/platforms/web/**/dist/
 .turbo/
 
 # ── TypeScript ────────────────────────────────────────────────────────────────
