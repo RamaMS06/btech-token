@@ -12,36 +12,36 @@ const TENANTS_DIR = resolve(ROOT, 'packages/tokens/sources/tenants');
 
 // Paths prefixes tenants ARE allowed to override
 const ALLOWED_PREFIXES: string[] = [
-  'color.background.primary',
-  'color.background.secondary',
-  'color.background.danger',
-  'color.background.success',
-  'color.background.warning',
-  'color.stroke.primary',
-  'color.stroke.secondary',
-  'color.stroke.danger',
-  'radius.interactive',
-  'radius.card',
-  'radius.badge',
-  'radius.tooltip',
+  // Brand identity — primary purpose of per-tenant overrides
+  'color.brand',
+  // Surface backgrounds (not text/icon/border — those are DS-controlled)
+  'color.bg',
+  // Border radius — tenants may use sharper or rounder shapes
+  'radius',
+  // Font family only — scale/size/weight are DS-controlled
   'typography.fontFamily',
 ];
 
 // Paths tenants must NEVER override (takes precedence over allowed list)
 const FORBIDDEN_PREFIXES: string[] = [
-  'color.blue',
-  'color.green',
-  'color.orange',
-  'color.red',
-  'color.neutral',
+  // Semantic roles the DS controls — changing these breaks accessibility guarantees
+  'color.text',
+  'color.icon',
+  'color.border',
+  'color.ext',
+  // Core primitives — must never leak into tenant overrides
+  'color.base',
+  // Layout & motion — locked globally
   'spacing',
+  'shadow',
+  'motion',
+  'zIndex',
+  // Typography scale — sizes, weights, line-heights are uniform across tenants
   'typography.fontSize',
   'typography.fontWeight',
   'typography.lineHeight',
+  'typography.typeScale',
   'typography.scale',
-  'motion',
-  'zIndex',
-  'shadow',
 ];
 
 function flattenPaths(obj: Record<string, unknown>, prefix = ''): string[] {

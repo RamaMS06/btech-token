@@ -38,34 +38,20 @@ interface TokenNode {
   [key: string]: TokenNode | string | undefined;
 }
 
-function resolveBaseColor(ref: string, baseTokens: TokenNode): string | null {
-  // Resolve {color.blue.500} → actual hex from base tokens
-  const path = ref.replace(/^\{|\}$/g, '').split('.');
-  let node: TokenNode | string | undefined = baseTokens;
-  for (const key of path) {
-    if (typeof node !== 'object' || node === null) return null;
-    node = (node as TokenNode)[key];
-  }
-  if (typeof node === 'object' && node !== null && typeof node.$value === 'string') {
-    return node.$value;
-  }
-  return null;
-}
-
 function loadJson(path: string): TokenNode {
   return JSON.parse(readFileSync(resolve(ROOT, path), 'utf-8'));
 }
 
-const baseColor = loadJson('packages/tokens/sources/core/color.primitive.json');
 const semanticColor = loadJson('packages/tokens/sources/semantic/color.json') as TokenNode;
 
 // Pairs to check: [fg token path, bg token path, context]
+// Paths must match the actual DTCG structure in sources/semantic/color.json
 const pairs: Array<[string[], string[], string]> = [
-  [['color', 'text', 'on-primary'],   ['color', 'background', 'primary'],   'primary button'],
-  [['color', 'text', 'on-secondary'], ['color', 'background', 'secondary'], 'secondary button'],
-  [['color', 'text', 'on-danger'],    ['color', 'background', 'danger'],    'danger button'],
-  [['color', 'text', 'primary'],      ['color', 'background', 'default'],   'body text on surface'],
-  [['color', 'text', 'secondary'],    ['color', 'background', 'default'],   'subtle text on surface'],
+  [['color', 'text', 'primary'],   ['color', 'bg', 'primary'],  'body text on surface'],
+  [['color', 'text', 'secondary'], ['color', 'bg', 'primary'],  'subtle text on surface'],
+  [['color', 'text', 'inverse'],   ['color', 'bg', 'tertiary'], 'inverse text on dark surface'],
+  [['color', 'text', 'error'],     ['color', 'bg', 'primary'],  'error text on surface'],
+  [['color', 'text', 'link'],      ['color', 'bg', 'primary'],  'link text on surface'],
 ];
 
 function getTokenValue(path: string[], tokens: TokenNode): string | null {
@@ -74,10 +60,8 @@ function getTokenValue(path: string[], tokens: TokenNode): string | null {
     if (typeof node !== 'object' || node === null) return null;
     node = (node as TokenNode)[key];
   }
-  if (typeof node === 'object' && node?.$value) {
-    const val = node.$value as string;
-    if (val.startsWith('{')) return resolveBaseColor(val, baseColor);
-    return val;
+  if (typeof node === 'object' && node !== null && typeof node.$value === 'string') {
+    return node.$value;
   }
   return null;
 }
@@ -91,7 +75,8 @@ for (const [fgPath, bgPath, label] of pairs) {
   const bg = getTokenValue(bgPath, semanticColor);
 
   if (!fg || !bg) {
-    console.warn(`  ⚠️  Could not resolve colors for: ${label}`);
+    console.error(`  ❌  Could not resolve token paths for: ${label}`);
+    hasFailures = true;
     continue;
   }
 
