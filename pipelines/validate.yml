@@ -70,8 +70,8 @@ jobs:
       # ── Flutter: tokens platform only ────────────────────────────────────
       - script: flutter pub get
         displayName: 'Flutter pub get (tokens-flutter)'
-        workingDirectory: packages/tokens/platforms/flutter
+        workingDirectory: packages/tokens/platforms/flutter/token
 
       - script: flutter analyze --no-fatal-infos
         displayName: 'Flutter analyze (tokens-flutter)'
-        workingDirectory: packages/tokens/platforms/flutter
+        workingDirectory: packages/tokens/platforms/flutter/token

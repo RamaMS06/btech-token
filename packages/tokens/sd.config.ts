@@ -8,7 +8,6 @@ import { loadTokenData } from './generators/token-loader.js';
 import { generateFlutterFiles } from './generators/flutter/flutter-generator.js';
 import { generateTsFiles } from './generators/web/web-generator.js';
 import { generateTokenTypes } from './generators/web/web-token-types.js';
-import { appendTenantCSS } from './generators/web/web-tenant-css.js';
 import { generateTenantIsolatedCss } from './generators/web/web-tenant-isolated.js';
 import { ensureTenantPackageJson } from './generators/web/web-tenant-package.js';
 import { appendDarkModeCss } from './generators/web/web-dark-generator.js';
@@ -68,13 +67,13 @@ StyleDictionary.registerTransformGroup({
 
 // =============================================================================
 // Output paths
-//   ROOT                             = packages/tokens/
-//   ROOT/platforms/flutter/lib/src/  = packages/tokens/platforms/flutter/lib/src/
-//   ROOT/platforms/web/              = packages/tokens/platforms/web/
+//   ROOT                                    = packages/tokens/
+//   ROOT/platforms/flutter/token/lib/src/   = packages/tokens/platforms/flutter/token/lib/src/
+//   ROOT/platforms/web/token/               = packages/tokens/platforms/web/token/
 // =============================================================================
-const FLUTTER_OUT   = `${ROOT}/platforms/flutter/lib/src/`;
-const WEB_OUT       = `${ROOT}/platforms/web/dist/`;
-const WEB_SRC       = `${ROOT}/platforms/web/src/`;
+const FLUTTER_OUT   = `${ROOT}/platforms/flutter/token/lib/src/`;
+const WEB_OUT       = `${ROOT}/platforms/web/token/dist/`;
+const WEB_SRC       = `${ROOT}/platforms/web/token/src/`;
 
 mkdirSync(FLUTTER_OUT, { recursive: true });
 mkdirSync(WEB_OUT,     { recursive: true });
@@ -156,8 +155,8 @@ function buildResolvedBaseMap(): Record<string, string> {
     generateFlutterTenantPackages(resolvedBaseMap);
 
     console.log(`\n  tenant packages ready for: ${tenantArg}`);
-    console.log(`  Web     → packages/platforms/web/tenants/${tenantArg}/dist/styles.css`);
-    console.log(`  Flutter → packages/tokens/platforms/flutter/tenants/\n`);
+    console.log(`  Web     → packages/tokens/platforms/web/${tenantArg}/dist/styles.css`);
+    console.log(`  Flutter → packages/tokens/platforms/flutter/${tenantArg}/\n`);
 
   } else {
     // =========================================================================
@@ -216,9 +215,6 @@ function buildResolvedBaseMap(): Record<string, string> {
     // Append composite typography CSS vars + utility classes to styles.css
     appendTypographyCompositesCss(`${WEB_OUT}styles.css`);
 
-    // Post-build: append [data-tenant="*"] overrides to styles.css
-    appendTenantCSS(resolvedBaseMap);
-
     // Post-build: append [data-mode="dark"] color overrides to styles.css
     appendDarkModeCss(`${WEB_OUT}styles.css`);
 
@@ -226,8 +222,8 @@ function buildResolvedBaseMap(): Record<string, string> {
     generateWebTenantPackages();
 
     console.log('\n pnpm generate complete\n');
-    console.log('  Flutter → packages/tokens/platforms/flutter/lib/src/');
-    console.log('  Web     → packages/tokens/platforms/web/src/ + dist/');
+    console.log('  Flutter → packages/tokens/platforms/flutter/token/lib/src/');
+    console.log('  Web     → packages/tokens/platforms/web/token/src/ + dist/');
     console.log('');
   }
 

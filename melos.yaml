@@ -2,8 +2,7 @@ name: btech_design_system
 repository: https://github.com/RamaMS06/btech-token
 
 packages:
-  - packages/tokens/platforms/flutter
-  - packages/tokens/platforms/flutter/tenants/*
+  - packages/tokens/platforms/flutter/*
 
 ide:
   intellij: false

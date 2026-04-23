@@ -1,8 +1,9 @@
 /**
  * bump-version.ts
  *
- * Bumps the version in packages/tokens/platforms/web/package.json, then syncs
- * packages/tokens/platforms/flutter/pubspec.yaml to the same version (mirror versioning).
+ * Bumps the version in packages/tokens/platforms/web/token/package.json, then syncs:
+ *   - packages/tokens/platforms/flutter/token/pubspec.yaml  (mirror versioning)
+ *   - packages/tokens/platforms/web/{tenant}/package.json   (all tenant packages)
  *
  * Usage:
  *   pnpm bump           ← patch (default), e.g. 1.0.1 → 1.0.2
@@ -19,7 +20,7 @@
  *   release:rc     → rc
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -31,29 +32,26 @@ if (!['patch', 'minor', 'major', 'rc'].includes(bumpType)) {
   process.exit(1);
 }
 
-// ── Read current version from tokens-web ──────────────────────────────────
-const webPkgPath = resolve(ROOT, 'packages/tokens/platforms/web/package.json');
+// ── Read current version from tokens-web base package ────────────────────
+const webPkgPath = resolve(ROOT, 'packages/tokens/platforms/web/token/package.json');
 const webPkg = JSON.parse(readFileSync(webPkgPath, 'utf8'));
 const currentVersion: string = webPkg.version;
 
 if (!currentVersion || !/^\d+\.\d+\.\d+(-rc\.\d+)?$/.test(currentVersion)) {
-  console.error(`❌  Invalid version in tokens-web/package.json: "${currentVersion}"`);
+  console.error(`❌  Invalid version in web/token/package.json: "${currentVersion}"`);
   process.exit(1);
 }
 
 // ── Compute new version ───────────────────────────────────────────────────
-// Split off any pre-release suffix: "1.0.1-rc.2" → base="1.0.1", pre="rc.2"
 const [baseVersion, preRelease] = currentVersion.split('-');
 const [major, minor, patch] = baseVersion.split('.').map(Number);
 
 let newVersion: string;
 if (bumpType === 'rc') {
   if (preRelease?.startsWith('rc.')) {
-    // Already an RC — increment the counter: rc.1 → rc.2
     const rcNum = parseInt(preRelease.split('.')[1], 10) + 1;
     newVersion = `${baseVersion}-rc.${rcNum}`;
   } else {
-    // Stable → first RC of the same base version: 1.0.1 → 1.0.1-rc.1
     newVersion = `${baseVersion}-rc.1`;
   }
 } else if (bumpType === 'major') {
@@ -61,25 +59,35 @@ if (bumpType === 'rc') {
 } else if (bumpType === 'minor') {
   newVersion = `${major}.${minor + 1}.0`;
 } else {
-  // patch — always stable, strips any rc suffix
   newVersion = `${major}.${minor}.${patch + 1}`;
 }
 
-// ── Write tokens-web/package.json ────────────────────────────────────────
+// ── Write web/token/package.json ─────────────────────────────────────────
 webPkg.version = newVersion;
 writeFileSync(webPkgPath, JSON.stringify(webPkg, null, 2) + '\n', 'utf8');
-console.log(`✅  @btech/tokens  ${currentVersion} → ${newVersion}`);
+console.log(`✅  @btech/tokens          ${currentVersion} → ${newVersion}`);
 
-// ── Write tokens-dart/pubspec.yaml (mirror versioning) ───────────────────
-const pubspecPath = resolve(ROOT, 'packages/tokens/platforms/flutter/pubspec.yaml');
+// ── Sync flutter/token/pubspec.yaml ──────────────────────────────────────
+const pubspecPath = resolve(ROOT, 'packages/tokens/platforms/flutter/token/pubspec.yaml');
 const pubspec = readFileSync(pubspecPath, 'utf8');
 const updatedPubspec = pubspec.replace(/^version:\s*.+$/m, `version: ${newVersion}`);
-
 if (updatedPubspec === pubspec) {
   console.log(`ℹ️   btech_tokens already at ${newVersion} — no change needed.`);
 } else {
   writeFileSync(pubspecPath, updatedPubspec, 'utf8');
-  console.log(`✅  btech_tokens          ${currentVersion} → ${newVersion}`);
+  console.log(`✅  btech_tokens           ${currentVersion} → ${newVersion}`);
+}
+
+// ── Sync all web tenant package.json versions ────────────────────────────
+const webPlatformDir = resolve(ROOT, 'packages/tokens/platforms/web');
+for (const entry of readdirSync(webPlatformDir)) {
+  if (entry === 'token') continue; // already done above
+  const tenantPkgPath = resolve(webPlatformDir, entry, 'package.json');
+  if (!existsSync(tenantPkgPath)) continue;
+  const tenantPkg = JSON.parse(readFileSync(tenantPkgPath, 'utf8'));
+  tenantPkg.version = newVersion;
+  writeFileSync(tenantPkgPath, JSON.stringify(tenantPkg, null, 2) + '\n', 'utf8');
+  console.log(`✅  @btech/tokens-${entry.padEnd(12)} ${currentVersion} → ${newVersion}`);
 }
 
 console.log(`\n📦  New version: ${newVersion}`);

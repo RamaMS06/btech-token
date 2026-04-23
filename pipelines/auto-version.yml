@@ -89,7 +89,7 @@ jobs:
 
       # ── Read new version ─────────────────────────────────────────────────
       - script: |
-          VERSION=$(node -p "require('./packages/tokens/platforms/web/package.json').version")
+          VERSION=$(node -p "require('./packages/tokens/platforms/web/token/package.json').version")
           echo "New version: $VERSION"
           echo "##vso[task.setvariable variable=NEW_VERSION]$VERSION"
           echo "##vso[task.setvariable variable=NEW_TAG]v$VERSION"
@@ -107,8 +107,8 @@ jobs:
           git config user.email "azure-pipelines@users.noreply.azure.com"
 
           git add \
-            packages/tokens/platforms/web/package.json \
-            packages/tokens/platforms/flutter/pubspec.yaml
+            packages/tokens/platforms/web/token/package.json \
+            packages/tokens/platforms/flutter/token/pubspec.yaml
 
           git commit -m "chore(release): bump to $(NEW_TAG) ***NO_CI***
 

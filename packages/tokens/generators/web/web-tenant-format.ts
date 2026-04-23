@@ -1,19 +1,17 @@
-// Generates per-tenant npm packages under packages/tokens/platforms/web/tenants/{id}/.
+// Generates per-tenant CSS-only npm packages under packages/tokens/platforms/web/{id}/.
 //
 // Each package contains:
-//   dist/styles.css  — Standalone CSS: starts from the already-generated base styles.css,
-//                      applies tenant override values into :root vars in-place,
-//                      then appends a tenant-aware [data-mode="dark"] block.
-//                      No import dependency on base package — fully standalone.
-//   src/index.ts     — Re-exports @btech/tokens + pre-configured activate() function.
-//   package.json     — name: "@btech/tokens-{id}", exports styles.css and JS.
+//   dist/styles.css  — Standalone CSS: starts from the base styles.css, applies
+//                      tenant override values into :root in-place, then appends
+//                      a [data-mode="dark"] block with tenant-aware dark values.
+//                      No JS, no TypeScript, no dependency on @btech/tokens.
+//   package.json     — name: "@btech/tokens-{id}", exports only ./styles.css.
 //
-// This mirrors Flutter's per-tenant Dart packages (btech_tokens_bspace etc.):
-//   import '@btech/tokens-bspace/styles.css'  → tokens already in :root
-//   activate({ mode: 'dark' })                → only sets data-mode, no tenant arg needed
+// Consumer usage:
+//   import '@btech/tokens-bspace/styles.css';     // all vars, bspace values in :root
+//   import { token, setMode } from '@btech/tokens'; // JS from the base package
 //
-// Run by sd.config.ts in BASE mode (same as generateFlutterTenantPackages).
-// Must run AFTER appendTenantCSS() and appendDarkModeCss() so base styles.css is complete.
+// Run by sd.config.ts in BASE mode (after appendDarkModeCss so base styles.css is complete).
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
 import {
@@ -37,11 +35,8 @@ function escapeRegex(s: string): string {
 }
 
 /**
- * Generates per-tenant web packages for all tenants found in sources/tenants/.
- * Output: packages/tokens/platforms/web/tenants/{id}/
- *
- * Reads the already-generated base dist/styles.css and applies tenant override
- * values directly in :root, ensuring identical var coverage with tenant values merged.
+ * Generates per-tenant CSS-only npm packages for all tenants in sources/tenants/.
+ * Output: packages/tokens/platforms/web/{id}/
  */
 export function generateWebTenantPackages(): void {
   const tenantsDir = `${ROOT}/sources/tenants`;
@@ -52,7 +47,7 @@ export function generateWebTenantPackages(): void {
     .sort();
 
   const lightBaseMap = buildResolvedBaseMap();
-  const darkBaseMap = buildDarkResolvedBaseMap();
+  const darkBaseMap  = buildDarkResolvedBaseMap();
 
   for (const tenantId of tenantIds) {
     generateWebTenantPackage(tenantId, lightBaseMap, darkBaseMap);
@@ -62,23 +57,20 @@ export function generateWebTenantPackages(): void {
 function generateWebTenantPackage(
   tenantId: string,
   lightBaseMap: Record<string, string>,
-  darkBaseMap: Record<string, string>,
+  darkBaseMap:  Record<string, string>,
 ): void {
   const overridePath = `${ROOT}/sources/tenants/${tenantId}/overrides.json`;
-  const baseCssPath  = `${ROOT}/platforms/web/dist/styles.css`;
-  const outDir  = `${ROOT}/platforms/web/tenants/${tenantId}`;
+  const baseCssPath  = `${ROOT}/platforms/web/token/dist/styles.css`;
+  const outDir  = `${ROOT}/platforms/web/${tenantId}`;
   const distDir = `${outDir}/dist`;
-  const srcDir  = `${outDir}/src`;
 
   mkdirSync(distDir, { recursive: true });
-  mkdirSync(srcDir, { recursive: true });
 
   // ── Resolve tenant overrides → CSS var override map ───────────────────────
   const rawOverrides = flattenDTCG(
     JSON.parse(readFileSync(overridePath, 'utf-8')),
   );
 
-  // Build CSS var → override value map (e.g. '--brand-primary' → '#145bc3')
   const cssVarOverrides: Record<string, string> = {};
   for (const [tokenPath, rawVal] of Object.entries(rawOverrides)) {
     const cleanPath = tokenPath.replace(/\.default$/, '');
@@ -89,26 +81,30 @@ function generateWebTenantPackage(
   }
 
   // ── styles.css ────────────────────────────────────────────────────────────
-  // Strategy: start from the base styles.css (already has full :root + tenant blocks
-  // + dark mode block), then find-and-replace the overridden var values within :root.
+  // Start from the fully-built base styles.css (has :root + dark mode block),
+  // then replace each overridden var's value inside :root.
   let tenantCss = [
     HEADER,
     `/* Tenant: ${tenantId} — standalone CSS (no import of base package required) */`,
-    `/* Tenant overrides: ${Object.keys(cssVarOverrides).join(', ')} */`,
+    `/* Overrides: ${Object.keys(cssVarOverrides).join(', ')} */`,
     '',
     readFileSync(baseCssPath, 'utf-8').trim(),
     '',
   ].join('\n');
 
-  // Apply tenant overrides: replace each var's value in the :root block.
-  // The regex matches: --btech-var-name: <value>;
   for (const [cssVar, overrideValue] of Object.entries(cssVarOverrides)) {
     const varRegex = new RegExp(`(${escapeRegex(cssVar)}:\\s*)([^;]+)(;)`, 'g');
     tenantCss = tenantCss.replace(varRegex, `$1${overrideValue}$3`);
   }
 
-  // ── Append tenant-specific [data-mode="dark"] block ───────────────────────
-  // Dark values = dark base map + tenant overrides applied on top.
+  // ── Replace base [data-mode="dark"] with tenant-aware dark block ─────────
+  // Remove the generic dark block written by appendDarkModeCss, then append
+  // a fresh one that merges tenant overrides on top of dark base values.
+  tenantCss = tenantCss.replace(
+    /\/\* ── Dark mode[\s\S]*?\[data-mode="dark"\][\s\S]*?\}\n?/,
+    '',
+  ).trimEnd();
+
   const mergedDark: Record<string, string> = { ...darkBaseMap };
   for (const [tokenPath, rawVal] of Object.entries(rawOverrides)) {
     const cleanPath = tokenPath.replace(/\.default$/, '');
@@ -118,8 +114,8 @@ function generateWebTenantPackage(
   const colorTree = buildColorTree();
   const darkLines: string[] = [
     '',
-    `/* ── Dark mode overrides for ${tenantId} ──────────────────────────────────────── */`,
-    `[data-tenant="${tenantId}"][data-mode="dark"], [data-mode="dark"][data-tenant="${tenantId}"] {`,
+    `/* ── Dark mode — ${tenantId} ──────────────────────────────────────────────── */`,
+    `[data-mode="dark"] {`,
   ];
   for (const [category, fields] of Object.entries(colorTree)) {
     for (const field of fields) {
@@ -133,65 +129,31 @@ function generateWebTenantPackage(
   }
   darkLines.push('}', '');
 
-  tenantCss += darkLines.join('\n');
+  tenantCss += '\n' + darkLines.join('\n');
   writeFileSync(`${distDir}/styles.css`, tenantCss, 'utf-8');
 
-  // ── src/index.ts ──────────────────────────────────────────────────────────
-  const indexTs = [
-    HEADER.replace(/^\/\* /, '// ').replace(/ \*\/\n/, '\n').replace(/\n \* /g, '\n// '),
-    `// @btech/tokens-${tenantId} — re-exports base @btech/tokens with tenant activate helper.`,
-    `// Import this package's styles.css INSTEAD OF @btech/tokens/styles.css.`,
-    '',
-    `export * from '@btech/tokens';`,
-    `import { activateTenant } from '@btech/tokens';`,
-    '',
-    `/**`,
-    ` * Activates the ${tenantId} tenant. Only pass \`mode\` — tenant is pre-configured.`,
-    ` * @example`,
-    ` * import '@btech/tokens-${tenantId}/styles.css';`,
-    ` * activate({ mode: 'dark' });`,
-    ` */`,
-    `export function activate(opts?: { mode?: 'light' | 'dark'; root?: HTMLElement }) {`,
-    `  return activateTenant({ tenant: '${tenantId}', mode: opts?.mode ?? 'light', root: opts?.root });`,
-    `}`,
-    '',
-  ].join('\n');
-  writeFileSync(`${srcDir}/index.ts`, indexTs, 'utf-8');
-
-  // ── package.json (only create if not already present) ─────────────────────
+  // ── package.json (CSS-only — always rewrite to keep in sync) ─────────────
   const pkgJsonPath = `${outDir}/package.json`;
-  if (!existsSync(pkgJsonPath)) {
-    const pkgJson = {
-      name:        `@btech/tokens-${tenantId}`,
-      version:     '1.0.0',
-      description: `BTech design tokens for ${tenantId} tenant — auto-generated`,
-      main:        './dist/index.js',
-      module:      './dist/index.mjs',
-      types:       './dist/index.d.ts',
-      exports: {
-        '.': {
-          types:   './dist/index.d.ts',
-          import:  './dist/index.mjs',
-          require: './dist/index.js',
-        },
-        './styles.css': './dist/styles.css',
-      },
-      scripts: {
-        build: 'tsup src/index.ts --format cjs,esm --dts',
-      },
-      dependencies: {
-        '@btech/tokens': 'workspace:*',
-      },
-      devDependencies: {
-        tsup:       '^8.0.2',
-        typescript: '^5.4.5',
-      },
-      publishConfig: {
-        registry: 'https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/',
-      },
-    };
-    writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n', 'utf-8');
-  }
 
-  console.log(`  Web tenant  — platforms/web/tenants/${tenantId}/`);
+  // Read current version from base package to stay in sync
+  const basePkgPath = `${ROOT}/platforms/web/token/package.json`;
+  const version = existsSync(basePkgPath)
+    ? JSON.parse(readFileSync(basePkgPath, 'utf-8')).version ?? '1.0.0'
+    : '1.0.0';
+
+  const pkgJson = {
+    name:        `@btech/tokens-${tenantId}`,
+    version,
+    description: `BTech design tokens for ${tenantId} — auto-generated, do not edit`,
+    exports: {
+      './styles.css': './dist/styles.css',
+    },
+    files: ['dist'],
+    publishConfig: {
+      registry: 'https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/',
+    },
+  };
+  writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n', 'utf-8');
+
+  console.log(`  Web tenant  — platforms/web/${tenantId}/  (@btech/tokens-${tenantId})`);
 }

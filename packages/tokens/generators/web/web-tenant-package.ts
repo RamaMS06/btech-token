@@ -1,70 +1,38 @@
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { ROOT } from '../utils.js';
 
 /**
- * Creates packages/tokens-{tenantId}/package.json if it doesn't exist.
- * Also creates a minimal src/index.ts that re-exports from the base package.
+ * Creates a CSS-only package.json for a tenant package if one doesn't exist.
+ * Used by TENANT mode (--tenant flag). BASE mode uses web-tenant-format.ts instead.
  */
 export function ensureTenantPackageJson(tenantId: string): void {
-  // ROOT = packages/tokens/ → go up two levels to monorepo root
-  const MONOREPO_ROOT = resolve(ROOT, '../..');
-  const pkgDir  = resolve(MONOREPO_ROOT, 'packages', 'platforms', 'web', 'tenants', tenantId);
-  const srcDir  = resolve(pkgDir, 'src');
-  const distDir = resolve(pkgDir, 'dist');
+  const pkgDir  = `${ROOT}/platforms/web/${tenantId}`;
+  const distDir = `${pkgDir}/dist`;
 
   mkdirSync(pkgDir,  { recursive: true });
-  mkdirSync(srcDir,  { recursive: true });
   mkdirSync(distDir, { recursive: true });
 
-  const pkgJsonPath = resolve(pkgDir, 'package.json');
+  const pkgJsonPath = `${pkgDir}/package.json`;
   if (!existsSync(pkgJsonPath)) {
+    // Read version from base package to stay in sync
+    const basePkgPath = `${ROOT}/platforms/web/token/package.json`;
+    const version = existsSync(basePkgPath)
+      ? JSON.parse(readFileSync(basePkgPath, 'utf-8')).version ?? '1.0.0'
+      : '1.0.0';
+
     const pkgJson = {
-      name: `@btech/tokens-${tenantId}`,
-      version: '1.0.0',
-      description: `BTech design tokens for ${tenantId} tenant`,
-      main: './dist/index.js',
-      module: './dist/index.mjs',
-      types: './dist/index.d.ts',
+      name:        `@btech/tokens-${tenantId}`,
+      version,
+      description: `BTech design tokens for ${tenantId} — auto-generated, do not edit`,
       exports: {
-        '.': {
-          types:   './dist/index.d.ts',
-          import:  './dist/index.mjs',
-          require: './dist/index.js',
-        },
         './styles.css': './dist/styles.css',
       },
-      scripts: {
-        build: 'tsup src/index.ts --format cjs,esm --dts',
-      },
-      dependencies: {
-        '@btech/tokens': 'workspace:*',
-      },
-      devDependencies: {
-        tsup:       '^8.0.2',
-        typescript: '^5.4.5',
-      },
+      files: ['dist'],
       publishConfig: {
-        registry:
-          'https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/',
+        registry: 'https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/',
       },
     };
     writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n');
-    console.log(`  Created packages/platforms/web/tenants/${tenantId}/package.json`);
-  }
-
-  // Create src/index.ts — re-exports everything from base @btech/tokens
-  const indexPath = resolve(srcDir, 'index.ts');
-  if (!existsSync(indexPath)) {
-    writeFileSync(
-      indexPath,
-      [
-        `// AUTO-GENERATED — re-exports base @btech/tokens for ${tenantId} tenant.`,
-        `// Import styles.css from this package to apply ${tenantId}'s token values to :root.`,
-        `export * from '@btech/tokens';`,
-        '',
-      ].join('\n'),
-    );
-    console.log(`  Created packages/platforms/web/tenants/${tenantId}/src/index.ts`);
+    console.log(`  Created platforms/web/${tenantId}/package.json`);
   }
 }
