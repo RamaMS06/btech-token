@@ -6,6 +6,7 @@
   "description": "Multi-tenant design token source of truth — React, Vue, Flutter",
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
+    "postinstall": "pnpm --filter @btech/tokens build",
     "tokens:watch": "node scripts/watch-tokens.mjs",
     "generate": "pnpm exec tsx packages/tokens/sd.config.ts && pnpm --filter @btech/tokens build",
     "build": "pnpm generate && turbo run build",
