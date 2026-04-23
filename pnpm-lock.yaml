@@ -24,44 +24,11 @@ importers:
         specifier: ^5.4.5
         version: 5.9.3
 
-  packages/tokens/platforms/web/bspace:
-    dependencies:
-      '@btech/tokens':
-        specifier: workspace:*
-        version: link:../token
-    devDependencies:
-      tsup:
-        specifier: ^8.0.2
-        version: 8.5.1(postcss@8.5.10)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
-      typescript:
-        specifier: ^5.4.5
-        version: 5.9.3
+  packages/tokens/platforms/web/bspace: {}
 
-  packages/tokens/platforms/web/tenant-a:
-    dependencies:
-      '@btech/tokens':
-        specifier: workspace:*
-        version: link:../token
-    devDependencies:
-      tsup:
-        specifier: ^8.0.2
-        version: 8.5.1(postcss@8.5.10)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
-      typescript:
-        specifier: ^5.4.5
-        version: 5.9.3
+  packages/tokens/platforms/web/tenant-a: {}
 
-  packages/tokens/platforms/web/tenant-bjb:
-    dependencies:
-      '@btech/tokens':
-        specifier: workspace:*
-        version: link:../token
-    devDependencies:
-      tsup:
-        specifier: ^8.0.2
-        version: 8.5.1(postcss@8.5.10)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
-      typescript:
-        specifier: ^5.4.5
-        version: 5.9.3
+  packages/tokens/platforms/web/tenant-bjb: {}
 
   packages/tokens/platforms/web/token:
     devDependencies:
