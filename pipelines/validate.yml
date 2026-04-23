@@ -35,17 +35,11 @@ jobs:
         displayName: 'Install JS dependencies'
 
       # ── Flutter ──────────────────────────────────────────────────────────
-      - script: |
-          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
-          echo "##vso[task.prependpath]$HOME/flutter/bin"
-        displayName: 'Setup Flutter (stable)'
-
-      - script: flutter --version
-        displayName: 'Flutter version check'
+      - template: templates/flutter-setup.yml
 
       # ── Generate + sync check ────────────────────────────────────────────
-      # Re-run the generator directly (bypasses Turbo cache) so the sync check
-      # always compares committed files against a fresh generation from tokens/.
+      # Re-run the generator directly so the sync check always compares
+      # committed files against a fresh generation from tokens/.
       - script: pnpm exec tsx packages/tokens/sd.config.ts
         displayName: 'Run token generator'
 
@@ -53,7 +47,6 @@ jobs:
         displayName: 'Build @btech/tokens'
 
       - script: |
-          # Check all platform outputs at once — framework-agnostic.
           CHANGED=$(git diff --name-only packages/tokens/platforms/)
 
           if [ -n "$CHANGED" ]; then
@@ -68,13 +61,13 @@ jobs:
           fi
 
           echo "✅  All generated files are in sync."
-        displayName: 'Check generated files are in sync with tokens/'
+        displayName: 'Sync check — generated files match token sources'
 
       # ── Token validators ─────────────────────────────────────────────────
       - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
-        displayName: 'Run JS validators (contrast + boundary)'
+        displayName: 'Run validators (contrast + boundary)'
 
-      # ── Flutter: packages/tokens-flutter ────────────────────────────────
+      # ── Flutter: tokens platform only ────────────────────────────────────
       - script: flutter pub get
         displayName: 'Flutter pub get (tokens-flutter)'
         workingDirectory: packages/tokens/platforms/flutter
@@ -82,12 +75,3 @@ jobs:
       - script: flutter analyze --no-fatal-infos
         displayName: 'Flutter analyze (tokens-flutter)'
         workingDirectory: packages/tokens/platforms/flutter
-
-      # ── Flutter: apps/demo-flutter ────────────────────────────────────────
-      - script: flutter pub get
-        displayName: 'Flutter pub get (demo-flutter)'
-        workingDirectory: apps/demo-flutter
-
-      - script: flutter analyze --no-fatal-infos
-        displayName: 'Flutter analyze (demo-flutter)'
-        workingDirectory: apps/demo-flutter

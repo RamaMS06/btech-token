@@ -1,4 +1,3 @@
 packages:
   - 'packages/tokens/platforms/web'
-  - 'apps/demo-react'
-  - 'apps/demo-vue'
+  - 'packages/tokens/platforms/web/tenants/*'
