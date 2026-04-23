@@ -1,6 +1,6 @@
 {
   "name": "@btech/tokens",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "Framework-agnostic BTech design tokens — BTechColor, BTechSpacing, BTechRadius + CSS custom properties",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -14,8 +14,12 @@
     "./styles.css": "./dist/styles.css",
     "./utilities.css": "./dist/utilities.css"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts"
+    "build": "tsup src/index.ts --format cjs,esm --dts --no-clean"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
