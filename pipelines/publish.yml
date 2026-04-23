@@ -1,17 +1,13 @@
-name: Publish Packages (Manual / Emergency)
+name: Publish Packages
 
-# This pipeline is the MANUAL / EMERGENCY release path.
-# Normal releases are handled automatically by auto-version pipeline on PR merge.
+# Triggered by any v* tag — whether pushed by auto-version.yml (normal flow)
+# or manually by a developer (hotfix / emergency).
 #
-# Use this pipeline when you need to:
-#   - Re-publish a version that failed mid-publish
-#   - Publish a hotfix tag manually
-#   - Release without going through a PR
+# Normal flow:
+#   PR merged → auto-version.yml bumps version + pushes v* tag → this pipeline publishes
 #
-# Trigger: push a v* tag manually
-#   git tag v1.2.3 -m "hotfix"
-#   git push origin v1.2.3
-
+# Manual / emergency flow:
+#   git tag v1.2.3 -m "hotfix" && git push origin v1.2.3 → this pipeline publishes
 trigger:
   tags:
     include:
@@ -28,8 +24,6 @@ pool:
 jobs:
   - job: publish
     displayName: 'Build & Publish to Azure Artifacts'
-    # Skip if the tag was pushed by the auto-version pipeline (it already published inline).
-    condition: ne(variables['Build.RequestedFor'], 'Azure Pipelines')
 
     steps:
       # ── Node / pnpm ───────────────────────────────────────────────────────
@@ -52,27 +46,43 @@ jobs:
         displayName: 'Install JS dependencies'
 
       # ── Flutter ───────────────────────────────────────────────────────────
-      - script: |
-          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
-          echo "##vso[task.prependpath]$HOME/flutter/bin"
-        displayName: 'Setup Flutter (stable)'
+      - template: templates/flutter-setup.yml
 
       - script: flutter pub get
         displayName: 'Flutter pub get'
-        workingDirectory: packages/tokens/platforms/flutter
+        workingDirectory: packages/tokens/platforms/flutter/token
 
       # ── Validate → Build → Publish ────────────────────────────────────────
       - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
-        displayName: 'Validate tokens (JS)'
+        displayName: 'Validate tokens (contrast + boundary)'
 
-      - script: pnpm build
-        displayName: 'Build all packages'
+      - script: pnpm --filter @btech/tokens build
+        displayName: 'Build @btech/tokens'
 
       - script: flutter analyze --no-fatal-infos
         displayName: 'Flutter analyze'
-        workingDirectory: packages/tokens/platforms/flutter
+        workingDirectory: packages/tokens/platforms/flutter/token
 
-      # npmAuthenticate@0 above already injected System.AccessToken into .npmrc.
-      # No NODE_AUTH_TOKEN variable needed.
-      - script: pnpm --filter @btech/tokens publish --no-git-checks
-        displayName: 'Publish @btech/tokens'
+      # Determine dist-tag: RC versions publish to "rc", stable to "latest"
+      - script: |
+          VERSION=$(node -p "require('./packages/tokens/platforms/web/token/package.json').version")
+          if echo "$VERSION" | grep -q '\-rc\.'; then
+            echo "##vso[task.setvariable variable=NPM_TAG]rc"
+          else
+            echo "##vso[task.setvariable variable=NPM_TAG]latest"
+          fi
+        displayName: 'Determine npm dist-tag (latest vs rc)'
+
+      # Publish base package
+      - script: pnpm --filter @btech/tokens publish --no-git-checks --tag $(NPM_TAG)
+        displayName: 'Publish @btech/tokens to Azure Artifacts'
+
+      # Publish all tenant packages (CSS-only, no build step needed)
+      - script: pnpm --filter "@btech/tokens-*" publish --no-git-checks --tag $(NPM_TAG)
+        displayName: 'Publish tenant packages to Azure Artifacts'
+
+      # ── Summary ───────────────────────────────────────────────────────────
+      - script: |
+          VERSION=$(node -p "require('./packages/tokens/platforms/web/token/package.json').version")
+          echo "##[section]Published @btech/tokens@$VERSION + tenant packages (tag: $(NPM_TAG))"
+        displayName: 'Publish summary'

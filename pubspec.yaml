@@ -1,0 +1,9 @@
+name: btech_design_system_workspace
+description: Workspace root — provides Melos for Flutter package management.
+publish_to: none
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dev_dependencies:
+  melos: ^6.3.2

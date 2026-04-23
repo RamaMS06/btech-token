@@ -30,7 +30,7 @@ function toVar(tokenPath: string): string {
   const clean = tokenPath.replace(/\.default$/, '').replace(/\.base$/, '');
   const stem = pathToCssVarStem(clean.split('.'))
     .replace(/([A-Z])/g, m => `-${m.toLowerCase()}`);
-  return `var(--btech-${stem})`;
+  return `var(--${stem})`;
 }
 
 /**
@@ -168,13 +168,7 @@ function buildRadiusRules(
   radius: ResolvedTokenMap['radius'],
 ): UtilityRule[] {
   const rules: UtilityRule[] = [];
-  for (const name of Object.keys(radius.core)) {
-    rules.push({
-      className: `rounded-${name}`,
-      declarations: { 'border-radius': toVar(`radius.${name}`) },
-    });
-  }
-  for (const name of Object.keys(radius.semantic)) {
+  for (const name of Object.keys(radius)) {
     rules.push({
       className: `rounded-${name}`,
       declarations: { 'border-radius': toVar(`radius.${name}`) },

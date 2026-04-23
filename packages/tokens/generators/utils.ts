@@ -5,10 +5,20 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 export function hexToArgb(hex: string): string {
   const clean = hex.replace('#', '');
-  const padded = clean.length === 3
+  // Expand 3-digit shorthand → 6 digits
+  const expanded = clean.length === 3
     ? clean.split('').map(c => c + c).join('')
     : clean;
-  return `0xFF${padded.toUpperCase()}`;
+  // CSS hex with alpha: #RRGGBBAA (8 chars) → Flutter 0xAARRGGBB
+  if (expanded.length === 8) {
+    const rr = expanded.slice(0, 2);
+    const gg = expanded.slice(2, 4);
+    const bb = expanded.slice(4, 6);
+    const aa = expanded.slice(6, 8);
+    return `0x${(aa + rr + gg + bb).toUpperCase()}`;
+  }
+  // Standard 6-digit hex: prepend full opacity FF
+  return `0xFF${expanded.toUpperCase()}`;
 }
 
 export function toCamelCase(str: string): string {
@@ -80,16 +90,16 @@ export function toYaml(obj: unknown, indent = 0): string {
 }
 
 // =============================================================================
-// Atlassian-aligned CSS variable naming
+// CSS variable naming
 // =============================================================================
-// Rules (mirrors Atlassian's --ds-* pattern with --btech-* prefix):
+// Rules:
 //   color.background.*  → background-*        (drop 'color.' prefix)
 //   color.text.*        → text-*              (drop 'color.' prefix)
 //   color.icon.*        → icon-*              (drop 'color.' prefix)
 //   color.stroke.*      → border-*            (stroke → border, drop 'color.')
 //   color.{primitive}.* → color-{primitive}-* (primitives keep 'color-' prefix)
 //   spacing.*           → space-*             (spacing → space)
-//   typography.*        → drop 'typography.'  (font-family-sans, font-size-sm, …)
+//   typography.*        → typography-*        (keep 'typography.' prefix)
 //   zIndex.*            → z-*                 (zIndex → z)
 //   motion.*            → drop 'motion.'      (duration-fast, easing-ease, …)
 //   radius.* / shadow.* → kept as-is
@@ -110,7 +120,7 @@ const PRIMITIVE_COLOR_KEYS = new Set([
  * pathToCssVarStem(['color', 'stroke', 'primary'])       → 'border-primary'
  * pathToCssVarStem(['color', 'blue', '500'])             → 'color-blue-500'
  * pathToCssVarStem(['spacing', 'md'])                    → 'space-md'
- * pathToCssVarStem(['typography', 'fontFamily', 'sans']) → 'fontFamily-sans'
+ * pathToCssVarStem(['typography', 'fontFamily', 'sans']) → 'typography-fontFamily-sans'
  * pathToCssVarStem(['zIndex', 'modal'])                  → 'z-modal'
  * pathToCssVarStem(['motion', 'duration', 'fast'])       → 'duration-fast'
  */
@@ -127,7 +137,7 @@ export function pathToCssVarStem(path: string[]): string {
     case 'spacing':
       return ['space', ...rest].join('-');
     case 'typography':
-      return rest.join('-');
+      return [cat, ...rest].join('-');
     case 'zIndex':
       return ['z', ...rest].join('-');
     case 'motion':
@@ -138,17 +148,17 @@ export function pathToCssVarStem(path: string[]): string {
 }
 
 /**
- * Full CSS variable name with `--btech-` prefix and kebab-case conversion.
+ * Full CSS variable name with optional prefix and kebab-case conversion.
  *
  * @example
- * pathToCssVar(['color', 'background', 'primary']) → '--btech-background-primary'
- * pathToCssVar(['spacing', 'md'])                  → '--btech-space-md'
- * pathToCssVar(['typography', 'fontFamily', 'sans'])→ '--btech-font-family-sans'
+ * pathToCssVar(['color', 'background', 'primary']) → '--background-primary'
+ * pathToCssVar(['spacing', 'md'])                  → '--space-md'
+ * pathToCssVar(['typography', 'fontFamily', 'sans'])→ '--typography-font-family-sans'
  */
-export function pathToCssVar(path: string[], prefix = 'btech'): string {
+export function pathToCssVar(path: string[], prefix = ''): string {
   const stem = pathToCssVarStem(path)
     .replace(/([A-Z])/g, m => `-${m.toLowerCase()}`);
-  return `--${prefix}-${stem}`;
+  return prefix ? `--${prefix}-${stem}` : `--${stem}`;
 }
 
 /** Dart reserved words that need a trailing underscore. */

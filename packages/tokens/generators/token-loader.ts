@@ -1,6 +1,15 @@
 import { readFileSync, readdirSync } from 'fs';
 import { ROOT, flattenDTCG, resolveRef } from './utils.js';
 
+export interface ShadowLayer {
+  color: string;    // e.g. "rgba(0,0,0,0.25)"
+  offsetX: number;  // px as number
+  offsetY: number;
+  blur: number;
+  spread: number;
+  inset: boolean;
+}
+
 export interface TypeScaleEntry {
   fontSize: number;
   fontWeight: number;
@@ -13,9 +22,14 @@ export interface TypeScaleEntry {
 export interface ResolvedTokenMap {
   baseMap: Record<string, string>;
   coreColors: Record<string, Record<string, string>>;
-  semanticColors: Record<string, Record<string, Record<string, string>>>;
+  /** Flat 2-level: group (text/icon/border/bg/brand/ext) → field-name → resolved hex */
+  semanticColors: Record<string, Record<string, string>>;
   spacing: Record<string, string>;
-  radius: { core: Record<string, string>; semantic: Record<string, string> };
+  stroke: Record<string, string>;
+  radius: Record<string, string>;
+  /** 2-level map: group → variant → ordered array of shadow layers.
+   *  Mirrors the Figma "/" separator: button/pressed → shadow.button.pressed */
+  shadow: Record<string, Record<string, ShadowLayer[]>>;
   typography: {
     fontFamilies: Record<string, string>;
     fontSizes: Record<string, string>;
@@ -56,18 +70,14 @@ export function loadTokenData(): ResolvedTokenMap {
     }
   }
 
-  // Semantic colors (3-level: group → category → variant)
+  // Semantic colors — flat 2-level: group → field-name → hex
   const semanticColorJson = JSON.parse(readFileSync(`${semanticDir}/color.json`, 'utf-8'));
-  const semanticColors: Record<string, Record<string, Record<string, string>>> = {};
-  for (const [group, categories] of Object.entries(semanticColorJson.color as Record<string, unknown>)) {
+  const semanticColors: Record<string, Record<string, string>> = {};
+  for (const [group, fields] of Object.entries(semanticColorJson.color as Record<string, unknown>)) {
     semanticColors[group] = {};
-    for (const [category, tokens] of Object.entries(categories as Record<string, unknown>)) {
-      if (category.startsWith('$')) continue;
-      semanticColors[group][category] = {};
-      for (const [tokenName, tokenDef] of Object.entries(tokens as Record<string, unknown>)) {
-        if (tokenName.startsWith('$')) continue;
-        semanticColors[group][category][tokenName] = resolveRef((tokenDef as any).$value, resolvedBaseMap);
-      }
+    for (const [fieldName, tokenDef] of Object.entries(fields as Record<string, unknown>)) {
+      if (fieldName.startsWith('$')) continue;
+      semanticColors[group][fieldName] = resolveRef((tokenDef as any).$value, resolvedBaseMap);
     }
   }
 
@@ -79,18 +89,50 @@ export function loadTokenData(): ResolvedTokenMap {
     spacing[k] = (v as any).$value;
   }
 
-  // Radius
-  const coreRadius: Record<string, string> = {};
+  // Stroke
+  const strokePrimitive = JSON.parse(readFileSync(`${coreDir}/stroke.primitive.json`, 'utf-8'));
+  const stroke: Record<string, string> = {};
+  for (const [k, v] of Object.entries(strokePrimitive.stroke as Record<string, unknown>)) {
+    if (k.startsWith('$')) continue;
+    stroke[k] = (v as any).$value;
+  }
+
+  // Radius — core primitives only (semantic aliases removed)
+  const radius: Record<string, string> = {};
   const radiusPrimitive = JSON.parse(readFileSync(`${coreDir}/radius.primitive.json`, 'utf-8'));
   for (const [k, v] of Object.entries(radiusPrimitive.radius as Record<string, unknown>)) {
     if (k.startsWith('$')) continue;
-    coreRadius[k] = (v as any).$value;
+    radius[k] = (v as any).$value;
   }
-  const semRadius: Record<string, string> = {};
-  const radiusSemantic = JSON.parse(readFileSync(`${semanticDir}/radius.json`, 'utf-8'));
-  for (const [k, v] of Object.entries(radiusSemantic.radius as Record<string, unknown>)) {
-    if (k.startsWith('$')) continue;
-    semRadius[k] = resolveRef((v as any).$value, resolvedBaseMap);
+
+  // Shadow — parse DTCG shadow objects into 2-level group→variant map.
+  // Preserves the Figma "/" separator hierarchy: button/pressed → shadow.button.pressed.
+  const shadow: Record<string, Record<string, ShadowLayer[]>> = {};
+  const shadowPrimitive = JSON.parse(readFileSync(`${coreDir}/shadow.primitive.json`, 'utf-8'));
+
+  function parsePx(v: string | number): number {
+    return parseFloat(String(v).replace('px', '')) || 0;
+  }
+  function parseShadowObj(obj: Record<string, unknown>): ShadowLayer {
+    return {
+      color:   String(obj.color ?? 'rgba(0,0,0,0)'),
+      offsetX: parsePx(obj.offsetX as string),
+      offsetY: parsePx(obj.offsetY as string),
+      blur:    parsePx(obj.blur as string),
+      spread:  parsePx(obj.spread as string),
+      inset:   Boolean(obj.inset),
+    };
+  }
+  for (const [group, variants] of Object.entries(shadowPrimitive.shadow as Record<string, unknown>)) {
+    if (group.startsWith('$')) continue;
+    shadow[group] = {};
+    for (const [variant, tokenDef] of Object.entries(variants as Record<string, unknown>)) {
+      if (variant.startsWith('$')) continue;
+      const raw = (tokenDef as any).$value;
+      shadow[group][variant] = Array.isArray(raw)
+        ? (raw as Record<string, unknown>[]).map(parseShadowObj)
+        : [parseShadowObj(raw as Record<string, unknown>)];
+    }
   }
 
   // Typography primitives
@@ -147,7 +189,9 @@ export function loadTokenData(): ResolvedTokenMap {
     coreColors,
     semanticColors,
     spacing,
-    radius: { core: coreRadius, semantic: semRadius },
+    stroke,
+    radius,
+    shadow,
     typography: { fontFamilies, fontSizes, fontWeights, lineHeights, semantic: semanticTypo, typeScale },
   };
 }

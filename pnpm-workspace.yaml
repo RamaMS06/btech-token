@@ -1,2 +1,2 @@
 packages:
-  - 'packages/tokens/platforms/web'
+  - 'packages/tokens/platforms/web/*'

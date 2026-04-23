@@ -1,0 +1,14 @@
+{
+  "name": "@btech/tokens-tenant-bjb",
+  "version": "1.0.0",
+  "description": "BTech design tokens for tenant-bjb — auto-generated, do not edit",
+  "exports": {
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/"
+  }
+}

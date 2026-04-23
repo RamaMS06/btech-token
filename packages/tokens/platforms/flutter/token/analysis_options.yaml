@@ -1,0 +1,6 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    # Tenant packages are separate pub packages — exclude them from base package analysis.
+    - tenants/**

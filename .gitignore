@@ -21,7 +21,10 @@ packages/**/build/
 packages/**/.flutter-plugins
 packages/**/.flutter-plugins-dependencies
 
-# ── Root-level Dart tooling ────────────────────────────────────────────────────
+
+# ── Root-level Dart tooling (Melos workspace) ─────────────────────────────────
+# pubspec.lock at root is for the Melos workspace — not a published package, not committed.
+pubspec.lock
 .dart_tool/
 build/
 
@@ -33,6 +36,9 @@ build/
 .env.local
 .env.*.local
 
+# ── Git worktrees ─────────────────────────────────────────────────────────────
+.worktrees/
+
 # ── OS / editor ───────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
@@ -41,8 +47,10 @@ Thumbs.db
 *.swp
 *.swo
 
-# ── Demo apps — local only, not published ─────────────────────────────────────
-apps/
+# ── Demo apps — entirely local, never committed to git ────────────────────────
+# apps/
 
 # ── Changesets ────────────────────────────────────────────────────────────────
 .changeset/*.js
+# Added by code-review-graph
+.code-review-graph/

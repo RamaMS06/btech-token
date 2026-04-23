@@ -1,58 +1,10 @@
-#!/usr/bin/env bash
-# pre-commit — auto-generate token outputs when sources change
+#!/usr/bin/env sh
+# pre-commit — lint / safety checks only.
 #
-# Triggers when any staged file matches:
-#   packages/tokens/sources/**   — token source JSON
-#   packages/tokens/sd.config.ts — generator config
+# Token regeneration is NOT done here.
+# Regeneration is handled by the generate pipeline (generate.yml) in CI,
+# which auto-commits the updated outputs to your branch when sources change.
 #
-# On match:
-#   1. Runs the token generator
-#   2. Builds @btech/tokens (web)
-#   3. Stages all generated output files
-#   4. Continues the commit (includes generated files automatically)
+# To regenerate locally before committing: pnpm generate
 
-set -e
-
-STAGED=$(git diff --cached --name-only)
-
-SOURCES_CHANGED=$(echo "$STAGED" | grep -E '^packages/tokens/(sources/|sd\.config\.ts)' || true)
-
-if [ -z "$SOURCES_CHANGED" ]; then
-  exit 0  # nothing to generate
-fi
-
-echo ""
-echo "🎨  Token sources changed — running generator..."
-echo ""
-echo "$SOURCES_CHANGED" | sed 's/^/   /'
-echo ""
-
-if ! pnpm exec tsx packages/tokens/sd.config.ts; then
-  echo ""
-  echo "❌  Token generation failed. Fix the errors above and try again."
-  exit 1
-fi
-
-if ! pnpm --filter @btech/tokens build; then
-  echo ""
-  echo "❌  @btech/tokens build failed. Fix the errors above and try again."
-  exit 1
-fi
-
-git add \
-  packages/tokens/platforms/flutter/lib/btech_tokens.dart \
-  packages/tokens/platforms/flutter/lib/src/color/ \
-  packages/tokens/platforms/flutter/lib/src/spacing/ \
-  packages/tokens/platforms/flutter/lib/src/radius/ \
-  packages/tokens/platforms/flutter/lib/src/typography/ \
-  packages/tokens/platforms/flutter/lib/src/tenant.dart \
-  packages/tokens/platforms/web/src/color/ \
-  packages/tokens/platforms/web/src/spacing/ \
-  packages/tokens/platforms/web/src/radius/ \
-  packages/tokens/platforms/web/src/typography/ \
-  packages/tokens/platforms/web/dist/styles.css \
-  2>/dev/null || true
-
-echo ""
-echo "✅  Generated outputs staged and ready to commit."
-echo ""
+exit 0

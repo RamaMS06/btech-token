@@ -1,152 +1,545 @@
-import type { Format } from 'style-dictionary/types';
-import { readFileSync, readdirSync, existsSync } from 'fs';
-import { ROOT, flattenDTCG, resolveRef } from '../utils.js';
+// AUTO-GENERATED helpers for per-tenant Flutter token packages.
+//
+// This file generates, for each tenant in `sources/tenants/{id}/`:
+//   packages/tokens/platforms/flutter/tenants/{id}/
+//     ├── pubspec.yaml
+//     └── lib/
+//         └── btech_tokens_{id_underscored}.dart
+//
+// The generated Dart file exposes:
+//   - const BTechColorTheme  btechColor         (light, public — Pattern B)
+//   - const BTechColorTheme  _btechColorDark    (dark, private — used by btechTheme)
+//   - const BTechRadiusTheme btechRadius
+//   - const BTechFontTheme   btechFont
+//   - ThemeData btechTheme({brightness, base})  — one-liner delegating to buildBtechTheme
+//
+// Field structure is entirely auto-derived from the source JSON — no hardcoded
+// TENANT_FIELD_MAP. Unknown/missing variants fall back to the subcategory's
+// default color.
 
-export const TENANT_FIELD_MAP: Array<{
-  path: string;
-  field: string;
-  type: 'Color' | 'double' | 'String';
-}> = [
-  // ── color.background ────────────────────────────────────────────────────────
-  { path: 'color.background.surface.default',   field: 'colorBackgroundSurface',              type: 'Color' },
-  { path: 'color.background.surface.subtle',    field: 'colorBackgroundSurfaceSubtle',        type: 'Color' },
-  { path: 'color.background.surface.raised',    field: 'colorBackgroundSurfaceRaised',        type: 'Color' },
-  { path: 'color.background.primary.default',   field: 'colorBackgroundPrimary',              type: 'Color' },
-  { path: 'color.background.primary.hover',     field: 'colorBackgroundPrimaryHover',         type: 'Color' },
-  { path: 'color.background.primary.pressed',   field: 'colorBackgroundPrimaryPressed',       type: 'Color' },
-  { path: 'color.background.primary.disable',   field: 'colorBackgroundPrimaryDisable',       type: 'Color' },
-  { path: 'color.background.primary.subtle',    field: 'colorBackgroundPrimarySubtle',        type: 'Color' },
-  { path: 'color.background.secondary.default', field: 'colorBackgroundSecondary',            type: 'Color' },
-  { path: 'color.background.secondary.hover',   field: 'colorBackgroundSecondaryHover',       type: 'Color' },
-  { path: 'color.background.secondary.pressed', field: 'colorBackgroundSecondaryPressed',     type: 'Color' },
-  { path: 'color.background.secondary.disable', field: 'colorBackgroundSecondaryDisable',     type: 'Color' },
-  { path: 'color.background.secondary.subtle',  field: 'colorBackgroundSecondarySubtle',      type: 'Color' },
-  { path: 'color.background.danger.default',    field: 'colorBackgroundDanger',               type: 'Color' },
-  { path: 'color.background.danger.hover',      field: 'colorBackgroundDangerHover',          type: 'Color' },
-  { path: 'color.background.danger.pressed',    field: 'colorBackgroundDangerPressed',        type: 'Color' },
-  { path: 'color.background.danger.disable',    field: 'colorBackgroundDangerDisable',        type: 'Color' },
-  { path: 'color.background.danger.subtle',     field: 'colorBackgroundDangerSubtle',         type: 'Color' },
-  { path: 'color.background.success.default',   field: 'colorBackgroundSuccess',              type: 'Color' },
-  { path: 'color.background.success.subtle',    field: 'colorBackgroundSuccessSubtle',        type: 'Color' },
-  { path: 'color.background.warning.default',   field: 'colorBackgroundWarning',              type: 'Color' },
-  { path: 'color.background.warning.subtle',    field: 'colorBackgroundWarningSubtle',        type: 'Color' },
-  { path: 'color.background.info.default',      field: 'colorBackgroundInfo',                 type: 'Color' },
-  { path: 'color.background.info.subtle',       field: 'colorBackgroundInfoSubtle',           type: 'Color' },
-  { path: 'color.background.neutral.default',   field: 'colorBackgroundNeutral',              type: 'Color' },
-  { path: 'color.background.neutral.subtle',    field: 'colorBackgroundNeutralSubtle',        type: 'Color' },
-  // ── color.text ──────────────────────────────────────────────────────────────
-  { path: 'color.text.neutral.default',         field: 'colorTextNeutral',                    type: 'Color' },
-  { path: 'color.text.neutral.subtle',          field: 'colorTextNeutralSubtle',              type: 'Color' },
-  { path: 'color.text.neutral.disabled',        field: 'colorTextNeutralDisabled',            type: 'Color' },
-  { path: 'color.text.neutral.inverse',         field: 'colorTextNeutralInverse',             type: 'Color' },
-  { path: 'color.text.on.primary',              field: 'colorTextOnPrimary',                  type: 'Color' },
-  { path: 'color.text.on.secondary',            field: 'colorTextOnSecondary',                type: 'Color' },
-  { path: 'color.text.on.danger',               field: 'colorTextOnDanger',                   type: 'Color' },
-  { path: 'color.text.on.info',                 field: 'colorTextOnInfo',                     type: 'Color' },
-  // ── color.icon ──────────────────────────────────────────────────────────────
-  { path: 'color.icon.neutral.default',         field: 'colorIconNeutral',                    type: 'Color' },
-  { path: 'color.icon.neutral.subtle',          field: 'colorIconNeutralSubtle',              type: 'Color' },
-  { path: 'color.icon.neutral.disabled',        field: 'colorIconNeutralDisabled',            type: 'Color' },
-  { path: 'color.icon.neutral.inverse',         field: 'colorIconNeutralInverse',             type: 'Color' },
-  { path: 'color.icon.on.primary',              field: 'colorIconOnPrimary',                  type: 'Color' },
-  { path: 'color.icon.on.danger',               field: 'colorIconOnDanger',                   type: 'Color' },
-  // ── color.stroke ────────────────────────────────────────────────────────────
-  { path: 'color.stroke.neutral.default',       field: 'colorStrokeNeutral',                  type: 'Color' },
-  { path: 'color.stroke.neutral.strong',        field: 'colorStrokeNeutralStrong',            type: 'Color' },
-  { path: 'color.stroke.neutral.subtle',        field: 'colorStrokeNeutralSubtle',            type: 'Color' },
-  { path: 'color.stroke.primary.default',       field: 'colorStrokePrimary',                  type: 'Color' },
-  { path: 'color.stroke.primary.bolder',        field: 'colorStrokePrimaryBolder',            type: 'Color' },
-  { path: 'color.stroke.danger.default',        field: 'colorStrokeDanger',                   type: 'Color' },
-  // ── radius ──────────────────────────────────────────────────────────────────
-  { path: 'radius.interactive',                 field: 'radiusInteractive',                   type: 'double' },
-  { path: 'radius.card',                        field: 'radiusCard',                          type: 'double' },
-  { path: 'radius.badge',                       field: 'radiusBadge',                         type: 'double' },
-  // ── typography ──────────────────────────────────────────────────────────────
-  { path: 'typography.fontFamily.sans',         field: 'typographyFontFamilySans',            type: 'String' },
-];
+import { readFileSync, readdirSync, existsSync, mkdirSync, writeFileSync } from 'fs';
+import { execSync } from 'child_process';
+import { ROOT, flattenDTCG, resolveRef, hexToArgb } from '../utils.js';
+import {
+  buildColorTree,
+  buildRadiusFields,
+  buildFontSans,
+  buildDarkResolvedBaseMap,
+  dashToCamel,
+  rgbaToArgb,
+  type ColorTree,
+} from './flutter-theme-generator.js';
 
-export const flutterTenantsFormat: Format = {
-  name: 'custom/flutter-tenants',
-  format: ({ dictionary }) => {
-    const baseMap: Record<string, string> = {};
-    for (const t of dictionary.allTokens) {
-      baseMap[t.path.join('.')] = String(t.value ?? t.$value);
+// =============================================================================
+// Helpers
+// =============================================================================
+
+/** `tenant-bjb` → `tenant_bjb`, `default` → `default`. */
+function toDartPackageName(tenantId: string): string {
+  return tenantId.replace(/-/g, '_');
+}
+
+/** `'8px'` → `'8.0'`, `'9999px'` → `'9999.0'`. */
+function pxToDouble(value: string): string {
+  const n = parseFloat(String(value).replace('px', ''));
+  if (Number.isNaN(n)) return '0.0';
+  return Number.isInteger(n) ? `${n}.0` : String(n);
+}
+
+/** Resolve a color value (hex, rgba, or 0x literal) to a Dart ARGB literal. */
+function resolveArgb(val: string | undefined, fallback: string): string {
+  if (!val) return fallback;
+  if (val.startsWith('0x')) return val;
+  if (val.startsWith('rgba(') || val.startsWith('rgba (')) return rgbaToArgb(val);
+  if (val.startsWith('#')) return hexToArgb(val);
+  return fallback;
+}
+
+/** `background` → `Background`. */
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// =============================================================================
+// Tenant map construction
+// =============================================================================
+
+/** Load an optional overrides file, merge into base map (refs resolved against base). */
+function buildTenantMap(
+  tenantId: string,
+  overrideFile: string,
+  resolvedBaseMap: Record<string, string>,
+): Record<string, string> {
+  const overridesPath = `${ROOT}/sources/tenants/${tenantId}/${overrideFile}`;
+  if (!existsSync(overridesPath)) return { ...resolvedBaseMap };
+
+  const rawOverrides = flattenDTCG(
+    JSON.parse(readFileSync(overridesPath, 'utf-8')) as Record<string, unknown>,
+  );
+
+  const resolvedOverrides: Record<string, string> = {};
+  for (const [k, v] of Object.entries(rawOverrides)) {
+    resolvedOverrides[k] = resolveRef(v, resolvedBaseMap);
+  }
+
+  return { ...resolvedBaseMap, ...resolvedOverrides };
+}
+
+// =============================================================================
+// Color theme literal emitter
+// =============================================================================
+
+/**
+ * Emits the nested BTechColorTheme(...) const expression for a given resolved map.
+ * Flat model: each field in a category is a plain Color (no sub-variants).
+ */
+function emitColorThemeLiteral(
+  tree: ColorTree,
+  resolvedMap: Record<string, string>,
+): string {
+  const L: string[] = [];
+  L.push('BTechColorTheme(');
+  for (const [category, fields] of Object.entries(tree)) {
+    const className = `BTechColor${cap(category)}`;
+    L.push(`  ${category}: ${className}(`);
+    for (const f of fields) {
+      const argb = resolveArgb(resolvedMap[`color.${category}.${f}`], '0xFF000000');
+      L.push(`    ${dashToCamel(f)}: Color(${argb}),`);
     }
+    L.push('  ),');
+  }
+  L.push(')');
+  return L.join('\n');
+}
 
-    const tenantsDir = `${ROOT}/sources/tenants`;
-    const tenantIds = readdirSync(tenantsDir)
-      .filter(d => existsSync(`${tenantsDir}/${d}/overrides.json`))
-      .sort((a, b) => (a === 'default' ? -1 : b === 'default' ? 1 : a.localeCompare(b)));
+// =============================================================================
+// Dart file emitter
+// =============================================================================
 
-    function getResolved(tenantId: string, tokenPath: string): string {
-      const overrides = flattenDTCG(
-        JSON.parse(readFileSync(`${tenantsDir}/${tenantId}/overrides.json`, 'utf-8'))
-      );
-      return resolveRef(overrides[tokenPath] ?? baseMap[tokenPath] ?? '#000000', baseMap);
-    }
+function emitTenantDart(
+  tenantId: string,
+  tree: ColorTree,
+  lightMap: Record<string, string>,
+  darkMap: Record<string, string>,
+  fullFontFamily: string,
+): string {
+  const pkgName = toDartPackageName(tenantId);
 
-    function toColor(hex: string): string {
-      return `const Color(0xFF${hex.replace('#', '').toUpperCase()})`;
-    }
-    function toDim(px: string): string {
-      return String(parseFloat(String(px).replace('px', '')));
-    }
-    function toFont(s: string): string {
-      return `'${String(s).split(',')[0].trim().replace(/'/g, '')}'`;
-    }
-    function toVarName(id: string): string {
-      return id === 'default'
-        ? 'defaultTokens'
-        : id.replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase());
-    }
-    function formatVal(val: string, type: 'Color' | 'double' | 'String'): string {
-      if (type === 'Color')  return toColor(val);
-      if (type === 'double') return toDim(val);
-      return toFont(val);
-    }
+  const radiusFields = buildRadiusFields(lightMap);
 
-    const L: string[] = [
-      '// AUTO-GENERATED by @btech/design-system — do not edit manually.',
-      '// Run `pnpm generate` to regenerate from tokens/tenants/**.',
-      '',
-      '// ignore_for_file: lines_longer_than_80_chars',
-      '',
-      "import 'package:flutter/material.dart';",
-      '',
-      '/// Resolved semantic token set for a specific tenant.',
-      '/// Components read these via context.btechTokens — never use primitives directly.',
-      'class BTechTenantTokens {',
-    ];
+  const L: string[] = [];
+  L.push('// AUTO-GENERATED by @btech/design-system — do not edit manually.');
+  L.push(`// Source: packages/tokens/sources/tenants/${tenantId}/overrides.json`);
+  L.push('// Run `pnpm generate` to regenerate.');
+  L.push('// ignore_for_file: lines_longer_than_80_chars');
+  L.push('');
+  L.push(`library btech_tokens_${pkgName};`);
+  L.push('');
+  L.push("import 'package:flutter/material.dart';");
+  L.push("import 'package:btech_tokens/btech_tokens.dart';");
+  L.push('');
+  // Hide names the tenant redefines — prevents ambiguous_export for consumers.
+  L.push("export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, btechTheme;");
+  L.push('');
 
-    for (const f of TENANT_FIELD_MAP) L.push(`  final ${f.type} ${f.field};`);
-    L.push('');
-    L.push('  const BTechTenantTokens({');
-    for (const f of TENANT_FIELD_MAP) L.push(`    required this.${f.field},`);
-    L.push('  });');
-    L.push('');
+  // ── Light theme (public — Pattern B) ────────────────────────────────────
+  L.push('// ── Light (public — Pattern B) ────────────────────────────────────────────');
+  L.push('');
+  L.push(`/// Light-mode BTech color tokens for the ${tenantId} tenant.`);
+  L.push(`const BTechColorTheme btechColor = ${emitColorThemeLiteral(tree, lightMap)};`);
+  L.push('');
 
-    for (const tenantId of tenantIds) {
-      const varName = toVarName(tenantId);
-      const label = tenantId === 'default' ? 'Default tenant.' : `Tenant: ${tenantId}.`;
-      L.push(`  /// ${label} Auto-generated from tokens/tenants/${tenantId}/overrides.json`);
-      L.push(`  static const BTechTenantTokens ${varName} = BTechTenantTokens(`);
-      for (const f of TENANT_FIELD_MAP) {
-        L.push(`    ${f.field}: ${formatVal(getResolved(tenantId, f.path), f.type)},`);
+  // ── Dark theme (private) ────────────────────────────────────────────────
+  L.push('// ── Dark (private — used only by btechTheme(), not exported) ─────────────');
+  L.push('// Falls back to light values when no dark overrides exist.');
+  L.push('');
+  L.push(`const BTechColorTheme _btechColorDark = ${emitColorThemeLiteral(tree, darkMap)};`);
+  L.push('');
+
+  // ── Radius ──────────────────────────────────────────────────────────────
+  L.push('// ── Radius (mode-agnostic) ────────────────────────────────────────────────');
+  L.push('');
+  L.push('const BTechRadiusTheme btechRadius = BTechRadiusTheme(');
+  for (const f of radiusFields) {
+    L.push(`  ${f.name}: ${pxToDouble(f.value)},`);
+  }
+  L.push(');');
+  L.push('');
+
+  // ── Theme builder ───────────────────────────────────────────────────────
+  L.push('// ── Theme builder — one line, logic lives in base ─────────────────────────');
+  L.push('');
+  L.push('/// Apply BTech tokens to [MaterialApp].');
+  L.push('///');
+  L.push('/// ```dart');
+  L.push('/// MaterialApp(');
+  L.push('///   theme:     btechTheme(),');
+  L.push('///   darkTheme: btechTheme(brightness: Brightness.dark),');
+  L.push('///   themeMode: ThemeMode.system,');
+  L.push('/// )');
+  L.push('/// ```');
+  L.push('ThemeData btechTheme({Brightness brightness = Brightness.light, ThemeData? base}) =>');
+  L.push(`    buildBtechTheme(btechColor, _btechColorDark, btechRadius, '${fullFontFamily.replace(/'/g, "\\'")}',`);
+  L.push('                    brightness: brightness, base: base);');
+  L.push('');
+
+  return L.join('\n');
+}
+
+// =============================================================================
+// Font asset helpers
+// =============================================================================
+
+/**
+ * Normalises a font family name to CamelCase with no spaces — used for folder
+ * names and file names to match Google Fonts' own naming convention.
+ *
+ *   "Rubik Storm"  → "RubikStorm"
+ *   "Open Sans"    → "OpenSans"
+ *   "Geist"        → "Geist"   (no-op for single-word names)
+ *
+ * The original spaced name is kept for the pubspec `family:` declaration and
+ * the Dart `fontFamily` string — Flutter needs it to match the family key.
+ */
+function toFontKey(fontFamily: string): string {
+  return fontFamily
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join('');
+}
+
+/**
+ * Attempts to auto-download a Google Fonts typeface (4 weights) from the
+ * google/fonts GitHub repository into `destDir`.
+ *
+ * Tries both `ofl/` and `apache/` directories — covers the vast majority of
+ * Google Fonts. Returns true if at least one weight was downloaded.
+ *
+ * Fonts NOT hosted on Google Fonts (e.g. Geist, custom brand fonts) will
+ * return false; add the TTF files manually to the destination directory.
+ *
+ * File naming follows Google Fonts convention: CamelCase with no spaces.
+ *   "Rubik Storm" → RubikStorm-Regular.ttf, RubikStorm-Medium.ttf, …
+ *   "Open Sans"   → OpenSans-Regular.ttf, OpenSans-Medium.ttf, …
+ */
+function tryDownloadGoogleFont(fontFamily: string, destDir: string): boolean {
+  // Google Fonts GitHub uses lowercase, no spaces for the directory slug.
+  const familySlug = fontFamily.toLowerCase().replace(/\s+/g, '');
+  // File names use CamelCase (no spaces): "Rubik Storm" → "RubikStorm-Regular.ttf"
+  const familyKey  = toFontKey(fontFamily);
+
+  const weights: string[] = [
+    `${familyKey}-Regular.ttf`,
+    `${familyKey}-Medium.ttf`,
+    `${familyKey}-SemiBold.ttf`,
+    `${familyKey}-Bold.ttf`,
+  ];
+
+  // Try both licence directories in order
+  const bases = [
+    `https://github.com/google/fonts/raw/main/ofl/${familySlug}`,
+    `https://github.com/google/fonts/raw/main/apache/${familySlug}`,
+  ];
+
+  mkdirSync(destDir, { recursive: true });
+  let downloaded = 0;
+
+  for (const file of weights) {
+    let ok = false;
+    for (const base of bases) {
+      try {
+        execSync(`curl -fsSL -o "${destDir}/${file}" "${base}/${file}"`, {
+          stdio: 'pipe',
+          timeout: 30_000,
+        });
+        ok = true;
+        break;
+      } catch {
+        // Try next base URL
       }
-      L.push('  );');
-      L.push('');
     }
+    if (ok) downloaded++;
+  }
 
-    L.push('  /// Registry — add new tenants here after running `pnpm add-tenant`.');
-    L.push('  static const Map<String, BTechTenantTokens> _registry = {');
-    for (const id of tenantIds) L.push(`    '${id}': ${toVarName(id)},`);
-    L.push('  };');
-    L.push('');
-    L.push('  /// Resolve tokens for [tenantId]. Falls back to [defaultTokens] if unknown.');
-    L.push('  static BTechTenantTokens forTenant(String tenantId) =>');
-    L.push('      _registry[tenantId] ?? defaultTokens;');
-    L.push('}');
+  return downloaded > 0;
+}
 
-    return L.join('\n') + '\n';
-  },
-};
+/**
+ * Ensures TTF font files for `fontFamily` exist at `{destFontsDir}/{FamilyKey}/`
+ * and returns the pubspec asset lines.
+ *
+ * Folder and file names use CamelCase (no spaces) to match Google Fonts convention:
+ *   "Rubik Storm" → fonts/RubikStorm/RubikStorm-Regular.ttf
+ *
+ * The pubspec `family:` and Dart fontFamily string keep the original spaced name
+ * so Flutter can match the family key correctly.
+ *
+ * If the fonts are already present (committed in git), they are used as-is.
+ * If missing, attempts an auto-download from the Google Fonts GitHub repository.
+ *
+ * Returns [] if fonts cannot be found or downloaded.
+ */
+function copyFontsForPackage(fontFamily: string, destFontsDir: string): string[] {
+  // Folder and file prefix: CamelCase, no spaces ("Rubik Storm" → "RubikStorm")
+  const familyKey = toFontKey(fontFamily);
+  const dest = `${destFontsDir}/${familyKey}`;
+
+  // If fonts already exist at the destination (committed in git), use them directly.
+  const alreadyPresent =
+    existsSync(dest) &&
+    readdirSync(dest).some((f) => f.endsWith('.ttf'));
+
+  if (!alreadyPresent) {
+    console.log(`  [fonts] '${fontFamily}' not found at destination — attempting Google Fonts download...`);
+    const ok = tryDownloadGoogleFont(fontFamily, dest);
+    if (!ok) {
+      console.warn(
+        `  [fonts] Could not auto-download '${fontFamily}'. ` +
+        `Place TTF files manually in ${destFontsDir}/${familyKey}/ ` +
+        `(naming: ${familyKey}-Regular.ttf, -Medium.ttf, -SemiBold.ttf, -Bold.ttf).`,
+      );
+      return [];
+    }
+    console.log(`  [fonts] Downloaded '${fontFamily}' → ${destFontsDir}/${familyKey}/`);
+  }
+
+  const weightDefs: [string, number | undefined][] = [
+    [`${familyKey}-Regular.ttf`,  undefined],
+    [`${familyKey}-Medium.ttf`,   500],
+    [`${familyKey}-SemiBold.ttf`, 600],
+    [`${familyKey}-Bold.ttf`,     700],
+  ];
+
+  const found = weightDefs.filter(([f]) => existsSync(`${dest}/${f}`));
+  if (found.length === 0) return [];
+
+  return found.map(([f, w]) =>
+    w === undefined
+      ? `        - asset: fonts/${familyKey}/${f}`
+      : `        - asset: fonts/${familyKey}/${f}\n          weight: ${w}`,
+  );
+}
+
+// =============================================================================
+// pubspec.yaml emitter
+// =============================================================================
+
+function emitPubspec(tenantId: string, fontFamily: string, fontLines: string[]): string {
+  const pkgName = toDartPackageName(tenantId);
+  const flutterSection = fontLines.length > 0
+    ? [
+        '',
+        'flutter:',
+        '  fonts:',
+        `    - family: ${fontFamily}`,
+        '      fonts:',
+        ...fontLines,
+      ].join('\n')
+    : '';
+
+  return [
+    `name: btech_tokens_${pkgName}`,
+    `description: BTech design tokens for ${tenantId} tenant — generated by pnpm generate`,
+    'version: 1.0.0',
+    // Not published to pub.dev — consumed via git path dependency.
+    'publish_to: none',
+    '',
+    'environment:',
+    "  sdk: '>=3.0.0 <4.0.0'",
+    "  flutter: '>=3.10.0'",
+    '',
+    'dependencies:',
+    '  flutter:',
+    '    sdk: flutter',
+    '  btech_tokens:',
+    '    path: ../token/',
+    flutterSection,
+    '',
+  ].join('\n');
+}
+
+// =============================================================================
+// Main entry
+// =============================================================================
+
+/**
+ * Generate a Flutter token package for every tenant found in `sources/tenants/`.
+ *
+ * Output layout per tenant:
+ *   packages/tokens/platforms/flutter/{id}/
+ *     ├── pubspec.yaml
+ *     └── lib/btech_tokens_{id_underscored}.dart
+ */
+export function generateFlutterTenantPackages(resolvedBaseMap: Record<string, string>): void {
+  const tenantsSrcDir = `${ROOT}/sources/tenants`;
+  const tenantsOutDir = `${ROOT}/platforms/flutter`;
+
+  if (!existsSync(tenantsSrcDir)) {
+    console.warn(`[flutter-tenant-format] No tenants directory at ${tenantsSrcDir}`);
+    return;
+  }
+
+  const tenantIds = readdirSync(tenantsSrcDir).filter((d) =>
+    existsSync(`${tenantsSrcDir}/${d}/overrides.json`),
+  );
+
+  const tree = buildColorTree();
+
+  // Build the semantic dark base once — reused for every tenant.
+  const darkBaseMap = buildDarkResolvedBaseMap();
+
+  // Resolve the default (base) font — used to skip bundling when a tenant inherits it.
+  const defaultFontSans = buildFontSans(resolvedBaseMap);
+
+  for (const tenantId of tenantIds) {
+    const lightMap = buildTenantMap(tenantId, 'overrides.json', resolvedBaseMap);
+    // Dark map = semantic dark base + optional per-tenant dark overrides.
+    const darkMap = buildTenantMap(tenantId, 'overrides.dark.json', darkBaseMap);
+
+    const fontSans = buildFontSans(lightMap);
+
+    const pkgName = toDartPackageName(tenantId);
+    const pkgDir = `${tenantsOutDir}/${tenantId}`;
+    const libDir = `${pkgDir}/lib`;
+    mkdirSync(libDir, { recursive: true });
+
+    // Copy font TTF files only when this tenant's font differs from the default.
+    // (Geist is already bundled in the base btech_tokens package.)
+    const fontLines = fontSans !== defaultFontSans
+      ? copyFontsForPackage(fontSans, `${pkgDir}/fonts`)
+      : [];
+
+    // Flutter registers package fonts as 'packages/{pkg}/{family}' — use the full name
+    // so TextStyle(fontFamily: ...) actually finds the bundled font.
+    const fontPkg = fontLines.length > 0 ? `btech_tokens_${pkgName}` : 'btech_tokens';
+    const fullFontFamily = `packages/${fontPkg}/${fontSans}`;
+
+    const dartPath = `${libDir}/btech_tokens_${pkgName}.dart`;
+    const pubspecPath = `${pkgDir}/pubspec.yaml`;
+
+    writeFileSync(dartPath, emitTenantDart(tenantId, tree, lightMap, darkMap, fullFontFamily), 'utf-8');
+    writeFileSync(pubspecPath, emitPubspec(tenantId, fontSans, fontLines), 'utf-8');
+
+    console.log(
+      `  Flutter tenant pkg — platforms/flutter/${tenantId}/ (btech_tokens_${pkgName})`,
+    );
+  }
+
+  // Generate defaults.dart into the BASE package so btech_tokens works standalone.
+  generateBaseDefaults(resolvedBaseMap);
+  console.log('  Flutter defaults  — platforms/flutter/token/lib/src/defaults.dart');
+}
+
+// =============================================================================
+// Base-package defaults generator
+// Writes platforms/flutter/token/lib/src/defaults.dart with the default (no-tenant)
+// btechColor, btechRadius, btechFont, and btechTheme() so that btech_tokens
+// can be used standalone without any tenant package.
+// =============================================================================
+
+function generateBaseDefaults(resolvedBaseMap: Record<string, string>): void {
+  const dartLibDir = `${ROOT}/platforms/flutter/token/lib/src`;
+  const basePkgDir  = `${ROOT}/platforms/flutter/token`;
+  const tree = buildColorTree();
+
+  // Default package has no tenant overrides — lightMap equals resolvedBaseMap.
+  const lightMap = buildTenantMap('default', 'overrides.json', resolvedBaseMap);
+  // Dark = semantic dark base (color.dark.json applied on top of light values).
+  const darkMap = buildDarkResolvedBaseMap();
+
+  const radiusFields = buildRadiusFields(lightMap);
+  const fontSans = buildFontSans(lightMap);
+
+  // ── Copy base font (Geist) and patch pubspec.yaml ────────────────────────────
+  const baseFontLines = copyFontsForPackage(fontSans, `${basePkgDir}/fonts`);
+  if (baseFontLines.length > 0) {
+    const pubspecPath = `${basePkgDir}/pubspec.yaml`;
+    let pubspec = readFileSync(pubspecPath, 'utf-8');
+    // Remove any existing flutter: section before re-emitting (idempotent).
+    pubspec = pubspec.replace(/\nflutter:[\s\S]*$/, '').trimEnd();
+    const flutterSection = [
+      '',
+      '',
+      'flutter:',
+      '  fonts:',
+      `    - family: ${fontSans}`,
+      '      fonts:',
+      ...baseFontLines,
+      '',
+    ].join('\n');
+    writeFileSync(pubspecPath, pubspec + flutterSection, 'utf-8');
+  }
+
+  const L: string[] = [];
+  L.push('// AUTO-GENERATED by @btech/design-system — do not edit manually.');
+  L.push('// Run `pnpm generate` to regenerate.');
+  L.push('// ignore_for_file: lines_longer_than_80_chars');
+  L.push('');
+  L.push("import 'package:flutter/material.dart';");
+  L.push("import 'color/color.theme.dart';");
+  L.push("import 'radius/radius.theme.dart';");
+  L.push("import 'theme_builder.dart';");
+  L.push('');
+  L.push('// ── Light (public — Pattern B) ─────────────────────────────────────────────');
+  L.push('');
+  L.push('/// Default light-mode color tokens. Used when no tenant package is active.');
+  L.push(`const BTechColorTheme btechColor = ${emitColorThemeLiteral(tree, lightMap)};`);
+  L.push('');
+  L.push('// ── Dark (private) ─────────────────────────────────────────────────────────');
+  L.push('');
+  L.push(`const BTechColorTheme _btechColorDark = ${emitColorThemeLiteral(tree, darkMap)};`);
+  L.push('');
+  L.push('// ── Radius ──────────────────────────────────────────────────────────────────');
+  L.push('');
+  L.push('/// Default radius tokens.');
+  L.push('const BTechRadiusTheme btechRadius = BTechRadiusTheme(');
+  for (const f of radiusFields) L.push(`  ${f.name}: ${pxToDouble(f.value)},`);
+  L.push(');');
+  L.push('');
+  L.push('// ── Theme builder ───────────────────────────────────────────────────────────');
+  L.push('');
+  L.push('/// Build a default BTech [ThemeData]. Use when no tenant package is needed.');
+  L.push('///');
+  L.push('/// ```dart');
+  L.push('/// MaterialApp(');
+  L.push('///   theme:     btechTheme(),');
+  L.push('///   darkTheme: btechTheme(brightness: Brightness.dark),');
+  L.push('///   themeMode: ThemeMode.system,');
+  L.push('/// )');
+  L.push('/// ```');
+  // Flutter registers package fonts as 'packages/{pkg}/{family}' — use the full name.
+  const fullFontFamily = `packages/btech_tokens/${fontSans}`;
+  L.push('ThemeData btechTheme({Brightness brightness = Brightness.light, ThemeData? base}) =>');
+  L.push(`    buildBtechTheme(btechColor, _btechColorDark, btechRadius, '${fullFontFamily.replace(/'/g, "\\'")}',`);
+  L.push('                    brightness: brightness, base: base);');
+  L.push('');
+
+  writeFileSync(`${dartLibDir}/defaults.dart`, L.join('\n'), 'utf-8');
+}
+
+// =============================================================================
+// Standalone CLI entry
+// Usage: pnpm exec tsx packages/tokens/generators/flutter/flutter-tenant-format.ts
+// =============================================================================
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  // Build a resolved base map the same way sd.config.ts does, so this file is
+  // independently runnable for smoke testing without touching base platforms.
+  const rawMap: Record<string, string> = {};
+  for (const dir of [`${ROOT}/sources/core`, `${ROOT}/sources/semantic`]) {
+    if (!existsSync(dir)) continue;
+    for (const f of readdirSync(dir).filter((x) => x.endsWith('.json'))) {
+      Object.assign(
+        rawMap,
+        flattenDTCG(JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'))),
+      );
+    }
+  }
+  const resolved: Record<string, string> = {};
+  for (const [k, v] of Object.entries(rawMap)) resolved[k] = resolveRef(v, rawMap);
+  for (const [k, v] of Object.entries(resolved)) resolved[k] = resolveRef(v, resolved);
+
+  generateFlutterTenantPackages(resolved);
+  // eslint-disable-next-line no-console
+  console.log('[flutter-tenant-format] Done.');
+}

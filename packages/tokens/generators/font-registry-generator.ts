@@ -67,7 +67,6 @@ export function generateFlutterFontRegistry(
 
   const L: string[] = [
     HEADER,
-    "import 'package:flutter/material.dart';",
     '',
     '/// Font source registry — generated from sources/core/font-registry.json.',
     '///',
