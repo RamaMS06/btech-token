@@ -53,7 +53,7 @@ const BTechColorTheme btechColor = BTechColorTheme(
     subtle: Color(0xFFF3EEF9),
     subtler: Color(0xFFE7EFF9),
     subtlest: Color(0xFFD1D5DB),
-    overlay: Color(0xFF181C20CC),
+    overlay: Color(0xCC181C20),
   ),
   brand: BTechColorBrand(
     primarySubtle: Color(0xFFE7EFF9),
@@ -126,7 +126,7 @@ const BTechColorTheme _btechColorDark = BTechColorTheme(
     subtle: Color(0xFF292F37),
     subtler: Color(0xFF505C6D),
     subtlest: Color(0xFF64748B),
-    overlay: Color(0xFF181C20CC),
+    overlay: Color(0xCC181C20),
   ),
   brand: BTechColorBrand(
     primarySubtle: Color(0xFF072D17),

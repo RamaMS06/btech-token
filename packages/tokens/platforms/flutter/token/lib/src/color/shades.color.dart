@@ -6,7 +6,7 @@
 import 'package:flutter/material.dart';
 
 /// Green color swatch — BTechColor.shades.green[500]
-final MaterialColor btechShadesGreen = MaterialColor(
+const MaterialColor btechShadesGreen = MaterialColor(
   0xFF08A94C,
   <int, Color>{
       50: Color(0xFFF0F8F4),
@@ -23,7 +23,7 @@ final MaterialColor btechShadesGreen = MaterialColor(
 );
 
 /// Lightblue color swatch — BTechColor.shades.lightblue[500]
-final MaterialColor btechShadesLightblue = MaterialColor(
+const MaterialColor btechShadesLightblue = MaterialColor(
   0xFF30AEE1,
   <int, Color>{
       50: Color(0xFFF2F6F8),
@@ -40,7 +40,7 @@ final MaterialColor btechShadesLightblue = MaterialColor(
 );
 
 /// Orange color swatch — BTechColor.shades.orange[500]
-final MaterialColor btechShadesOrange = MaterialColor(
+const MaterialColor btechShadesOrange = MaterialColor(
   0xFFF8981D,
   <int, Color>{
       50: Color(0xFFF9F6F1),
@@ -57,7 +57,7 @@ final MaterialColor btechShadesOrange = MaterialColor(
 );
 
 /// Blue color swatch — BTechColor.shades.blue[500]
-final MaterialColor btechShadesBlue = MaterialColor(
+const MaterialColor btechShadesBlue = MaterialColor(
   0xFF145BC3,
   <int, Color>{
       50: Color(0xFFE7EFF9),
@@ -74,7 +74,7 @@ final MaterialColor btechShadesBlue = MaterialColor(
 );
 
 /// Purple color swatch — BTechColor.shades.purple[500]
-final MaterialColor btechShadesPurple = MaterialColor(
+const MaterialColor btechShadesPurple = MaterialColor(
   0xFF8A59C2,
   <int, Color>{
       50: Color(0xFFF3EEF9),
@@ -91,7 +91,7 @@ final MaterialColor btechShadesPurple = MaterialColor(
 );
 
 /// Teal color swatch — BTechColor.shades.teal[500]
-final MaterialColor btechShadesTeal = MaterialColor(
+const MaterialColor btechShadesTeal = MaterialColor(
   0xFF0D9488,
   <int, Color>{
       50: Color(0xFFF0F8F7),
@@ -108,7 +108,7 @@ final MaterialColor btechShadesTeal = MaterialColor(
 );
 
 /// Indigo color swatch — BTechColor.shades.indigo[500]
-final MaterialColor btechShadesIndigo = MaterialColor(
+const MaterialColor btechShadesIndigo = MaterialColor(
   0xFF6366F1,
   <int, Color>{
       50: Color(0xFFF3F3F9),
@@ -125,7 +125,7 @@ final MaterialColor btechShadesIndigo = MaterialColor(
 );
 
 /// Rose color swatch — BTechColor.shades.rose[500]
-final MaterialColor btechShadesRose = MaterialColor(
+const MaterialColor btechShadesRose = MaterialColor(
   0xFFE11D48,
   <int, Color>{
       50: Color(0xFFF8F2F3),
@@ -142,7 +142,7 @@ final MaterialColor btechShadesRose = MaterialColor(
 );
 
 /// Neutral color swatch — BTechColor.shades.neutral[500]
-final MaterialColor btechShadesNeutral = MaterialColor(
+const MaterialColor btechShadesNeutral = MaterialColor(
   0xFF64748B,
   <int, Color>{
       50: Color(0xFFF4F5F6),
@@ -160,7 +160,7 @@ final MaterialColor btechShadesNeutral = MaterialColor(
 );
 
 /// Red color swatch — BTechColor.shades.red[500]
-final MaterialColor btechShadesRed = MaterialColor(
+const MaterialColor btechShadesRed = MaterialColor(
   0xFFEF4444,
   <int, Color>{
       50: Color(0xFFF9F2F2),
@@ -177,7 +177,7 @@ final MaterialColor btechShadesRed = MaterialColor(
 );
 
 /// Amber color swatch — BTechColor.shades.amber[500]
-final MaterialColor btechShadesAmber = MaterialColor(
+const MaterialColor btechShadesAmber = MaterialColor(
   0xFFF59E0B,
   <int, Color>{
       50: Color(0xFFF9F6F1),
@@ -194,7 +194,7 @@ final MaterialColor btechShadesAmber = MaterialColor(
 );
 
 /// Sky color swatch — BTechColor.shades.sky[500]
-final MaterialColor btechShadesSky = MaterialColor(
+const MaterialColor btechShadesSky = MaterialColor(
   0xFF0EA5E9,
   <int, Color>{
       50: Color(0xFFF1F6F9),

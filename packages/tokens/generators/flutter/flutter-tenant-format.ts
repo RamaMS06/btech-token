@@ -427,12 +427,12 @@ export function generateFlutterTenantPackages(resolvedBaseMap: Record<string, st
 
   // Generate defaults.dart into the BASE package so btech_tokens works standalone.
   generateBaseDefaults(resolvedBaseMap);
-  console.log('  Flutter defaults  — platforms/flutter/lib/src/defaults.dart');
+  console.log('  Flutter defaults  — platforms/flutter/token/lib/src/defaults.dart');
 }
 
 // =============================================================================
 // Base-package defaults generator
-// Writes platforms/flutter/lib/src/defaults.dart with the default (no-tenant)
+// Writes platforms/flutter/token/lib/src/defaults.dart with the default (no-tenant)
 // btechColor, btechRadius, btechFont, and btechTheme() so that btech_tokens
 // can be used standalone without any tenant package.
 // =============================================================================

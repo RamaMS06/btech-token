@@ -112,8 +112,8 @@ class _InnerShadowBoxPainter extends BoxPainter {
   void paint(Canvas canvas, Offset offset, ImageConfiguration config) {
     final size   = config.size ?? Size.zero;
     final rect   = offset & size;
-    final radius = (_dec.borderRadius?.resolve(config.textDirection)
-        ?? BorderRadius.zero) as BorderRadius;
+    final radius = _dec.borderRadius?.resolve(config.textDirection)
+        ?? BorderRadius.zero;
     final rrect  = radius.toRRect(rect);
 
     // 1. Background

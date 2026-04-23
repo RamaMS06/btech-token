@@ -5,10 +5,20 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 export function hexToArgb(hex: string): string {
   const clean = hex.replace('#', '');
-  const padded = clean.length === 3
+  // Expand 3-digit shorthand → 6 digits
+  const expanded = clean.length === 3
     ? clean.split('').map(c => c + c).join('')
     : clean;
-  return `0xFF${padded.toUpperCase()}`;
+  // CSS hex with alpha: #RRGGBBAA (8 chars) → Flutter 0xAARRGGBB
+  if (expanded.length === 8) {
+    const rr = expanded.slice(0, 2);
+    const gg = expanded.slice(2, 4);
+    const bb = expanded.slice(4, 6);
+    const aa = expanded.slice(6, 8);
+    return `0x${(aa + rr + gg + bb).toUpperCase()}`;
+  }
+  // Standard 6-digit hex: prepend full opacity FF
+  return `0xFF${expanded.toUpperCase()}`;
 }
 
 export function toCamelCase(str: string): string {

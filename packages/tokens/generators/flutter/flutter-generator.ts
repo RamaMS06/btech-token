@@ -31,8 +31,8 @@ function dartTextStyle(entry: TypeScaleEntry, varName: string): string[] {
 }
 
 export function generateFlutterFiles(data: ResolvedTokenMap): void {
-  const DART_SRC = `${ROOT}/platforms/flutter/lib/src`;
-  const DART_LIB = `${ROOT}/platforms/flutter/lib`;
+  const DART_SRC = `${ROOT}/platforms/flutter/token/lib/src`;
+  const DART_LIB = `${ROOT}/platforms/flutter/token/lib`;
 
   // ── color/ ─────────────────────────────────────────────────────────────────
   const colorDir = `${DART_SRC}/color`;
@@ -66,7 +66,7 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
       ).join('\n');
 
       L.push(`/// ${toPascalCase(group)} color swatch — BTechColor.shades.${group}[500]`);
-      L.push(`final MaterialColor btechShades${toPascalCase(group)} = MaterialColor(`);
+      L.push(`const MaterialColor btechShades${toPascalCase(group)} = MaterialColor(`);
       L.push(`  ${hexToArgb(primaryHex)},`);
       L.push(`  <int, Color>{`);
       L.push(mapEntries);

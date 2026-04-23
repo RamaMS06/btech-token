@@ -168,6 +168,7 @@ class BTechColorTheme extends ThemeExtension<BTechColorTheme> {
   final BTechColorBrand brand;
   final BTechColorExt ext;
 
+  @override
   BTechColorTheme copyWith({
     BTechColorText? text,
     BTechColorIcon? icon,
@@ -233,7 +234,7 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
     subtle: Color(0xFFF4F5F6),
     subtler: Color(0xFFDBDDE1),
     subtlest: Color(0xFFC1C6CD),
-    overlay: Color(0xFF181C20CC),
+    overlay: Color(0xCC181C20),
   ),
   brand: BTechColorBrand(
     primarySubtle: Color(0xFFF0F8F4),
