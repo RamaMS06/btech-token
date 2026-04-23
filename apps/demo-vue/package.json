@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "pnpm --prefix ../.. run generate:web",
     "dev": "vite --port 5177"
   },
   "dependencies": {
