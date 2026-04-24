@@ -1,4 +1,5 @@
 {
+  "$schema": "../../schema/token.schema.json",
   "radius": {
     "2xs": { "$value": "2px",    "$type": "dimension" },
     "xs":  { "$value": "4px",    "$type": "dimension" },

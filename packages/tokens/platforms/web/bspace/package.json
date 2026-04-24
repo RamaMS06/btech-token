@@ -9,7 +9,7 @@
     "dist"
   ],
   "peerDependencies": {
-    "@btech/tokens": ">=1.0.0-rc.1 <2.0.0"
+    "@btech/tokens": ">=1.0.0-rc.3 <2.0.0"
   },
   "publishConfig": {
     "registry": "https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/"
