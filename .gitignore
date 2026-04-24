@@ -61,5 +61,8 @@ Thumbs.db
 # Added by code-review-graph
 .code-review-graph/
 
-# ── Graph viz — regenerated snapshot, never committed ─────────────────────────
-tools/graph-viz/public/graph.json
+# ── Graph viz — internal tool, never committed to main ────────────────────────
+# tools/graph-viz/ is an on-demand xyflow visualization of the
+# code-review-graph MCP cache. It is developer-local only — not part of
+# the published design system.
+tools/graph-viz/
