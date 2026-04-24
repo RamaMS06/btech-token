@@ -135,19 +135,32 @@ function generateWebTenantPackage(
   // ── package.json (CSS-only — always rewrite to keep in sync) ─────────────
   const pkgJsonPath = `${outDir}/package.json`;
 
-  // Read current version from base package to stay in sync.
-  // Exception: when base is an rc.* pre-release, tenants DON'T follow — they
-  // only ship on stable releases. Preserve the tenant's existing version.
+  // Hybrid versioning contract:
+  //   * tenant `version` is preserved across regenerations — tenant only
+  //     bumps when its own source changes (or when an explicit scope=all
+  //     bump is used).
+  //   * tenant `peerDependencies['@btech/tokens']` is also preserved once
+  //     written. On first scaffold we seed it with the current base major
+  //     range as the floor. After that it only moves when the developer
+  //     intentionally widens/tightens it (e.g. via `scripts/add-tenant.ts`
+  //     or a manual edit when the tenant starts relying on a token added
+  //     in a newer base). Auto-rewriting the floor on every generate
+  //     would re-introduce forced lockstep: any base bump would cascade
+  //     a tenant re-publish even when the tenant source is untouched.
   const basePkgPath = `${ROOT}/platforms/web/token/package.json`;
-  const baseVersion = existsSync(basePkgPath)
+  const baseVersion: string = existsSync(basePkgPath)
     ? JSON.parse(readFileSync(basePkgPath, 'utf-8')).version ?? '1.0.0'
     : '1.0.0';
+  const baseMajor = parseInt(baseVersion.split('.')[0], 10);
 
-  let version = baseVersion;
-  if (/-rc\./.test(baseVersion) && existsSync(pkgJsonPath)) {
-    const existing = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
-    if (existing.version) version = existing.version;
-  }
+  const existingPkg = existsSync(pkgJsonPath)
+    ? JSON.parse(readFileSync(pkgJsonPath, 'utf-8'))
+    : null;
+
+  const version: string = existingPkg?.version ?? baseVersion;
+  const peerDepRange: string =
+    existingPkg?.peerDependencies?.['@btech/tokens'] ??
+    `>=${baseVersion} <${baseMajor + 1}.0.0`;
 
   const pkgJson = {
     name:        `@btech/tokens-${tenantId}`,
@@ -157,6 +170,11 @@ function generateWebTenantPackage(
       './styles.css': './dist/styles.css',
     },
     files: ['dist'],
+    // Pinned at scaffold time; preserved across regenerations. Update
+    // deliberately when the tenant requires a newer base version.
+    peerDependencies: {
+      '@btech/tokens': peerDepRange,
+    },
     publishConfig: {
       registry: 'https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/',
     },

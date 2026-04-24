@@ -14,7 +14,7 @@
  *
  * 3. Activate a tenant (optional — defaults to base theme if skipped)
  *    import { activateTenant } from '@btech/tokens';
- *    activateTenant({ tenant: 'tenant-bjb' });       ← sets data-tenant on <html>
+ *    activateTenant({ tenant: 'bspace' });           ← sets data-tenant on <html>
  *
  * 4. Import token() wherever you need it in TypeScript / JS
  *    import { token, cssVar, tokenCalc } from '@btech/tokens';
@@ -336,9 +336,9 @@ const resolved = getComputedStyle(document.documentElement)
 //   Pay Now
 // </button>
 //
-// <div data-tenant="tenant-bjb">
+// <div data-tenant="bspace">
 //   <button class="bg-primary text-on-primary rounded-interactive px-md py-sm">
-//     BJB button — different brand color, same class
+//     bspace button — different brand color, same class
 //   </button>
 // </div>
 

@@ -33,9 +33,7 @@ packages/tokens/
 │   │   ├── radius.json
 │   │   └── typography.json
 │   └── tenants/
-│       ├── default/overrides.json
-│       ├── tenant-bjb/overrides.json
-│       └── tenant-a/overrides.json
+│       └── bspace/overrides.json
 └── platforms/flutter/
     ├── lib/                           ← btech_tokens base package
     │   ├── btech_tokens.dart          ← barrel export
@@ -46,9 +44,7 @@ packages/tokens/
     │       ├── theme_builder.dart         ← buildBtechTheme() — ONE place, no duplication
     │       └── context.dart               ← BTechContextExtension
     └── tenants/
-        ├── default/
-        ├── tenant-bjb/
-        └── tenant-a/
+        └── bspace/
 ```
 
 ---
@@ -212,10 +208,10 @@ ThemeData btechTheme({Brightness brightness = Brightness.light, ThemeData? base}
 
 ```dart
 // pubspec.yaml
-// btech_tokens_tenant_bjb:
-//   git: { url: ..., path: packages/tokens/platforms/flutter/tenants/tenant-bjb }
+// btech_tokens_bspace:
+//   git: { url: ..., path: packages/tokens/platforms/flutter/tenants/bspace }
 
-import 'package:btech_tokens_tenant_bjb/btech_tokens_tenant_bjb.dart';
+import 'package:btech_tokens_bspace/btech_tokens_bspace.dart';
 
 // Setup — light + dark + auto system switch:
 MaterialApp(

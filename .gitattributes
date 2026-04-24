@@ -1,0 +1,14 @@
+# ── pnpm lockfile — auto-regenerate on merge conflict ─────────────────────
+# pnpm-lock.yaml is a generated, deterministic file. Line-by-line merges
+# create fake conflicts. We register a custom merge driver (configured via
+# .githooks/install-merge-driver.sh → run by `pnpm install` postinstall)
+# that resolves conflicts by re-running `pnpm install --lockfile-only`
+# against the post-merge package.json state.
+#
+# To activate on your machine: `pnpm install` (triggers postinstall) or
+# manually run `./.githooks/install-merge-driver.sh`.
+pnpm-lock.yaml merge=pnpm-lock
+pnpm-lock.yaml -diff
+
+# Keep the lockfile excluded from stats/blame noise
+pnpm-lock.yaml linguist-generated=true

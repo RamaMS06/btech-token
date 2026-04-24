@@ -149,19 +149,16 @@ token('color.background.primary') // ✅
 
 ```ts
 // After login: set once, all components update automatically
-activateTenant({ tenant: 'tenant-bjb' });
+activateTenant({ tenant: 'bspace' });
 
 // Or directly via DOM
-document.documentElement.setAttribute('data-tenant', 'tenant-a');
+document.documentElement.setAttribute('data-tenant', 'bspace');
 ```
 
 ```html
-<!-- Side-by-side tenant preview -->
-<div data-tenant="tenant-a">
-  <Button /> <!-- blue theme -->
-</div>
-<div data-tenant="tenant-bjb">
-  <Button /> <!-- red theme, same component -->
+<!-- Scoped tenant region (useful for previews or mixed-tenant views) -->
+<div data-tenant="bspace">
+  <Button /> <!-- bspace theme -->
 </div>
 ```
 
@@ -195,7 +192,7 @@ dependencies:
 ```dart
 // main.dart — set tenant once
 MaterialApp(
-  theme: BTechTheme.forTenant('tenant-bjb', Brightness.light),
+  theme: BTechTheme.forTenant('bspace', Brightness.light),
   home: HomePage(),
 );
 
@@ -255,9 +252,7 @@ packages/tokens/
 │   ├── semantic/      Semantic tokens    — meaningful names (color.background.primary)
 │   ├── components/    Component tokens   — scoped (button.primary.background)
 │   └── tenants/
-│       ├── default/   Fallback values for all tokens
-│       ├── tenant-a/  Brand overrides for Tenant A
-│       └── tenant-bjb/ Brand overrides for Tenant BJB
+│       └── bspace/    Brand overrides for bspace tenant
 ├── generators/        Style Dictionary formatters (web, flutter, python)
 ├── platforms/
 │   ├── web/           @btech/tokens — TypeScript + CSS output
@@ -336,15 +331,29 @@ pnpm install
 | `btech-ds.publish` | Push `v*` tag (manual) | Build + publish to Azure Artifacts |
 | `btech-ds.auto-version` | PR merged to `main` | Bump semver, tag, publish |
 
-**Release flow:**
-- Add PR tag `release:major`, `release:minor`, or `release:patch` before merging
-- Add `no-release` to skip publishing (docs, chore PRs)
-- Default bump is `patch` if no tag is set
+**Release flow (hybrid versioning):**
+
+Each package tracks its own version. PR labels control what gets bumped:
+
+| Label | Effect |
+|---|---|
+| `release:major\|minor\|patch\|rc` | Semver bump type (default `patch`) |
+| `scope:all` | Bump base + all tenants (lockstep) |
+| `scope:base` | Bump only base packages (`@btech/tokens`, `btech_tokens`) |
+| `scope:tenants` | Bump only tenant packages |
+| `scope:tenant:<id>` | Bump a single tenant (e.g. `scope:tenant:bspace`) |
+| `no-release` | Skip publishing (docs, chore PRs) |
+| *(no scope label)* | Auto-detect from changed files in `sources/` |
+
+Tenant-only bumps commit new package.json(s) to main **without** a git tag — run `publish.yml` manually to release them. Base-version bumps tag + auto-publish as before.
+
+Local bump (`pnpm bump`) supports the same flags: `--scope=<s>`, `--auto`, `--dry-run`. See **[docs/architecture/versioning.md](./docs/architecture/versioning.md)** for the full decision matrix.
 
 ---
 
 ## Deeper Docs
 
 - [docs/architecture.md](./docs/architecture.md) — Pipeline, token model, naming conventions
+- [docs/architecture/versioning.md](./docs/architecture/versioning.md) — Hybrid auto-scope versioning
 - [docs/contributing.md](./docs/contributing.md) — Add/modify tenants, local dev, validators
 - [docs/ci-cd.md](./docs/ci-cd.md) — Pipeline details, release flow, versioning

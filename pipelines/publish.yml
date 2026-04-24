@@ -52,12 +52,17 @@ jobs:
         displayName: 'Flutter pub get'
         workingDirectory: packages/tokens/platforms/flutter/token
 
-      # ── Validate → Build → Publish ────────────────────────────────────────
-      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
-        displayName: 'Validate tokens (contrast + boundary)'
+      # ── Validate → Generate → Build → Publish ─────────────────────────────
+      - script: pnpm validate
+        displayName: 'Run validators (contrast + boundary + workspace-deps)'
 
-      - script: pnpm --filter @btech/tokens build
-        displayName: 'Build @btech/tokens'
+      # IMPORTANT: 'pnpm generate' (not 'pnpm build') — produces both:
+      #   - Style Dictionary outputs (styles.css, utilities.css) via sd.config.ts
+      #   - TypeScript bundles (index.js, index.mjs, index.d.ts) via tsup
+      # Using 'pnpm --filter @btech/tokens build' alone runs tsup only,
+      # resulting in a published tarball missing styles.css (rc.1 bug).
+      - script: pnpm generate
+        displayName: 'Generate tokens (CSS + JS + types)'
 
       - script: flutter analyze --no-fatal-infos
         displayName: 'Flutter analyze'
@@ -73,22 +78,16 @@ jobs:
           fi
         displayName: 'Determine npm dist-tag (latest vs rc)'
 
-      # Publish base package
-      - script: pnpm --filter @btech/tokens publish --no-git-checks --tag $(NPM_TAG)
-        displayName: 'Publish @btech/tokens to Azure Artifacts'
-
-      # Publish tenant packages only for stable (non-RC) releases.
-      # RC releases ship only the base package; tenants follow once the API stabilises.
-      - script: pnpm --filter "@btech/tokens-*" publish --no-git-checks --tag $(NPM_TAG)
-        displayName: 'Publish tenant packages to Azure Artifacts'
-        condition: and(succeeded(), ne(variables['NPM_TAG'], 'rc'))
+      # Idempotent publish — only packages whose local version is NOT yet
+      # on the registry are published. Safe to re-run, tolerant of hybrid
+      # versioning (scoped bumps where only some packages advanced).
+      - script: pnpm exec tsx scripts/publish-changed.ts
+        displayName: 'Publish packages with new versions (skip existing)'
+        env:
+          NPM_TAG: $(NPM_TAG)
 
       # ── Summary ───────────────────────────────────────────────────────────
       - script: |
           VERSION=$(node -p "require('./packages/tokens/platforms/web/token/package.json').version")
-          if [ "$(NPM_TAG)" = "rc" ]; then
-            echo "##[section]Published @btech/tokens@$VERSION (tag: rc, tenants skipped)"
-          else
-            echo "##[section]Published @btech/tokens@$VERSION + tenant packages (tag: $(NPM_TAG))"
-          fi
+          echo "##[section]Published @btech/tokens@$VERSION + tenant packages (tag: $(NPM_TAG))"
         displayName: 'Publish summary'

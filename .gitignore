@@ -3,6 +3,12 @@ node_modules/
 .pnpm-store/
 
 # ── Build outputs ─────────────────────────────────────────────────────────────
+# Web dist/ is NEVER committed — it is regenerated in CI (pipelines/*.yml) and
+# included in published tarballs via each package's `files: ["dist"]`.
+# Consumers get dist via the npm registry, not git.
+#
+# Flutter is the opposite: Dart artifacts live in `lib/src/` (not `dist/`) and
+# ARE committed because Flutter consumers depend on us via `git` path.
 dist/
 **/dist/
 .turbo/
@@ -54,3 +60,10 @@ Thumbs.db
 .changeset/*.js
 # Added by code-review-graph
 .code-review-graph/
+
+# ── Graph viz — internal tool, never committed to main ────────────────────────
+# tools/graph-viz/ is an on-demand xyflow visualization of the
+# code-review-graph MCP cache. It is developer-local only — not part of
+# the published design system.
+tools/graph-viz/
+code-review-graph.zip

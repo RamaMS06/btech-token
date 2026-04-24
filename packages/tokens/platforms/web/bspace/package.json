@@ -1,6 +1,6 @@
 {
   "name": "@btech/tokens-bspace",
-  "version": "1.0.0",
+  "version": "1.0.0-rc.3",
   "description": "BTech design tokens for bspace — auto-generated, do not edit",
   "exports": {
     "./styles.css": "./dist/styles.css"
@@ -8,6 +8,9 @@
   "files": [
     "dist"
   ],
+  "peerDependencies": {
+    "@btech/tokens": ">=1.0.0-rc.3 <2.0.0"
+  },
   "publishConfig": {
     "registry": "https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/"
   }

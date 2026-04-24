@@ -53,9 +53,24 @@ jobs:
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
 
-      # ── Determine bump type from PR labels ───────────────────────────────
+      # ── Capture base version BEFORE bump (for tag-guard later) ───────────
+      - script: |
+          PREV=$(node -p "require('./packages/tokens/platforms/web/token/package.json').version")
+          echo "Previous base version: $PREV"
+          echo "##vso[task.setvariable variable=PREV_BASE_VERSION]$PREV"
+        displayName: 'Capture previous base version'
+
+      # ── Determine bump type & scope from PR labels ───────────────────────
       # PR_TAGS is set in the btech-ds-secrets variable group.
-      # Format: comma-separated label names, e.g. "release:minor,bug-fix"
+      # Format: comma-separated label names, e.g. "release:minor,scope:tenant:bspace"
+      #
+      # Supported labels:
+      #   release:major|minor|patch|rc   → semver bump type
+      #   scope:all|base|tenants         → which packages to bump
+      #   scope:tenant:<id>              → bump a single tenant
+      #   no-release                     → skip entirely
+      #
+      # If no scope:* label is present, defaults to --auto (detect from git diff).
       - script: |
           TAGS="${PR_TAGS:-}"
           echo "PR labels: $TAGS"
@@ -76,15 +91,31 @@ jobs:
             BUMP=patch
           fi
 
+          SCOPE_FLAG="--auto"
+          if echo "$TAGS" | grep -q "scope:all"; then
+            SCOPE_FLAG="--scope=all"
+          elif echo "$TAGS" | grep -q "scope:base"; then
+            SCOPE_FLAG="--scope=base"
+          elif echo "$TAGS" | grep -q "scope:tenants"; then
+            SCOPE_FLAG="--scope=tenants"
+          else
+            TENANT=$(echo "$TAGS" | grep -oE "scope:tenant:[A-Za-z0-9_-]+" | head -n1 | cut -d: -f3)
+            if [ -n "$TENANT" ]; then
+              SCOPE_FLAG="--scope=tenant:$TENANT"
+            fi
+          fi
+
           echo "Bump type: $BUMP"
+          echo "Scope flag: $SCOPE_FLAG"
           echo "##vso[task.setvariable variable=BUMP_TYPE]$BUMP"
-        displayName: 'Determine bump type from PR labels'
+          echo "##vso[task.setvariable variable=SCOPE_FLAG]$SCOPE_FLAG"
+        displayName: 'Determine bump type & scope from PR labels'
         env:
           PR_TAGS: $(PR_TAGS)
 
       # ── Bump version ─────────────────────────────────────────────────────
-      - script: pnpm exec tsx scripts/bump-version.ts $(BUMP_TYPE)
-        displayName: 'Bump package versions (web + flutter)'
+      - script: pnpm exec tsx scripts/bump-version.ts $(BUMP_TYPE) $(SCOPE_FLAG)
+        displayName: 'Bump package versions (scoped)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # ── Read new version ─────────────────────────────────────────────────
@@ -97,29 +128,41 @@ jobs:
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # ── Validate tokens ──────────────────────────────────────────────────
-      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
-        displayName: 'Validate tokens (contrast + boundary)'
+      - script: pnpm validate
+        displayName: 'Run validators (contrast + boundary + workspace-deps)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # ── Commit version bump back to main ─────────────────────────────────
+      # A git tag is pushed ONLY when the BASE version changed. Tenant-only
+      # bumps commit the new tenant package.json(s) back to main without a
+      # tag — publish of tenant-only changes is triggered manually (Run
+      # pipeline → publish.yml) to keep the pipeline flow predictable.
       - script: |
           git config user.name "Azure Pipelines"
           git config user.email "azure-pipelines@users.noreply.azure.com"
 
           git add \
             packages/tokens/platforms/web/token/package.json \
-            packages/tokens/platforms/flutter/token/pubspec.yaml
+            packages/tokens/platforms/flutter/token/pubspec.yaml \
+            packages/tokens/platforms/web/*/package.json
 
           git commit -m "chore(release): bump to $(NEW_TAG) ***NO_CI***
 
           Auto-bumped by Azure Pipelines after merging PR.
           Bump type: $(BUMP_TYPE)
-          @btech/tokens@$(NEW_VERSION)
-          btech_tokens $(NEW_VERSION)"
+          Scope:     $(SCOPE_FLAG)
+          Base:      @btech/tokens@$(NEW_VERSION)"
 
-          git tag $(NEW_TAG) -m "Release $(NEW_TAG)"
-          git push origin HEAD:main --follow-tags
-        displayName: 'Commit version bump & push tag'
+          if [ "$(NEW_VERSION)" != "$(PREV_BASE_VERSION)" ]; then
+            echo "Base version changed ($(PREV_BASE_VERSION) → $(NEW_VERSION)) — tagging $(NEW_TAG)."
+            git tag $(NEW_TAG) -m "Release $(NEW_TAG)"
+            git push origin HEAD:main --follow-tags
+          else
+            echo "Base version unchanged ($(PREV_BASE_VERSION)) — tenant-only bump, skipping tag."
+            echo "To publish the tenant(s), manually run pipelines/publish.yml."
+            git push origin HEAD:main
+          fi
+        displayName: 'Commit version bump & push tag (base-only)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # Publish is handled by publish.yml — triggered by the v* tag above.

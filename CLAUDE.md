@@ -156,6 +156,12 @@ Container(
 
 ---
 
+## Versioning
+
+Hybrid auto-scope: every package tracks its own version. `pnpm bump [type] [flags]` supports `--scope=all|base|tenants|tenant:<id>`, `--auto` (diff-driven), `--dry-run`. Defaults to `all` for back-compat. Tenant `package.json` preserves its version across `pnpm generate` — generator no longer overwrites with base. Publishes via `scripts/publish-changed.ts` (skips already-published). See `docs/architecture/versioning.md`.
+
+---
+
 ## CI / Azure DevOps
 
 - **Repo:** `https://dev.azure.com/buma/BUMA%20-%20Bspace%20Design%20System/_git/btech-ds`

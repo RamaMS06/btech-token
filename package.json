@@ -5,11 +5,11 @@
   "packageManager": "pnpm@9.15.9",
   "description": "Multi-tenant design token source of truth — React, Vue, Flutter",
   "scripts": {
-    "prepare": "git config core.hooksPath .githooks",
-    "generate": "pnpm exec tsx packages/tokens/sd.config.ts && pnpm --filter @btech/tokens build",
-    "generate:web": "pnpm exec tsx packages/tokens/sd.config.ts --skip-flutter && pnpm --filter @btech/tokens build",
+    "prepare": "git config core.hooksPath .githooks && ./.githooks/install-merge-driver.sh",
+    "generate": "pnpm exec tsx packages/tokens/sd.config.ts && pnpm --filter @btech/tokens build && pnpm install --lockfile-only --silent",
+    "generate:web": "pnpm exec tsx packages/tokens/sd.config.ts --skip-flutter && pnpm --filter @btech/tokens build && pnpm install --lockfile-only --silent",
     "build": "pnpm generate && turbo run build",
-    "validate": "pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts",
+    "validate": "pnpm exec tsx tools/validators/lockfile-sync.ts && pnpm exec tsx tools/validators/schema.ts && pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts && pnpm exec tsx tools/validators/workspace-deps.ts",
     "add-tenant": "pnpm exec tsx scripts/add-tenant.ts",
     "tokens:watch": "node scripts/watch-tokens.mjs",
     "bootstrap": "pnpm install && melos bootstrap",
@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "ajv": "^8.18.0",
     "style-dictionary": "^4.3.0",
     "tsx": "^4.7.2",
     "turbo": "^2.0.6",
