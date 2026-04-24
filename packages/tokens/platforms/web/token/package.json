@@ -19,7 +19,8 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --no-clean"
+    "build": "tsup src/index.ts --format cjs,esm --dts --no-clean",
+    "prepublishOnly": "cd ../../../../.. && pnpm generate"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
