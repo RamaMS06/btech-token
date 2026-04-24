@@ -149,19 +149,16 @@ token('color.background.primary') // ✅
 
 ```ts
 // After login: set once, all components update automatically
-activateTenant({ tenant: 'tenant-bjb' });
+activateTenant({ tenant: 'bspace' });
 
 // Or directly via DOM
-document.documentElement.setAttribute('data-tenant', 'tenant-a');
+document.documentElement.setAttribute('data-tenant', 'bspace');
 ```
 
 ```html
-<!-- Side-by-side tenant preview -->
-<div data-tenant="tenant-a">
-  <Button /> <!-- blue theme -->
-</div>
-<div data-tenant="tenant-bjb">
-  <Button /> <!-- red theme, same component -->
+<!-- Scoped tenant region (useful for previews or mixed-tenant views) -->
+<div data-tenant="bspace">
+  <Button /> <!-- bspace theme -->
 </div>
 ```
 
@@ -195,7 +192,7 @@ dependencies:
 ```dart
 // main.dart — set tenant once
 MaterialApp(
-  theme: BTechTheme.forTenant('tenant-bjb', Brightness.light),
+  theme: BTechTheme.forTenant('bspace', Brightness.light),
   home: HomePage(),
 );
 
@@ -255,9 +252,7 @@ packages/tokens/
 │   ├── semantic/      Semantic tokens    — meaningful names (color.background.primary)
 │   ├── components/    Component tokens   — scoped (button.primary.background)
 │   └── tenants/
-│       ├── default/   Fallback values for all tokens
-│       ├── tenant-a/  Brand overrides for Tenant A
-│       └── tenant-bjb/ Brand overrides for Tenant BJB
+│       └── bspace/    Brand overrides for bspace tenant
 ├── generators/        Style Dictionary formatters (web, flutter, python)
 ├── platforms/
 │   ├── web/           @btech/tokens — TypeScript + CSS output

@@ -79,7 +79,7 @@ Tokens follow the Design Token Community Group (DTCG) shape: every leaf has
 ```
 
 ```json
-// tokens/tenants/tenant-a/overrides.json  (tenant override)
+// tokens/tenants/bspace/overrides.json  (tenant override)
 {
   "color": {
     "background": {

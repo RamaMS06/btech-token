@@ -57,8 +57,7 @@ The scaffolder writes a minimal `overrides.json`. Extend it as needed:
 
 Edit the file directly:
 
-  - `tokens/tenants/default/overrides.json`   — base brand
-  - `tokens/tenants/tenant-a/overrides.json`
+  - `tokens/tenants/bspace/overrides.json`   — bspace brand overrides
 
 Then run `pnpm generate` and preview (§4).
 

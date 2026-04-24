@@ -34,7 +34,7 @@ import {
 // Helpers
 // =============================================================================
 
-/** `tenant-bjb` → `tenant_bjb`, `default` → `default`. */
+/** `my-tenant` → `my_tenant`, `bspace` → `bspace`. */
 function toDartPackageName(tenantId: string): string {
   return tenantId.replace(/-/g, '_');
 }

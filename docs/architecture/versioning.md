@@ -20,7 +20,7 @@ Every package tracks its own version. `pnpm bump` supports four scopes:
 
 ## Why hybrid
 
-Pre-PR #72538 we used pure **lockstep**: every release bumped base + 3 tenants to the same version. Problem: a change that only touched `sources/tenants/bspace/` still forced a new `@btech/tokens-tenant-a@X.Y.Z` even though tenant-a had no semantic change. Consumers of tenant-a are dragged along for no reason.
+Pre-PR #72538 we used pure **lockstep**: every release bumped base + every tenant to the same version. Problem: a change that only touched one tenant's overrides still forced a new version for every other tenant package, dragging unrelated consumers through upgrades with no semantic change.
 
 The opposite extreme — **fully independent** via Changesets — works but requires per-PR changeset files, per-package git tags, and a heavier release workflow. Overkill for a 4-package workspace.
 
