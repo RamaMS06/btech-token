@@ -52,12 +52,17 @@ jobs:
         displayName: 'Flutter pub get'
         workingDirectory: packages/tokens/platforms/flutter/token
 
-      # ── Validate → Build → Publish ────────────────────────────────────────
+      # ── Validate → Generate → Build → Publish ─────────────────────────────
       - script: pnpm validate
         displayName: 'Run validators (contrast + boundary + workspace-deps)'
 
-      - script: pnpm --filter @btech/tokens build
-        displayName: 'Build @btech/tokens'
+      # IMPORTANT: 'pnpm generate' (not 'pnpm build') — produces both:
+      #   - Style Dictionary outputs (styles.css, utilities.css) via sd.config.ts
+      #   - TypeScript bundles (index.js, index.mjs, index.d.ts) via tsup
+      # Using 'pnpm --filter @btech/tokens build' alone runs tsup only,
+      # resulting in a published tarball missing styles.css (rc.1 bug).
+      - script: pnpm generate
+        displayName: 'Generate tokens (CSS + JS + types)'
 
       - script: flutter analyze --no-fatal-infos
         displayName: 'Flutter analyze'

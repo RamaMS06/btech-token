@@ -1,6 +1,6 @@
 {
   "name": "@btech/tokens",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "description": "Framework-agnostic BTech design tokens — BTechColor, BTechSpacing, BTechRadius + CSS custom properties",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
