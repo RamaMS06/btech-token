@@ -12,116 +12,60 @@ Multi-platform, multi-tenant design tokens for Web and Flutter. One source under
 
 ## Setup — Azure Artifacts Authentication
 
-`@btech/tokens` is published to the **btech** Azure Artifacts feed.
-Follow the steps for your OS — same pattern as `buma-dev`.
+`@btech/tokens` is published to the **btech** Azure Artifacts feed. Consuming
+it requires a Personal Access Token (PAT) in your global `~/.npmrc`.
 
----
+### Quick Setup (recommended)
 
-### macOS / Linux
-
-**Step 1 — Generate a Personal Access Token**
-
-1. Go to: **https://buma.visualstudio.com/_usersSettings/tokens**
-2. Click **+ New Token**
-3. Set:
-   - Name: `btech-npm` (or anything descriptive)
-   - Organization: `buma`
-   - Expiration: 1 year (recommended)
-   - Scopes: **Packaging → Read & Write**
-4. Click **Create** and copy the token
-
-**Step 2 — Base64-encode your PAT**
-
-Open Terminal and run:
+Run this once from the repo root after cloning:
 
 ```bash
-node -e "require('readline').createInterface({input:process.stdin,output:process.stdout,historySize:0}).question('PAT> ',p=>{console.log(Buffer.from(p.trim()).toString('base64'));process.exit();})"
+pnpm install
+pnpm setup:auth
 ```
 
-Paste your PAT when prompted → copy the base64 output.
+The script will:
+1. Prompt for your PAT (masked input).
+2. Validate it against the feed.
+3. Base64-encode and write the auth block to your global `~/.npmrc`.
+4. Stop — safe to re-run, never touches other feed blocks (e.g. `buma-dev`).
 
-**Step 3 — Add credentials to your global `~/.npmrc`**
+**Generate a PAT first** at
+[buma.visualstudio.com/_usersSettings/tokens](https://buma.visualstudio.com/_usersSettings/tokens)
+with scope **Packaging → Read & Write** (1 year expiration recommended).
+
+**Verify:**
 
 ```bash
-code ~/.npmrc
+npm view @btech/tokens --registry https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/
 ```
 
-Add the following block (replace `<base64-pat>` with your encoded token):
+> This script manages the `btech` feed only. Other feeds (e.g. `buma-dev`) are
+> scoped to their own projects — set them up per the instructions in those repos.
+
+### Manual Setup (fallback)
+
+If `pnpm setup:auth` is unavailable (e.g. outside the monorepo), add this block
+to your global `~/.npmrc` manually — replace `<base64-pat>` with your
+base64-encoded PAT:
 
 ```ini
-; begin auth token — btech feed
+; begin btech auth token
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:username=buma
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:_password=<base64-pat>
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:email=npm requires email to be set but doesn't use the value
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/:username=buma
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/:_password=<base64-pat>
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/:email=npm requires email to be set but doesn't use the value
-; end auth token
+; end btech auth token
 ```
 
-**Step 4 — Verify**
+Base64-encode your PAT with:
 
 ```bash
-npm view @btech/tokens --registry https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/
+# macOS / Linux / Windows (PowerShell)
+node -e "process.stdout.write(Buffer.from(process.argv[1]).toString('base64'))" "YOUR_PAT_HERE"
 ```
-
----
-
-### Windows
-
-**Step 1 — Generate a Personal Access Token**
-
-1. Go to: **https://buma.visualstudio.com/_usersSettings/tokens**
-2. Click **+ New Token**
-3. Set:
-   - Name: `btech-npm`
-   - Organization: `buma`
-   - Expiration: 1 year
-   - Scopes: **Packaging → Read & Write**
-4. Click **Create** and copy the token
-
-**Step 2 — Base64-encode your PAT**
-
-Open **Command Prompt** or **PowerShell** and run:
-
-```powershell
-node -e "require('readline').createInterface({input:process.stdin,output:process.stdout,historySize:0}).question('PAT> ',p=>{console.log(Buffer.from(p.trim()).toString('base64'));process.exit();})"
-```
-
-Paste your PAT when prompted → copy the base64 output.
-
-**Step 3 — Add credentials to your global `.npmrc`**
-
-Open your global `.npmrc` file:
-
-```powershell
-# PowerShell
-code $env:USERPROFILE\.npmrc
-
-# Or Command Prompt
-code %USERPROFILE%\.npmrc
-```
-
-Add the following block (replace `<base64-pat>` with your encoded token):
-
-```ini
-; begin auth token — btech feed
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:username=buma
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:_password=<base64-pat>
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:email=npm requires email to be set but doesn't use the value
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/:username=buma
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/:_password=<base64-pat>
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/:email=npm requires email to be set but doesn't use the value
-; end auth token
-```
-
-**Step 4 — Verify**
-
-```powershell
-npm view @btech/tokens --registry https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/
-```
-
----
 
 > **CI Pipelines** — no setup needed. Pipelines authenticate automatically via
 > `System.AccessToken`. No PAT or env var required.
