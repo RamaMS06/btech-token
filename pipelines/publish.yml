@@ -73,13 +73,13 @@ jobs:
           fi
         displayName: 'Determine npm dist-tag (latest vs rc)'
 
-      # Publish base package
-      - script: pnpm --filter @btech/tokens publish --no-git-checks --tag $(NPM_TAG)
-        displayName: 'Publish @btech/tokens to Azure Artifacts'
-
-      # Publish all tenant packages (CSS-only, no build step needed)
-      - script: pnpm --filter "@btech/tokens-*" publish --no-git-checks --tag $(NPM_TAG)
-        displayName: 'Publish tenant packages to Azure Artifacts'
+      # Idempotent publish — only packages whose local version is NOT yet
+      # on the registry are published. Safe to re-run, tolerant of hybrid
+      # versioning (scoped bumps where only some packages advanced).
+      - script: pnpm exec tsx scripts/publish-changed.ts
+        displayName: 'Publish packages with new versions (skip existing)'
+        env:
+          NPM_TAG: $(NPM_TAG)
 
       # ── Summary ───────────────────────────────────────────────────────────
       - script: |

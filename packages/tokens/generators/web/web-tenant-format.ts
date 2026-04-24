@@ -135,11 +135,20 @@ function generateWebTenantPackage(
   // ── package.json (CSS-only — always rewrite to keep in sync) ─────────────
   const pkgJsonPath = `${outDir}/package.json`;
 
-  // Read current version from base package to stay in sync
+  // Base version drives the peerDependencies range. Tenant version itself
+  // is preserved across regenerations (independent per-tenant versioning).
+  // Only falls back to base version when the tenant is being scaffolded for
+  // the first time (no existing package.json).
   const basePkgPath = `${ROOT}/platforms/web/token/package.json`;
-  const version = existsSync(basePkgPath)
+  const baseVersion: string = existsSync(basePkgPath)
     ? JSON.parse(readFileSync(basePkgPath, 'utf-8')).version ?? '1.0.0'
     : '1.0.0';
+
+  const version: string = existsSync(pkgJsonPath)
+    ? JSON.parse(readFileSync(pkgJsonPath, 'utf-8')).version ?? baseVersion
+    : baseVersion;
+
+  const baseMajor = parseInt(baseVersion.split('.')[0], 10);
 
   const pkgJson = {
     name:        `@btech/tokens-${tenantId}`,
@@ -149,6 +158,11 @@ function generateWebTenantPackage(
       './styles.css': './dist/styles.css',
     },
     files: ['dist'],
+    // Tenant CSS is a runtime companion to @btech/tokens base semantics.
+    // Pin to current base major range so consumers get a clear compat signal.
+    peerDependencies: {
+      '@btech/tokens': `>=${baseVersion} <${baseMajor + 1}.0.0`,
+    },
     publishConfig: {
       registry: 'https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/',
     },
