@@ -60,3 +60,6 @@ Thumbs.db
 .changeset/*.js
 # Added by code-review-graph
 .code-review-graph/
+
+# ── Graph viz — regenerated snapshot, never committed ─────────────────────────
+tools/graph-viz/public/graph.json

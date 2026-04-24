@@ -20,7 +20,9 @@
     "bump:minor": "pnpm exec tsx scripts/bump-version.ts minor",
     "bump:major": "pnpm exec tsx scripts/bump-version.ts major",
     "bump:rc": "pnpm exec tsx scripts/bump-version.ts rc",
-    "setup:auth": "pnpm exec tsx scripts/setup-auth.ts"
+    "setup:auth": "pnpm exec tsx scripts/setup-auth.ts",
+    "graph:export": "pnpm --filter @btech/graph-viz run export",
+    "graph:view": "pnpm --filter @btech/graph-viz run dev"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
