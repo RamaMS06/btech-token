@@ -79,15 +79,20 @@ if (updatedPubspec === pubspec) {
 }
 
 // ── Sync all web tenant package.json versions ────────────────────────────
-const webPlatformDir = resolve(ROOT, 'packages/tokens/platforms/web');
-for (const entry of readdirSync(webPlatformDir)) {
-  if (entry === 'token') continue; // already done above
-  const tenantPkgPath = resolve(webPlatformDir, entry, 'package.json');
-  if (!existsSync(tenantPkgPath)) continue;
-  const tenantPkg = JSON.parse(readFileSync(tenantPkgPath, 'utf8'));
-  tenantPkg.version = newVersion;
-  writeFileSync(tenantPkgPath, JSON.stringify(tenantPkg, null, 2) + '\n', 'utf8');
-  console.log(`✅  @btech/tokens-${entry.padEnd(12)} ${currentVersion} → ${newVersion}`);
+// RC releases are base-package only — tenants are excluded from the rc channel.
+if (bumpType === 'rc') {
+  console.log('ℹ️   Tenant packages skipped for rc bump (tenants ship only on stable releases).');
+} else {
+  const webPlatformDir = resolve(ROOT, 'packages/tokens/platforms/web');
+  for (const entry of readdirSync(webPlatformDir)) {
+    if (entry === 'token') continue; // already done above
+    const tenantPkgPath = resolve(webPlatformDir, entry, 'package.json');
+    if (!existsSync(tenantPkgPath)) continue;
+    const tenantPkg = JSON.parse(readFileSync(tenantPkgPath, 'utf8'));
+    tenantPkg.version = newVersion;
+    writeFileSync(tenantPkgPath, JSON.stringify(tenantPkg, null, 2) + '\n', 'utf8');
+    console.log(`✅  @btech/tokens-${entry.padEnd(12)} ${currentVersion} → ${newVersion}`);
+  }
 }
 
 console.log(`\n📦  New version: ${newVersion}`);

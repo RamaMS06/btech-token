@@ -77,12 +77,18 @@ jobs:
       - script: pnpm --filter @btech/tokens publish --no-git-checks --tag $(NPM_TAG)
         displayName: 'Publish @btech/tokens to Azure Artifacts'
 
-      # Publish all tenant packages (CSS-only, no build step needed)
+      # Publish tenant packages only for stable (non-RC) releases.
+      # RC releases ship only the base package; tenants follow once the API stabilises.
       - script: pnpm --filter "@btech/tokens-*" publish --no-git-checks --tag $(NPM_TAG)
         displayName: 'Publish tenant packages to Azure Artifacts'
+        condition: and(succeeded(), ne(variables['NPM_TAG'], 'rc'))
 
       # ── Summary ───────────────────────────────────────────────────────────
       - script: |
           VERSION=$(node -p "require('./packages/tokens/platforms/web/token/package.json').version")
-          echo "##[section]Published @btech/tokens@$VERSION + tenant packages (tag: $(NPM_TAG))"
+          if [ "$(NPM_TAG)" = "rc" ]; then
+            echo "##[section]Published @btech/tokens@$VERSION (tag: rc, tenants skipped)"
+          else
+            echo "##[section]Published @btech/tokens@$VERSION + tenant packages (tag: $(NPM_TAG))"
+          fi
         displayName: 'Publish summary'

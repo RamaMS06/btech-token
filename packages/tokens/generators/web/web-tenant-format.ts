@@ -135,11 +135,19 @@ function generateWebTenantPackage(
   // ── package.json (CSS-only — always rewrite to keep in sync) ─────────────
   const pkgJsonPath = `${outDir}/package.json`;
 
-  // Read current version from base package to stay in sync
+  // Read current version from base package to stay in sync.
+  // Exception: when base is an rc.* pre-release, tenants DON'T follow — they
+  // only ship on stable releases. Preserve the tenant's existing version.
   const basePkgPath = `${ROOT}/platforms/web/token/package.json`;
-  const version = existsSync(basePkgPath)
+  const baseVersion = existsSync(basePkgPath)
     ? JSON.parse(readFileSync(basePkgPath, 'utf-8')).version ?? '1.0.0'
     : '1.0.0';
+
+  let version = baseVersion;
+  if (/-rc\./.test(baseVersion) && existsSync(pkgJsonPath)) {
+    const existing = JSON.parse(readFileSync(pkgJsonPath, 'utf-8'));
+    if (existing.version) version = existing.version;
+  }
 
   const pkgJson = {
     name:        `@btech/tokens-${tenantId}`,
