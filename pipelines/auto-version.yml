@@ -128,8 +128,8 @@ jobs:
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # ── Validate tokens ──────────────────────────────────────────────────
-      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
-        displayName: 'Validate tokens (contrast + boundary)'
+      - script: pnpm validate
+        displayName: 'Run validators (contrast + boundary + workspace-deps)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # ── Commit version bump back to main ─────────────────────────────────

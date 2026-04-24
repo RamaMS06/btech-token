@@ -53,8 +53,8 @@ jobs:
         workingDirectory: packages/tokens/platforms/flutter/token
 
       # ── Validate → Build → Publish ────────────────────────────────────────
-      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
-        displayName: 'Validate tokens (contrast + boundary)'
+      - script: pnpm validate
+        displayName: 'Run validators (contrast + boundary + workspace-deps)'
 
       - script: pnpm --filter @btech/tokens build
         displayName: 'Build @btech/tokens'
