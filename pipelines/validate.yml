@@ -63,9 +63,9 @@ jobs:
           echo "✅  All generated files are in sync."
         displayName: 'Sync check — generated files match token sources'
 
-      # ── Token validators ─────────────────────────────────────────────────
-      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
-        displayName: 'Run validators (contrast + boundary)'
+      # ── Token + workspace validators ─────────────────────────────────────
+      - script: pnpm validate
+        displayName: 'Run validators (contrast + boundary + workspace-deps)'
 
       # ── Flutter: tokens platform only ────────────────────────────────────
       - script: flutter pub get
