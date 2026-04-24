@@ -31,6 +31,14 @@ jobs:
           corepack prepare pnpm@9 --activate
         displayName: 'Setup pnpm 9'
 
+      # Auth to Azure Artifacts feed so `pnpm install` can fetch
+      # @btech/tokens (tenant packages depend on it via peerDep → pnpm
+      # resolves it from the feed, not workspace link, by design).
+      - task: npmAuthenticate@0
+        displayName: 'Authenticate with Azure Artifacts'
+        inputs:
+          workingFile: .npmrc
+
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
 
