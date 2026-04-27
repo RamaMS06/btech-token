@@ -41,6 +41,8 @@ jobs:
 
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # ── Flutter ──────────────────────────────────────────────────────────
       - template: templates/flutter-setup.yml

@@ -66,8 +66,17 @@ jobs:
           corepack prepare pnpm@9 --activate
         displayName: 'Setup pnpm 9'
 
+      # Inject System.AccessToken into .npmrc so pnpm can fetch @btech/* from
+      # Azure Artifacts feed. No personal PAT needed.
+      - task: npmAuthenticate@0
+        displayName: 'Authenticate with Azure Artifacts'
+        inputs:
+          workingFile: .npmrc
+
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # ── Defensive guard: confirm the merge actually changed token sources ──
       # The trigger paths filter is the first line of defense. This is the
