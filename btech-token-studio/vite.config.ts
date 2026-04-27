@@ -29,10 +29,16 @@ export default defineConfig(({ mode }) => {
     // ── Main thread build ──────────────────────────────────────────────────
     // Figma's plugin sandbox executes a plain script tag — no module system.
     // IIFE format with no external references is the correct target.
+    //
+    // target: 'es2017' — Figma's main-thread sandbox uses an older JS engine
+    // that does NOT support nullish coalescing (??), optional chaining (?.),
+    // or other ES2020+ features at the top level. We compile down to ES2017
+    // so all those modern operators get transpiled to safe equivalents.
     return {
       build: {
         outDir: 'dist',
         emptyOutDir: true, // Clean dist before the first (main) build
+        target: 'es2017',
         lib: {
           entry: resolve(__dirname, 'src/main/code.ts'),
           name: 'code',
