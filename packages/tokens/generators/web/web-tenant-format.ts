@@ -140,16 +140,22 @@ function generateWebTenantPackage(
   //     bumps when its own source changes (or when an explicit scope=all
   //     bump is used).
   //   * tenant `peerDependencies['@btech/tokens']` is also preserved once
-  //     written. On first scaffold we seed it with the current base major
-  //     range as the floor. After that it only moves when the developer
-  //     intentionally widens/tightens it (e.g. via `scripts/add-tenant.ts`
-  //     or a manual edit when the tenant starts relying on a token added
-  //     in a newer base). Auto-rewriting the floor on every generate
-  //     would re-introduce forced lockstep: any base bump would cascade
-  //     a tenant re-publish even when the tenant source is untouched.
-  const basePkgPath = `${ROOT}/platforms/web/token/package.json`;
-  const baseVersion: string = existsSync(basePkgPath)
-    ? JSON.parse(readFileSync(basePkgPath, 'utf-8')).version ?? '1.0.0'
+  //     written. On first scaffold we seed it with the current platform
+  //     major range as the floor. After that it only moves when the
+  //     developer intentionally widens/tightens it (e.g. via
+  //     `scripts/add-tenant.ts` or a manual edit when the tenant starts
+  //     relying on a token added in a newer base). Auto-rewriting the
+  //     floor on every generate would re-introduce forced lockstep: any
+  //     base bump would cascade a tenant re-publish even when the tenant
+  //     source is untouched.
+  //
+  // Seed source: the repo-root package.json holds the canonical platform
+  // version (single source of truth). Reading from root rather than from
+  // the web base package keeps the seed platform-agnostic — the same
+  // number is used to seed Flutter and Python tenants.
+  const rootPkgPath = `${ROOT}/../../package.json`; // packages/tokens/ → repo root
+  const baseVersion: string = existsSync(rootPkgPath)
+    ? JSON.parse(readFileSync(rootPkgPath, 'utf-8')).version ?? '1.0.0'
     : '1.0.0';
   const baseMajor = parseInt(baseVersion.split('.')[0], 10);
 

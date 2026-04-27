@@ -1,7 +1,7 @@
 // AUTO-GENERATED helpers for per-tenant Flutter token packages.
 //
 // This file generates, for each tenant in `sources/tenants/{id}/`:
-//   packages/tokens/platforms/flutter/tenants/{id}/
+//   packages/tokens/platforms/flutter/{id}/
 //     ├── pubspec.yaml
 //     └── lib/
 //         └── btech_tokens_{id_underscored}.dart

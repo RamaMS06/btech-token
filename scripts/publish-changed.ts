@@ -20,17 +20,24 @@
  *   pnpm exec tsx scripts/publish-changed.ts --dry-run
  *
  * Env:
- *   NPM_TAG   dist-tag to publish under ("rc" or "latest"). Required.
+ *   NPM_TAG              dist-tag to publish under ("rc" or "latest"). Required.
+ *   PUBLISH_ONLY_TENANT  optional — when set to a tenant id, restricts the
+ *                        publish loop to that single `@btech/tokens-<id>`
+ *                        package. Set by publish.yml when triggered by a
+ *                        `<tenant>-v<version>` tag so tenant-only releases
+ *                        don't accidentally re-publish base or other tenants.
  */
 
 import { execSync, spawnSync } from 'child_process';
 import { readdirSync, readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 
-const ROOT      = new URL('..', import.meta.url).pathname;
-const WEB_DIR   = resolve(ROOT, 'packages/tokens/platforms/web');
-const DRY_RUN   = process.argv.includes('--dry-run');
-const NPM_TAG   = process.env.NPM_TAG ?? '';
+const ROOT       = new URL('..', import.meta.url).pathname;
+const WEB_DIR    = resolve(ROOT, 'packages/tokens/platforms/web');
+const DRY_RUN    = process.argv.includes('--dry-run');
+const NPM_TAG    = process.env.NPM_TAG ?? '';
+// Empty string is interpreted as "no restriction" — same semantics as unset.
+const ONLY_TENANT = (process.env.PUBLISH_ONLY_TENANT ?? '').trim();
 
 if (!NPM_TAG && !DRY_RUN) {
   console.error('❌  NPM_TAG env var required (e.g. NPM_TAG=rc or NPM_TAG=latest).');
@@ -52,6 +59,17 @@ function readPkg(dir: string): Pkg | null {
 }
 
 function collectPackages(): Pkg[] {
+  // Tenant-only mode short-circuits the whole walk: we only ever consider
+  // `<WEB_DIR>/<tenant>/package.json`. Base + sibling tenants stay alone.
+  if (ONLY_TENANT) {
+    const target = readPkg(resolve(WEB_DIR, ONLY_TENANT));
+    if (!target) {
+      console.error(`❌  PUBLISH_ONLY_TENANT="${ONLY_TENANT}" but no package found at ${WEB_DIR}/${ONLY_TENANT}.`);
+      process.exit(1);
+    }
+    return [target];
+  }
+
   const pkgs: Pkg[] = [];
   const base = readPkg(resolve(WEB_DIR, 'token'));
   if (base) pkgs.push(base);

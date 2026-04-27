@@ -1,12 +1,13 @@
 # BTech Design System
 
-Multi-platform, multi-tenant design tokens for Web and Flutter. One source under
-`packages/tokens/sources/` compiles into platform outputs:
+Multi-platform, multi-tenant design tokens for Web, Flutter, and Python. One
+source under `packages/tokens/sources/` compiles into platform outputs:
 
 | Package | Platform | Registry |
 |---|---|---|
-| `@btech/tokens` | Web — TypeScript API + CSS variables | Azure Artifacts `btech` |
+| `@btech/tokens` | Web — TypeScript API + CSS variables | Azure Artifacts `btech` (npm) |
 | `btech_tokens` | Flutter — Dart API + tenant themes | pub.dev (path dep in dev) |
+| `btech-tokens` | Python — typed dataclass API + `to_css()` for Streamlit / Gradio / NiceGUI | Azure Artifacts `btech` (PyPI) |
 
 ---
 
@@ -205,6 +206,39 @@ Container(
   ),
 )
 ```
+
+---
+
+### Python (Streamlit / Gradio / NiceGUI / notebooks)
+
+```bash
+pip install keyring artifacts-keyring
+pip install \
+  --index-url https://pkgs.dev.azure.com/buma/BUMA%20-%20Bspace%20Design%20System/_packaging/btech/pypi/simple/ \
+  btech-tokens
+# Or, for a tenant variant:
+pip install --index-url ... btech-tokens-bspace
+```
+
+```python
+from btech_tokens import BTechColor, BTechSpacing, set_mode, LIGHT, DARK, to_css
+
+BTechColor.bg.primary             # '#ffffff'
+BTechSpacing.md                   # 12.0
+
+set_mode('dark')
+BTechColor.bg.primary             # '#181c20'
+
+# CSS injection for raw HTML/CSS frameworks (Streamlit example):
+import streamlit as st
+st.markdown(f'<style>{to_css()}</style>', unsafe_allow_html=True)
+```
+
+Designed for **single-process UI consumers**. For multi-user-deployed dashboards
+where two users may want different modes, use the deterministic `LIGHT` / `DARK`
+namespace constants instead of `set_mode`. See the
+[base package README](packages/tokens/platforms/python/token/README.md) for full
+API + tenant + Streamlit / Gradio / NiceGUI examples.
 
 ---
 
