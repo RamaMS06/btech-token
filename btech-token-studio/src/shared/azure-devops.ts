@@ -82,7 +82,10 @@ export class AzureDevOpsClient {
 
   private apiBase(): string {
     const { orgUrl, project, repo } = this.settings;
-    return `${orgUrl}/${encodeURIComponent(project)}/_apis/git/repositories/${encodeURIComponent(repo)}`;
+    // Strip trailing slash — common user paste mistake produces URLs like
+    // `https://dev.azure.com/buma//PROJECT/...` which Azure DevOps rejects.
+    const org = orgUrl.replace(/\/+$/, '');
+    return `${org}/${encodeURIComponent(project)}/_apis/git/repositories/${encodeURIComponent(repo)}`;
   }
 
   // ── Error helper ──────────────────────────────────────────────────────────
@@ -105,11 +108,16 @@ export class AzureDevOpsClient {
   /**
    * Quick connectivity check — returns true on 200, false otherwise.
    * Does NOT throw so the Settings UI can display a friendly status.
+   *
+   * Uses the project-scoped repository endpoint (not /_apis/connectionData,
+   * which returns HTTP 400 on dev.azure.com regardless of auth state). This
+   * single GET validates all four settings fields at once: orgUrl + project +
+   * repo + PAT must all resolve correctly for it to return 200.
    */
   async testConnection(): Promise<boolean> {
     try {
       const res = await fetch(
-        `${this.settings.orgUrl}/_apis/connectionData?api-version=7.1`,
+        `${this.apiBase()}?api-version=7.1`,
         { headers: this.headers() },
       );
       return res.ok;

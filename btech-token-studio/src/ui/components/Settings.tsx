@@ -33,23 +33,40 @@ export function SettingsPanel({ onClose }: SettingsProps) {
   // Local draft — don't commit to store until Save is clicked
   const [draft, setDraft] = useState<Settings>({ ...settings });
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
+  const [testError, setTestError] = useState<string>('');
 
   function patch(key: keyof Settings, value: string) {
     setDraft((prev) => ({ ...prev, [key]: value }));
   }
 
   async function handleTestConnection() {
-    if (!draft.pat) {
+    // Validate all 4 fields up front so the user knows exactly what's missing
+    const missing: string[] = [];
+    if (!draft.orgUrl?.trim()) missing.push('Organization URL');
+    if (!draft.project?.trim()) missing.push('Project');
+    if (!draft.repo?.trim()) missing.push('Repository');
+    if (!draft.pat?.trim()) missing.push('PAT');
+
+    if (missing.length) {
       setTestStatus('fail');
+      setTestError(`Missing: ${missing.join(', ')}`);
       return;
     }
+
     setTestStatus('testing');
+    setTestError('');
     try {
       const client = new AzureDevOpsClient(draft);
       const ok = await client.testConnection();
-      setTestStatus(ok ? 'ok' : 'fail');
-    } catch {
+      if (ok) {
+        setTestStatus('ok');
+      } else {
+        setTestStatus('fail');
+        setTestError('Check PAT scope (Code: Read & Write), org URL, project name, and repo name.');
+      }
+    } catch (err) {
       setTestStatus('fail');
+      setTestError(err instanceof Error ? err.message : 'Network error');
     }
   }
 
@@ -135,8 +152,11 @@ export function SettingsPanel({ onClose }: SettingsProps) {
               <span className="connection-status connection-status--ok">Connected</span>
             )}
             {testStatus === 'fail' && (
-              <span className="connection-status connection-status--fail">
-                Failed — check PAT + URL
+              <span
+                className="connection-status connection-status--fail"
+                title={testError || undefined}
+              >
+                {testError || 'Failed — check PAT + URL'}
               </span>
             )}
           </div>

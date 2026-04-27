@@ -2,6 +2,18 @@
 
 A Figma plugin for the BUMA design system that lets designers pull, edit, and push DTCG design tokens directly from the Figma canvas — no developer handoff required.
 
+## For org users (designers)
+
+If you're a BUMA designer, **you don't need this README**. The plugin is
+installed for the whole organization automatically:
+
+1. Open Figma → **Plugins** menu → search "BTech Token Studio"
+2. Click **Run** → Settings → paste your Azure DevOps PAT → Save
+3. You're done. See [`docs/plugin-onboarding.md`](../docs/plugin-onboarding.md) for the full first-time guide (PAT scope, expiry, troubleshooting).
+
+The rest of this README is **for plugin maintainers / developers** —
+you don't need to clone the repo or build anything to use the plugin.
+
 ## What it does
 
 - **Pull** all token JSON files from `packages/tokens/sources/**` in the Azure DevOps repository
@@ -12,7 +24,11 @@ A Figma plugin for the BUMA design system that lets designers pull, edit, and pu
 
 Tokens are stored locally per-user in Figma's `clientStorage` (encrypted). Changes are persisted to storage automatically on every edit.
 
-## Building
+## Building (developer-only)
+
+> Ordinary designers should install the plugin from the Figma Plugins
+> menu — they don't need to build anything. The instructions below are
+> for plugin maintainers iterating on the plugin code itself.
 
 ```bash
 # Install dependencies (run from repo root)
@@ -33,7 +49,7 @@ Build outputs:
 | File | Purpose |
 |---|---|
 | `dist/code.js` | Figma main thread (sandbox) |
-| `dist/ui.html` | Plugin UI (self-contained HTML) |
+| `dist/index.html` | Plugin UI (self-contained HTML) |
 
 ## Installing in Figma (development)
 
@@ -42,7 +58,10 @@ Build outputs:
 3. Select `btech-token-studio/manifest.json` from your local clone
 4. The plugin appears under **Plugins → Development → BTech Token Studio**
 
-For org-wide deployment (Enterprise), upload `dist/code.js` + `dist/ui.html` via the Figma Admin console under **Org plugins**.
+For **org-wide deployment** (BUMA Figma Organization plan), see
+[`docs/plugin-publishing.md`](../docs/plugin-publishing.md) — release is
+fully automated via Azure DevOps pipelines and the admin uploads a
+prepackaged ZIP to the Figma admin UI.
 
 ## First-time setup
 

@@ -993,7 +993,14 @@ a {
 .tree-branch__body::before {
   content: '';
   position: absolute;
-  left: 0;
+  /*
+   * Vertical line sits directly under the parent caret's centre column.
+   *   parent heading: padding-left 8 + caret half-width 4 = 12 px from the
+   *   tree-branch's left edge. The body has margin-left: 4, so a tree-line
+   *   `left` of 8 puts the rule at 4 + 8 = 12 px — flush below the caret's
+   *   ▾ glyph instead of floating 8 px to its left.
+   */
+  left: 8px;
   top: 0;
   /*
    * Anchor the curve by HEIGHT (not bottom) so the bend aligns with the
@@ -1006,7 +1013,16 @@ a {
    * default at 16 px so the leaf row case (the most visible one) is right.
    */
   height: 16px;
-  width: 8px;
+  /*
+   * Horizontal stub extends from the parent-caret column toward the first
+   * child, but stops short of the content so the bend has breathing room.
+   * Body content starts at padding-left: 14 px; leaf-row pads another 8 px
+   * before the first chip → chip left edge at 22 px from body left. We
+   * end the stub at left + width = 8 + 10 = 18 px, leaving a 4 px gap
+   * between `╰─` and the swatch (and ~8 px before a nested caret at 26 px).
+   * Looks like a guideline pointing at the content rather than touching it.
+   */
+  width: 10px;
   border-left: 1px solid var(--figma-color-border);
   border-bottom: 1px solid var(--figma-color-border);
   border-bottom-left-radius: 6px;

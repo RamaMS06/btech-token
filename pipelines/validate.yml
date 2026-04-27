@@ -77,6 +77,16 @@ jobs:
       - script: pnpm validate
         displayName: 'Run validators (contrast + boundary + workspace-deps)'
 
+      # ── Plugin smoke build (catches breakage before merge) ──────────────
+      # Plugin lives in btech-token-studio/ and is published independently
+      # via plugin-publish.yml. Validate here only checks build doesn't
+      # break — it does NOT publish anything.
+      - script: pnpm --filter @btech/token-studio exec tsc --noEmit
+        displayName: 'Plugin type-check'
+
+      - script: pnpm --filter @btech/token-studio build
+        displayName: 'Plugin build (smoke test)'
+
       # ── Flutter: tokens platform only ────────────────────────────────────
       - script: flutter pub get
         displayName: 'Flutter pub get (tokens-flutter)'
