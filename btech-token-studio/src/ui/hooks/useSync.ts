@@ -13,7 +13,12 @@
  *   2. Detect scope tag from changed paths.
  *   3. Create branch figma/<timestamp>-<scope>.
  *   4. Push a single atomic commit.
- *   5. Open a PR with the scope label + "release:rc".
+ *   5. Open a PR carrying only the scope label (and `version:<x>` when the
+ *      designer proposed a specific number). The release channel is decided
+ *      by CI from the merge target — main produces stable `vX.Y.Z` tags via
+ *      auto-version.yml's default `patch` bump. The plugin no longer
+ *      hardcodes `release:rc`, which previously forced every push to become
+ *      a prerelease regardless of where it merged.
  *   6. Mark all dirty sets as clean.
  */
 
@@ -220,10 +225,16 @@ export function useSync() {
       const prDescription =
         `Token changes from Figma plugin.\n\n**Scope:** ${scopeTag}\n**Tenants:** ${tenantList}${versionDescriptor}\n\n**Changed files:**\n${pathList}`;
 
-      // Build the PR label set. `version:<x>` is added when the designer
-      // proposed a different version — auto-version.yml parses it via the
-      // `set <version>` mode of bump-version.ts.
-      const labels = [scopeTag, 'release:rc'];
+      // Build the PR label set. Only the scope label travels by default —
+      // CI derives the bump verb from the merge target (main → patch
+      // produces stable `vX.Y.Z` tags). The hardcoded `release:rc` that
+      // used to live here forced every push into the rc channel even when
+      // the PR targeted main; we don't want that on main.
+      //
+      // `version:<x>` is appended when the designer proposed a specific
+      // number — auto-version.yml parses it via bump-version.ts's
+      // `set <version>` mode and that overrides the branch default.
+      const labels = [scopeTag];
       if (nextVersion && nextVersion !== baseVersion) {
         labels.push(`version:${nextVersion}`);
       }
