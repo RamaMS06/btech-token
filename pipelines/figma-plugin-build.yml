@@ -1,0 +1,76 @@
+name: Build Figma Plugin
+
+# Runs when plugin source or its workspace config changes.
+# Does NOT publish — the Figma Org private plugin is uploaded manually by an
+# admin via the Figma console. This pipeline only validates that the code
+# compiles and type-checks clean.
+trigger:
+  branches:
+    include:
+      - main
+      - feat/*
+  paths:
+    include:
+      - btech-token-studio/**
+      - pnpm-workspace.yaml
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - btech-token-studio/**
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: build_plugin
+    displayName: 'Type-check + build @btech/token-studio'
+
+    steps:
+      # ── Node / pnpm ──────────────────────────────────────────────────────
+      - task: NodeTool@0
+        displayName: 'Setup Node.js 20'
+        inputs:
+          versionSpec: '20.x'
+
+      - script: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+        displayName: 'Setup pnpm 9'
+
+      # Auth to Azure Artifacts feed so `pnpm install` can resolve
+      # @btech/tokens (the base package the plugin dogfoods).
+      - task: npmAuthenticate@0
+        displayName: 'Authenticate with Azure Artifacts'
+        inputs:
+          workingFile: .npmrc
+
+      - script: pnpm install --frozen-lockfile
+        displayName: 'Install JS dependencies'
+
+      # ── Type-check ────────────────────────────────────────────────────────
+      # Run tsc first — catches errors before the slower Vite build.
+      - script: pnpm --filter @btech/token-studio tsc
+        displayName: 'TypeScript type-check (@btech/token-studio)'
+
+      # ── Build ─────────────────────────────────────────────────────────────
+      # Produces dist/code.js (main thread) + dist/ui.html (UI iframe).
+      - script: pnpm --filter @btech/token-studio build
+        displayName: 'Build plugin assets (@btech/token-studio)'
+
+      # ── Verify outputs ────────────────────────────────────────────────────
+      # Belt-and-suspenders: confirm the expected files were emitted.
+      - script: |
+          if [ ! -f btech-token-studio/dist/code.js ]; then
+            echo "❌  dist/code.js missing — main thread build failed."
+            exit 1
+          fi
+          if [ ! -f btech-token-studio/dist/ui.html ]; then
+            echo "❌  dist/ui.html missing — UI build failed."
+            exit 1
+          fi
+          echo "✓  dist/code.js and dist/ui.html present."
+        displayName: 'Verify dist outputs'
