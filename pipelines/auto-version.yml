@@ -15,9 +15,24 @@ trigger:
     include:
       - main
   paths:
-    # Skip commits that are themselves version bumps or generated outputs.
+    # ONLY trigger when something that affects the published package changed.
+    # Anything outside this list (docs, scripts, tools, pipelines, README,
+    # demo apps, etc.) merging to main will NOT publish a new version.
+    include:
+      - packages/tokens/sources/**                    # token JSONs (designer + Figma plugin)
+      - packages/tokens/generators/**                 # generator code
+      - packages/tokens/sd.config.ts                  # Style Dictionary config
+      - packages/tokens/platforms/**/package.json     # manual version edits (web)
+      - packages/tokens/platforms/**/pubspec.yaml     # manual version edits (flutter)
+      - packages/tokens/platforms/**/pyproject.toml   # manual version edits (python)
+    # Re-exclude derivative outputs so a generate-only commit cascade doesn't
+    # falsely trip the trigger. Real source changes still cascade through to
+    # this trigger because `sources/**` is in the include list.
     exclude:
-      - 'packages/tokens/platforms/**'
+      - 'packages/tokens/platforms/web/*/dist/**'
+      - 'packages/tokens/platforms/web/*/src/**'
+      - 'packages/tokens/platforms/flutter/*/lib/src/**'
+      - 'packages/tokens/platforms/flutter/*/lib/btech_tokens.dart'
 
 pr: none
 
@@ -53,6 +68,35 @@ jobs:
 
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
+
+      # ── Defensive guard: confirm the merge actually changed token sources ──
+      # The trigger paths filter is the first line of defense. This is the
+      # second — it inspects the actual diff of the merge commit and skips
+      # the release if (somehow) only derivative or unrelated files changed.
+      # This protects against:
+      #   • PRs that touch ONLY pipelines/, docs/, scripts/, tools/, README
+      #   • Path filter false positives from glob edge cases
+      #   • Manual commits to main that bypass PR review
+      - script: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- \
+            'packages/tokens/sources/**' \
+            'packages/tokens/generators/**' \
+            'packages/tokens/sd.config.ts' \
+            'packages/tokens/platforms/web/*/package.json' \
+            'packages/tokens/platforms/flutter/*/pubspec.yaml' \
+            'packages/tokens/platforms/python/*/pyproject.toml' \
+            2>/dev/null || true)
+
+          if [ -z "$CHANGED" ]; then
+            echo "##[warning]No token-source / generator / version-manifest changes in this merge."
+            echo "##[warning]Skipping release — nothing to publish."
+            echo "##vso[task.setvariable variable=SKIP_RELEASE]true"
+            exit 0
+          fi
+
+          echo "##[section]Token-related changes detected:"
+          echo "$CHANGED"
+        displayName: 'Detect real token changes (skip release if none)'
 
       # ── Capture root version BEFORE bump (for tag-guard later) ──────────
       # Root `package.json` is the canonical platform version. All derived
