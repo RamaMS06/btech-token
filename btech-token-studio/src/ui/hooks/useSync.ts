@@ -103,8 +103,33 @@ export function useSync() {
       // Get the HEAD SHA so we can store it for future change detection
       const sha = await client.getBranchHead(settings.baseBranch);
 
+      // Fetch the canonical platform version from the repo-root package.json
+      // so the header VersionField pre-fills with the right number. Reading
+      // from the root rather than the web base package keeps the displayed
+      // version platform-agnostic — Flutter and Python publish at the same
+      // version; the displayed number is the platform release, not the web
+      // package's number specifically.
+      // Failure here is non-fatal — we still complete the pull, just without
+      // a baseline.
+      let baseVersion: string | null = null;
+      try {
+        const pkgJson = await client.getFileContent(
+          'package.json',
+          settings.baseBranch,
+        );
+        const parsed = JSON.parse(pkgJson) as { version?: string };
+        if (parsed.version) baseVersion = parsed.version;
+      } catch (err) {
+        // Don't block the pull on a missing version file — designer can
+        // still edit and push; auto-version.yml will then bump as usual.
+        console.warn('[BTech Token Studio] Could not read root version:', err);
+      }
+
       tokenStore.setSets(sets);
       tokenStore.setLastPull(sha, Date.now());
+      // setBaseVersion also resets nextVersion to the same value, which is
+      // exactly what we want after a fresh pull.
+      tokenStore.setBaseVersion(baseVersion);
 
       setSyncState({
         status: 'success',
@@ -167,8 +192,16 @@ export function useSync() {
       }));
 
       const tenantList = tenants.length > 0 ? tenants.join(', ') : 'none';
+      // Capture the proposed version once, before the async push, so the
+      // value can't drift if the user keeps typing in VersionField.
+      const baseVersion = tokenStore.baseVersion;
+      const nextVersion = tokenStore.nextVersion;
+      const versionLine =
+        nextVersion && nextVersion !== baseVersion
+          ? `\nTarget version: ${nextVersion}`
+          : '';
       const commitMessage =
-        `feat(tokens): update from Figma\n\nScope: ${scopeTag}\nTenants: ${tenantList}`;
+        `feat(tokens): update from Figma\n\nScope: ${scopeTag}\nTenants: ${tenantList}${versionLine}`;
 
       setSyncState({ status: 'pushing', message: 'Committing changes…', prUrl: null });
       await client.pushChanges({
@@ -180,8 +213,20 @@ export function useSync() {
       });
 
       const pathList = changedPaths.map((p) => `- ${p}`).join('\n');
+      const versionDescriptor =
+        nextVersion && nextVersion !== baseVersion
+          ? `\n**Target version:** ${nextVersion} (was ${baseVersion ?? 'unknown'})`
+          : '';
       const prDescription =
-        `Token changes from Figma plugin.\n\n**Scope:** ${scopeTag}\n**Tenants:** ${tenantList}\n\n**Changed files:**\n${pathList}`;
+        `Token changes from Figma plugin.\n\n**Scope:** ${scopeTag}\n**Tenants:** ${tenantList}${versionDescriptor}\n\n**Changed files:**\n${pathList}`;
+
+      // Build the PR label set. `version:<x>` is added when the designer
+      // proposed a different version — auto-version.yml parses it via the
+      // `set <version>` mode of bump-version.ts.
+      const labels = [scopeTag, 'release:rc'];
+      if (nextVersion && nextVersion !== baseVersion) {
+        labels.push(`version:${nextVersion}`);
+      }
 
       setSyncState({ status: 'pushing', message: 'Opening pull request…', prUrl: null });
       const pr = await client.createPullRequest({
@@ -189,11 +234,13 @@ export function useSync() {
         targetBranch: settings.baseBranch,
         title: `[Figma] Update tokens — ${scopeTag}`,
         description: prDescription,
-        labels: [scopeTag, 'release:rc'],
+        labels,
       });
 
-      // PR created — mark sets clean so the dirty badge disappears
-      tokenStore.markCleanAll();
+      // PR created — refresh `originalTree` from the just-pushed `tree`
+      // so the next "Clear changes" reverts to what's in flight to the
+      // repo, not to whatever was last pulled. Also clears the dirty flag.
+      tokenStore.snapshotAfterPush();
 
       setSyncState({
         status: 'success',

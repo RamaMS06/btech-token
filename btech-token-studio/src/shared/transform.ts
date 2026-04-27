@@ -151,6 +151,28 @@ export function parseJsonToSet(path: string, json: string): TokenSet {
     path,
     name: id,
     tree,
+    // Deep clone via JSON for the revert source. DTCG trees are pure JSON
+    // (no functions, no Dates, no Maps) so the round-trip is lossless and
+    // the clone shares no references with `tree`. We avoid `structuredClone`
+    // because the Figma plugin sandbox cannot be relied upon to expose it
+    // across all host versions.
+    originalTree: JSON.parse(JSON.stringify(tree)) as DTCGGroup,
+    dirty: false,
+  };
+}
+
+// ── Snapshot helper ─────────────────────────────────────────────────────────
+
+/**
+ * Refresh `originalTree` from the current `tree`. Called after a successful
+ * push so the next "Clear changes" reverts to what's now committed in repo,
+ * not to whatever was last pulled. Returns a new TokenSet object — callers
+ * must replace the entry in the store rather than mutate in place.
+ */
+export function snapshotSet(set: TokenSet): TokenSet {
+  return {
+    ...set,
+    originalTree: JSON.parse(JSON.stringify(set.tree)) as DTCGGroup,
     dirty: false,
   };
 }

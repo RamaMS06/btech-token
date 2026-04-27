@@ -14,10 +14,12 @@ export function ensureTenantPackageJson(tenantId: string): void {
 
   const pkgJsonPath = `${pkgDir}/package.json`;
   if (!existsSync(pkgJsonPath)) {
-    // Read version from base package to stay in sync
-    const basePkgPath = `${ROOT}/platforms/web/token/package.json`;
-    const version = existsSync(basePkgPath)
-      ? JSON.parse(readFileSync(basePkgPath, 'utf-8')).version ?? '1.0.0'
+    // Seed from the canonical platform version at the repo root rather than
+    // the web base package — the root version is platform-agnostic and is
+    // the single source of truth for "what version is this design system at".
+    const rootPkgPath = `${ROOT}/../../package.json`; // packages/tokens/ → repo root
+    const version = existsSync(rootPkgPath)
+      ? JSON.parse(readFileSync(rootPkgPath, 'utf-8')).version ?? '1.0.0'
       : '1.0.0';
 
     const pkgJson = {

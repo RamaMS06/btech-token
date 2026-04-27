@@ -72,6 +72,18 @@ export interface TokenSet {
   name: string;
   tree: DTCGGroup;
   /**
+   * Deep-clone of `tree` taken at last successful pull (or push). Acts as the
+   * revert source for the "Clear changes" action — set tree = originalTree to
+   * undo every local edit. Persisted alongside `tree` so a designer who
+   * reloads the plugin can still revert.
+   *
+   * For sets created locally (e.g. a tenant override file that didn't exist
+   * in the repo yet), `originalTree` is the empty group. Reverting in that
+   * case wipes the entries the designer just added — which is the correct
+   * "back to last pulled state" semantics.
+   */
+  originalTree: DTCGGroup;
+  /**
    * True when local state differs from the last pulled SHA.
    * Cleared on successful push or pull.
    */
@@ -83,6 +95,19 @@ export interface TokenStorageState {
   sets: Record<string, TokenSet>;
   lastPullSha: string | null;
   lastPullAt: number | null;
+  /**
+   * Currently published `@btech/tokens` version, fetched from
+   * packages/tokens/platforms/web/token/package.json on pull. Null when the
+   * plugin has never pulled.
+   */
+  baseVersion: string | null;
+  /**
+   * Designer-proposed version for the next push. Defaults to `baseVersion`
+   * after pull; designer can edit it through the header VersionField.
+   * Sent as a `version:<x>` PR label so auto-version.yml can set the new
+   * version explicitly instead of semver-bumping.
+   */
+  nextVersion: string | null;
 }
 
 // ── Settings model ──────────────────────────────────────────────────────────

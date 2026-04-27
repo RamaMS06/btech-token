@@ -33,8 +33,12 @@ const SNAPSHOT_SIZE_LIMIT = 100 * 1024; // 100KB in characters
 // ── Launch ────────────────────────────────────────────────────────────────────
 
 figma.showUI(__html__, {
-  width: 480,
-  height: 720,
+  // Sized for the nested tree layout — the right panel needs enough horizontal
+  // space to fit a full row of color swatches without wrapping (≈9–10 swatches
+  // × 30 px + sidebar). Height stays compact so the plugin doesn't dominate
+  // the Figma canvas; the body scrolls when content overflows.
+  width: 580,
+  height: 640,
   // themeColors: true makes the UI adopt the host app's dark/light theme.
   // Combined with our CSS var usage, this means the plugin looks native.
   themeColors: true,
@@ -73,6 +77,8 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         sets: {},
         lastPullSha: null,
         lastPullAt: null,
+        baseVersion: null,
+        nextVersion: null,
       };
       send({ type: 'tokens-loaded', payload });
       break;

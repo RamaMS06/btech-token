@@ -21,6 +21,8 @@ import {
 import { generateUtilitiesCss } from './generators/web/web-utilities-generator.js';
 import { appendTypographyCompositesCss } from './generators/web/web-typography-composites.js';
 import { generateFlutterTenantPackages } from './generators/flutter/flutter-tenant-format.js';
+import { generatePythonFiles } from './generators/python/python-generator.js';
+import { generatePythonTenantPackages } from './generators/python/python-tenant-format.js';
 
 // =============================================================================
 // Register custom Style Dictionary transforms
@@ -228,9 +230,15 @@ function buildResolvedBaseMap(): Record<string, string> {
     // Post-build: generate per-tenant web packages (platforms/web/tenants/{id}/)
     generateWebTenantPackages();
 
+    // Python — base package + per-tenant packages
+    generatePythonFiles(data);
+    console.log('  Python  — base package generated');
+    generatePythonTenantPackages();
+
     console.log('\n pnpm generate complete\n');
     console.log('  Flutter → packages/tokens/platforms/flutter/token/lib/src/');
     console.log('  Web     → packages/tokens/platforms/web/token/src/ + dist/');
+    console.log('  Python  → packages/tokens/platforms/python/token/btech_tokens/');
     console.log('');
   }
 

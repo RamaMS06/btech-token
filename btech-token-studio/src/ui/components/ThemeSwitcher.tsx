@@ -1,48 +1,101 @@
 /**
  * ThemeSwitcher — tenant filter dropdown in the top toolbar
  * ----------------------------------------------------------
- * Phase 1 behaviour: selecting a tenant filters the sidebar to show only
- * that tenant's sets + base sets (core/semantic/components). It does NOT
- * resolve values (base + override merging is Phase 3).
+ * Picks which tenant's overrides are merged into the values shown in the
+ * right panel. The sidebar list (which token sets exist) is independent of
+ * this selection — only the *values* change.
  *
- * Tenant options are derived from the loaded sets — any set with a path
- * under "tenants/<id>/" contributes a tenant option. If no tenant sets are
- * loaded, the dropdown still renders but only shows "All sets".
+ * Options:
+ *   - "Default"    → no overrides applied; designers see base values
+ *   - "<tenantId>" → that tenant's overrides merged into base values for
+ *                    every leaf whose path appears in tenants/<id>/overrides.json
+ *
+ * The dropdown only lists tenants that actually have an override file
+ * loaded — pulling the repo with no tenant overrides means just "Default".
+ *
+ * Switching while dirty
+ * ---------------------
+ * Switching tenants discards unsaved edits (the store calls `discardAll`
+ * on tenant change). When dirty work exists, we put up a ConfirmDialog so
+ * the designer doesn't lose work to a stray click. With no dirty sets the
+ * switch is instant — no confirmation, no friction.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTokens } from '../hooks/useTokens.js';
+import { listAvailableTenants } from '../../shared/tenant-resolver.js';
+import { ConfirmDialog } from './ConfirmDialog.js';
+
+/** Title-Case a tenant id for display: "bspace" → "Bspace" */
+function prettifyTenantId(id: string): string {
+  return id
+    .replace(/[-_]+/g, ' ')
+    .split(' ')
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(' ');
+}
 
 export function ThemeSwitcher() {
-  const { sets, activeTenant, setActiveTenant } = useTokens();
+  const { sets, activeTenant, setActiveTenant, discardAll } = useTokens();
+  const tenants = useMemo(() => listAvailableTenants(sets), [sets]);
+  const dirtyCount = useMemo(
+    () => Object.values(sets).filter((s) => s.dirty).length,
+    [sets],
+  );
 
-  const tenants = useMemo(() => {
-    const ids = new Set<string>();
-    for (const id of Object.keys(sets)) {
-      if (id.startsWith('tenants/')) {
-        const parts = id.split('/');
-        if (parts[1]) ids.add(parts[1]);
-      }
+  // Pending tenant id captured from the dropdown when we need to confirm
+  // first. `null` means "no switch in flight".
+  const [pendingTenant, setPendingTenant] = useState<string | null | undefined>(undefined);
+
+  function handleChange(value: string) {
+    const next = value || null;
+    if (next === activeTenant) return;
+
+    if (dirtyCount > 0) {
+      // Park the request, surface the confirm modal
+      setPendingTenant(next);
+      return;
     }
-    return Array.from(ids).sort();
-  }, [sets]);
+    setActiveTenant(next);
+  }
+
+  function confirmSwitch() {
+    if (pendingTenant === undefined) return;
+    discardAll();
+    setActiveTenant(pendingTenant);
+    setPendingTenant(undefined);
+  }
 
   return (
     <div className="theme-switcher">
-      <label htmlFor="tenant-select" className="theme-switcher__label">
-        Tenant
-      </label>
+      <span className="theme-switcher__label">Tenant</span>
       <select
-        id="tenant-select"
         className="theme-switcher__select"
         value={activeTenant ?? ''}
-        onChange={(e) => setActiveTenant(e.target.value || null)}
+        onChange={(e) => handleChange(e.target.value)}
+        aria-label="Active tenant"
       >
-        <option value="">All sets</option>
+        <option value="">Default</option>
         {tenants.map((id) => (
-          <option key={id} value={id}>{id}</option>
+          <option key={id} value={id}>{prettifyTenantId(id)}</option>
         ))}
       </select>
+
+      {pendingTenant !== undefined && (
+        <ConfirmDialog
+          title="Switch tenant?"
+          body={
+            <>
+              You have <strong>{dirtyCount}</strong> unsaved {dirtyCount === 1 ? 'change' : 'changes'}.
+              Switching tenants will discard {dirtyCount === 1 ? 'it' : 'them'} and revert to the last pulled state.
+            </>
+          }
+          confirmLabel="Discard & switch"
+          cancelLabel="Stay here"
+          onConfirm={confirmSwitch}
+          onClose={() => setPendingTenant(undefined)}
+        />
+      )}
     </div>
   );
 }

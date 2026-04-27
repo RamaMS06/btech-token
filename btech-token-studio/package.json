@@ -10,10 +10,11 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
+    "ajv": "^8.18.0",
+    "geist": "^1.7.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "zustand": "^4.5.5",
-    "ajv": "^8.18.0"
+    "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@figma/plugin-typings": "^1.105.0",

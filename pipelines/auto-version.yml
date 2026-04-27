@@ -8,6 +8,7 @@ name: Auto Version on Merge
 #   release:minor  → X.Y+1.0
 #   release:patch  → X.Y.Z+1  (default — no label needed)
 #   release:rc     → X.Y.Z-rc.N  (pre-release; rc counter auto-increments)
+#   version:<x>    → write that exact version (overrides release:* when present)
 #   no-release     → skip entirely (docs, chore, etc.)
 trigger:
   branches:
@@ -53,12 +54,15 @@ jobs:
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
 
-      # ── Capture base version BEFORE bump (for tag-guard later) ───────────
+      # ── Capture root version BEFORE bump (for tag-guard later) ──────────
+      # Root `package.json` is the canonical platform version. All derived
+      # packages (web/flutter/python base + tenants) mirror it under the
+      # reset rule (see scripts/bump-version.ts).
       - script: |
-          PREV=$(node -p "require('./packages/tokens/platforms/web/token/package.json').version")
-          echo "Previous base version: $PREV"
-          echo "##vso[task.setvariable variable=PREV_BASE_VERSION]$PREV"
-        displayName: 'Capture previous base version'
+          PREV=$(node -p "require('./package.json').version")
+          echo "Previous root version: $PREV"
+          echo "##vso[task.setvariable variable=PREV_ROOT_VERSION]$PREV"
+        displayName: 'Capture previous root version'
 
       # ── Determine bump type & scope from PR labels ───────────────────────
       # PR_TAGS is set in the btech-ds-secrets variable group.
@@ -79,6 +83,15 @@ jobs:
             echo "Label 'no-release' found — skipping release."
             echo "##vso[task.setvariable variable=SKIP_RELEASE]true"
             exit 0
+          fi
+
+          # `version:<x.y.z>` PR label overrides everything else — designer
+          # supplied the literal next version through the Figma plugin's
+          # VersionField. We pass it to bump-version.ts via `set <x>` mode.
+          TARGET=$(echo "$TAGS" | grep -oE "version:[0-9A-Za-z.+-]+" | head -n1 | cut -d: -f2-)
+          if [ -n "$TARGET" ]; then
+            echo "Detected version target: $TARGET"
+            echo "##vso[task.setvariable variable=TARGET_VERSION]$TARGET"
           fi
 
           if echo "$TAGS" | grep -q "release:major"; then
@@ -114,17 +127,30 @@ jobs:
           PR_TAGS: $(PR_TAGS)
 
       # ── Bump version ─────────────────────────────────────────────────────
-      - script: pnpm exec tsx scripts/bump-version.ts $(BUMP_TYPE) $(SCOPE_FLAG)
+      # When the PR carries a `version:<x>` label, we delegate to bump-
+      # version.ts's `set` mode which writes that exact version. Otherwise
+      # we semver-bump per the release:* label.
+      - script: |
+          if [ -n "$(TARGET_VERSION)" ]; then
+            echo "Setting version to $(TARGET_VERSION) ($SCOPE_FLAG)"
+            pnpm exec tsx scripts/bump-version.ts set "$(TARGET_VERSION)" $(SCOPE_FLAG)
+          else
+            echo "Bumping $(BUMP_TYPE) ($SCOPE_FLAG)"
+            pnpm exec tsx scripts/bump-version.ts $(BUMP_TYPE) $(SCOPE_FLAG)
+          fi
         displayName: 'Bump package versions (scoped)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
-      # ── Read new version ─────────────────────────────────────────────────
+      # ── Read new root version ────────────────────────────────────────────
+      # bump-version.ts also exposes NEW_ROOT_VERSION / RESET_ALL via
+      # ##vso[task.setvariable] but we re-read here for resilience — the
+      # bump step may have been skipped if SKIP_RELEASE was set.
       - script: |
-          VERSION=$(node -p "require('./packages/tokens/platforms/web/token/package.json').version")
-          echo "New version: $VERSION"
-          echo "##vso[task.setvariable variable=NEW_VERSION]$VERSION"
+          VERSION=$(node -p "require('./package.json').version")
+          echo "New root version: $VERSION"
+          echo "##vso[task.setvariable variable=NEW_ROOT_VERSION]$VERSION"
           echo "##vso[task.setvariable variable=NEW_TAG]v$VERSION"
-        displayName: 'Read new version'
+        displayName: 'Read new root version'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # ── Validate tokens ──────────────────────────────────────────────────
@@ -133,36 +159,77 @@ jobs:
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # ── Commit version bump back to main ─────────────────────────────────
-      # A git tag is pushed ONLY when the BASE version changed. Tenant-only
-      # bumps commit the new tenant package.json(s) back to main without a
-      # tag — publish of tenant-only changes is triggered manually (Run
-      # pipeline → publish.yml) to keep the pipeline flow predictable.
+      # Tagging strategy:
+      #   - Root version changed     → push `v<root>` (publishes base + tenants
+      #                                via the reset rule in publish.yml)
+      #   - Tenant-only bump (single)→ push `<tenant>-v<version>` (publishes
+      #                                only that tenant)
+      #   - Multiple tenants bumped  → push one `<tenant>-v<version>` per
+      #                                tenant (each fires publish.yml)
+      # Both tag forms are honoured by publish.yml, so every successful bump
+      # results in an automatic release without manual intervention.
       - script: |
+          set -e
           git config user.name "Azure Pipelines"
           git config user.email "azure-pipelines@users.noreply.azure.com"
 
           git add \
+            package.json \
             packages/tokens/platforms/web/token/package.json \
             packages/tokens/platforms/flutter/token/pubspec.yaml \
-            packages/tokens/platforms/web/*/package.json
+            packages/tokens/platforms/web/*/package.json \
+            packages/tokens/platforms/python/token/pyproject.toml \
+            packages/tokens/platforms/python/tenants/*/pyproject.toml || true
+
+          # Skip empty commits — `set 1.0.0` on an already-1.0.0 tree is a no-op.
+          if git diff --staged --quiet; then
+            echo "No version changes to commit — exiting cleanly."
+            exit 0
+          fi
 
           git commit -m "chore(release): bump to $(NEW_TAG) ***NO_CI***
 
           Auto-bumped by Azure Pipelines after merging PR.
           Bump type: $(BUMP_TYPE)
           Scope:     $(SCOPE_FLAG)
-          Base:      @btech/tokens@$(NEW_VERSION)"
+          Root:      @btech/design-system@$(NEW_ROOT_VERSION)"
 
-          if [ "$(NEW_VERSION)" != "$(PREV_BASE_VERSION)" ]; then
-            echo "Base version changed ($(PREV_BASE_VERSION) → $(NEW_VERSION)) — tagging $(NEW_TAG)."
+          TAGS=()
+          if [ "$(NEW_ROOT_VERSION)" != "$(PREV_ROOT_VERSION)" ]; then
+            # Root moved → single root tag covers base + tenants in publish.yml
+            echo "Root version changed ($(PREV_ROOT_VERSION) → $(NEW_ROOT_VERSION)) — tagging $(NEW_TAG)."
             git tag $(NEW_TAG) -m "Release $(NEW_TAG)"
-            git push origin HEAD:main --follow-tags
+            TAGS+=("$(NEW_TAG)")
           else
-            echo "Base version unchanged ($(PREV_BASE_VERSION)) — tenant-only bump, skipping tag."
-            echo "To publish the tenant(s), manually run pipelines/publish.yml."
-            git push origin HEAD:main
+            # Tenant-only bump path — one tag per changed tenant package
+            echo "Root version unchanged — looking for tenant-only bumps."
+            for pkg in packages/tokens/platforms/web/*/package.json; do
+              dir=$(dirname "$pkg")
+              tenant=$(basename "$dir")
+              [ "$tenant" = "token" ] && continue
+              # Only tag when the tenant package version actually changed in
+              # this commit. `git log -1 --name-only` lists files touched.
+              if git log -1 --name-only --pretty=format: HEAD | grep -q "$pkg"; then
+                tv=$(node -p "require('./$pkg').version")
+                tag="${tenant}-v${tv}"
+                echo "Tenant '$tenant' bumped → tagging $tag"
+                git tag "$tag" -m "Release $tag"
+                TAGS+=("$tag")
+              fi
+            done
           fi
-        displayName: 'Commit version bump & push tag (base-only)'
+
+          if [ ${#TAGS[@]} -eq 0 ]; then
+            echo "Nothing tagged — pushing commit only."
+            git push origin HEAD:main
+          else
+            echo "Pushing ${#TAGS[@]} tag(s): ${TAGS[*]}"
+            git push origin HEAD:main
+            for tag in "${TAGS[@]}"; do
+              git push origin "$tag"
+            done
+          fi
+        displayName: 'Commit version bump & push tag(s)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # Publish is handled by publish.yml — triggered by the v* tag above.

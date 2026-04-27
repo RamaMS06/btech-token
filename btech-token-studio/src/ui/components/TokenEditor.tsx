@@ -2,11 +2,17 @@
  * TokenEditor — modal for adding or editing a single token
  * ---------------------------------------------------------
  * Two modes:
- *   - "add"  : type selector first, then path + value + description + set picker
+ *   - "add"  : type selector first, then path + value + description
  *   - "edit" : path is read-only display, all other fields are editable
  *
- * Validation runs on save via Ajv (inline per-field errors).
- * On success the store's addToken/editToken is called and the modal closes.
+ * Routing is owned by the token store: when a tenant is active, both add
+ * and edit operations write to that tenant's `tenants/<id>/overrides.json`.
+ * Otherwise they write to the currently focused base set (`activeSetId`).
+ * The editor doesn't need to know — it just calls `editToken(path, …)` /
+ * `addToken(path, token)` and the store decides where the value lands.
+ *
+ * Validation runs on save via Ajv (inline per-field errors). On success the
+ * modal closes and the dirty badge appears on the affected set.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -21,8 +27,12 @@ interface TokenEditorProps {
   mode: 'add' | 'edit';
   /** Required in edit mode — the path of the token being edited */
   editPath?: string;
-  /** The active set id where the token lives (edit) or will be added (add) */
-  setId: string;
+  /**
+   * Pre-select this $type when opening in add mode (e.g. the per-section
+   * `+` button in TokenTreeView passes the section's type here). Ignored
+   * in edit mode — the existing token's type is used instead.
+   */
+  defaultType?: DTCGType;
   onClose: () => void;
 }
 
@@ -55,40 +65,65 @@ function parseValue(raw: string, type: DTCGType): DTCGToken['$value'] {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function TokenEditor({ mode, editPath, setId, onClose }: TokenEditorProps) {
-  const { sets, addToken, editToken } = useTokens();
-  const activeSet = sets[setId];
+export function TokenEditor({ mode, editPath, defaultType, onClose }: TokenEditorProps) {
+  const { sets, activeSetId, activeTenant, addToken, editToken } = useTokens();
 
-  // Form state
-  const [tokenType, setTokenType] = useState<DTCGType>('color');
+  // The "source of truth" set that the editor reads from when hydrating an
+  // edit form. For edit mode we still want to show the *resolved* value the
+  // designer clicked on — so we look up the leaf in the active base set,
+  // since override files are sparse and may not contain $type.
+  const baseSet = activeSetId ? sets[activeSetId] : null;
+
+  // Form state — when opening in add mode with a pre-selected type, seed it
+  // so the type dropdown lands on the right value without a flash of "color".
+  const [tokenType, setTokenType] = useState<DTCGType>(defaultType ?? 'color');
   const [path, setPath] = useState('');
   const [rawValue, setRawValue] = useState('');
   const [description, setDescription] = useState('');
-  const [targetSetId, setTargetSetId] = useState(setId);
   const [errors, setErrors] = useState<string[]>([]);
 
-  // Hydrate form when editing an existing token
+  // Hydrate form when editing an existing token. We read from the BASE set
+  // because that's where $type lives even when an override exists. The value
+  // shown is the override's value if present, falling back to base.
   useEffect(() => {
-    if (mode !== 'edit' || !editPath || !activeSet) return;
+    if (mode !== 'edit' || !editPath || !baseSet) return;
 
-    // Walk the tree to find the token
     const segments = editPath.split('.');
-    let node: unknown = activeSet.tree;
+    let baseNode: unknown = baseSet.tree;
     for (const seg of segments) {
-      if (typeof node !== 'object' || node === null) return;
-      node = (node as Record<string, unknown>)[seg];
+      if (typeof baseNode !== 'object' || baseNode === null) return;
+      baseNode = (baseNode as Record<string, unknown>)[seg];
     }
-    if (!node || typeof node !== 'object' || !('$value' in node)) return;
+    if (!baseNode || typeof baseNode !== 'object' || !('$value' in baseNode)) return;
 
-    const token = node as DTCGToken;
-    setTokenType(token.$type);
+    const baseLeaf = baseNode as DTCGToken;
+    setTokenType(baseLeaf.$type);
+    setDescription(baseLeaf.$description ?? '');
+
+    // If a tenant override exists for this path, prefer its current value so
+    // the editor opens on what the designer is actually looking at on screen.
+    let displayedValue: DTCGToken['$value'] = baseLeaf.$value;
+    if (activeTenant) {
+      const overrideId = `tenants/${activeTenant}/overrides`;
+      const overrideSet = sets[overrideId];
+      if (overrideSet) {
+        let n: unknown = overrideSet.tree;
+        for (const seg of segments) {
+          if (typeof n !== 'object' || n === null) { n = null; break; }
+          n = (n as Record<string, unknown>)[seg];
+        }
+        if (n && typeof n === 'object' && '$value' in n) {
+          displayedValue = (n as DTCGToken).$value;
+        }
+      }
+    }
+
     setRawValue(
-      typeof token.$value === 'object'
-        ? JSON.stringify(token.$value, null, 2)
-        : String(token.$value),
+      typeof displayedValue === 'object'
+        ? JSON.stringify(displayedValue, null, 2)
+        : String(displayedValue),
     );
-    setDescription(token.$description ?? '');
-  }, [mode, editPath, activeSet]);
+  }, [mode, editPath, baseSet, activeTenant, sets]);
 
   // ── Save ──────────────────────────────────────────────────────────────────
 
@@ -112,9 +147,10 @@ export function TokenEditor({ mode, editPath, setId, onClose }: TokenEditorProps
         setErrors(['Path is required.']);
         return;
       }
-      addToken(targetSetId, path.trim(), token);
+      addToken(path.trim(), token);
     } else if (editPath) {
-      editToken(setId, editPath, token);
+      // For edits the store routes on tenant context; we pass updates only.
+      editToken(editPath, token);
     }
 
     onClose();
@@ -122,7 +158,10 @@ export function TokenEditor({ mode, editPath, setId, onClose }: TokenEditorProps
 
   // ── Render ────────────────────────────────────────────────────────────────
 
-  const allSetIds = Object.keys(sets);
+  // Visible target description so designers know where the edit will land.
+  const targetLabel = activeTenant
+    ? `tenants/${activeTenant}/overrides`
+    : (baseSet?.id ?? '—');
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -133,6 +172,12 @@ export function TokenEditor({ mode, editPath, setId, onClose }: TokenEditorProps
         </div>
 
         <div className="modal__body">
+          {/* Routing hint — keeps the designer aware that tenant edits land on the override file */}
+          <div className="form-routing-hint" role="note">
+            <span className="form-routing-hint__label">Saves to</span>
+            <span className="form-routing-hint__target">{targetLabel}</span>
+          </div>
+
           {/* Type selector — shown first in add mode, read-only display in edit mode */}
           <label className="form-field">
             <span className="form-field__label">Type</span>
@@ -199,22 +244,6 @@ export function TokenEditor({ mode, editPath, setId, onClose }: TokenEditorProps
               rows={2}
             />
           </label>
-
-          {/* Set selector — only in add mode */}
-          {mode === 'add' && (
-            <label className="form-field">
-              <span className="form-field__label">Token Set</span>
-              <select
-                className="form-field__input"
-                value={targetSetId}
-                onChange={(e) => setTargetSetId(e.target.value)}
-              >
-                {allSetIds.map((id) => (
-                  <option key={id} value={id}>{id}</option>
-                ))}
-              </select>
-            </label>
-          )}
 
           {/* Validation errors */}
           {errors.length > 0 && (
