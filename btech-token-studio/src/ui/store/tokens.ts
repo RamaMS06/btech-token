@@ -37,10 +37,19 @@ interface TokenState {
   activeTenant: string | null;
   lastPullSha: string | null;
   lastPullAt: number | null;
-  /** Currently published @btech/tokens version, fetched at pull. */
+  /** Currently published canonical platform version, fetched at pull. */
   baseVersion: string | null;
-  /** Designer-proposed next version (mirrors baseVersion until edited). */
-  nextVersion: string | null;
+  /**
+   * Latest version observed on the remote `main` branch — fetched silently
+   * on plugin mount and after each push. When this differs from
+   * `baseVersion`, the header surfaces a "new version available" badge so
+   * the designer can pull before they keep editing on a stale baseline.
+   *
+   * Intentionally NOT persisted: the value is cheap to refetch and we want
+   * a fresh check on every plugin open rather than risk showing a stale
+   * "new" badge from an old session.
+   */
+  remoteVersion: string | null;
 }
 
 interface TokenActions {
@@ -58,13 +67,19 @@ interface TokenActions {
   markCleanAll: () => void;
   dirtySets: () => TokenSet[];
 
-  /** Revert every dirty set to its `originalTree`. Resets nextVersion. */
+  /** Revert every dirty set to its `originalTree`. */
   discardAll: () => void;
   /** Revert a single set. */
   discardSet: (setId: string) => void;
 
   setBaseVersion: (v: string | null) => void;
-  setNextVersion: (v: string | null) => void;
+  /**
+   * Record the latest version seen on remote `main`. Called by the
+   * background check that fires on plugin mount and after each push.
+   * Pass `null` to clear (e.g. when the check fails — never leave a
+   * stale value lying around).
+   */
+  setRemoteVersion: (v: string | null) => void;
 
   /**
    * Reconcile in-memory state after a successful push: replace each set's
@@ -169,7 +184,6 @@ function schedulePersist(state: TokenState): void {
       lastPullSha: state.lastPullSha,
       lastPullAt: state.lastPullAt,
       baseVersion: state.baseVersion,
-      nextVersion: state.nextVersion,
     };
     // postMessage to main thread — main thread writes to figma.clientStorage
     parent.postMessage({ pluginMessage: { type: 'save-tokens', payload } }, '*');
@@ -186,7 +200,7 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
   lastPullSha: null,
   lastPullAt: null,
   baseVersion: null,
-  nextVersion: null,
+  remoteVersion: null,
 
   // ── Actions
   setSets: (sets) =>
@@ -335,8 +349,6 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
       const next = {
         ...state,
         sets: reverted,
-        // Reset proposed version to whatever's currently published.
-        nextVersion: state.baseVersion,
       };
       schedulePersist(next);
       return next;
@@ -373,23 +385,22 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
 
   setBaseVersion: (v) =>
     set((state) => {
-      // Pull just landed — refresh both fields so the editor starts at the
-      // currently published value.
+      // Pull just landed — record the published version so the header
+      // VersionLabel renders it. The number is read-only in the UI; bumps
+      // are derived from the active branch by CI.
       const next = {
         ...state,
         baseVersion: v,
-        nextVersion: v,
       };
       schedulePersist(next);
       return next;
     }),
 
-  setNextVersion: (v) =>
-    set((state) => {
-      const next = { ...state, nextVersion: v };
-      schedulePersist(next);
-      return next;
-    }),
+  // remoteVersion is intentionally NOT persisted — schedulePersist isn't
+  // called here. A stale "new version available" badge from a previous
+  // session would be more confusing than a brief moment of no badge while
+  // the background check completes on next mount.
+  setRemoteVersion: (v) => set({ remoteVersion: v }),
 
   // ── Post-push reconciliation ─────────────────────────────────────────────
 

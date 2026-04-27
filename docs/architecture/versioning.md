@@ -80,6 +80,39 @@ The tenant counter being independent is what lets one tenant ship a hotfix witho
 
 ---
 
+## Branches: `main` vs `dev`
+
+Two long-lived branches drive the release channel. The Figma plugin's
+header `<BranchSwitcher>` is the only UI surface that picks between them —
+designers no longer type a version anywhere.
+
+| Filter value | Branch git | Default bump verb (CI) | Tag form                        | Dist-tag |
+|--------------|------------|------------------------|---------------------------------|----------|
+| `main`       | `main`     | `patch`                | `v<x>` / `<tenant>-v<x>`        | `latest` |
+| `dev`        | `dev`      | `rc`                   | `v<x>-rc.<n>` / `<tenant>-v<x>-rc.<n>` | `rc`     |
+
+Implications:
+
+- **Pull target.** `useSync.pull()` reads `packages/tokens/sources/**` and
+  `package.json` from `settings.activeBranch`. Switching the filter
+  retargets the pull; switching with dirty work prompts to discard
+  (same rule as the tenant filter).
+- **Push target.** PRs are opened against `settings.activeBranch`. The
+  plugin attaches only the scope label — the bump verb is derived in CI.
+- **CI bump verb.** `auto-version.yml` resolves the default from
+  `BUILD_SOURCEBRANCH`: `refs/heads/dev` → `rc`, anything else → `patch`.
+  A `release:*` PR label still overrides when present.
+- **Tenant-only on `dev`.** A tenant patch merged on `dev` becomes a
+  tenant rc (`bspace-v1.5.8-rc.N`) — the rc suffix applies platform-wide
+  to whatever channel the branch represents.
+
+Promotion `dev → main` (graduate an rc to a stable release) is currently a
+manual cherry-pick / merge of `dev` into `main`. The next `auto-version.yml`
+run on `main` will produce a stable tag. A dedicated `bump rc:graduate`
+verb is on the roadmap — see Non-goals.
+
+---
+
 ## CLI surface
 
 ```sh
@@ -109,33 +142,34 @@ pnpm bump patch --dry-run               # print plan, no writes
 
 ```
 ┌─ Designer pulls ──────────────────────────────────────────────────┐
-│  useSync.ts fetches /package.json from main → version "1.0.0-rc.3" │
-│  VersionField pre-fills with "1.0.0-rc.3"                          │
+│  Header BranchSwitcher = "main" (or "dev")                         │
+│  useSync.ts fetches /package.json from <activeBranch>              │
+│  VersionLabel renders the pulled version (read-only)               │
 └────────────────────────────────────────────────────────────────────┘
             │
-            ▼  (designer types "1.1.0" + edits tokens + clicks Push)
+            ▼  (designer edits tokens + clicks Push)
 ┌─ Plugin push ─────────────────────────────────────────────────────┐
-│  Branch:   figma/<ts>-<scope>                                      │
-│  PR labels: <scope-tag>, release:rc, version:1.1.0                 │
+│  Source branch:  figma/<ts>-<scope>                                │
+│  Target branch:  <activeBranch>                                    │
+│  PR labels:      <scope-tag>   (no version, no release verb)       │
 └────────────────────────────────────────────────────────────────────┘
             │
-            ▼  (PR merged to main)
+            ▼  (PR merged to <activeBranch>)
 ┌─ auto-version.yml ────────────────────────────────────────────────┐
-│  Reads PR labels, picks bump mode + scope                          │
-│  `version:1.1.0` → bump set 1.1.0  (overrides release:* type)      │
-│  Reset rule fires (1.0.0 → 1.1.0 = minor change → resetAll)        │
-│  Writes 1.1.0 to root + all downstream                             │
-│  Tags `v1.1.0` (root-tag form, since root moved)                   │
+│  Default bump verb = patch (main) | rc (dev)                       │
+│  release:* / version:* PR labels still override when present       │
+│  Bumps + commits + tags + pushes back to <activeBranch>            │
 └────────────────────────────────────────────────────────────────────┘
             │
             ▼
 ┌─ publish.yml (triggered by `v*` tag) ─────────────────────────────┐
-│  Builds + publishes web base + every tenant (1.1.0)                │
-│  Builds + publishes flutter base + python base + python tenants    │
+│  v1.1.0           → dist-tag `latest` (stable)                     │
+│  v1.1.0-rc.1      → dist-tag `rc` (prerelease)                     │
+│  bspace-v1.5.8-rc.1 → tenant-only prerelease                       │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
-For tenant-only patches the flow is the same up to merge, then `auto-version.yml` writes only the tenant package, tags `<tenant>-v<v>`, and `publish.yml`'s tenant-only path publishes only that tenant's npm + python packages.
+For tenant-only patches the flow is the same up to merge, then `auto-version.yml` writes only the tenant package, tags `<tenant>-v<v>` (or `<tenant>-v<v>-rc.<n>` on `dev`), and `publish.yml`'s tenant-only path publishes only that tenant's npm + python packages.
 
 ---
 
@@ -168,7 +202,7 @@ fi
 
 | Label                       | Effect                                                                   |
 |-----------------------------|--------------------------------------------------------------------------|
-| `release:major\|minor\|patch\|rc` | Semver bump type (default `patch`)                                  |
+| `release:major\|minor\|patch\|rc` | Semver bump type (overrides branch-derived default)                |
 | `scope:all`                 | Force `--scope=all`                                                      |
 | `scope:base`                | `--scope=base`                                                           |
 | `scope:tenants`             | `--scope=tenants`                                                        |
@@ -176,8 +210,9 @@ fi
 | `version:<x.y.z>`           | Invokes `bump set <x.y.z>` — overrides `release:*` bump type             |
 | `no-release`                | Skip release entirely                                                    |
 | *(no scope label)*          | Use `--auto`                                                             |
+| *(no release label)*        | Bump verb derived from branch: `main` → `patch`, `dev` → `rc`            |
 
-The Token Studio plugin attaches `version:<x>` automatically when the designer changes the version field — this delegates the version decision to a human in Figma rather than letting CI guess.
+The Token Studio plugin no longer attaches `version:*` or `release:*` labels — branch is the single source of truth for the bump verb. Both labels are still honoured when added manually (e.g. on a hand-merged PR), so power users can pin a specific version or override the default.
 
 ---
 
@@ -223,3 +258,5 @@ A non-zero exit here means `bump-version.ts` was bypassed (hand-edit) or has a b
 - Auto-publish without a tag — the tag is the explicit "release this" signal.
 - Pre-push HEAD-conflict check in the Figma plugin — accepted limitation; deferred until concurrency becomes a real problem.
 - CHANGELOG generation — future enhancement, not currently in scope.
+- Automated `dev → main` graduation — currently a manual merge or cherry-pick. A `bump rc:graduate` verb (already partially supported in `bump-version.ts`) would let the next `auto-version.yml` run on `main` strip the `-rc.N` suffix cleanly; full automation is deferred until promotion frequency justifies it.
+- Branch protection rules for `dev` — set manually in the Azure DevOps web UI alongside the existing `main` protections; not codified by this pipeline.

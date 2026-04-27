@@ -11,9 +11,11 @@
  * Push:
  *   1. Validate all dirty sets with Ajv (block on failure).
  *   2. Detect scope tag from changed paths.
- *   3. Create branch figma/<timestamp>-<scope>.
+ *   3. Create branch figma/<timestamp>-<scope> off the active branch.
  *   4. Push a single atomic commit.
- *   5. Open a PR with the scope label + "release:rc".
+ *   5. Open a PR targeting the active branch with the scope label only.
+ *      The bump verb (`patch` for main, `rc` for dev) is derived in CI from
+ *      the merge target — the plugin no longer attaches a release label.
  *   6. Mark all dirty sets as clean.
  */
 
@@ -79,14 +81,14 @@ export function useSync() {
     try {
       const client = new AzureDevOpsClient(settings);
 
-      // Discover all JSON files under sources/
-      const files = await client.listFiles(settings.baseBranch, 'packages/tokens/sources');
+      // Discover all JSON files under sources/ on the active branch
+      const files = await client.listFiles(settings.activeBranch, 'packages/tokens/sources');
       const jsonFiles = files.filter((f) => f.path.endsWith('.json'));
 
       // Fetch all file contents in parallel — typically < 20 files, safe to fan out
       const contents = await Promise.all(
         jsonFiles.map(async (f) => {
-          const content = await client.getFileContent(f.path, settings.baseBranch);
+          const content = await client.getFileContent(f.path, settings.activeBranch);
           return { path: f.path, content };
         }),
       );
@@ -101,7 +103,7 @@ export function useSync() {
       }
 
       // Get the HEAD SHA so we can store it for future change detection
-      const sha = await client.getBranchHead(settings.baseBranch);
+      const sha = await client.getBranchHead(settings.activeBranch);
 
       // Fetch the canonical platform version from the repo-root package.json
       // so the header VersionField pre-fills with the right number. Reading
@@ -115,7 +117,7 @@ export function useSync() {
       try {
         const pkgJson = await client.getFileContent(
           'package.json',
-          settings.baseBranch,
+          settings.activeBranch,
         );
         const parsed = JSON.parse(pkgJson) as { version?: string };
         if (parsed.version) baseVersion = parsed.version;
@@ -127,13 +129,15 @@ export function useSync() {
 
       tokenStore.setSets(sets);
       tokenStore.setLastPull(sha, Date.now());
-      // setBaseVersion also resets nextVersion to the same value, which is
-      // exactly what we want after a fresh pull.
+      // Record the version that's currently published on the active branch.
+      // The header VersionLabel reads this; bumps are derived by CI from the
+      // branch the PR merges into, so the plugin no longer carries a
+      // designer-editable next-version field.
       tokenStore.setBaseVersion(baseVersion);
 
       setSyncState({
         status: 'success',
-        message: `Pulled ${jsonFiles.length} file(s) from ${settings.baseBranch}.`,
+        message: `Pulled ${jsonFiles.length} file(s) from ${settings.activeBranch}.`,
         prUrl: null,
       });
     } catch (err) {
@@ -179,8 +183,8 @@ export function useSync() {
       const { tag: scopeTag, tenants } = detectScope(changedPaths);
       const branchName = buildBranchName(scopeTag);
 
-      setSyncState({ status: 'pushing', message: `Resolving ${settings.baseBranch} HEAD…`, prUrl: null });
-      const baseSha = await client.getBranchHead(settings.baseBranch);
+      setSyncState({ status: 'pushing', message: `Resolving ${settings.activeBranch} HEAD…`, prUrl: null });
+      const baseSha = await client.getBranchHead(settings.activeBranch);
 
       setSyncState({ status: 'pushing', message: `Creating branch ${branchName}…`, prUrl: null });
       await client.createBranch(branchName, baseSha);
@@ -192,46 +196,38 @@ export function useSync() {
       }));
 
       const tenantList = tenants.length > 0 ? tenants.join(', ') : 'none';
-      // Capture the proposed version once, before the async push, so the
-      // value can't drift if the user keeps typing in VersionField.
-      const baseVersion = tokenStore.baseVersion;
-      const nextVersion = tokenStore.nextVersion;
-      const versionLine =
-        nextVersion && nextVersion !== baseVersion
-          ? `\nTarget version: ${nextVersion}`
-          : '';
+      // No "Target version" line in the commit/PR — version bumps are now
+      // derived in CI from the merge target (`main` → patch, `dev` → rc),
+      // so the plugin never proposes a number. `auto-version.yml` still
+      // honours a manually-added `version:<x>` label for power users who
+      // need to override on a specific PR.
       const commitMessage =
-        `feat(tokens): update from Figma\n\nScope: ${scopeTag}\nTenants: ${tenantList}${versionLine}`;
+        `feat(tokens): update from Figma\n\nScope: ${scopeTag}\nBranch: ${settings.activeBranch}\nTenants: ${tenantList}`;
 
       setSyncState({ status: 'pushing', message: 'Committing changes…', prUrl: null });
       await client.pushChanges({
         sourceBranch: branchName,
-        targetBranch: settings.baseBranch,
+        targetBranch: settings.activeBranch,
         baseSha,
         commitMessage,
         changes,
       });
 
       const pathList = changedPaths.map((p) => `- ${p}`).join('\n');
-      const versionDescriptor =
-        nextVersion && nextVersion !== baseVersion
-          ? `\n**Target version:** ${nextVersion} (was ${baseVersion ?? 'unknown'})`
-          : '';
       const prDescription =
-        `Token changes from Figma plugin.\n\n**Scope:** ${scopeTag}\n**Tenants:** ${tenantList}${versionDescriptor}\n\n**Changed files:**\n${pathList}`;
+        `Token changes from Figma plugin.\n\n**Scope:** ${scopeTag}\n` +
+        `**Target branch:** \`${settings.activeBranch}\`\n` +
+        `**Tenants:** ${tenantList}\n\n**Changed files:**\n${pathList}`;
 
-      // Build the PR label set. `version:<x>` is added when the designer
-      // proposed a different version — auto-version.yml parses it via the
-      // `set <version>` mode of bump-version.ts.
-      const labels = [scopeTag, 'release:rc'];
-      if (nextVersion && nextVersion !== baseVersion) {
-        labels.push(`version:${nextVersion}`);
-      }
+      // Only the scope label is attached. CI derives the bump verb from the
+      // PR's target branch; release:rc is no longer hardcoded because main
+      // PRs would otherwise get incorrectly tagged as prereleases.
+      const labels = [scopeTag];
 
       setSyncState({ status: 'pushing', message: 'Opening pull request…', prUrl: null });
       const pr = await client.createPullRequest({
         sourceBranch: branchName,
-        targetBranch: settings.baseBranch,
+        targetBranch: settings.activeBranch,
         title: `[Figma] Update tokens — ${scopeTag}`,
         description: prDescription,
         labels,

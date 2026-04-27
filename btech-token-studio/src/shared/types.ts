@@ -96,18 +96,12 @@ export interface TokenStorageState {
   lastPullSha: string | null;
   lastPullAt: number | null;
   /**
-   * Currently published `@btech/tokens` version, fetched from
-   * packages/tokens/platforms/web/token/package.json on pull. Null when the
-   * plugin has never pulled.
+   * Currently published canonical platform version (root `package.json`),
+   * fetched on pull from the active branch. Read-only in the UI — versioning
+   * is now driven by the active branch (main → patch, dev → rc) rather than
+   * by a manually-entered field. Null when the plugin has never pulled.
    */
   baseVersion: string | null;
-  /**
-   * Designer-proposed version for the next push. Defaults to `baseVersion`
-   * after pull; designer can edit it through the header VersionField.
-   * Sent as a `version:<x>` PR label so auto-version.yml can set the new
-   * version explicitly instead of semver-bumping.
-   */
-  nextVersion: string | null;
 }
 
 // ── Settings model ──────────────────────────────────────────────────────────
@@ -115,13 +109,21 @@ export interface TokenStorageState {
 /**
  * Designer-configurable connection settings stored in figma.clientStorage
  * under 'btech.settings'. PAT is encrypted by Figma's clientStorage layer.
+ *
+ * Branch selection moved out of Settings — designers pick the active branch
+ * via the header `<BranchSwitcher>`, mapped to one of the fixed channel
+ * values below. We still persist it under the same Settings blob (to share
+ * the existing debounced postMessage path) but the UI no longer exposes it.
  */
+export type ActiveBranch = 'main' | 'dev';
+
 export interface Settings {
   orgUrl: string;
   project: string;
   repo: string;
   pat: string;
-  baseBranch: string;
+  /** Currently active git branch — pulls and pushes target this. */
+  activeBranch: ActiveBranch;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -129,7 +131,7 @@ export const DEFAULT_SETTINGS: Settings = {
   project: 'BUMA - Bspace Design System',
   repo: 'btech-ds',
   pat: '',
-  baseBranch: 'main',
+  activeBranch: 'main',
 };
 
 // ── postMessage protocol ────────────────────────────────────────────────────

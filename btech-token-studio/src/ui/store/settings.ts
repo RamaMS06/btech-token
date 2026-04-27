@@ -11,7 +11,7 @@
 
 import { create } from 'zustand';
 import { DEFAULT_SETTINGS } from '../../shared/types.js';
-import type { Settings } from '../../shared/types.js';
+import type { ActiveBranch, Settings } from '../../shared/types.js';
 
 // ── State shape ──────────────────────────────────────────────────────────────
 
@@ -23,6 +23,12 @@ interface SettingsState {
 interface SettingsActions {
   setSettings: (settings: Settings) => void;
   patchSettings: (patch: Partial<Settings>) => void;
+  /**
+   * Switch the active git branch. Header `<BranchSwitcher>` is the only
+   * UI surface that calls this — Settings panel no longer exposes branch
+   * selection because the channel filter is the single source of truth.
+   */
+  setBranch: (branch: ActiveBranch) => void;
   markLoaded: (settings: Settings) => void;
 }
 
@@ -38,6 +44,34 @@ function schedulePersist(settings: Settings): void {
     persistTimer = null;
     parent.postMessage({ pluginMessage: { type: 'save-settings', payload: settings } }, '*');
   }, 500);
+}
+
+/**
+ * Coerce a persisted settings blob into the current shape.
+ *
+ * Migration concerns:
+ * - Old versions carried a free-form `baseBranch: string`. Drop it and
+ *   default `activeBranch` to `'main'` unless the persisted value happens
+ *   to already be one of the two known channel names.
+ * - Anything else outside the allowed enum is replaced by `'main'` —
+ *   safer than honouring an unknown branch the new pipeline can't bump.
+ */
+function normaliseSettings(raw: Settings): Settings {
+  // The persisted blob may contain legacy fields that aren't on the type
+  // anymore. Read them through a permissive cast rather than declaring
+  // them on Settings — they're only relevant inside this migration.
+  const legacy = raw as Settings & { baseBranch?: unknown };
+  const candidate: unknown = raw.activeBranch ?? legacy.baseBranch;
+  const activeBranch: ActiveBranch =
+    candidate === 'main' || candidate === 'dev' ? candidate : 'main';
+
+  return {
+    orgUrl: raw.orgUrl ?? DEFAULT_SETTINGS.orgUrl,
+    project: raw.project ?? DEFAULT_SETTINGS.project,
+    repo: raw.repo ?? DEFAULT_SETTINGS.repo,
+    pat: raw.pat ?? '',
+    activeBranch,
+  };
 }
 
 // ── Store ────────────────────────────────────────────────────────────────────
@@ -59,7 +93,17 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
     });
   },
 
+  setBranch: (branch) => {
+    set((state) => {
+      const next: Settings = { ...state.settings, activeBranch: branch };
+      schedulePersist(next);
+      return { settings: next };
+    });
+  },
+
   // Called once on init-done to hydrate from clientStorage without triggering
-  // an immediate re-save (the data is already persisted).
-  markLoaded: (settings) => set({ settings, isLoaded: true }),
+  // an immediate re-save (the data is already persisted). Runs the loaded
+  // blob through `normaliseSettings` so legacy `baseBranch` values are
+  // coerced into the new `activeBranch` enum without breaking the plugin.
+  markLoaded: (settings) => set({ settings: normaliseSettings(settings), isLoaded: true }),
 }));

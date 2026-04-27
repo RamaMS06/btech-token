@@ -1,7 +1,13 @@
 /**
  * Settings modal — PAT + repo connection configuration
  * ------------------------------------------------------
- * Inputs: Organization URL, Project, Repo, Base branch, PAT.
+ * Inputs: Organization URL, Project, Repo, PAT.
+ *
+ * The active branch (`main` vs `dev`) is intentionally NOT a Settings
+ * field — it's a per-session filter exposed via `<BranchSwitcher>` in the
+ * header so designers can swap stable / rc baselines without opening this
+ * modal. Settings is reserved for connection config that rarely changes.
+ *
  * "Test connection" calls the Azure DevOps connectionData endpoint to
  * verify the PAT is valid before the designer tries a real pull/push.
  *
@@ -91,17 +97,6 @@ export function SettingsPanel({ onClose }: SettingsProps) {
               placeholder="btech-ds"
               value={draft.repo}
               onChange={(e) => patch('repo', e.target.value)}
-            />
-          </label>
-
-          <label className="form-field">
-            <span className="form-field__label">Base branch</span>
-            <input
-              className="form-field__input"
-              type="text"
-              placeholder="main"
-              value={draft.baseBranch}
-              onChange={(e) => patch('baseBranch', e.target.value)}
             />
           </label>
 

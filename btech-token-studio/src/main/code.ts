@@ -78,7 +78,6 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         lastPullSha: null,
         lastPullAt: null,
         baseVersion: null,
-        nextVersion: null,
       };
       send({ type: 'tokens-loaded', payload });
       break;

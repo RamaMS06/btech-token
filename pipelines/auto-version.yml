@@ -1,19 +1,28 @@
 name: Auto Version on Merge
 
-# Triggers when any commit lands on main — which in practice means a merged PR.
-# Version bump commits from this pipeline use ***NO_CI*** so they don't re-trigger.
+# Triggers when any commit lands on `main` (stable) or `dev` (rc) — which in
+# practice means a merged PR. Version bump commits from this pipeline use
+# ***NO_CI*** so they don't re-trigger.
 #
-# PR label → bump type:
+# Bump verb is derived from the merge target by default:
+#   main → patch        (X.Y.Z+1, dist-tag `latest`)
+#   dev  → rc           (X.Y.Z-rc.N, dist-tag `rc`)
+#
+# PR labels override the default when present:
 #   release:major  → X+1.0.0
 #   release:minor  → X.Y+1.0
-#   release:patch  → X.Y.Z+1  (default — no label needed)
-#   release:rc     → X.Y.Z-rc.N  (pre-release; rc counter auto-increments)
+#   release:patch  → X.Y.Z+1
+#   release:rc     → X.Y.Z-rc.N  (rc counter auto-increments)
 #   version:<x>    → write that exact version (overrides release:* when present)
 #   no-release     → skip entirely (docs, chore, etc.)
+#
+# Tags are pushed back to whichever branch triggered the run, so dev bumps stay
+# on the dev line until they're explicitly merged into main.
 trigger:
   branches:
     include:
       - main
+      - dev
   paths:
     # ONLY trigger when something that affects the published package changed.
     # Anything outside this list (docs, scripts, tools, pipelines, README,
@@ -117,20 +126,27 @@ jobs:
           echo "##vso[task.setvariable variable=PREV_ROOT_VERSION]$PREV"
         displayName: 'Capture previous root version'
 
-      # ── Determine bump type & scope from PR labels ───────────────────────
+      # ── Determine bump type & scope from branch + PR labels ──────────────
       # PR_TAGS is set in the btech-ds-secrets variable group.
       # Format: comma-separated label names, e.g. "release:minor,scope:tenant:bspace"
       #
+      # Default bump verb is DERIVED FROM THE TRIGGER BRANCH:
+      #   main → patch  (stable releases, dist-tag `latest`)
+      #   dev  → rc     (prereleases, dist-tag `rc`)
+      # PR labels still take precedence when present (power-user override).
+      #
       # Supported labels:
-      #   release:major|minor|patch|rc   → semver bump type
+      #   release:major|minor|patch|rc   → semver bump type (overrides default)
       #   scope:all|base|tenants         → which packages to bump
       #   scope:tenant:<id>              → bump a single tenant
+      #   version:<x>                    → write exact version (overrides release:*)
       #   no-release                     → skip entirely
       #
       # If no scope:* label is present, defaults to --auto (detect from git diff).
       - script: |
           TAGS="${PR_TAGS:-}"
           echo "PR labels: $TAGS"
+          echo "Source branch: $BUILD_SOURCEBRANCH"
 
           if echo "$TAGS" | grep -q "no-release"; then
             echo "Label 'no-release' found — skipping release."
@@ -138,23 +154,33 @@ jobs:
             exit 0
           fi
 
-          # `version:<x.y.z>` PR label overrides everything else — designer
-          # supplied the literal next version through the Figma plugin's
-          # VersionField. We pass it to bump-version.ts via `set <x>` mode.
+          # `version:<x.y.z>` PR label overrides everything else — used when
+          # someone (a power user, hand-merged PR) needs to set a literal
+          # version. The Figma plugin no longer produces this label.
           TARGET=$(echo "$TAGS" | grep -oE "version:[0-9A-Za-z.+-]+" | head -n1 | cut -d: -f2-)
           if [ -n "$TARGET" ]; then
             echo "Detected version target: $TARGET"
             echo "##vso[task.setvariable variable=TARGET_VERSION]$TARGET"
           fi
 
+          # Branch-derived default. refs/heads/dev → rc; everything else → patch.
+          # Resolved here so PR-label overrides below can still win.
+          case "$BUILD_SOURCEBRANCH" in
+            refs/heads/dev) DEFAULT_BUMP=rc ;;
+            *)              DEFAULT_BUMP=patch ;;
+          esac
+          echo "Default bump verb (from branch): $DEFAULT_BUMP"
+
           if echo "$TAGS" | grep -q "release:major"; then
             BUMP=major
           elif echo "$TAGS" | grep -q "release:minor"; then
             BUMP=minor
+          elif echo "$TAGS" | grep -q "release:patch"; then
+            BUMP=patch
           elif echo "$TAGS" | grep -q "release:rc"; then
             BUMP=rc
           else
-            BUMP=patch
+            BUMP=$DEFAULT_BUMP
           fi
 
           SCOPE_FLAG="--auto"
@@ -226,6 +252,12 @@ jobs:
           git config user.name "Azure Pipelines"
           git config user.email "azure-pipelines@users.noreply.azure.com"
 
+          # Push back to the same branch we triggered on. Hard-coding `main`
+          # here would silently send `dev` rc bumps to `main`, which would
+          # both lose the prerelease line and skip CI re-checks on dev.
+          PUSH_BRANCH="${BUILD_SOURCEBRANCH#refs/heads/}"
+          echo "Pushing version bump to branch: $PUSH_BRANCH"
+
           git add \
             package.json \
             packages/tokens/platforms/web/token/package.json \
@@ -274,10 +306,10 @@ jobs:
 
           if [ ${#TAGS[@]} -eq 0 ]; then
             echo "Nothing tagged — pushing commit only."
-            git push origin HEAD:main
+            git push origin "HEAD:$PUSH_BRANCH"
           else
             echo "Pushing ${#TAGS[@]} tag(s): ${TAGS[*]}"
-            git push origin HEAD:main
+            git push origin "HEAD:$PUSH_BRANCH"
             for tag in "${TAGS[@]}"; do
               git push origin "$tag"
             done
