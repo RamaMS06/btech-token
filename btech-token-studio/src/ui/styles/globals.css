@@ -851,6 +851,35 @@ a {
   flex-shrink: 0;
 }
 
+/*
+ * Tenant override badge in the sidebar — a small "@N" pill on the right of
+ * each base-set entry showing how many leaves the active tenant overrides
+ * inside that set. Uses the same brand-colour palette as the per-leaf
+ * override markers so the signal is consistent across the UI. Sits before
+ * the dirty dot when both are visible.
+ */
+.sidebar__override-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: var(--figma-color-bg-brand-tertiary, rgba(20, 91, 195, 0.14));
+  color: var(--figma-color-text-brand, #145bc3);
+  border: 1px solid var(--figma-color-border-brand, rgba(20, 91, 195, 0.45));
+}
+
+/*
+ * When both badge and dirty dot are present, the badge already grabs the
+ * `margin-left: auto`, so the dot just needs a small explicit gap rather
+ * than fighting the badge for the auto margin.
+ */
+.sidebar__override-badge + .sidebar__dirty-dot {
+  margin-left: 6px;
+}
+
 /* ── View-mode toggle (segmented control in TokenList toolbar) ─────────────── */
 
 .view-toggle {
