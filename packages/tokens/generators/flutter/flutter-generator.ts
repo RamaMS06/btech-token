@@ -44,16 +44,18 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
   }
   mkdirSync(colorDir, { recursive: true });
 
-  // shades.color.dart — uses MaterialColor so Flutter theming works natively.
-  // Access: BTechColor.shades.blue          → primary swatch color (500)
-  //         BTechColor.shades.blue[400]     → specific shade via MaterialColor
-  //         BTechColor.shades.blue.shade700 → via MaterialColor getter
+  // swatches.color.dart — primitive color groups as MaterialColor swatches so
+  // Flutter theming works natively (gradient, ButtonStyle, etc).
+  // Access: BTechColor.blue          → primary swatch color (500)
+  //         BTechColor.blue[400]     → specific shade via MaterialColor
+  //         BTechColor.blue.shade700 → via MaterialColor getter
+  //
+  // No wrapper class — group names live directly on BTechColor (see color.theme.dart).
+  const groupNames: string[] = Object.keys(data.coreColors);
   {
     const L = [HEADER, "import 'package:flutter/material.dart';\n"];
-    const groupNames: string[] = [];
 
     for (const [group, shades] of Object.entries(data.coreColors)) {
-      groupNames.push(group);
       const entries = Object.entries(shades)
         .filter(([k]) => k !== '0') // key 0 (white) is excluded from MaterialColor map
         .sort((a, b) => Number(a[0]) - Number(b[0]));
@@ -65,34 +67,23 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
         `      ${shade}: Color(${hexToArgb(hex)}),`
       ).join('\n');
 
-      L.push(`/// ${toPascalCase(group)} color swatch — BTechColor.shades.${group}[500]`);
-      L.push(`const MaterialColor btechShades${toPascalCase(group)} = MaterialColor(`);
+      L.push(`/// ${toPascalCase(group)} color swatch — BTechColor.${group}[500]`);
+      L.push(`const MaterialColor btechColor${toPascalCase(group)} = MaterialColor(`);
       L.push(`  ${hexToArgb(primaryHex)},`);
       L.push(`  <int, Color>{`);
       L.push(mapEntries);
       L.push(`  },`);
       L.push(`);\n`);
     }
-
-    L.push('/// Primitive color palette as MaterialColor swatches.');
-    L.push('/// Access: BTechColor.shades.blue        → primary 500');
-    L.push('///         BTechColor.shades.blue[400]   → shade 400');
-    L.push('///         BTechColor.shades.green.shade700');
-    L.push('class BTechShadesColor {');
-    L.push('  const BTechShadesColor();');
-    for (const group of groupNames) {
-      L.push(`  MaterialColor get ${group} => btechShades${toPascalCase(group)};`);
-    }
-    L.push('}\n');
-    writeFileSync(`${colorDir}/shades.color.dart`, L.join('\n') + '\n');
+    writeFileSync(`${colorDir}/swatches.color.dart`, L.join('\n') + '\n');
   }
 
-  // color.dart barrel — only shades (primitive swatches) + the theme-based classes.
+  // color.dart barrel — primitive swatches + the theme-based classes.
   // Pattern A classes (text/icon/background/stroke *.color.dart) are removed;
   // BTechColor in color.theme.dart already provides both Pattern A static access
-  // AND Pattern C reactive access.
+  // (semantic categories AND primitive groups) and Pattern C reactive access.
   writeFileSync(`${colorDir}/color.dart`, [
-    "export 'shades.color.dart';",
+    "export 'swatches.color.dart';",
     "export 'color.theme.dart';",
     '',
   ].join('\n'));
@@ -416,7 +407,7 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
     "///   BTechRadius.interactive                 // double",
     'library btech_tokens;',
     '',
-    // color.dart re-exports shades.color.dart + color.theme.dart (BTechColor, BTechColorTheme, etc.)
+    // color.dart re-exports swatches.color.dart + color.theme.dart (BTechColor, BTechColorTheme, etc.)
     "export 'src/color/color.dart';",
     "export 'src/spacing/spacing.dart';",
     "export 'src/shadow/shadow.dart';",
@@ -432,6 +423,8 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
     '',
   ].join('\n'));
 
-  // Generate ThemeExtension classes, theme_builder.dart, and context.dart
-  generateFlutterThemeFiles();
+  // Generate ThemeExtension classes, theme_builder.dart, and context.dart.
+  // Pass primitive color group names so BTechColor exposes them as direct
+  // static getters (BTechColor.green, BTechColor.blue, …).
+  generateFlutterThemeFiles(undefined, groupNames);
 }

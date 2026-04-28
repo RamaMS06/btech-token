@@ -7,7 +7,7 @@ import { BTechBorderColor } from './border.color';
 import { BTechBgColor } from './bg.color';
 import { BTechBrandColor } from './brand.color';
 import { BTechExtColor } from './ext.color';
-import { BTechShadesColor } from './shades.color';
+import { btechColorGreen, btechColorLightblue, btechColorOrange, btechColorBlue, btechColorPurple, btechColorTeal, btechColorIndigo, btechColorRose, btechColorNeutral, btechColorRed, btechColorAmber, btechColorSky } from './swatches.color';
 
 export const BTechColor = {
   text: new BTechTextColor(),
@@ -16,6 +16,19 @@ export const BTechColor = {
   bg: new BTechBgColor(),
   brand: new BTechBrandColor(),
   ext: new BTechExtColor(),
-  shades: new BTechShadesColor(),
+
+  // Primitive color groups — direct numeric-key access.
+  green: btechColorGreen,
+  lightblue: btechColorLightblue,
+  orange: btechColorOrange,
+  blue: btechColorBlue,
+  purple: btechColorPurple,
+  teal: btechColorTeal,
+  indigo: btechColorIndigo,
+  rose: btechColorRose,
+  neutral: btechColorNeutral,
+  red: btechColorRed,
+  amber: btechColorAmber,
+  sky: btechColorSky,
 } as const;
 

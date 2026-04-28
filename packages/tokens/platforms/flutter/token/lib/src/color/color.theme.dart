@@ -3,7 +3,7 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:flutter/material.dart';
-import 'shades.color.dart';
+import 'swatches.color.dart';
 
 class BTechColorText {
   const BTechColorText({
@@ -277,8 +277,21 @@ abstract class BTechColor {
   static BTechColorBg get bg => _light.bg;
   static BTechColorBrand get brand => _light.brand;
   static BTechColorExt get ext => _light.ext;
-  // Raw primitive color swatches — BTechColor.shades.green[500]
-  static const BTechShadesColor shades = BTechShadesColor();
+
+  // Primitive color swatches — direct access (BTechColor.green[500], BTechColor.blue.shade700).
+  // Each group is a MaterialColor so Flutter ButtonStyle / gradient APIs work natively.
+  static MaterialColor get green => btechColorGreen;
+  static MaterialColor get lightblue => btechColorLightblue;
+  static MaterialColor get orange => btechColorOrange;
+  static MaterialColor get blue => btechColorBlue;
+  static MaterialColor get purple => btechColorPurple;
+  static MaterialColor get teal => btechColorTeal;
+  static MaterialColor get indigo => btechColorIndigo;
+  static MaterialColor get rose => btechColorRose;
+  static MaterialColor get neutral => btechColorNeutral;
+  static MaterialColor get red => btechColorRed;
+  static MaterialColor get amber => btechColorAmber;
+  static MaterialColor get sky => btechColorSky;
 
   /// Called by [buildBtechTheme] — do not call directly.
   static void activateBoth(BTechColorTheme light, BTechColorTheme dark) {

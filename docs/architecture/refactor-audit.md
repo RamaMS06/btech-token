@@ -19,7 +19,7 @@ apps, not by code inside this repo. The graph can't see consumer calls.
 | Category | Examples | Action |
 |---|---|---|
 | Flutter token classes | `BTechRadius`, `BTechColor`, `BTechShadow`, `BTechFontSize`, `BTechFontWeight`, `BTechLineHeight`, `BTechStroke`, `BTechSpacing`, `BTechTypography`, `BTechFontRegistry` | **Keep** — public API |
-| Web token classes (per-category accessors) | `BTechBrandColor`, `BTechBgColor`, `BTechIconColor`, `BTechTextColor`, `BTechBackgroundColor`, `BTechStrokeColor`, `BTechExtColor`, `BTechShades*Color` | **Keep** — public API |
+| Web token classes (per-category accessors) | `BTechBrandColor`, `BTechBgColor`, `BTechIconColor`, `BTechTextColor`, `BTechBorderColor`, `BTechExtColor` + primitive swatch consts (`btechColorGreen`, `btechColorBlue`, …) | **Keep** — public API |
 | Tenant JS helpers | `activate()` in `platforms/web/{bspace,tenant-a,tenant-bjb}/src/index.ts` | **Keep** — public API |
 | Token utility functions | `cssVar`, `tokenCalc`, `followSystemMode` in `platforms/web/token/src/token.ts` | **Keep** — documented in README |
 | Flutter theme overrides | `BTechColorTheme.lerp`, `BTechRadiusTheme.lerp`, `InnerShadowDecoration.{lerpFrom,lerpTo,createBoxPainter,paint}`, `createState`, `build`, `initState` | **Keep** — Flutter framework hooks |

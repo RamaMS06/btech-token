@@ -1,4 +1,4 @@
-import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync, readFileSync, existsSync, readdirSync, unlinkSync } from 'fs';
 import { toPascalCase, toYaml, dartSafeName, pathToCssVar } from '../utils.js';
 import type { ResolvedTokenMap } from '../token-loader.js';
 import { generateTsSemanticColorGroup } from './web-color.js';
@@ -10,27 +10,32 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
 
   // ── color/ ────────────────────────────────────────────────────────────────
   const colorDir = `${outDir}/color`;
+  // Clean stale *.ts files before regen so removed categories (e.g. shades.color.ts
+  // after the swatches refactor) don't linger and confuse barrel exports.
+  if (existsSync(colorDir)) {
+    for (const f of readdirSync(colorDir).filter(f => f.endsWith('.ts'))) {
+      unlinkSync(`${colorDir}/${f}`);
+    }
+  }
   mkdirSync(colorDir, { recursive: true });
 
-  // shades.color.ts
+  // swatches.color.ts — primitive color groups as plain numeric-keyed const
+  // objects. No wrapper class — group names live directly on BTechColor.
+  // Access: BTechColor.green[500]   → '#22c55e' (typed literal)
+  //         BTechColor.neutral[0]   → '#ffffff' (white, included)
   {
     const L = [HEADER];
     for (const [group, shades] of Object.entries(data.coreColors)) {
-      const className = `BTechShades${toPascalCase(group)}Color`;
+      const constName = `btechColor${toPascalCase(group)}`;
       const entries = Object.entries(shades).sort((a, b) => Number(a[0]) - Number(b[0]));
-      L.push(`export class ${className} {`);
+      L.push(`/** ${toPascalCase(group)} primitive swatch — BTechColor.${group}[500] */`);
+      L.push(`export const ${constName} = {`);
       for (const [shade, hex] of entries) {
-        L.push(`  readonly s${shade} = '${hex}' as const;`);
+        L.push(`  ${shade}: '${hex}',`);
       }
-      L.push('}\n');
+      L.push('} as const;\n');
     }
-    L.push('export class BTechShadesColor {');
-    for (const group of Object.keys(data.coreColors)) {
-      const className = `BTechShades${toPascalCase(group)}Color`;
-      L.push(`  readonly ${group} = new ${className}();`);
-    }
-    L.push('}\n');
-    writeFileSync(`${colorDir}/shades.color.ts`, L.join('\n') + '\n');
+    writeFileSync(`${colorDir}/swatches.color.ts`, L.join('\n') + '\n');
   }
 
   // Per-group color files (text, icon, border, bg, brand, ext)
@@ -39,20 +44,28 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     generateTsSemanticColorGroup(colorDir, groupName, data.semanticColors[groupName], HEADER);
   }
 
-  // color.token.ts — dynamic, driven by semanticGroups
+  // color.token.ts — dynamic, driven by semanticGroups + primitive swatches.
+  // Primitive groups (green, blue, neutral, …) are spread directly onto
+  // BTechColor so consumers write BTechColor.green[500] — no .shades indirection.
+  const primitiveGroups = Object.keys(data.coreColors);
   {
     const L = [HEADER];
     for (const g of semanticGroups) {
       const cls = `BTech${toPascalCase(g)}Color`;
       L.push(`import { ${cls} } from './${g}.color';`);
     }
-    L.push("import { BTechShadesColor } from './shades.color';\n");
+    const swatchImports = primitiveGroups.map(g => `btechColor${toPascalCase(g)}`).join(', ');
+    L.push(`import { ${swatchImports} } from './swatches.color';\n`);
     L.push('export const BTechColor = {');
     for (const g of semanticGroups) {
       const cls = `BTech${toPascalCase(g)}Color`;
       L.push(`  ${g}: new ${cls}(),`);
     }
-    L.push('  shades: new BTechShadesColor(),');
+    L.push('');
+    L.push('  // Primitive color groups — direct numeric-key access.');
+    for (const g of primitiveGroups) {
+      L.push(`  ${g}: btechColor${toPascalCase(g)},`);
+    }
     L.push('} as const;\n');
     writeFileSync(`${colorDir}/color.token.ts`, L.join('\n') + '\n');
   }
@@ -61,7 +74,7 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   {
     const exports = [
       ...semanticGroups.map(g => `export * from './${g}.color';`),
-      "export * from './shades.color';",
+      "export * from './swatches.color';",
       "export { BTechColor } from './color.token';",
       '',
     ];
