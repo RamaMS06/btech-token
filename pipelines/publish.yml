@@ -81,8 +81,13 @@ jobs:
         inputs:
           workingFile: .npmrc
 
+      # NODE_AUTH_TOKEN substitutes the placeholder in .npmrc so pnpm can
+      # authenticate to the private @btech feed. Without it pnpm falls back
+      # to registry.npmjs.org (404) on @btech/* deps recorded in the lockfile.
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # ── Flutter ───────────────────────────────────────────────────────────
       - template: templates/flutter-setup.yml
@@ -94,14 +99,19 @@ jobs:
       # ── Validate → Generate → Build → Publish ─────────────────────────────
       - script: pnpm validate
         displayName: 'Run validators (contrast + boundary + workspace-deps)'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # IMPORTANT: 'pnpm generate' (not 'pnpm build') — produces both:
       #   - Style Dictionary outputs (styles.css, utilities.css) via sd.config.ts
       #   - TypeScript bundles (index.js, index.mjs, index.d.ts) via tsup
       # Using 'pnpm --filter @btech/tokens build' alone runs tsup only,
       # resulting in a published tarball missing styles.css (rc.1 bug).
+      # generate runs pnpm install --lockfile-only internally → needs auth.
       - script: pnpm generate
         displayName: 'Generate tokens (CSS + JS + types)'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       - script: flutter analyze --no-fatal-infos
         displayName: 'Flutter analyze'
@@ -136,6 +146,7 @@ jobs:
         env:
           NPM_TAG: $(NPM_TAG)
           PUBLISH_ONLY_TENANT: $(PUBLISH_TENANT)
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # ── Python — build & publish to btech feed (PyPI side of same feed) ───
       - task: UsePythonVersion@0
