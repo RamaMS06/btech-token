@@ -1,16 +1,25 @@
 name: Validate Tokens
 
-# Runs on every PR to main AND on direct pushes to main.
+# Runs on every PR to main/dev AND on direct pushes to main/dev.
 # Acts as the final gate before merge — generated files must be in sync.
+#
+# Why both branches?
+#   - main: stable line, validates production-bound merges
+#   - dev:  rc line, validates Figma plugin PRs (the plugin defaults its
+#           target branch to dev) so they show up under "Related pipelines"
+#           on the PR page just like manual PRs to main do. Without this,
+#           plugin-opened PRs into dev had no associated build run.
 trigger:
   branches:
     include:
       - main
+      - dev
 
 pr:
   branches:
     include:
       - main
+      - dev
 
 pool:
   vmImage: ubuntu-latest

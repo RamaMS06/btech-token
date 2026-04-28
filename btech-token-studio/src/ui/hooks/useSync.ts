@@ -22,7 +22,11 @@
 import { useCallback, useState } from 'react';
 import { AzureDevOpsClient } from '../../shared/azure-devops.js';
 import { detectScope } from '../../shared/scope-detector.js';
-import { parseJsonToSet, serializeSetToJson } from '../../shared/transform.js';
+import {
+  parseJsonToSet,
+  serializeSetToJson,
+  diffLeafTokens,
+} from '../../shared/transform.js';
 import { validateTree } from '../../shared/validators.js';
 import { useTokenStore } from '../store/tokens.js';
 import { useSettingsStore } from '../store/settings.js';
@@ -266,11 +270,81 @@ export function useSync() {
         changes,
       });
 
-      const pathList = changedPaths.map((p) => `- ${p}`).join('\n');
-      const prDescription =
-        `Token changes from Figma plugin.\n\n**Scope:** ${scopeTag}\n` +
-        `**Target branch:** \`${settings.activeBranch}\`\n` +
-        `**Tenants:** ${tenantList}\n\n**Changed files:**\n${pathList}`;
+      // ── Build a rich PR description ─────────────────────────────────────
+      // Earlier the body was a four-line scope/branch/tenant block which
+      // gave reviewers no signal at all about what changed. We now include:
+      //   • per-file leaf-diff counts (+added / ~modified / −removed)
+      //   • a roll-up summary line
+      //   • the base SHA the branch was authored from (so the reviewer can
+      //     verify it was up-to-date with `targetBranch` before approving)
+      //   • a hint about which version verb auto-version.yml will pick
+      //     based on the merge target (main → patch, dev → rc)
+      //   • a small reviewer checklist that mirrors the human PR template
+      //   • a generated-by footer so it's obvious this came from the plugin
+      const perFileLines = dirty.map((s) => {
+        const d = diffLeafTokens(s.tree, s.originalTree ?? s.tree);
+        const parts: string[] = [];
+        if (d.added) parts.push(`+${d.added} added`);
+        if (d.modified) parts.push(`~${d.modified} modified`);
+        if (d.removed) parts.push(`−${d.removed} removed`);
+        const detail = parts.length ? ` (${parts.join(', ')})` : '';
+        return `- \`${s.path}\` — **${d.total}** ${d.total === 1 ? 'change' : 'changes'}${detail}`;
+      });
+      const totals = dirty.reduce(
+        (acc, s) => {
+          const d = diffLeafTokens(s.tree, s.originalTree ?? s.tree);
+          return {
+            added: acc.added + d.added,
+            modified: acc.modified + d.modified,
+            removed: acc.removed + d.removed,
+            total: acc.total + d.total,
+          };
+        },
+        { added: 0, modified: 0, removed: 0, total: 0 },
+      );
+      const totalsLine = [
+        `**${totals.total}** ${totals.total === 1 ? 'token change' : 'token changes'}`,
+        `across **${dirty.length}** ${dirty.length === 1 ? 'file' : 'files'}`,
+      ].join(' ');
+      const totalsBreakdown =
+        totals.added || totals.modified || totals.removed
+          ? ` — +${totals.added} added · ~${totals.modified} modified · −${totals.removed} removed`
+          : '';
+
+      // CI bumps from the merge target — keep this in sync with the verb
+      // table at the top of pipelines/auto-version.yml.
+      const expectedBump =
+        settings.activeBranch === 'main' ? '`patch`' : '`rc` (prerelease)';
+
+      const prDescription = [
+        '### Summary',
+        '',
+        `${totalsLine}${totalsBreakdown}.`,
+        '',
+        '### Metadata',
+        '',
+        `| Field | Value |`,
+        `|---|---|`,
+        `| Scope | \`${scopeTag}\` |`,
+        `| Target branch | \`${settings.activeBranch}\` |`,
+        `| Tenants | ${tenantList} |`,
+        `| Base SHA | \`${baseSha.slice(0, 12)}\` |`,
+        `| Expected version bump | ${expectedBump} (auto-applied by \`auto-version.yml\` after merge) |`,
+        '',
+        '### Changed files',
+        '',
+        ...perFileLines,
+        '',
+        '### Reviewer checklist',
+        '',
+        '- [ ] Token names + values look reasonable for the stated scope',
+        '- [ ] `validate.yml` (Related pipelines, above) passed — schema, contrast, boundary',
+        '- [ ] No accidental cross-tenant edits (file paths match the scope tag)',
+        '',
+        '---',
+        '',
+        '_Opened by **BTech Token Studio** (Figma plugin). Apply the `no-release` label if this should not trigger a version bump on merge._',
+      ].join('\n');
 
       // Only the scope label is attached. CI derives the bump verb from the
       // PR's target branch; release:rc is no longer hardcoded because main

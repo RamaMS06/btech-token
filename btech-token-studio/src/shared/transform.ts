@@ -98,30 +98,59 @@ export function treeToFlatTokens(tree: DTCGGroup, prefix = ''): FlatToken[] {
  * `snapshotSet` and `parseJsonToSet`.
  */
 export function countLeafChanges(current: DTCGGroup, baseline: DTCGGroup): number {
-  // An empty baseline means "this set is brand new locally and has never
-  // been on origin yet" — every current leaf is an addition. We still count
-  // them so the designer sees the real number of new tokens being shipped.
+  const d = diffLeafTokens(current, baseline);
+  return d.total;
+}
+
+// ── diffLeafTokens ──────────────────────────────────────────────────────────
+
+/**
+ * Structured diff result. Same passes as `countLeafChanges` but exposes
+ * per-bucket counts so callers can render a richer summary
+ * (e.g. PR description: "5 changes (+2 added, ~3 modified)").
+ */
+export interface LeafDiff {
+  added: number;
+  modified: number;
+  removed: number;
+  total: number;
+}
+
+/**
+ * Per-bucket leaf-level diff between a current tree and its baseline.
+ * `added`    — leaves in `current` but not `baseline`
+ * `modified` — leaves in both, with serialised value differs
+ * `removed`  — leaves in `baseline` but not `current`
+ *
+ * Used by the Figma plugin's PR description to show the designer (and
+ * reviewer) exactly what shape the change takes — "5 added, 0 modified,
+ * 1 removed" reads very differently from "6 modified" even though both
+ * sum to 6.
+ */
+export function diffLeafTokens(current: DTCGGroup, baseline: DTCGGroup): LeafDiff {
   const cur = treeToFlatTokens(current);
   const base = treeToFlatTokens(baseline);
   const baseMap = new Map<string, DTCGToken>(base.map((t) => [t.path, t.token]));
   const seen = new Set<string>();
-  let changes = 0;
+  let added = 0;
+  let modified = 0;
+  let removed = 0;
 
   for (const { path, token } of cur) {
     seen.add(path);
     const baseToken = baseMap.get(path);
     if (!baseToken) {
-      changes++; // added
+      added++;
       continue;
     }
     if (JSON.stringify(token) !== JSON.stringify(baseToken)) {
-      changes++; // modified
+      modified++;
     }
   }
   for (const path of baseMap.keys()) {
-    if (!seen.has(path)) changes++; // removed
+    if (!seen.has(path)) removed++;
   }
-  return changes;
+  return { added, modified, removed, total: added + modified + removed };
 }
 
 // ── flatTokensToTree ────────────────────────────────────────────────────────
