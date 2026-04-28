@@ -640,6 +640,41 @@ a {
   font-size: 10px;
 }
 
+/*
+ * Pull-target picker — sits between sync-info and the warning panel in the
+ * SyncPanel pull mode. Mirrors `.branch-switcher` styles so it reads as a
+ * peer of the header dropdowns. Without explicit dark-theme bg/color the
+ * native <select> renders white-on-white in Figma's dark UI.
+ */
+.sync-target {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sync-target__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--figma-color-text-secondary);
+  flex-shrink: 0;
+}
+
+.sync-target__select {
+  flex: 1;
+  font-size: 11px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  background: var(--figma-color-bg);
+  color: var(--figma-color-text);
+}
+
+.sync-target__select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .sync-warning {
   background: var(--figma-color-bg-warning);
   border-radius: 6px;
