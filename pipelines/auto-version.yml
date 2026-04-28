@@ -49,11 +49,18 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  - group: btech-ds-secrets   # provides PR_TAGS
+  - group: btech-ds-secrets   # provides PR_TAGS, optionally GIT_PUSH_PAT
   - name: BUMP_TYPE
     value: patch               # default; overridden by determine-bump step
   - name: SKIP_RELEASE
     value: 'false'
+  # Optional PAT fallback for git push. Pre-declared as empty so the pipeline
+  # works even when the secrets variable group doesn't define it. When the
+  # admin sets it in `btech-ds-secrets`, the variable group value overrides
+  # this empty default and the push step auto-switches to PAT auth.
+  # See docs/ci-cd-permissions.md for when/why to set it.
+  - name: GIT_PUSH_PAT
+    value: ''
 
 jobs:
   - job: auto_version
@@ -63,6 +70,60 @@ jobs:
       - checkout: self
         persistCredentials: true
         fetchDepth: 0
+
+      # ── Preflight: confirm we can push BEFORE doing any work ───────────────
+      # Build service identity needs `Contribute` + `Create tag` on this repo
+      # (Project Settings → Repositories → btech-ds → Security). When that
+      # permission is missing, the bump commits are made locally and then the
+      # final `git push` fails with TF401027 — wasting a job run and leaving
+      # nothing to retry against.
+      #
+      # We probe BOTH push paths so we fail fast with the right diagnostic:
+      #   1. If GIT_PUSH_PAT is set in btech-ds-secrets, use that (admin
+      #      workaround when build-service perms cannot be granted).
+      #   2. Otherwise, use System.AccessToken via persistCredentials.
+      #
+      # The probe is `git push --dry-run` — server-side perms check without
+      # actually writing anything. Cheap, deterministic, accurate.
+      - script: |
+          set +e
+          PUSH_BRANCH="${BUILD_SOURCEBRANCH#refs/heads/}"
+
+          if [ -n "${GIT_PUSH_PAT:-}" ]; then
+            echo "GIT_PUSH_PAT detected — preflight will skip (PAT auth always works if scope is correct)."
+            echo "##vso[task.setvariable variable=USE_PAT]true"
+            exit 0
+          fi
+
+          echo "Probing push permission with build-service identity ($PUSH_BRANCH)…"
+          PROBE_OUTPUT=$(git push --dry-run origin "HEAD:$PUSH_BRANCH" 2>&1)
+          PROBE_RC=$?
+          echo "$PROBE_OUTPUT"
+          if [ $PROBE_RC -ne 0 ]; then
+            echo "##[error]Build service cannot push to this repo (preflight failed)."
+            echo "##[error]"
+            echo "##[error]ROOT CAUSE: pipeline identity is missing 'Contribute'"
+            echo "##[error]and/or 'Create tag' permission on repo 'btech-ds'."
+            echo "##[error]"
+            echo "##[error]FIX A — admin grants permission (preferred, one-time):"
+            echo "##[error]  1. Project Settings → Repositories → btech-ds → Security"
+            echo "##[error]  2. Find user: '<Project> Build Service (<org>)'"
+            echo "##[error]  3. Set: Contribute = Allow, Create tag = Allow"
+            echo "##[error]  4. Save. Re-run this pipeline."
+            echo "##[error]"
+            echo "##[error]FIX B — PAT fallback (admin cannot grant the perms above):"
+            echo "##[error]  1. Create PAT — scope: Code (Read & Write), 1y expiry"
+            echo "##[error]  2. Pipelines → Library → variable group 'btech-ds-secrets'"
+            echo "##[error]  3. Add SECRET variable: GIT_PUSH_PAT = <the PAT>"
+            echo "##[error]  4. Save. Re-run pipeline (auto-detects PAT)."
+            echo "##[error]"
+            echo "##[error]Full runbook: docs/ci-cd-permissions.md"
+            exit 1
+          fi
+          echo "✓ Push permission OK — build service can write to $PUSH_BRANCH."
+        displayName: 'Preflight: verify git push permission'
+        env:
+          GIT_PUSH_PAT: $(GIT_PUSH_PAT)
 
       # ── Node / pnpm ──────────────────────────────────────────────────────
       - task: NodeTool@0
@@ -258,6 +319,25 @@ jobs:
           PUSH_BRANCH="${BUILD_SOURCEBRANCH#refs/heads/}"
           echo "Pushing version bump to branch: $PUSH_BRANCH"
 
+          # ── Pick auth strategy ──
+          # GIT_PUSH_PAT (set in btech-ds-secrets) → embed PAT in remote URL,
+          # which overrides the persistCredentials extraHeader that checkout
+          # configured. Otherwise we just push to `origin` and let the build
+          # service identity authenticate (preflight already verified perms).
+          if [ -n "${GIT_PUSH_PAT:-}" ]; then
+            echo "Auth: GIT_PUSH_PAT (PAT-based)"
+            REMOTE=$(git remote get-url origin)
+            CLEAN_URL=$(echo "$REMOTE" | sed -E 's|https://[^@]*@|https://|')
+            PUSH_URL=$(echo "$CLEAN_URL" | sed -E "s|https://|https://pat:${GIT_PUSH_PAT}@|")
+            # Drop the persistCredentials extraHeader so the URL-embedded PAT
+            # is the ONLY auth header the push request carries — otherwise
+            # both auths arrive and the server can pick the wrong one.
+            git config --unset-all http.extraHeader 2>/dev/null || true
+          else
+            echo "Auth: System.AccessToken (build-service via persistCredentials)"
+            PUSH_URL="origin"
+          fi
+
           git add \
             package.json \
             packages/tokens/platforms/web/token/package.json \
@@ -304,18 +384,40 @@ jobs:
             done
           fi
 
+          # Helper: push with a clear admin-fix message on failure. Even
+          # though the preflight step caught most permission issues, repos
+          # with branch policies (e.g. require-PR-on-dev) can still reject
+          # an actual push that passed --dry-run, so we keep the helper
+          # everywhere.
+          push_or_explain() {
+            if git push "$PUSH_URL" "$@"; then
+              return 0
+            fi
+            echo "##[error]git push failed AFTER preflight passed."
+            echo "##[error]Likely causes:"
+            echo "##[error]  1. Branch policy on '$PUSH_BRANCH' requires PR/reviewers."
+            echo "##[error]     Fix: add build-service to 'Bypass policies when pushing'"
+            echo "##[error]     in Branches → $PUSH_BRANCH → Branch policies."
+            echo "##[error]  2. PAT (GIT_PUSH_PAT) expired — rotate in btech-ds-secrets."
+            echo "##[error]  3. Tag already exists on origin (idempotent re-run; safe to ignore)."
+            echo "##[error]Full runbook: docs/ci-cd-permissions.md"
+            return 1
+          }
+
           if [ ${#TAGS[@]} -eq 0 ]; then
             echo "Nothing tagged — pushing commit only."
-            git push origin "HEAD:$PUSH_BRANCH"
+            push_or_explain "HEAD:$PUSH_BRANCH"
           else
             echo "Pushing ${#TAGS[@]} tag(s): ${TAGS[*]}"
-            git push origin "HEAD:$PUSH_BRANCH"
+            push_or_explain "HEAD:$PUSH_BRANCH"
             for tag in "${TAGS[@]}"; do
-              git push origin "$tag"
+              push_or_explain "$tag"
             done
           fi
         displayName: 'Commit version bump & push tag(s)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
+        env:
+          GIT_PUSH_PAT: $(GIT_PUSH_PAT)
 
       # Publish is handled by publish.yml — triggered by the v* tag above.
 
