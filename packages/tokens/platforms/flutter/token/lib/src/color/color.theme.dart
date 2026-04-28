@@ -237,12 +237,12 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
     overlay: Color(0xCC181C20),
   ),
   brand: BTechColorBrand(
-    primarySubtle: Color(0xFFF0F8F4),
-    primary: Color(0xFF08A94C),
-    primaryBold: Color(0xFF0A853E),
-    secondarySubtle: Color(0xFFF0F8F7),
-    secondary: Color(0xFF0D9488),
-    secondaryBold: Color(0xFF0D766C),
+    primarySubtle: Color(0xFFE7EFF9),
+    primary: Color(0xFF145BC3),
+    primaryBold: Color(0xFF10499C),
+    secondarySubtle: Color(0xFFF9F6F1),
+    secondary: Color(0xFFF59E0B),
+    secondaryBold: Color(0xFFBD7C0C),
   ),
   ext: BTechColorExt(
     successSubtler: Color(0xFFE2F3E9),

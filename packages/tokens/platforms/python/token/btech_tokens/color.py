@@ -115,20 +115,20 @@ _DARK_BORDER = BTechColorBorder(
 )
 
 _LIGHT_BRAND = BTechColorBrand(
-    primary='#08a94c',
-    primary_bold='#0a853e',
-    primary_subtle='#f0f8f4',
-    secondary='#0d9488',
-    secondary_bold='#0d766c',
-    secondary_subtle='#f0f8f7',
+    primary='#145bc3',
+    primary_bold='#10499c',
+    primary_subtle='#e7eff9',
+    secondary='#f59e0b',
+    secondary_bold='#bd7c0c',
+    secondary_subtle='#f9f6f1',
 )
 _DARK_BRAND = BTechColorBrand(
-    primary='#41e084',
-    primary_bold='#08a94c',
-    primary_subtle='#094623',
-    secondary='#3ed8ca',
-    secondary_bold='#0d9488',
-    secondary_subtle='#0a403b',
+    primary='#437ccf',
+    primary_bold='#145bc3',
+    primary_subtle='#08244e',
+    secondary='#e8ba6c',
+    secondary_bold='#f59e0b',
+    secondary_subtle='#5a3d0b',
 )
 
 _LIGHT_EXT = BTechColorExt(
