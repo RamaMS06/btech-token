@@ -26,7 +26,11 @@ import { parseJsonToSet, serializeSetToJson } from '../../shared/transform.js';
 import { validateTree } from '../../shared/validators.js';
 import { useTokenStore } from '../store/tokens.js';
 import { useSettingsStore } from '../store/settings.js';
-import type { TokenSet } from '../../shared/types.js';
+import type {
+  TokenSet,
+  ActiveBranch,
+  BranchSnapshot,
+} from '../../shared/types.js';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,6 +45,16 @@ export interface ValidationFailure {
   setName: string;
   errors: string[];
 }
+
+/**
+ * Which branches to refresh on `pull`.
+ *  - `'active'` → just the currently selected branch (legacy default).
+ *  - `'main'` / `'dev'` → fetch one specific branch even if it isn't active
+ *    (warms the cache for future swaps).
+ *  - `'all'`    → fetch BOTH branches in parallel; afterwards the designer
+ *    can flip between them with no further network calls.
+ */
+export type PullTarget = 'active' | 'all' | 'main' | 'dev';
 
 // ── Branch name helper ───────────────────────────────────────────────────────
 
@@ -69,82 +83,121 @@ export function useSync() {
 
   // ── Pull ───────────────────────────────────────────────────────────────────
 
-  const pull = useCallback(async (): Promise<void> => {
-    const { settings } = settingsStore;
-    if (!settings.pat) {
-      setSyncState({ status: 'error', message: 'No PAT configured. Open Settings first.', prUrl: null });
-      return;
+  /**
+   * Fetch one branch's full state (sets + baseVersion + HEAD sha) into a
+   * `BranchSnapshot`. Pure function relative to the store — the caller
+   * decides whether to commit the snapshot or discard it (e.g. on error).
+   */
+  async function pullBranchSnapshot(
+    client: AzureDevOpsClient,
+    branch: ActiveBranch,
+  ): Promise<{ snapshot: BranchSnapshot; fileCount: number }> {
+    const files = await client.listFiles(branch, 'packages/tokens/sources');
+    const jsonFiles = files.filter((f) => f.path.endsWith('.json'));
+
+    const contents = await Promise.all(
+      jsonFiles.map(async (f) => {
+        const content = await client.getFileContent(f.path, branch);
+        return { path: f.path, content };
+      }),
+    );
+
+    const sets: Record<string, TokenSet> = {};
+    for (const { path, content } of contents) {
+      const normPath = path.startsWith('/') ? path.slice(1) : path;
+      const tokenSet = parseJsonToSet(normPath, content);
+      sets[tokenSet.id] = tokenSet;
     }
 
-    setSyncState({ status: 'pulling', message: 'Fetching files from Azure DevOps…', prUrl: null });
+    const sha = await client.getBranchHead(branch);
 
+    let baseVersion: string | null = null;
     try {
-      const client = new AzureDevOpsClient(settings);
-
-      // Discover all JSON files under sources/ on the active branch
-      const files = await client.listFiles(settings.activeBranch, 'packages/tokens/sources');
-      const jsonFiles = files.filter((f) => f.path.endsWith('.json'));
-
-      // Fetch all file contents in parallel — typically < 20 files, safe to fan out
-      const contents = await Promise.all(
-        jsonFiles.map(async (f) => {
-          const content = await client.getFileContent(f.path, settings.activeBranch);
-          return { path: f.path, content };
-        }),
+      const pkgJson = await client.getFileContent('package.json', branch);
+      const parsed = JSON.parse(pkgJson) as { version?: string };
+      if (parsed.version) baseVersion = parsed.version;
+    } catch (err) {
+      console.warn(
+        `[BTech Token Studio] Could not read root version on ${branch}:`,
+        err,
       );
+    }
 
-      // Parse each file into a TokenSet
-      const sets: Record<string, TokenSet> = {};
-      for (const { path, content } of contents) {
-        // Normalise leading slash (Azure DevOps returns "/packages/...")
-        const normPath = path.startsWith('/') ? path.slice(1) : path;
-        const tokenSet = parseJsonToSet(normPath, content);
-        sets[tokenSet.id] = tokenSet;
+    return {
+      snapshot: { sets, baseVersion, lastPullSha: sha, lastPullAt: Date.now() },
+      fileCount: jsonFiles.length,
+    };
+  }
+
+  const pull = useCallback(
+    async (target: PullTarget = 'active'): Promise<void> => {
+      const { settings } = settingsStore;
+      if (!settings.pat) {
+        setSyncState({
+          status: 'error',
+          message: 'No PAT configured. Open Settings first.',
+          prUrl: null,
+        });
+        return;
       }
 
-      // Get the HEAD SHA so we can store it for future change detection
-      const sha = await client.getBranchHead(settings.activeBranch);
+      // Resolve which branches to fetch. `'active'` is the legacy single-
+      // branch behaviour; `'all'` warms both caches in one click; named
+      // values let the designer pre-warm the inactive branch without
+      // switching to it first.
+      const branches: ActiveBranch[] =
+        target === 'all'
+          ? ['main', 'dev']
+          : target === 'active'
+            ? [settings.activeBranch]
+            : [target];
 
-      // Fetch the canonical platform version from the repo-root package.json
-      // so the header VersionField pre-fills with the right number. Reading
-      // from the root rather than the web base package keeps the displayed
-      // version platform-agnostic — Flutter and Python publish at the same
-      // version; the displayed number is the platform release, not the web
-      // package's number specifically.
-      // Failure here is non-fatal — we still complete the pull, just without
-      // a baseline.
-      let baseVersion: string | null = null;
-      try {
-        const pkgJson = await client.getFileContent(
-          'package.json',
-          settings.activeBranch,
-        );
-        const parsed = JSON.parse(pkgJson) as { version?: string };
-        if (parsed.version) baseVersion = parsed.version;
-      } catch (err) {
-        // Don't block the pull on a missing version file — designer can
-        // still edit and push; auto-version.yml will then bump as usual.
-        console.warn('[BTech Token Studio] Could not read root version:', err);
-      }
-
-      tokenStore.setSets(sets);
-      tokenStore.setLastPull(sha, Date.now());
-      // Record the version that's currently published on the active branch.
-      // The header VersionLabel reads this; bumps are derived by CI from the
-      // branch the PR merges into, so the plugin no longer carries a
-      // designer-editable next-version field.
-      tokenStore.setBaseVersion(baseVersion);
-
+      const label =
+        branches.length === 1
+          ? `branch ${branches[0]}`
+          : `branches ${branches.join(', ')}`;
       setSyncState({
-        status: 'success',
-        message: `Pulled ${jsonFiles.length} file(s) from ${settings.activeBranch}.`,
+        status: 'pulling',
+        message: `Fetching ${label} from Azure DevOps…`,
         prUrl: null,
       });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setSyncState({ status: 'error', message, prUrl: null });
-    }
-  }, [settingsStore, tokenStore]);
+
+      try {
+        const client = new AzureDevOpsClient(settings);
+
+        // Fan out across the requested branches. Each branch fetch is
+        // independent so they can run in parallel — typically < 20 files
+        // each, well within Azure DevOps rate limits.
+        const results = await Promise.all(
+          branches.map(async (branch) => ({
+            branch,
+            ...(await pullBranchSnapshot(client, branch)),
+          })),
+        );
+
+        // Commit each snapshot. `commitBranchPull` mirrors the active
+        // branch's snapshot into the top-level fields automatically; the
+        // inactive branch only updates the cache.
+        for (const { branch, snapshot } of results) {
+          tokenStore.commitBranchPull(branch, snapshot, settings.activeBranch);
+        }
+
+        const totalFiles = results.reduce((sum, r) => sum + r.fileCount, 0);
+        setSyncState({
+          status: 'success',
+          message:
+            branches.length === 1
+              ? `Pulled ${totalFiles} file(s) from ${branches[0]}.`
+              : `Pulled ${totalFiles} file(s) across ${branches.join(' + ')}.`,
+          prUrl: null,
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        setSyncState({ status: 'error', message, prUrl: null });
+      }
+    },
+    [settingsStore, tokenStore],
+  );
 
   // ── Push ───────────────────────────────────────────────────────────────────
 

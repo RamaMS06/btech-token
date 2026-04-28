@@ -17,7 +17,8 @@
 
 import React, { useState } from 'react';
 import { useTokens } from '../hooks/useTokens.js';
-import { useSync } from '../hooks/useSync.js';
+import { useSync, type PullTarget } from '../hooks/useSync.js';
+import { useSettingsStore } from '../store/settings.js';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -40,7 +41,15 @@ function formatDate(ts: number | null): string {
 export function SyncPanel({ initialMode, onClose, onSwitchToPush }: SyncPanelProps) {
   const { sets, lastPullSha, lastPullAt, dirtySets } = useTokens();
   const { syncState, pull, push } = useSync();
+  const activeBranch = useSettingsStore((s) => s.settings.activeBranch);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+
+  /**
+   * Designer-selected pull target. Default `'active'` keeps the legacy
+   * one-click behaviour. `'all'` warms both branch caches so subsequent
+   * branch swaps are instantaneous — the headline win of this feature.
+   */
+  const [pullTarget, setPullTarget] = useState<PullTarget>('active');
 
   const dirty = dirtySets();
   const hasDirty = dirty.length > 0;
@@ -48,7 +57,7 @@ export function SyncPanel({ initialMode, onClose, onSwitchToPush }: SyncPanelPro
   // ── Pull flow ──────────────────────────────────────────────────────────────
 
   async function handlePull() {
-    await pull();
+    await pull(pullTarget);
   }
 
   function handlePullRequest() {
@@ -106,6 +115,30 @@ export function SyncPanel({ initialMode, onClose, onSwitchToPush }: SyncPanelPro
                   </>
                 )}
               </div>
+
+              {/*
+                Pull-target picker. Designers can pre-warm the inactive
+                branch (or both) so subsequent branch swaps are instant.
+                Defaults to "active branch" to keep the legacy one-click
+                experience for the common case.
+              */}
+              <label className="sync-target">
+                <span className="sync-target__label">Pull target</span>
+                <select
+                  className="sync-target__select"
+                  value={pullTarget}
+                  onChange={(e) => setPullTarget(e.target.value as PullTarget)}
+                  disabled={isPulling}
+                  aria-label="Branch to pull"
+                >
+                  <option value="active">
+                    Active branch ({activeBranch})
+                  </option>
+                  <option value="main">Main only</option>
+                  <option value="dev">Dev only</option>
+                  <option value="all">All branches (main + dev)</option>
+                </select>
+              </label>
 
               {hasDirty && confirmDiscard && (
                 <div className="sync-warning">
@@ -227,7 +260,11 @@ export function SyncPanel({ initialMode, onClose, onSwitchToPush }: SyncPanelPro
               {initialMode === 'pull'
                 ? isPulling
                   ? 'Pulling…'
-                  : 'Pull from main'
+                  : pullTarget === 'all'
+                    ? 'Pull all branches'
+                    : pullTarget === 'active'
+                      ? `Pull ${activeBranch}`
+                      : `Pull ${pullTarget}`
                 : isPushing
                   ? 'Pushing…'
                   : 'Push & create PR'}

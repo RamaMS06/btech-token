@@ -59,6 +59,13 @@ export interface DTCGGroup {
 // ── Plugin token set model ──────────────────────────────────────────────────
 
 /**
+ * Currently active git branch — pulls and pushes target this. Declared up
+ * here (above the storage types) so `BranchSnapshot` / `TokenStorageState`
+ * can reference it without a forward dependency.
+ */
+export type ActiveBranch = 'main' | 'dev';
+
+/**
  * A TokenSet maps 1:1 to a JSON file in packages/tokens/sources/**
  * The `id` is derived from the relative path: e.g.
  *   "packages/tokens/sources/core/color.primitive.json" → "core/color.primitive"
@@ -90,8 +97,26 @@ export interface TokenSet {
   dirty: boolean;
 }
 
+/**
+ * Per-branch frozen snapshot of "what was last pulled". The plugin caches
+ * one of these per branch so that switching branches via `<BranchSwitcher>`
+ * doesn't need a fresh network round-trip every time — the designer sees
+ * the same state they'd see immediately after a pull.
+ *
+ * Sets are stored INCLUDING their dirty flags + originalTree, so a designer
+ * who edits on `dev`, switches to `main`, then comes back to `dev` finds
+ * their unsaved work intact.
+ */
+export interface BranchSnapshot {
+  sets: Record<string, TokenSet>;
+  baseVersion: string | null;
+  lastPullSha: string | null;
+  lastPullAt: number | null;
+}
+
 /** Serialisable slice persisted to figma.clientStorage under 'btech.tokens' */
 export interface TokenStorageState {
+  /** Mirror of `branchSnapshots[activeBranch].sets` — the in-view set map. */
   sets: Record<string, TokenSet>;
   lastPullSha: string | null;
   lastPullAt: number | null;
@@ -102,6 +127,15 @@ export interface TokenStorageState {
    * by a manually-entered field. Null when the plugin has never pulled.
    */
   baseVersion: string | null;
+  /**
+   * Per-branch cached pull snapshots. Populated by `useSync.pull(target)`
+   * — `target='active'` writes one entry, `target='all'` writes both.
+   * `<BranchSwitcher>` reads from here to swap branches without re-pulling.
+   *
+   * Optional on the type so older persisted blobs (pre-feature) still
+   * deserialise; the store seeds `{}` on load.
+   */
+  branchSnapshots?: Partial<Record<ActiveBranch, BranchSnapshot>>;
 }
 
 // ── Settings model ──────────────────────────────────────────────────────────
@@ -114,8 +148,10 @@ export interface TokenStorageState {
  * via the header `<BranchSwitcher>`, mapped to one of the fixed channel
  * values below. We still persist it under the same Settings blob (to share
  * the existing debounced postMessage path) but the UI no longer exposes it.
+ *
+ * (`ActiveBranch` itself is declared above near the storage types — keep
+ * this comment so `git blame` still tells the story.)
  */
-export type ActiveBranch = 'main' | 'dev';
 
 export interface Settings {
   orgUrl: string;

@@ -25,7 +25,13 @@
  */
 
 import { create } from 'zustand';
-import type { TokenSet, DTCGToken, DTCGGroup } from '../../shared/types.js';
+import type {
+  TokenSet,
+  DTCGToken,
+  DTCGGroup,
+  ActiveBranch,
+  BranchSnapshot,
+} from '../../shared/types.js';
 import { ensureTenantOverrideSet } from '../../shared/tenant-resolver.js';
 
 // ── State shape ──────────────────────────────────────────────────────────────
@@ -50,6 +56,16 @@ interface TokenState {
    * "new" badge from an old session.
    */
   remoteVersion: string | null;
+  /**
+   * Per-branch frozen pull snapshots — populated by `commitBranchPull` and
+   * read by `swapToBranch`. Lets the designer switch between `main` and
+   * `dev` without re-pulling each time. Persisted alongside the rest of
+   * the token state so the cache survives plugin reloads.
+   *
+   * Keys are `ActiveBranch` values; missing entry means "this branch has
+   * never been pulled in the current installation".
+   */
+  branchSnapshots: Partial<Record<ActiveBranch, BranchSnapshot>>;
 }
 
 interface TokenActions {
@@ -99,6 +115,37 @@ interface TokenActions {
     incoming: Record<string, TokenSet>,
     opts?: { overwriteIds?: string[] },
   ) => void;
+
+  /**
+   * Record a fresh pull for `branch`. Always writes the snapshot into
+   * `branchSnapshots[branch]`. When `branch === activeBranch`, also
+   * mirrors the snapshot into the top-level fields so the UI sees the
+   * pull immediately. Use this from `useSync.pull` for both single-branch
+   * and `target='all'` flows — call it once per branch that was fetched.
+   */
+  commitBranchPull: (
+    branch: ActiveBranch,
+    snapshot: BranchSnapshot,
+    activeBranch: ActiveBranch,
+  ) => void;
+
+  /**
+   * Replace the entire `branchSnapshots` cache. Used at hydration time
+   * (App.tsx → init-done / tokens-loaded) to restore what was persisted
+   * to figma.clientStorage in the previous session.
+   */
+  hydrateBranchSnapshots: (
+    snapshots: Partial<Record<ActiveBranch, BranchSnapshot>>,
+  ) => void;
+
+  /**
+   * Swap the active view to `target`'s cached snapshot without re-pulling.
+   * Saves the current top-level state into `branchSnapshots[currentBranch]`
+   * first so any in-progress (clean) state on the old branch is retained.
+   * Then loads `branchSnapshots[target]` if present, otherwise clears
+   * top-level fields back to "never pulled" defaults.
+   */
+  swapToBranch: (currentBranch: ActiveBranch, target: ActiveBranch) => void;
 }
 
 export type TokenStore = TokenState & TokenActions;
@@ -195,6 +242,9 @@ function schedulePersist(state: TokenState): void {
       lastPullSha: state.lastPullSha,
       lastPullAt: state.lastPullAt,
       baseVersion: state.baseVersion,
+      // Per-branch cache: persist so designers don't lose the cross-branch
+      // state when the plugin window closes.
+      branchSnapshots: state.branchSnapshots,
     };
     // postMessage to main thread — main thread writes to figma.clientStorage
     parent.postMessage({ pluginMessage: { type: 'save-tokens', payload } }, '*');
@@ -212,6 +262,7 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
   lastPullAt: null,
   baseVersion: null,
   remoteVersion: null,
+  branchSnapshots: {},
 
   // ── Actions
   setSets: (sets) =>
@@ -469,6 +520,121 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
       }
 
       const next = { ...state, sets: merged };
+      schedulePersist(next);
+      return next;
+    }),
+
+  // ── Per-branch cache ─────────────────────────────────────────────────────
+  //
+  // The plugin caches a frozen "what was last pulled" snapshot per branch so
+  // that `<BranchSwitcher>` can swap between `main` / `dev` without forcing
+  // a network round-trip. The active branch's snapshot is mirrored into the
+  // top-level fields for the rest of the UI to read; the inactive branch
+  // sits dormant until the designer flips back.
+
+  hydrateBranchSnapshots: (snapshots) =>
+    set((state) => {
+      // Defensive normalisation — older persisted snapshots may have sets
+      // without the new `originalTree` field. Use the same `normaliseSets`
+      // path we use for top-level state so swap semantics match.
+      const out: Partial<Record<ActiveBranch, BranchSnapshot>> = {};
+      for (const [branch, snap] of Object.entries(snapshots)) {
+        if (!snap) continue;
+        out[branch as ActiveBranch] = {
+          sets: normaliseSets(snap.sets),
+          baseVersion: snap.baseVersion,
+          lastPullSha: snap.lastPullSha,
+          lastPullAt: snap.lastPullAt,
+        };
+      }
+      return { ...state, branchSnapshots: out };
+    }),
+
+  commitBranchPull: (branch, snapshot, activeBranch) =>
+    set((state) => {
+      // Deep-clone the sets map on the way in so subsequent edits to the
+      // top-level state can't mutate the cached snapshot by reference.
+      const frozenSets: Record<string, TokenSet> = {};
+      for (const [id, s] of Object.entries(snapshot.sets)) {
+        frozenSets[id] = {
+          ...s,
+          tree: cloneTree(s.tree),
+          originalTree: cloneTree(s.originalTree ?? s.tree),
+        };
+      }
+
+      const branchSnapshots = {
+        ...state.branchSnapshots,
+        [branch]: { ...snapshot, sets: frozenSets },
+      };
+
+      // If we just pulled the branch the designer is currently looking at,
+      // mirror the snapshot into the live top-level fields so the UI
+      // reflects the pull immediately. For the OTHER branch (e.g. pulled
+      // as part of `target='all'`) we just stash it in the cache and let
+      // `swapToBranch` pick it up when needed.
+      if (branch === activeBranch) {
+        const next = {
+          ...state,
+          sets: normaliseSets(snapshot.sets),
+          baseVersion: snapshot.baseVersion,
+          lastPullSha: snapshot.lastPullSha,
+          lastPullAt: snapshot.lastPullAt,
+          branchSnapshots,
+        };
+        schedulePersist(next);
+        return next;
+      }
+
+      const next = { ...state, branchSnapshots };
+      schedulePersist(next);
+      return next;
+    }),
+
+  swapToBranch: (currentBranch, target) =>
+    set((state) => {
+      if (currentBranch === target) return state;
+
+      // Snapshot the current top-level state under the OLD branch so any
+      // post-pull tweaks survive a round trip. We stash whatever's live
+      // (including dirty flags) — discardAll is the caller's job before
+      // calling this if a clean swap is desired.
+      const currentFrozen: BranchSnapshot = {
+        sets: state.sets,
+        baseVersion: state.baseVersion,
+        lastPullSha: state.lastPullSha,
+        lastPullAt: state.lastPullAt,
+      };
+
+      const branchSnapshots = {
+        ...state.branchSnapshots,
+        [currentBranch]: currentFrozen,
+      };
+
+      // Load the target branch's cached snapshot if we have one. If the
+      // designer never pulled the target branch, fall back to "empty"
+      // top-level state — the silent remote-version poll will refill the
+      // header placeholder and the designer can pull when ready.
+      const cached = branchSnapshots[target];
+
+      const next = cached
+        ? {
+            ...state,
+            sets: normaliseSets(cached.sets),
+            baseVersion: cached.baseVersion,
+            lastPullSha: cached.lastPullSha,
+            lastPullAt: cached.lastPullAt,
+            branchSnapshots,
+          }
+        : {
+            ...state,
+            sets: {},
+            baseVersion: null,
+            lastPullSha: null,
+            lastPullAt: null,
+            branchSnapshots,
+          };
+
       schedulePersist(next);
       return next;
     }),

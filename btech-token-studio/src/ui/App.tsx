@@ -100,6 +100,12 @@ export function App() {
             if (msg.tokens.baseVersion) {
               tokenStore.setBaseVersion(msg.tokens.baseVersion);
             }
+            // Restore per-branch pull cache so a designer who pulled both
+            // branches in the previous session can flip between them
+            // without re-pulling.
+            if (msg.tokens.branchSnapshots) {
+              tokenStore.hydrateBranchSnapshots(msg.tokens.branchSnapshots);
+            }
           }
           if (msg.settings) {
             settingsStore.markLoaded(msg.settings as Settings);
@@ -117,6 +123,9 @@ export function App() {
           }
           if (payload.baseVersion) {
             tokenStore.setBaseVersion(payload.baseVersion);
+          }
+          if (payload.branchSnapshots) {
+            tokenStore.hydrateBranchSnapshots(payload.branchSnapshots);
           }
           break;
         }

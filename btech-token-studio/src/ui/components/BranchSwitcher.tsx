@@ -23,6 +23,7 @@
 import React, { useMemo, useState } from 'react';
 import { useSettingsStore } from '../store/settings.js';
 import { useTokens } from '../hooks/useTokens.js';
+import { useTokenStore } from '../store/tokens.js';
 import { ConfirmDialog } from './ConfirmDialog.js';
 import type { ActiveBranch } from '../../shared/types.js';
 
@@ -34,7 +35,12 @@ const BRANCH_OPTIONS: Array<{ value: ActiveBranch; label: string }> = [
 export function BranchSwitcher() {
   const activeBranch = useSettingsStore((s) => s.settings.activeBranch);
   const setBranch = useSettingsStore((s) => s.setBranch);
-  const { sets, discardAll, setBaseVersion, setRemoteVersion } = useTokens();
+  const { sets, discardAll, setRemoteVersion } = useTokens();
+  // Reach directly into the token store for `swapToBranch` — `useTokens`
+  // exposes a curated subset and adding the swap action there would force
+  // every consumer to re-render on cache writes. The header is the only
+  // place that swaps, so a direct reference keeps things contained.
+  const swapToBranch = useTokenStore((s) => s.swapToBranch);
 
   const dirtyCount = useMemo(
     () => Object.values(sets).filter((s) => s.dirty).length,
@@ -48,16 +54,23 @@ export function BranchSwitcher() {
   const [pendingBranch, setPendingBranch] = useState<ActiveBranch | null>(null);
 
   /**
-   * Reset version state when the branch actually flips. The previously
-   * pulled `baseVersion` belongs to the OLD branch, so leaving it in
-   * place makes `VersionLabel` compare it against the NEW branch's
-   * remote version and falsely render a "↓ new" badge — there's no
-   * update available, the designer just hasn't pulled the new branch
-   * yet. Clearing both falls the header back to the placeholder and
-   * lets the silent poll refill `remoteVersion` for the new branch.
+   * Swap the live view to the target branch's cached snapshot (if any),
+   * then flip `settings.activeBranch` so subsequent pull/push target the
+   * new branch. `remoteVersion` is intentionally cleared — the silent
+   * poll re-fires on `activeBranch` change and refills it from the new
+   * branch's `package.json`, so we'd rather show no badge briefly than
+   * a stale one against the previous branch.
+   *
+   * If the designer has already pulled the target branch in this
+   * session (or a previous one — `branchSnapshots` is persisted), the
+   * swap is instantaneous: sets, baseVersion, and lastPullSha all
+   * restore from cache and the header renders the target branch's
+   * version immediately. Otherwise the top-level fields fall back to
+   * "never pulled" and the designer pulls from the new branch as
+   * normal.
    */
   function applySwitch(target: ActiveBranch) {
-    setBaseVersion(null);
+    swapToBranch(activeBranch, target);
     setRemoteVersion(null);
     setBranch(target);
   }
