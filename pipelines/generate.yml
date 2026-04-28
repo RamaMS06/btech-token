@@ -70,10 +70,15 @@ jobs:
         workingDirectory: packages/tokens/platforms/flutter/token
 
       # ── Commit back generated files if anything changed ───────────────────
-      # This step races with auto-version.yml and manual pushes — both can
-      # land on $BRANCH while we were generating. We use a re-stage-on-fresh-
-      # base loop instead of a single push:
+      # This step races with auto-version.yml, manual pushes, AND with PR
+      # auto-completion (which deletes the source branch). We use a re-stage-
+      # on-fresh-base loop instead of a single push:
       #
+      #   0. is the branch still on origin?       (PR may have been
+      #                                             auto-completed and the
+      #                                             source branch deleted
+      #                                             between trigger and now —
+      #                                             nothing to push back to)
       #   1. fetch origin
       #   2. reset --mixed to origin/$BRANCH       (discard any prior local
       #                                             commit, keep worktree)
@@ -81,10 +86,11 @@ jobs:
       #   4. if no diff vs origin → exit clean    (someone else's push
       #                                             already covered our regen)
       #   5. commit + push
-      #   6. push rejected? backoff + retry from (1) up to MAX_RETRIES
+      #   6. push rejected? backoff + retry from (0) up to MAX_RETRIES
       #
       # This converges as long as racing pushes eventually stop. Manual pushes
-      # always win — generate just rebases on top and retries.
+      # always win — generate just rebases on top and retries. PR completions
+      # also short-circuit cleanly (step 0).
       - script: |
           set -e
           git config user.name "Azure Pipelines"
@@ -96,6 +102,24 @@ jobs:
 
           for attempt in $(seq 1 $MAX_RETRIES); do
             echo "── Sync attempt $attempt of $MAX_RETRIES ($BRANCH) ──"
+
+            # ── Step 0: branch still alive on origin? ──
+            # Common case for plugin-driven flows: the Figma plugin pushes a
+            # feature branch + opens a PR with auto-complete + delete-source-
+            # branch enabled. By the time we land here (~3-5 min after
+            # trigger), the PR may already be merged and the source branch
+            # gone. Trying to `git fetch origin "$BRANCH"` then errors with
+            #   fatal: couldn't find remote ref <branch>
+            # and aborts the whole pipeline. Detect that case and exit clean
+            # — the generated outputs we'd have pushed back to the feature
+            # branch are now moot; the PR merge already brought the source
+            # changes onto the target branch and the target branch's own
+            # generate.yml run will produce its own outputs.
+            if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+              echo "Branch $BRANCH no longer exists on origin — nothing to commit back."
+              echo "(Most likely cause: PR was auto-completed with 'delete source branch' enabled.)"
+              exit 0
+            fi
 
             git fetch origin "$BRANCH"
             # --mixed (default): move HEAD to origin/$BRANCH, unstage
@@ -117,6 +141,16 @@ jobs:
 
             if git push origin "HEAD:$BRANCH"; then
               echo "✓ Pushed generated outputs on attempt $attempt."
+              exit 0
+            fi
+
+            # Push could fail for two reasons we want to handle differently:
+            #   (a) branch raced — someone pushed between our fetch and push
+            #   (b) branch deleted — PR auto-completed mid-loop
+            # Re-check existence on origin: if it's gone, exit clean rather
+            # than burn retries on a ref that will never come back.
+            if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+              echo "Branch $BRANCH was deleted on origin during this attempt — exiting clean."
               exit 0
             fi
 

@@ -216,6 +216,26 @@ the step exits 0. This is the common case when two pipelines run in
 parallel against the same source change — whichever lands first
 completes the work and the other no-ops.
 
+### Deleted-branch handling: generate
+
+The Figma plugin pushes its tenant edits to a feature branch
+(e.g. `20260429-062110-scope-tenant-bspace`) and immediately opens a
+PR with auto-complete + delete-source-branch enabled. By the time
+`generate.yml` finishes install + generate + flutter analyze (~3-5
+minutes later), the PR is often already merged and the source branch
+is gone from origin. A naive `git fetch origin "$BRANCH"` then errors:
+
+```
+fatal: couldn't find remote ref 20260429-062110-scope-tenant-bspace
+```
+
+`generate.yml` defends against this by calling
+`git ls-remote --exit-code --heads origin "$BRANCH"` at the top of
+each retry iteration AND after a failed push. If the branch is gone,
+the step exits 0 — there's nothing to push back to, and the merge
+that deleted the branch already brought the source change onto the
+target branch (where its own `generate.yml` run will produce outputs).
+
 ### Tag conflicts
 
 After a successful commit push, the loop iterates the new tags. For
