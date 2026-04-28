@@ -305,6 +305,8 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Anchor the absolute-positioned override dot to this slot. */
+  position: relative;
 }
 
 .token-row__color-preview {
@@ -357,6 +359,42 @@ a {
   color: var(--figma-color-text-ondanger);
   padding: 1px 4px;
   border-radius: 2px;
+}
+
+/*
+ * Tenant override marker on TokenRow. Mirrors the swatch / pill treatment
+ * used in TokenTreeView so composite types (shadow, typography, border,
+ * gradient, transition) get the same brand-coloured signal when their
+ * value comes from a tenant overrides file.
+ */
+.token-row--overridden {
+  /* Subtle tinted left border so the row reads as "different" even when
+     scrolling fast. Matches the swatch ring colour. */
+  box-shadow: inset 2px 0 0 0 var(--figma-color-border-brand, #145bc3);
+}
+
+.token-row__override-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--figma-color-bg-brand, #145bc3);
+  border: 1.5px solid var(--figma-color-bg, #fff);
+  box-sizing: content-box;
+  pointer-events: none;
+}
+
+.token-row__override-badge {
+  font-size: 8px;
+  background: var(--figma-color-bg-brand-tertiary, rgba(20, 91, 195, 0.12));
+  color: var(--figma-color-text-brand, #145bc3);
+  border: 1px solid var(--figma-color-border-brand, #145bc3);
+  padding: 1px 4px;
+  border-radius: 2px;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
 }
 
 .token-row__menu-btn {

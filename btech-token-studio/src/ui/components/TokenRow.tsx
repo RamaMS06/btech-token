@@ -11,6 +11,7 @@
 
 import React from 'react';
 import type { DTCGToken } from '../../shared/types.js';
+import type { ResolvedToken } from '../../shared/tenant-resolver.js';
 
 // ── Props ────────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,17 @@ interface TokenRowProps {
   path: string;
   token: DTCGToken;
   onEdit: (path: string) => void;
+}
+
+/**
+ * Read the tenant id that supplied this leaf's value, if any. Mirrors the
+ * helper in TokenTreeView — composite types (shadow, typography, border,
+ * gradient, transition) fall back to TokenRow rendering, so without this
+ * the override badge would silently drop on those types when a tenant is
+ * active.
+ */
+function overriddenBy(token: DTCGToken): string | null {
+  return (token as ResolvedToken).__overriddenBy ?? null;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -55,18 +67,38 @@ function renderValuePreview(token: DTCGToken): React.ReactNode {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function TokenRow({ path, token, onEdit }: TokenRowProps) {
+  const override = overriddenBy(token);
   return (
-    <li className="token-row">
+    <li className={`token-row${override ? ' token-row--overridden' : ''}`}>
       <button
         className="token-row__btn"
         onClick={() => onEdit(path)}
-        title={`Edit ${path}`}
+        title={
+          override
+            ? `Edit ${path} (overridden by ${override})`
+            : `Edit ${path}`
+        }
       >
         <span className="token-row__preview-slot">
           {renderValuePreview(token)}
+          {/* Tenant override marker — small dot in the corner of the preview
+              slot. Visible regardless of token type so composite tokens
+              (shadow, typography, border, gradient, transition) signal
+              tenant divergence the same way swatches and pills do. */}
+          {override && (
+            <span className="token-row__override-dot" aria-hidden />
+          )}
         </span>
         <span className="token-row__path">{path}</span>
         <span className="token-row__meta">
+          {override && (
+            <span
+              className="token-row__override-badge"
+              title={`Overridden by ${override}`}
+            >
+              {override}
+            </span>
+          )}
           {token.$deprecated && (
             <span className="token-row__deprecated-badge">deprecated</span>
           )}
