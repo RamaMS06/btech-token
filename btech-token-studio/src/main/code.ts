@@ -17,6 +17,8 @@
  */
 
 import type { UIToMainMessage, MainToUIMessage, TokenStorageState, Settings } from '../shared/types.js';
+import { runFigmaImportScan, runFigmaImportApply } from './figma-import.js';
+import { runFigmaExport } from './figma-export.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -126,6 +128,43 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
       // Phase 3 hook: writing a token subset to Figma Variables.
       // Not implemented in Phase 1 — acknowledged so the UI doesn't hang.
       figma.notify('Apply to Figma Variables is coming in Phase 3.', { timeout: 3000 });
+      break;
+    }
+
+    // ── Figma Variables / Styles import-export ──────────────────────────
+    // Each branch is wrapped so a thrown error inside the executor turns
+    // into a typed `*-error` message + a canvas notify, rather than
+    // crashing the plugin sandbox silently.
+    case 'figma-import-scan': {
+      try {
+        await runFigmaImportScan(send);
+      } catch (err) {
+        const message = (err as Error).message ?? String(err);
+        send({ type: 'figma-import-error', message });
+        figma.notify(`Import scan failed: ${message}`, { error: true });
+      }
+      break;
+    }
+
+    case 'figma-import-apply': {
+      try {
+        await runFigmaImportApply(msg.selection, msg.options, send);
+      } catch (err) {
+        const message = (err as Error).message ?? String(err);
+        send({ type: 'figma-import-error', message });
+        figma.notify(`Import failed: ${message}`, { error: true });
+      }
+      break;
+    }
+
+    case 'figma-export': {
+      try {
+        await runFigmaExport(msg.payload, send);
+      } catch (err) {
+        const message = (err as Error).message ?? String(err);
+        send({ type: 'figma-export-error', message });
+        figma.notify(`Export failed: ${message}`, { error: true });
+      }
       break;
     }
 

@@ -1638,3 +1638,676 @@ a {
   color: var(--figma-color-text);
   font-weight: 500;
 }
+
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Figma Variables / Styles import-export feature
+   ────────────────────────────────────────────────────────────────────────────
+   Adds:
+     - Import/Export popover menu next to the Settings cog
+     - Reusable ToggleSwitch + CheckboxTree primitives (used by both modals)
+     - Wide-modal variant + body-scoped utility classes (blurb / loading /
+       error / success / warnings) shared by Export + Import + Diff modals
+     - Diff list visuals (badges, swatches, side-by-side value picker, bulk
+       header buttons)
+   All colors driven by --figma-color-* so light/dark inherits automatically.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── Wide modal variant (used by Import + Diff which need horizontal room) ── */
+.modal--wide {
+  width: 520px;
+  max-width: calc(100vw - 32px);
+}
+
+/* ── Body-scoped utility classes shared across Export/Import/Diff ─────────── */
+.modal__blurb {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal__loading {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  padding: 16px 0;
+  text-align: center;
+}
+
+.modal__error {
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: var(--figma-color-bg-danger-tertiary, rgba(220, 50, 50, 0.08));
+  color: var(--figma-color-text-danger, #b71c1c);
+  border: 1px solid var(--figma-color-border-danger, rgba(220, 50, 50, 0.3));
+}
+
+.modal__success {
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: var(--figma-color-bg-success-tertiary, rgba(20, 130, 70, 0.08));
+  color: var(--figma-color-text-success, #1b6c3a);
+  border: 1px solid var(--figma-color-border-success, rgba(20, 130, 70, 0.3));
+}
+
+.modal__warnings {
+  font-size: 11px;
+  margin-top: 6px;
+  color: var(--figma-color-text-secondary);
+}
+
+.modal__warnings summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  padding: 2px 0;
+}
+
+.modal__warnings ul {
+  margin: 6px 0 0 18px;
+  padding: 0;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* ── Import / Export popover trigger + menu ───────────────────────────────── */
+.import-export-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.import-export-menu__popover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  min-width: 160px;
+  background: var(--figma-color-bg);
+  border: 1px solid var(--figma-color-border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  z-index: 50;
+}
+
+.import-export-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--figma-color-text);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.import-export-menu__item:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.import-export-menu__item-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  color: var(--figma-color-text-secondary);
+}
+
+/* ── Toggle switch (reusable) ─────────────────────────────────────────────── */
+.toggle-switch__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+.toggle-switch__row:last-child {
+  border-bottom: none;
+}
+
+.toggle-switch {
+  flex-shrink: 0;
+  width: 28px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.toggle-switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.toggle-switch__track {
+  display: block;
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--figma-color-bg-tertiary, var(--figma-color-bg-secondary));
+  border: 1px solid var(--figma-color-border);
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.toggle-switch__track--on {
+  background: var(--figma-color-bg-brand);
+  border-color: var(--figma-color-bg-brand);
+}
+
+.toggle-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 120ms ease;
+}
+
+.toggle-switch__track--on + .toggle-switch__thumb,
+.toggle-switch[aria-checked="true"] .toggle-switch__thumb {
+  transform: translateX(12px);
+}
+
+.toggle-switch__label-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle-switch__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--figma-color-text);
+}
+
+.toggle-switch__description {
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+  line-height: 1.45;
+}
+
+/* ── Checkbox tree (reusable) ─────────────────────────────────────────────── */
+.checkbox-tree {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.checkbox-tree__toggle-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--figma-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--figma-color-bg-secondary);
+  border: none;
+  border-bottom: 1px solid var(--figma-color-border);
+  cursor: pointer;
+  text-align: left;
+}
+
+.checkbox-tree__toggle-all:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.checkbox-tree__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--figma-color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-tree__row:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.checkbox-tree__row--child {
+  padding-left: 26px;
+}
+
+.checkbox-tree__row--grandchild {
+  padding-left: 42px;
+}
+
+.checkbox-tree__checkbox {
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--figma-color-border-strong, var(--figma-color-border));
+  border-radius: 3px;
+  background: var(--figma-color-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.checkbox-tree__checkbox--checked {
+  background: var(--figma-color-bg-brand);
+  border-color: var(--figma-color-bg-brand);
+}
+
+.checkbox-tree__checkbox--checked::after {
+  content: '';
+  width: 7px;
+  height: 4px;
+  border-left: 1.5px solid var(--figma-color-text-onbrand, #fff);
+  border-bottom: 1.5px solid var(--figma-color-text-onbrand, #fff);
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.checkbox-tree__checkbox--indeterminate {
+  background: var(--figma-color-bg-brand);
+  border-color: var(--figma-color-bg-brand);
+}
+
+.checkbox-tree__checkbox--indeterminate::after {
+  content: '';
+  width: 7px;
+  height: 1.5px;
+  background: var(--figma-color-text-onbrand, #fff);
+}
+
+.checkbox-tree__count {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+}
+
+.checkbox-tree__empty {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  padding: 12px;
+  text-align: center;
+}
+
+/* ── Import options block ─────────────────────────────────────────────────── */
+.import-styles__options {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--figma-color-border);
+  border-bottom: 1px solid var(--figma-color-border);
+  padding: 4px 0;
+}
+
+/* ── Diff modal — counter + bulk-actions header ───────────────────────────── */
+.import-diff__counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  background: var(--figma-color-bg-secondary);
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+.import-diff__counter strong {
+  color: var(--figma-color-text);
+  font-weight: 600;
+}
+
+.import-diff__bulk {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+.import-diff__bulk-btn {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  background: var(--figma-color-bg);
+  color: var(--figma-color-text);
+  border: 1px solid var(--figma-color-border);
+  cursor: pointer;
+}
+
+.import-diff__bulk-btn:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+/* Resting (inactive) state — both buttons share neutral chrome so the
+   designer doesn't think one is pre-selected before they click. */
+.import-diff__bulk-btn--import,
+.import-diff__bulk-btn--main {
+  border-color: var(--figma-color-border, rgba(255, 255, 255, 0.12));
+  color: var(--figma-color-text);
+  background: transparent;
+}
+
+/* Active state — applied when EVERY row currently resolves to this side.
+   We use a filled background + brand colour for "import" (the additive,
+   forward-going action) and a quieter strong-bordered fill for "main"
+   (the conservative keep-existing action), so the two are distinguishable
+   even at a glance. */
+.import-diff__bulk-btn--import.import-diff__bulk-btn--active {
+  background: var(--figma-color-bg-brand);
+  border-color: var(--figma-color-bg-brand);
+  color: var(--figma-color-text-onbrand, #fff);
+}
+
+.import-diff__bulk-btn--main.import-diff__bulk-btn--active {
+  background: var(--figma-color-bg-secondary);
+  border-color: var(--figma-color-text);
+  color: var(--figma-color-text);
+  font-weight: 600;
+}
+
+.import-diff__bulk-btn--active:hover {
+  /* Filter rather than colour swap so each variant tints its own
+     active background instead of collapsing to the same hover gray. */
+  filter: brightness(0.95);
+  background: var(--figma-color-bg-brand);
+}
+
+.import-diff__bulk-btn--main.import-diff__bulk-btn--active:hover {
+  background: var(--figma-color-bg-secondary);
+  filter: brightness(1.05);
+}
+
+/* ── Diff modal — list and rows ──────────────────────────────────────────── */
+.import-diff__list {
+  /* Reuses .modal__body so flex-column + scroll is inherited; this just
+     tightens the gap so grouped rows stack densely. */
+  gap: 0;
+  padding-top: 0;
+  /* `position: sticky` on a child element looks for the nearest scrolling
+     ancestor; that's already this list (.modal__body has overflow-y: auto).
+     We just need to make sure no intermediate ancestor introduces its own
+     stacking/clipping context. */
+}
+
+.import-diff__group {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--figma-color-border);
+  /* No `overflow: hidden` — it would clip the sticky header. The list as
+     a whole already lives inside the modal body's scroll container so
+     visual containment is handled there. */
+}
+
+.import-diff__group:last-child {
+  border-bottom: none;
+}
+
+.import-diff__group-header {
+  /* Sticks to the top of the modal body's scroll container so the
+     designer always sees which group's rows are currently in view. */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--figma-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  background: var(--figma-color-bg-secondary);
+  border: none;
+  border-bottom: 1px solid transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  /* Slight shadow so the header reads as a layer above the rows when it
+     sticks during scroll. Subtle in light, tuned for both themes. */
+  box-shadow: 0 1px 0 0 var(--figma-color-border);
+}
+
+.import-diff__group-header:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.import-diff__group--open .import-diff__group-header {
+  border-bottom-color: var(--figma-color-border);
+}
+
+.import-diff__group-caret {
+  flex: 0 0 auto;
+  color: var(--figma-color-text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.import-diff__group-caret--open {
+  transform: rotate(90deg);
+}
+
+.import-diff__group-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-diff__group-meta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.import-diff__group-stat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  background: var(--figma-color-bg);
+}
+
+.import-diff__group-stat--add {
+  color: rgb(20, 130, 70);
+  background: rgba(20, 130, 70, 0.12);
+}
+
+.import-diff__group-stat--change {
+  color: rgb(180, 130, 30);
+  background: rgba(180, 130, 30, 0.14);
+}
+
+.import-diff__group-stat--remove {
+  color: rgb(190, 60, 60);
+  background: rgba(190, 60, 60, 0.12);
+}
+
+.import-diff__expand-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 16px 0;
+}
+
+.import-diff__expand-all {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--figma-color-text-brand, var(--figma-color-text));
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.import-diff__expand-all:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.import-diff__row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+/* Last row inside an expanded group should not draw a divider —
+   the group itself owns the bottom separator. */
+.import-diff__group .import-diff__row:last-child {
+  border-bottom: none;
+}
+
+.import-diff__row--add {
+  background: rgba(20, 130, 70, 0.05);
+}
+.import-diff__row--change {
+  background: rgba(180, 130, 30, 0.05);
+}
+.import-diff__row--remove {
+  background: rgba(220, 50, 50, 0.05);
+}
+
+.import-diff__row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.import-diff__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.import-diff__badge--add {
+  background: rgba(20, 130, 70, 0.2);
+  color: #1b6c3a;
+}
+.import-diff__badge--change {
+  background: rgba(180, 130, 30, 0.2);
+  color: #8a5a00;
+}
+.import-diff__badge--remove {
+  background: rgba(220, 50, 50, 0.2);
+  color: #b71c1c;
+}
+
+.import-diff__path {
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--figma-color-text);
+  flex: 1;
+  word-break: break-all;
+}
+
+.import-diff__type {
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+  background: var(--figma-color-bg-secondary);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.import-diff__values {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.import-diff__value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: var(--figma-color-bg);
+}
+
+.import-diff__value:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.import-diff__value--import {
+  border-left: 3px solid var(--figma-color-bg-brand);
+}
+
+.import-diff__value--main {
+  border-left: 3px solid var(--figma-color-text-secondary);
+}
+
+.import-diff__value--skip {
+  border-left: 3px dashed var(--figma-color-border-strong, var(--figma-color-border));
+  color: var(--figma-color-text-secondary);
+}
+
+.import-diff__radio {
+  flex-shrink: 0;
+}
+
+.import-diff__value-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--figma-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  min-width: 72px;
+}
+
+.import-diff__value-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.import-diff__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--figma-color-border);
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 6px 6px;
+  background-position: 0 0, 0 3px, 3px -3px, -3px 0;
+  flex-shrink: 0;
+}

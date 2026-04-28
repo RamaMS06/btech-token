@@ -88,6 +88,17 @@ interface TokenActions {
    * reverts to "what's in flight to repo" rather than "what we last pulled".
    */
   snapshotAfterPush: () => void;
+
+  /**
+   * Merge an incoming sets map into the store. Used by ImportDiffModal
+   * after the designer has resolved which rows to import — only ids
+   * listed in `overwriteIds` get replaced, the rest are left alone.
+   * Resulting sets are marked dirty so the next push surfaces them.
+   */
+  mergeSets: (
+    incoming: Record<string, TokenSet>,
+    opts?: { overwriteIds?: string[] },
+  ) => void;
 }
 
 export type TokenStore = TokenState & TokenActions;
@@ -415,6 +426,27 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
         };
       }
       const next = { ...state, sets: reconciled };
+      schedulePersist(next);
+      return next;
+    }),
+
+  mergeSets: (incoming, opts) =>
+    set((state) => {
+      const overwrite = new Set(opts?.overwriteIds ?? []);
+      const merged: Record<string, TokenSet> = { ...state.sets };
+
+      for (const [id, incomingSet] of Object.entries(incoming)) {
+        const existing = merged[id];
+        if (existing && !overwrite.has(id)) {
+          // Caller didn't ask for an overwrite — leave the existing set
+          // alone. This protects against accidental data loss from a
+          // half-built incoming map.
+          continue;
+        }
+        merged[id] = { ...incomingSet, dirty: true };
+      }
+
+      const next = { ...state, sets: merged };
       schedulePersist(next);
       return next;
     }),

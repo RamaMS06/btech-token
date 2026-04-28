@@ -22,6 +22,7 @@
 
 import React from 'react';
 import { useTokens } from '../hooks/useTokens.js';
+import { ImportExportMenu } from './ImportExportMenu.js';
 
 interface BottomActionBarProps {
   onShowPull: () => void;
@@ -33,6 +34,12 @@ interface BottomActionBarProps {
    * don't dispatch directly here so the destructive action stays gated.
    */
   onShowDiscard: () => void;
+  /**
+   * Raised when the designer picks Export-to-Figma or Import-Styles from
+   * the Import/Export menu next to the Settings cog. Owner (App) mounts
+   * the corresponding modal.
+   */
+  onShowImportExport: (mode: 'export' | 'import') => void;
 }
 
 export function BottomActionBar({
@@ -40,6 +47,7 @@ export function BottomActionBar({
   onShowPush,
   onShowSettings,
   onShowDiscard,
+  onShowImportExport,
 }: BottomActionBarProps) {
   const { sets } = useTokens();
   // Recompute dirty count from the live sets map; using `dirtySets()` from
@@ -74,6 +82,10 @@ export function BottomActionBar({
             />
           </svg>
         </button>
+
+        {/* Sits adjacent to Settings — same icon-button visual weight,
+            but opens its own popover with the two Figma sync actions. */}
+        <ImportExportMenu onSelect={onShowImportExport} />
 
         <button
           type="button"

@@ -71,6 +71,9 @@ function normaliseSettings(raw: Settings): Settings {
     repo: raw.repo ?? DEFAULT_SETTINGS.repo,
     pat: raw.pat ?? '',
     activeBranch,
+    // Older snapshots predate the export feature — seed the default so
+    // ExportFigmaModal doesn't render with all toggles undefined.
+    exportTypes: raw.exportTypes ?? DEFAULT_SETTINGS.exportTypes,
   };
 }
 
