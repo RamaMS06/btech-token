@@ -156,9 +156,104 @@ local commit.
 
 ---
 
+## Concurrent push handling
+
+A second class of pipeline failure looks superficially like a permission
+error but is actually a race condition:
+
+```
+ ! [rejected]        HEAD -> dev (fetch first)
+error: failed to push some refs to 'https://dev.azure.com/.../btech-ds'
+hint: Updates were rejected because the remote contains work that you do
+hint: not have locally.
+```
+
+This happens when the pipeline started against an earlier commit on
+`$BRANCH`, generated/bumped against that base, and by the time it
+tries to push, someone else (a manual `git push`, the other pipeline,
+or a later PR merge) has already advanced `origin/$BRANCH`. Git
+correctly refuses the push because it would either lose history or
+require a force-push.
+
+Both `pipelines/auto-version.yml` and `pipelines/generate.yml` handle
+this with a **rebase + retry** loop instead of a single push:
+
+```
+for attempt in 1..MAX_RETRIES (= 5):
+  git fetch origin $BRANCH
+  git reset --mixed origin/$BRANCH      # move HEAD, keep worktree
+  re-stage the files we care about
+  if no diff → exit 0                   # someone else's push covered ours
+  commit
+  if push succeeds → push tags + exit 0
+  else → backoff (2s × 2^attempt) and retry
+```
+
+### Why `--mixed` and not `--hard`
+
+The bumped/generated files live in the working tree and we want to
+keep them. `--mixed` moves `HEAD` to `origin/$BRANCH` and unstages
+everything, but does not touch the working tree. We then re-`git add`
+exactly the files we own and either commit them on top of fresh
+origin or skip if origin already covered the change.
+
+### Idempotency: auto-version
+
+If `origin/$BRANCH:package.json` already reports a version `>=` our
+target (a manual push raced ahead with the same or newer bump), the
+push step exits successfully without committing. This prevents an
+accidental "downgrade" commit when the same release is processed
+twice (e.g. pipeline rerun after a partial failure).
+
+If the version on origin matches our target but the corresponding tag
+(`v<version>`) is missing, the step still creates and pushes the tag
+so `publish.yml` fires once.
+
+### Idempotency: generate
+
+If after fetching origin there's no diff against the staged files,
+the step exits 0. This is the common case when two pipelines run in
+parallel against the same source change — whichever lands first
+completes the work and the other no-ops.
+
+### Tag conflicts
+
+After a successful commit push, the loop iterates the new tags. For
+each tag:
+
+- **No remote tag** → create and push it (normal case).
+- **Remote tag at the same SHA** (or an ancestor of our HEAD) → skip;
+  same release already in flight on origin.
+- **Remote tag at a different SHA** → fail loudly with
+  `##[error]Real conflict.` This indicates two pipelines that
+  bumped to the same version from different bases — operator must
+  inspect and pick a winner manually.
+
+### When the retry loop gives up
+
+If all `MAX_RETRIES` attempts fail, the pipeline exits 1 with:
+
+```
+##[error]Failed to push bump after 5 attempts.
+##[error]Likely cause: continuous concurrent pushes to <branch>.
+##[error]Manual recovery: re-run this pipeline once <branch> activity settles.
+```
+
+This usually means humans are still pushing to `dev`/`main` while CI
+runs. Wait for the branch to quiesce, then re-run.
+
+### When NOT to use this pattern
+
+`publish.yml` does **not** push back to the repo (it only publishes
+to feeds), so it doesn't need a retry loop. Only pipelines that
+write commits or tags to `btech-ds` need this handling.
+
+---
+
 ## Related
 
-- `pipelines/auto-version.yml` — pipeline definition with the fix
-- `pipelines/publish.yml` — does NOT push back to the repo; immune to this issue
+- `pipelines/auto-version.yml` — preflight + PAT fallback + rebase/retry on push
+- `pipelines/generate.yml` — rebase/retry on regenerate-and-commit
+- `pipelines/publish.yml` — does NOT push back to the repo; immune to both issues
 - `scripts/bump-version.ts` — local + CI version bump logic
 - `docs/architecture/versioning.md` — versioning model overview

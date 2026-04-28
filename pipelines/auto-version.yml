@@ -338,82 +338,136 @@ jobs:
             PUSH_URL="origin"
           fi
 
-          git add \
-            package.json \
-            packages/tokens/platforms/web/token/package.json \
-            packages/tokens/platforms/flutter/token/pubspec.yaml \
-            packages/tokens/platforms/web/*/package.json \
-            packages/tokens/platforms/python/token/pyproject.toml \
-            packages/tokens/platforms/python/tenants/*/pyproject.toml || true
+          # The version files in the working tree already hold the BUMPED
+          # version (set by the earlier `Bump package versions` step). We use
+          # them as the source of truth across retry iterations — `git reset
+          # --mixed` keeps the working tree intact while moving HEAD.
+          VERSION_FILES=(
+            package.json
+            packages/tokens/platforms/web/token/package.json
+            packages/tokens/platforms/flutter/token/pubspec.yaml
+            packages/tokens/platforms/python/token/pyproject.toml
+          )
+          # Glob expansions — capture matches into the array. Set nullglob
+          # so an empty match doesn't leave the literal pattern behind.
+          shopt -s nullglob
+          VERSION_FILES+=( packages/tokens/platforms/web/*/package.json )
+          VERSION_FILES+=( packages/tokens/platforms/python/tenants/*/pyproject.toml )
+          shopt -u nullglob
 
-          # Skip empty commits — `set 1.0.0` on an already-1.0.0 tree is a no-op.
-          if git diff --staged --quiet; then
-            echo "No version changes to commit — exiting cleanly."
-            exit 0
-          fi
+          # Compare two semver strings. Returns 0 if $1 >= $2, 1 otherwise.
+          # Works for stable (1.2.3) and prerelease (1.0.0-rc.5) versions
+          # as long as both follow the same shape, which our bumper enforces.
+          gte_version() {
+            [ "$1" = "$2" ] && return 0
+            local higher
+            higher=$(printf "%s\n%s\n" "$1" "$2" | sort -V | tail -n1)
+            [ "$higher" = "$1" ]
+          }
 
-          git commit -m "chore(release): bump to $(NEW_TAG) ***NO_CI***
+          MAX_RETRIES=5
+          BACKOFF=2
+
+          for attempt in $(seq 1 $MAX_RETRIES); do
+            echo "── Sync attempt $attempt of $MAX_RETRIES ──"
+
+            git fetch origin "$PUSH_BRANCH"
+            # --mixed: move HEAD to origin/$BRANCH, unstage everything, but
+            # keep the working tree (with our bumped version files) intact.
+            git reset --mixed "origin/$PUSH_BRANCH"
+
+            # Idempotency guard: if origin already advanced past our target
+            # version (e.g. someone manually pushed the same tag), skip
+            # cleanly. Prevents accidental "downgrade" commits.
+            ORIGIN_VERSION=$(git show "origin/$PUSH_BRANCH:package.json" 2>/dev/null \
+              | node -e "try{const j=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(j.version||'')}catch(e){}" \
+              || true)
+            if [ -n "$ORIGIN_VERSION" ] && gte_version "$ORIGIN_VERSION" "$(NEW_ROOT_VERSION)"; then
+              echo "Origin already at $ORIGIN_VERSION (≥ target $(NEW_ROOT_VERSION)) — bump idempotent. Skipping commit."
+              # Still try to push the tag if it's not yet on origin
+              if [ "$ORIGIN_VERSION" = "$(NEW_ROOT_VERSION)" ] && \
+                 ! git ls-remote --tags origin "$(NEW_TAG)" | grep -q "refs/tags/$(NEW_TAG)$"; then
+                echo "Origin at our version but tag $(NEW_TAG) missing — creating tag at origin HEAD."
+                git tag $(NEW_TAG) "origin/$PUSH_BRANCH" -m "Release $(NEW_TAG)" 2>/dev/null || true
+                git push "$PUSH_URL" "$(NEW_TAG)" || echo "##[warning]Tag push failed (may already exist remotely)."
+              fi
+              exit 0
+            fi
+
+            # Re-stage version files
+            git add "${VERSION_FILES[@]}" 2>/dev/null || true
+
+            if git diff --cached --quiet; then
+              echo "No version changes vs origin/$PUSH_BRANCH — nothing to commit."
+              exit 0
+            fi
+
+            git commit -m "chore(release): bump to $(NEW_TAG) ***NO_CI***
 
           Auto-bumped by Azure Pipelines after merging PR.
           Bump type: $(BUMP_TYPE)
           Scope:     $(SCOPE_FLAG)
           Root:      @btech/design-system@$(NEW_ROOT_VERSION)"
 
-          TAGS=()
-          if [ "$(NEW_ROOT_VERSION)" != "$(PREV_ROOT_VERSION)" ]; then
-            # Root moved → single root tag covers base + tenants in publish.yml
-            echo "Root version changed ($(PREV_ROOT_VERSION) → $(NEW_ROOT_VERSION)) — tagging $(NEW_TAG)."
-            git tag $(NEW_TAG) -m "Release $(NEW_TAG)"
-            TAGS+=("$(NEW_TAG)")
-          else
-            # Tenant-only bump path — one tag per changed tenant package
-            echo "Root version unchanged — looking for tenant-only bumps."
-            for pkg in packages/tokens/platforms/web/*/package.json; do
-              dir=$(dirname "$pkg")
-              tenant=$(basename "$dir")
-              [ "$tenant" = "token" ] && continue
-              # Only tag when the tenant package version actually changed in
-              # this commit. `git log -1 --name-only` lists files touched.
-              if git log -1 --name-only --pretty=format: HEAD | grep -q "$pkg"; then
-                tv=$(node -p "require('./$pkg').version")
-                tag="${tenant}-v${tv}"
-                echo "Tenant '$tenant' bumped → tagging $tag"
-                git tag "$tag" -m "Release $tag"
-                TAGS+=("$tag")
+            # Build the tag list. Don't actually create local tag refs yet —
+            # we only want refs once we know the commit pushed; otherwise a
+            # retry leaves stale tag refs lying around.
+            TAGS=()
+            if [ "$(NEW_ROOT_VERSION)" != "$(PREV_ROOT_VERSION)" ]; then
+              echo "Root version changed ($(PREV_ROOT_VERSION) → $(NEW_ROOT_VERSION)) — will tag $(NEW_TAG)."
+              TAGS+=("$(NEW_TAG)")
+            else
+              echo "Root version unchanged — checking tenant-only bumps."
+              for pkg in packages/tokens/platforms/web/*/package.json; do
+                dir=$(dirname "$pkg")
+                tenant=$(basename "$dir")
+                [ "$tenant" = "token" ] && continue
+                if git log -1 --name-only --pretty=format: HEAD | grep -q "$pkg"; then
+                  tv=$(node -p "require('./$pkg').version")
+                  TAGS+=("${tenant}-v${tv}")
+                fi
+              done
+            fi
+
+            # ── Push commit ──
+            if ! git push "$PUSH_URL" "HEAD:$PUSH_BRANCH"; then
+              echo "Commit push rejected on attempt $attempt — branch raced. Retry in ${BACKOFF}s."
+              sleep $BACKOFF
+              BACKOFF=$((BACKOFF * 2))
+              continue
+            fi
+
+            # ── Push tags (only after commit lands) ──
+            # Tag conflicts: if remote tag exists at our SHA, treat as
+            # idempotent re-run. If it exists at a different SHA, surface a
+            # clear error — that's a real conflict.
+            COMMIT_SHA=$(git rev-parse HEAD)
+            for tag in "${TAGS[@]}"; do
+              REMOTE_TAG_SHA=$(git ls-remote --tags "$PUSH_URL" "$tag" 2>/dev/null | awk '{print $1}' | head -n1)
+              if [ -n "$REMOTE_TAG_SHA" ]; then
+                if [ "$REMOTE_TAG_SHA" = "$COMMIT_SHA" ] || git merge-base --is-ancestor "$REMOTE_TAG_SHA" "$COMMIT_SHA" 2>/dev/null; then
+                  echo "Tag $tag already on origin at compatible SHA — skipping create."
+                  continue
+                fi
+                echo "##[error]Tag $tag exists on origin at $REMOTE_TAG_SHA but our HEAD is $COMMIT_SHA."
+                echo "##[error]Real conflict. Inspect the tag on origin and decide manually."
+                exit 1
+              fi
+              git tag "$tag" -m "Release $tag"
+              if ! git push "$PUSH_URL" "$tag"; then
+                echo "##[warning]Tag push failed for $tag (may have been created concurrently). Continuing."
               fi
             done
-          fi
 
-          # Helper: push with a clear admin-fix message on failure. Even
-          # though the preflight step caught most permission issues, repos
-          # with branch policies (e.g. require-PR-on-dev) can still reject
-          # an actual push that passed --dry-run, so we keep the helper
-          # everywhere.
-          push_or_explain() {
-            if git push "$PUSH_URL" "$@"; then
-              return 0
-            fi
-            echo "##[error]git push failed AFTER preflight passed."
-            echo "##[error]Likely causes:"
-            echo "##[error]  1. Branch policy on '$PUSH_BRANCH' requires PR/reviewers."
-            echo "##[error]     Fix: add build-service to 'Bypass policies when pushing'"
-            echo "##[error]     in Branches → $PUSH_BRANCH → Branch policies."
-            echo "##[error]  2. PAT (GIT_PUSH_PAT) expired — rotate in btech-ds-secrets."
-            echo "##[error]  3. Tag already exists on origin (idempotent re-run; safe to ignore)."
-            echo "##[error]Full runbook: docs/ci-cd-permissions.md"
-            return 1
-          }
+            echo "✓ Bump pushed on attempt $attempt (commit $COMMIT_SHA, tags: ${TAGS[*]:-none})."
+            exit 0
+          done
 
-          if [ ${#TAGS[@]} -eq 0 ]; then
-            echo "Nothing tagged — pushing commit only."
-            push_or_explain "HEAD:$PUSH_BRANCH"
-          else
-            echo "Pushing ${#TAGS[@]} tag(s): ${TAGS[*]}"
-            push_or_explain "HEAD:$PUSH_BRANCH"
-            for tag in "${TAGS[@]}"; do
-              push_or_explain "$tag"
-            done
-          fi
+          echo "##[error]Failed to push bump after $MAX_RETRIES attempts."
+          echo "##[error]Likely cause: continuous concurrent pushes to $PUSH_BRANCH."
+          echo "##[error]Manual recovery: re-run this pipeline once $PUSH_BRANCH activity settles."
+          echo "##[error]Full runbook: docs/ci-cd-permissions.md"
+          exit 1
         displayName: 'Commit version bump & push tag(s)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
         env:
