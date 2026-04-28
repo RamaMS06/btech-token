@@ -7,7 +7,7 @@ import { BTechBorderColor } from './border.color';
 import { BTechBgColor } from './bg.color';
 import { BTechBrandColor } from './brand.color';
 import { BTechExtColor } from './ext.color';
-import { btechColorGreen, btechColorLightblue, btechColorOrange, btechColorBlue, btechColorPurple, btechColorTeal, btechColorIndigo, btechColorRose, btechColorNeutral, btechColorRed, btechColorAmber, btechColorSky } from './swatches.color';
+import { btechColorGreen, btechColorLightblue, btechColorOrange, btechColorBlue, btechColorPurple, btechColorTeal, btechColorIndigo, btechColorRose, btechColorYellow, btechColorNeutral, btechColorRed, btechColorAmber, btechColorSky } from './swatches.color';
 
 export const BTechColor = {
   text: new BTechTextColor(),
@@ -26,6 +26,7 @@ export const BTechColor = {
   teal: btechColorTeal,
   indigo: btechColorIndigo,
   rose: btechColorRose,
+  yellow: btechColorYellow,
   neutral: btechColorNeutral,
   red: btechColorRed,
   amber: btechColorAmber,

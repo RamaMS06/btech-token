@@ -27,6 +27,7 @@ import {
   formatDimension,
   formatAlias,
   variableNameToPath,
+  namespacePrefixForCollection,
   type FigmaResolvedType,
   type Rgba,
 } from '../shared/dtcg-figma.js';
@@ -105,6 +106,10 @@ export async function runFigmaImportApply(
 
     // Index variables by id once — alias resolution needs target lookups.
     const variableById = new Map(allVariables.map((v) => [v.id, v]));
+    // Same for collections: an alias target lives in some collection whose
+    // namespace prefix we need (e.g. a Brand variable aliasing a Primitives
+    // variable should serialise as `{color.green.500}`, not `{green.500}`).
+    const collectionById = new Map(allCollections.map((c) => [c.id, c]));
 
     for (const coll of allCollections) {
       const wantedModeIds = selection.collections[coll.id];
@@ -119,9 +124,15 @@ export async function runFigmaImportApply(
         (v) => v.variableCollectionId === coll.id,
       );
 
+      // Prefix that gets prepended to both the leaf path and any alias the
+      // variable's target produces. Empty for non-color collections (Spacing
+      // & Radius etc.) which already encode their top-level segment in the
+      // variable name.
+      const prefix = namespacePrefixForCollection(coll.name);
+
       for (const mode of wantedModes) {
         for (const variable of collectionVars) {
-          const path = variableNameToPath(variable.name);
+          const path = prefix + variableNameToPath(variable.name);
           const raw = variable.valuesByMode[mode.modeId];
           if (raw == null) {
             warnings.push(
@@ -134,6 +145,7 @@ export async function runFigmaImportApply(
             variable.resolvedType as FigmaResolvedType,
             raw,
             variableById,
+            collectionById,
             options,
             warnings,
             variable.name,
@@ -212,6 +224,7 @@ function variableValueToToken(
   resolvedType: FigmaResolvedType,
   raw: VariableValue,
   variableById: Map<string, Variable>,
+  collectionById: Map<string, VariableCollection>,
   options: ImportOptions,
   warnings: string[],
   variableName: string,
@@ -233,8 +246,17 @@ function variableValueToToken(
       );
       return null;
     }
+    // Look up the target's collection so we can apply the same namespace
+    // prefix the import loop is using for that collection's leaves. Without
+    // this the alias would point at e.g. `{green.500}` while the actual
+    // imported leaf path is `color.green.500`, leaving every brand /
+    // semantic alias unresolvable in the plugin preview.
+    const targetCollection = collectionById.get(target.variableCollectionId);
+    const targetPrefix = targetCollection
+      ? namespacePrefixForCollection(targetCollection.name)
+      : '';
     return {
-      $value: formatAlias(variableNameToPath(target.name)),
+      $value: formatAlias(targetPrefix + variableNameToPath(target.name)),
       $type: figmaTypeToDtcgType(resolvedType, options),
     };
   }

@@ -64,25 +64,80 @@ function cap(s: string): string {
 // Tenant map construction
 // =============================================================================
 
-/** Load an optional overrides file, merge into base map (refs resolved against base). */
+/** Load source raw maps + apply tenant overrides at the RAW level, then resolve.
+ *  This is critical for the brand-layer override pattern: tenants alias the brand
+ *  rungs (color.brand.primary.500 → {color.blue.500}), and semantic tokens alias
+ *  the brand rungs (color.brand.primary-default → {color.brand.primary.500}). The
+ *  override must be applied BEFORE resolution so the chain re-resolves correctly.
+ *  The legacy "merge already-resolved values" approach silently dropped tenant
+ *  changes from propagating up through the alias chain. */
 function buildTenantMap(
   tenantId: string,
   overrideFile: string,
   resolvedBaseMap: Record<string, string>,
 ): Record<string, string> {
-  const overridesPath = `${ROOT}/sources/tenants/${tenantId}/${overrideFile}`;
-  if (!existsSync(overridesPath)) return { ...resolvedBaseMap };
+  const isDarkOverride = overrideFile.includes('.dark.');
 
-  const rawOverrides = flattenDTCG(
-    JSON.parse(readFileSync(overridesPath, 'utf-8')) as Record<string, unknown>,
-  );
-
-  const resolvedOverrides: Record<string, string> = {};
-  for (const [k, v] of Object.entries(rawOverrides)) {
-    resolvedOverrides[k] = resolveRef(v, resolvedBaseMap);
+  // Re-load raw sources from scratch so tenant overrides apply BEFORE resolution.
+  // Order matters: load LIGHT files first, then DARK files (so dark refs override
+  // light at the raw level for dark-mode builds).
+  const rawMap: Record<string, string> = {};
+  for (const dir of [`${ROOT}/sources/core`, `${ROOT}/sources/semantic`]) {
+    if (!existsSync(dir)) continue;
+    const all = readdirSync(dir).filter(f => f.endsWith('.json'));
+    const lightFiles = all.filter(f => !f.includes('.dark.'));
+    const darkFiles  = all.filter(f =>  f.includes('.dark.'));
+    // Always load light files (the base layer).
+    for (const f of lightFiles) {
+      Object.assign(rawMap, flattenDTCG(JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'))));
+    }
+    // Layer dark files on top only when building a dark map.
+    if (isDarkOverride) {
+      for (const f of darkFiles) {
+        Object.assign(rawMap, flattenDTCG(JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'))));
+      }
+    }
   }
 
-  return { ...resolvedBaseMap, ...resolvedOverrides };
+  // Brand-layer overrides come from the tenant's LIGHT overrides.json — they
+  // define the tenant's brand identity (which primitive ramps the brand layer
+  // aliases) and apply to BOTH light and dark modes. Apply them first.
+  const lightOverridesPath = `${ROOT}/sources/tenants/${tenantId}/overrides.json`;
+  if (existsSync(lightOverridesPath)) {
+    Object.assign(rawMap, flattenDTCG(
+      JSON.parse(readFileSync(lightOverridesPath, 'utf-8')) as Record<string, unknown>,
+    ));
+  }
+
+  // Mode-specific overrides — for dark mode, layer overrides.dark.json on top
+  // of the brand identity. For light mode this is the same file as above and
+  // has already been applied; the second assign is a no-op.
+  const overridesPath = `${ROOT}/sources/tenants/${tenantId}/${overrideFile}`;
+  if (existsSync(overridesPath) && overridesPath !== lightOverridesPath) {
+    Object.assign(rawMap, flattenDTCG(
+      JSON.parse(readFileSync(overridesPath, 'utf-8')) as Record<string, unknown>,
+    ));
+  }
+
+  // If neither file exists for this tenant, fall back to the pre-resolved base.
+  if (!existsSync(lightOverridesPath) && !existsSync(overridesPath)) {
+    return { ...resolvedBaseMap };
+  }
+
+  // Three-pass resolution to handle chained references:
+  //   semantic alias → brand-layer alias → primitive-rung alias → hex.
+  const resolved: Record<string, string> = {};
+  for (const [k, v] of Object.entries(rawMap)) resolved[k] = resolveRef(v, rawMap);
+  for (const [k, v] of Object.entries(resolved)) resolved[k] = resolveRef(v, resolved);
+  for (const [k, v] of Object.entries(resolved)) resolved[k] = resolveRef(v, resolved);
+
+  // Strip `-default` disambiguator suffix so consumer-facing keys stay clean.
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(resolved)) {
+    const cleanKey = k.replace(/-default(\.|$)/, '$1');
+    out[cleanKey] = v;
+  }
+  return out;
 }
 
 // =============================================================================

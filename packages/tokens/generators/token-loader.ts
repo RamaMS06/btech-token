@@ -71,13 +71,20 @@ export function loadTokenData(): ResolvedTokenMap {
   }
 
   // Semantic colors — flat 2-level: group → field-name → hex
+  // The `-default` suffix is an internal disambiguator (added in source files
+  // where a flat semantic leaf would collide with a primitive group of the same
+  // name — e.g. `color.brand.primary` collides with `color.brand.primary.{50..900}`).
+  // We strip `-default` here so consumer-facing names stay clean across all
+  // generators (Flutter, Web, Python). CSS variables get the same treatment via
+  // the post-build regex in sd.config.ts.
   const semanticColorJson = JSON.parse(readFileSync(`${semanticDir}/color.json`, 'utf-8'));
   const semanticColors: Record<string, Record<string, string>> = {};
   for (const [group, fields] of Object.entries(semanticColorJson.color as Record<string, unknown>)) {
     semanticColors[group] = {};
     for (const [fieldName, tokenDef] of Object.entries(fields as Record<string, unknown>)) {
       if (fieldName.startsWith('$')) continue;
-      semanticColors[group][fieldName] = resolveRef((tokenDef as any).$value, resolvedBaseMap);
+      const consumerField = fieldName.replace(/-default$/, '');
+      semanticColors[group][consumerField] = resolveRef((tokenDef as any).$value, resolvedBaseMap);
     }
   }
 

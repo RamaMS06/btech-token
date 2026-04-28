@@ -113,6 +113,20 @@ export const btechColorRose = {
   900: '#2f0b13',
 } as const;
 
+/** Yellow primitive swatch — BTechColor.yellow[500] */
+export const btechColorYellow = {
+  50: '#fdf9e7',
+  100: '#fcf3d0',
+  200: '#f8e8a1',
+  300: '#f5dc71',
+  400: '#f1d142',
+  500: '#eec513',
+  600: '#be9e0f',
+  700: '#8f760b',
+  800: '#5f4f08',
+  900: '#302704',
+} as const;
+
 /** Neutral primitive swatch — BTechColor.neutral[500] */
 export const btechColorNeutral = {
   0: '#ffffff',

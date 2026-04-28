@@ -1,10 +1,10 @@
 {
   "button": {
     "primary": {
-      "bg":       { "$value": "{color.brand.primary}",       "$type": "color" },
+      "bg":       { "$value": "{color.brand.primary-default}",       "$type": "color" },
       "bgHover":  { "$value": "{color.brand.primary-bold}",  "$type": "color" },
       "fg":       { "$value": "{color.text.inverse}",        "$type": "color" },
-      "border":   { "$value": "{color.brand.primary}",       "$type": "color" },
+      "border":   { "$value": "{color.brand.primary-default}",       "$type": "color" },
       "radius":   { "$value": "{radius.sm}",        "$type": "dimension" }
     },
     "secondary": {

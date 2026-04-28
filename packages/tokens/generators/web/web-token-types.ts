@@ -16,7 +16,14 @@ export function generateTokenTypes(webSrcPath: string): void {
       if (!file.endsWith('.json')) continue;
       const flat = flattenDTCG(JSON.parse(readFileSync(`${dir}/${file}`, 'utf-8')));
       for (const rawPath of Object.keys(flat)) {
-        allPaths.add(rawPath.replace(/\.default$/, ''));
+        // Strip both `.default` (legacy) and `-default` (current) disambiguator
+        // suffixes from the consumer-facing union type. The suffix exists in
+        // source files only to avoid SD path collisions with primitive groups
+        // (e.g. `color.brand.primary-default` vs `color.brand.primary.{50..900}`).
+        const cleanPath = rawPath
+          .replace(/\.default$/, '')
+          .replace(/-default$/, '');
+        allPaths.add(cleanPath);
       }
     }
   }

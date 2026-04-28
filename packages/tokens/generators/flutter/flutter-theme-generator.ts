@@ -44,7 +44,12 @@ export function buildColorTree(): ColorTree {
 
   const tree: ColorTree = {};
   for (const [category, categoryNode] of Object.entries(colorJson.color)) {
-    tree[category] = Object.keys(categoryNode).filter(k => !k.startsWith('$'));
+    tree[category] = Object.keys(categoryNode)
+      .filter(k => !k.startsWith('$'))
+      // Strip `-default` suffix used in source files to avoid SD path collisions
+      // (e.g. `color.brand.primary` collides with primitive `color.brand.primary.{50..900}`).
+      // Consumer-facing API stays clean: `c.brand.primary` (not `c.brand.primaryDefault`).
+      .map(k => k.replace(/-default$/, ''));
   }
   return tree;
 }
@@ -76,12 +81,23 @@ export function buildFontSans(resolvedMap: Record<string, string>): string {
 // Helpers
 // =============================================================================
 
-/** Resolve a raw flat map in two passes to handle chained references. */
+/** Resolve a raw flat map in two passes to handle chained references.
+ *  After resolution, the `-default` disambiguator suffix is stripped from key
+ *  paths so consumer lookups stay clean. The internal suffix exists only in
+ *  source files where a flat semantic name would collide with a primitive
+ *  group of the same name (see `token-loader.ts` for the rationale). */
 function resolveMap(rawMap: Record<string, string>): Record<string, string> {
   const resolved: Record<string, string> = {};
   for (const [k, v] of Object.entries(rawMap)) resolved[k] = resolveRef(v, rawMap);
   for (const [k, v] of Object.entries(resolved)) resolved[k] = resolveRef(v, resolved);
-  return resolved;
+  // Strip `-default` from keys after resolution (refs were resolved against the
+  // suffixed source paths, so this rename is safe — no alias targets remain).
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(resolved)) {
+    const cleanKey = k.replace(/-default(\.|$)/, '$1');
+    out[cleanKey] = v;
+  }
+  return out;
 }
 
 /**

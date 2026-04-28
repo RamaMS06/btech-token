@@ -262,6 +262,35 @@ export function variableNameToPath(name: string): string {
   return name.replace(/\//g, '.');
 }
 
+/**
+ * Infer the DTCG namespace prefix that should sit ABOVE a variable's name
+ * when it crosses into our source repo. Figma's variable name only encodes
+ * groups within the collection (e.g. `green/500`, `brand/primary/500`,
+ * `bg/primary`), so without a prefix every imported leaf would land at the
+ * top level of its set and wouldn't match the existing repo paths
+ * (`color.green.500`, `color.brand.primary.500`, `color.bg.primary`).
+ *
+ * Heuristic — the standard BTech setup has three color-shaped collections
+ * (Primitives, Brand, Semantic Color) and they all funnel into the
+ * `color.*` namespace. Any other collection (Spacing & Radius, etc.)
+ * already encodes its own top-level segment in the variable name and
+ * doesn't need an extra prefix.
+ *
+ * Returns the prefix WITH a trailing dot (`'color.'`) so callers can do
+ * straight string concatenation, or empty string when no prefix applies.
+ */
+export function namespacePrefixForCollection(collectionName: string): string {
+  const lower = collectionName.toLowerCase();
+  if (
+    lower === 'primitives' ||
+    lower === 'brand' ||
+    lower.includes('color')
+  ) {
+    return 'color.';
+  }
+  return '';
+}
+
 // ── Alias parsing / formatting ──────────────────────────────────────────────
 
 /**

@@ -196,7 +196,7 @@ class BTechColorTheme extends ThemeExtension<BTechColorTheme> {
 // ── Default light theme (resolved from semantic/color.json) ─────
 const BTechColorTheme _defaultLight = BTechColorTheme(
   text: BTechColorText(
-    primary: Color(0xFF181C20),
+    primary: Color(0xFF292F37),
     secondary: Color(0xFF64748B),
     tertiary: Color(0xFF98A2B0),
     inverse: Color(0xFFFFFFFF),
@@ -204,11 +204,11 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
     link: Color(0xFF0D766C),
     success: Color(0xFF0A632F),
     error: Color(0xFF991515),
-    warning: Color(0xFF885A0D),
+    warning: Color(0xFF8F760B),
     info: Color(0xFF0F5E81),
   ),
   icon: BTechColorIcon(
-    primary: Color(0xFF181C20),
+    primary: Color(0xFF292F37),
     secondary: Color(0xFF64748B),
     tertiary: Color(0xFF98A2B0),
     inverse: Color(0xFFFFFFFF),
@@ -216,7 +216,7 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
     link: Color(0xFF0D766C),
     success: Color(0xFF0A632F),
     error: Color(0xFF991515),
-    warning: Color(0xFF885A0D),
+    warning: Color(0xFF8F760B),
     info: Color(0xFF0F5E81),
   ),
   border: BTechColorBorder(
@@ -230,7 +230,7 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
     primary: Color(0xFFFFFFFF),
     secondary: Color(0xFFECEDEE),
     tertiary: Color(0xFF64748B),
-    inverse: Color(0xFF181C20),
+    inverse: Color(0xFF292F37),
     subtle: Color(0xFFF4F5F6),
     subtler: Color(0xFFDBDDE1),
     subtlest: Color(0xFFC1C6CD),
@@ -253,10 +253,10 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
     infoSubtle: Color(0xFFD0E4ED),
     info: Color(0xFF0EA5E9),
     infoBold: Color(0xFF0F81B4),
-    warningSubtler: Color(0xFFF5F0E7),
-    warningSubtle: Color(0xFFEFE3D0),
-    warning: Color(0xFFF59E0B),
-    warningBold: Color(0xFFBD7C0C),
+    warningSubtler: Color(0xFFFCF3D0),
+    warningSubtle: Color(0xFFF8E8A1),
+    warning: Color(0xFFEEC513),
+    warningBold: Color(0xFFBE9E0F),
     errorSubtler: Color(0xFFF6EAEA),
     errorSubtle: Color(0xFFF0D9D9),
     error: Color(0xFFEF4444),
@@ -288,6 +288,7 @@ abstract class BTechColor {
   static MaterialColor get teal => btechColorTeal;
   static MaterialColor get indigo => btechColorIndigo;
   static MaterialColor get rose => btechColorRose;
+  static MaterialColor get yellow => btechColorYellow;
   static MaterialColor get neutral => btechColorNeutral;
   static MaterialColor get red => btechColorRed;
   static MaterialColor get amber => btechColorAmber;

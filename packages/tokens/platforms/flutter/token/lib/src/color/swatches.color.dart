@@ -141,6 +141,23 @@ const MaterialColor btechColorRose = MaterialColor(
   },
 );
 
+/// Yellow color swatch — BTechColor.yellow[500]
+const MaterialColor btechColorYellow = MaterialColor(
+  0xFFEEC513,
+  <int, Color>{
+      50: Color(0xFFFDF9E7),
+      100: Color(0xFFFCF3D0),
+      200: Color(0xFFF8E8A1),
+      300: Color(0xFFF5DC71),
+      400: Color(0xFFF1D142),
+      500: Color(0xFFEEC513),
+      600: Color(0xFFBE9E0F),
+      700: Color(0xFF8F760B),
+      800: Color(0xFF5F4F08),
+      900: Color(0xFF302704),
+  },
+);
+
 /// Neutral color swatch — BTechColor.neutral[500]
 const MaterialColor btechColorNeutral = MaterialColor(
   0xFF64748B,

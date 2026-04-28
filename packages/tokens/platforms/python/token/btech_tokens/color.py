@@ -79,23 +79,23 @@ class BTechColorText:
     warning: str
 
 _LIGHT_BG = BTechColorBg(
-    inverse='#181c20',
+    inverse='#292f37',
     overlay='#181c20cc',
     primary='#ffffff',
     secondary='#ecedee',
     subtle='#f4f5f6',
     subtler='#dbdde1',
-    subtlest='#C1C6CD',
+    subtlest='#c1c6cd',
     tertiary='#64748b',
 )
 _DARK_BG = BTechColorBg(
     inverse='#ecedee',
     overlay='#181c20cc',
-    primary='#181c20',
+    primary='#292f37',
     secondary='#3c4450',
     subtle='#292f37',
     subtler='#505c6d',
-    subtlest='#64748B',
+    subtlest='#64748b',
     tertiary='#ecedee',
 )
 
@@ -125,10 +125,10 @@ _LIGHT_BRAND = BTechColorBrand(
 _DARK_BRAND = BTechColorBrand(
     primary='#41e084',
     primary_bold='#08a94c',
-    primary_subtle='#072d17',
+    primary_subtle='#094623',
     secondary='#3ed8ca',
-    secondary_bold='#0d766c',
-    secondary_subtle='#082a27',
+    secondary_bold='#0d9488',
+    secondary_subtle='#0a403b',
 )
 
 _LIGHT_EXT = BTechColorExt(
@@ -144,10 +144,10 @@ _LIGHT_EXT = BTechColorExt(
     success_bold='#0a853e',
     success_subtle='#c5ead5',
     success_subtler='#e2f3e9',
-    warning='#f59e0b',
-    warning_bold='#bd7c0c',
-    warning_subtle='#efe3d0',
-    warning_subtler='#f5f0e7',
+    warning='#eec513',
+    warning_bold='#be9e0f',
+    warning_subtle='#f8e8a1',
+    warning_subtler='#fcf3d0',
 )
 _DARK_EXT = BTechColorExt(
     error='#e88d8d',
@@ -162,10 +162,10 @@ _DARK_EXT = BTechColorExt(
     success_bold='#f0f8f4',
     success_subtle='#0a632f',
     success_subtler='#08a94c',
-    warning='#e8ba6c',
-    warning_bold='#f9f6f1',
-    warning_subtle='#885a0d',
-    warning_subtler='#f59e0b',
+    warning='#f1d142',
+    warning_bold='#fdf9e7',
+    warning_subtle='#8f760b',
+    warning_subtler='#eec513',
 )
 
 _LIGHT_ICON = BTechColorIcon(
@@ -174,23 +174,23 @@ _LIGHT_ICON = BTechColorIcon(
     info='#0f5e81',
     inverse='#ffffff',
     link='#0d766c',
-    primary='#181c20',
+    primary='#292f37',
     secondary='#64748b',
     success='#0a632f',
     tertiary='#98a2b0',
-    warning='#885a0d',
+    warning='#8f760b',
 )
 _DARK_ICON = BTechColorIcon(
     disabled='#505c6d',
     error='#ebbdbd',
     info='#aad4e7',
-    inverse='#181c20',
+    inverse='#292f37',
     link='#0d9488',
     primary='#ecedee',
     secondary='#98a2b0',
     success='#94e2b5',
     tertiary='#64748b',
-    warning='#e9d2ab',
+    warning='#f5dc71',
 )
 
 _LIGHT_TEXT = BTechColorText(
@@ -199,23 +199,23 @@ _LIGHT_TEXT = BTechColorText(
     info='#0f5e81',
     inverse='#ffffff',
     link='#0d766c',
-    primary='#181c20',
+    primary='#292f37',
     secondary='#64748b',
     success='#0a632f',
     tertiary='#98a2b0',
-    warning='#885a0d',
+    warning='#8f760b',
 )
 _DARK_TEXT = BTechColorText(
     disabled='#505c6d',
     error='#ebbdbd',
     info='#aad4e7',
-    inverse='#181c20',
+    inverse='#292f37',
     link='#0d9488',
     primary='#ecedee',
     secondary='#98a2b0',
     success='#94e2b5',
     tertiary='#64748b',
-    warning='#e9d2ab',
+    warning='#f5dc71',
 )
 
 @dataclass(frozen=True, slots=True)

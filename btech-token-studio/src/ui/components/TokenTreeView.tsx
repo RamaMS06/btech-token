@@ -13,8 +13,10 @@
  *   - composite types → fall back to a one-line row (TokenRow)
  *
  * Hovering any preview shows a dark tooltip with the leaf key + the raw
- * $value string. If $value is a DTCG alias like `{dimension.sm}` and the
- * referenced token lives in the same set, the resolved value is also shown.
+ * $value string. If $value is a DTCG alias like `{dimension.sm}`, the
+ * resolved value is also shown — the lookup spans every loaded set (passed
+ * as `allSets`) so brand aliases pointing at primitives in a sibling file
+ * resolve correctly.
  *
  * Nothing here mutates state — clicks delegate to the `onEdit(path)` callback
  * which the parent uses to open the editor modal.
@@ -119,9 +121,13 @@ function isReference(value: unknown): value is string {
 }
 
 /**
- * Resolve a DTCG alias to its underlying value, but only within the current
- * set. Cross-set resolution would require a full graph (Phase 3+); here we
- * only look up paths inside the same activeSet.
+ * Resolve a DTCG alias to its underlying value. The `lookup` map is the
+ * union of every loaded set's flat tokens (active set wins collisions), so
+ * cross-set chains like
+ *   color.text.brand → {color.brand.primary.500}
+ *                    → {color.green.500}        (in core/color.brand set)
+ *                    → "#08a94c"                (in core/color.primitive set)
+ * resolve in one walk. Depth-bounded to guard against accidental cycles.
  *
  * Returns the resolved string, or null if the alias cannot be resolved.
  */
@@ -419,11 +425,22 @@ function TreeSection({ type, tree, lookup, onEdit, onAddOfType }: TreeSectionPro
 
 interface TokenTreeViewProps {
   activeSet: TokenSet;
+  /**
+   * Optional map of every loaded set, used ONLY to extend the alias-resolution
+   * lookup so references like `{color.green.500}` can resolve when the target
+   * lives in a different set than the active one (e.g. a brand alias in
+   * `core/color.brand` pointing at a primitive in `core/color.primitive`).
+   *
+   * Active-set tokens win on path collision, so what's displayed remains
+   * exactly the active set's contents — only the resolved values shown in
+   * tooltips and tenant-override badges change.
+   */
+  allSets?: Record<string, TokenSet>;
   onEdit: (path: string) => void;
   onAddOfType: (type: DTCGType) => void;
 }
 
-export function TokenTreeView({ activeSet, onEdit, onAddOfType }: TokenTreeViewProps) {
+export function TokenTreeView({ activeSet, allSets, onEdit, onAddOfType }: TokenTreeViewProps) {
   // Flatten once so we can both group-by-type AND build a same-set lookup
   // for alias resolution. Both consumers iterate on different shapes of the
   // same data, so memoising the flat list saves rebuilding it per-section.
@@ -437,12 +454,32 @@ export function TokenTreeView({ activeSet, onEdit, onAddOfType }: TokenTreeViewP
       if (!byTypeMap.has(t)) byTypeMap.set(t, []);
       byTypeMap.get(t)!.push(item);
     }
+
+    // Cross-set lookup extension. We iterate every other loaded set and
+    // graft its leaves into the lookup map ONLY when the path isn't already
+    // claimed by the active set. This is what makes aliases like
+    //   color.brand.primary.500  →  {color.green.500}
+    // resolve to a real hex when `color.green.500` lives in a sibling set.
+    // The active set still owns rendering — `byTypeMap` is built solely from
+    // its flat list above — so this can't introduce extra rows.
+    if (allSets) {
+      for (const setId of Object.keys(allSets)) {
+        const s = allSets[setId];
+        if (!s || s === activeSet) continue;
+        for (const item of treeToFlatTokens(s.tree)) {
+          if (!lookupMap.has(item.path)) {
+            lookupMap.set(item.path, item.token);
+          }
+        }
+      }
+    }
+
     // Stable alpha order inside each type bucket
     for (const items of byTypeMap.values()) {
       items.sort((a, b) => a.path.localeCompare(b.path));
     }
     return { byType: byTypeMap, lookup: lookupMap };
-  }, [activeSet]);
+  }, [activeSet, allSets]);
 
   // Render TYPE_ORDER first, then any types not in the order list (forward-compat)
   const knownTypes = TYPE_ORDER.filter((t) => byType.has(t));
