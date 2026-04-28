@@ -75,6 +75,55 @@ export function treeToFlatTokens(tree: DTCGGroup, prefix = ''): FlatToken[] {
   return result;
 }
 
+// ── countLeafChanges ────────────────────────────────────────────────────────
+
+/**
+ * Count the number of leaf-level edits between a current tree and its
+ * baseline (`originalTree`). Each of the following counts as one change:
+ *
+ *   - **Added**     — a leaf path exists in `current` but not in `baseline`
+ *   - **Removed**   — a leaf path exists in `baseline` but not in `current`
+ *   - **Modified**  — a leaf path exists in both but its $value / $type /
+ *                     metadata serializes differently
+ *
+ * This is what the bottom action bar uses to show "Push 17 changes …" instead
+ * of "Push 1 change …" when a single set has many edited tokens. The set-level
+ * `dirty` flag stays — it's still the right primitive for "is this set dirty
+ * at all" — but the count shown to designers needs to be the per-leaf number
+ * so it matches what they actually edited.
+ *
+ * Uses `JSON.stringify` for value comparison: DTCG tokens are pure JSON
+ * (string/number/object — no Date/Map/function) so the serialised form is a
+ * deterministic equality check. Same reasoning we already rely on for
+ * `snapshotSet` and `parseJsonToSet`.
+ */
+export function countLeafChanges(current: DTCGGroup, baseline: DTCGGroup): number {
+  // An empty baseline means "this set is brand new locally and has never
+  // been on origin yet" — every current leaf is an addition. We still count
+  // them so the designer sees the real number of new tokens being shipped.
+  const cur = treeToFlatTokens(current);
+  const base = treeToFlatTokens(baseline);
+  const baseMap = new Map<string, DTCGToken>(base.map((t) => [t.path, t.token]));
+  const seen = new Set<string>();
+  let changes = 0;
+
+  for (const { path, token } of cur) {
+    seen.add(path);
+    const baseToken = baseMap.get(path);
+    if (!baseToken) {
+      changes++; // added
+      continue;
+    }
+    if (JSON.stringify(token) !== JSON.stringify(baseToken)) {
+      changes++; // modified
+    }
+  }
+  for (const path of baseMap.keys()) {
+    if (!seen.has(path)) changes++; // removed
+  }
+  return changes;
+}
+
 // ── flatTokensToTree ────────────────────────────────────────────────────────
 
 /**

@@ -1247,10 +1247,16 @@ a {
 /* ── Tooltip on leaf hover ─────────────────────────────────────────────────── */
 
 .leaf-tooltip {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+  /*
+   * Position is set inline (`position: fixed` + top/left) by LeafTooltip in
+   * JS so the tooltip can be clamped to the viewport — a swatch flush against
+   * the panel's left edge would otherwise have its tooltip cut off. CSS here
+   * only owns the visual chrome and the visibility transition.
+   *
+   * Visibility is also driven by inline `opacity` from the component (we no
+   * longer rely on `:hover` because the tooltip lives in the viewport
+   * coordinate space, not under the .leaf-wrap's hover scope).
+   */
   min-width: 80px;
   max-width: 240px;
   padding: 6px 8px;
@@ -1266,19 +1272,27 @@ a {
 }
 
 .leaf-tooltip::after {
-  /* Downward-pointing arrow at the bottom of the tooltip */
+  /*
+   * Arrow pointing DOWN from the tooltip (default — tooltip sits above the
+   * trigger). `--tt-arrow-x` is the trigger center expressed in tooltip-local
+   * coordinates, so when the body slides sideways to fit on screen the arrow
+   * keeps pointing at the actual swatch/pill.
+   */
   content: '';
   position: absolute;
   top: 100%;
-  left: 50%;
+  left: var(--tt-arrow-x, 50%);
   transform: translateX(-50%);
   border: 5px solid transparent;
   border-top-color: #1c1c1c;
 }
 
-.leaf-wrap:hover .leaf-tooltip,
-.leaf-wrap:focus-within .leaf-tooltip {
-  opacity: 1;
+.leaf-tooltip--below::after {
+  /* Tooltip flipped below the trigger — arrow points UP instead. */
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #1c1c1c;
 }
 
 .leaf-tooltip__title {

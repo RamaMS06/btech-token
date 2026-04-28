@@ -245,6 +245,14 @@ function schedulePersist(state: TokenState): void {
       // Per-branch cache: persist so designers don't lose the cross-branch
       // state when the plugin window closes.
       branchSnapshots: state.branchSnapshots,
+      // UI selection: persist what the designer was looking at so reopening
+      // the modal lands them back on the same set + tenant filter.
+      // Without this, the panel resets to "Select a token set from the
+      // sidebar" and the tenant dropdown drops back to "Default", which
+      // hides the override badges (@N) even though the dirty edits underneath
+      // are still in `sets`.
+      activeSetId: state.activeSetId,
+      activeTenant: state.activeTenant,
     };
     // postMessage to main thread — main thread writes to figma.clientStorage
     parent.postMessage({ pluginMessage: { type: 'save-tokens', payload } }, '*');
@@ -274,9 +282,22 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
       return next;
     }),
 
-  setActiveSet: (id) => set({ activeSetId: id }),
+  // Both selectors below are now persisted (they used to be ephemeral).
+  // Hydration runs on plugin open via `init-done` / `tokens-loaded` so the
+  // designer reopens the modal with the last-viewed set + tenant restored.
+  setActiveSet: (id) =>
+    set((state) => {
+      const next = { ...state, activeSetId: id };
+      schedulePersist(next);
+      return next;
+    }),
 
-  setActiveTenant: (id) => set({ activeTenant: id }),
+  setActiveTenant: (id) =>
+    set((state) => {
+      const next = { ...state, activeTenant: id };
+      schedulePersist(next);
+      return next;
+    }),
 
   setLastPull: (sha, at) =>
     set((state) => {

@@ -35,9 +35,35 @@ import { ExportFigmaModal } from './components/ExportFigmaModal.js';
 import { ImportStylesModal } from './components/ImportStylesModal.js';
 import { ImportDiffModal } from './components/ImportDiffModal.js';
 import { useTokenStore } from './store/tokens.js';
+import type { TokenStore } from './store/tokens.js';
 import { useSettingsStore } from './store/settings.js';
 import { useRemoteVersionCheck } from './hooks/useRemoteVersionCheck.js';
 import type { MainToUIMessage, TokenStorageState, Settings, TokenSet } from '../shared/types.js';
+
+/**
+ * Re-apply the activeSetId / activeTenant carried in a hydrated
+ * `TokenStorageState`. We validate `activeSetId` against the freshly-loaded
+ * sets map so a stale id (set that was removed from repo, or renamed)
+ * doesn't leave the panel pointing at a non-existent target. `activeTenant`
+ * is left as-is — the tenant resolver tolerates unknown ids by simply not
+ * rendering any override badges.
+ */
+function restoreUiSelection(payload: TokenStorageState, store: TokenStore): void {
+  if (payload.activeSetId !== undefined) {
+    const id = payload.activeSetId;
+    if (id === null || (id && store.sets[id])) {
+      store.setActiveSet(id);
+    } else {
+      // Persisted id no longer resolves — fall back to the empty state so
+      // the designer picks a valid set rather than seeing a phantom
+      // selection that produces no content.
+      store.setActiveSet(null);
+    }
+  }
+  if (payload.activeTenant !== undefined) {
+    store.setActiveTenant(payload.activeTenant);
+  }
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -106,6 +132,14 @@ export function App() {
             if (msg.tokens.branchSnapshots) {
               tokenStore.hydrateBranchSnapshots(msg.tokens.branchSnapshots);
             }
+            // Restore the last-viewed set + tenant filter. Validate the set
+            // id still resolves to one of the freshly-hydrated sets — pulls
+            // can rename / drop sets between sessions and we don't want a
+            // dangling activeSetId stuck pointing at something that no
+            // longer exists. `activeTenant` doesn't need a similar check
+            // because it's just a free-form id; the override resolver
+            // tolerates an unknown tenant by rendering no badges.
+            restoreUiSelection(msg.tokens, tokenStore);
           }
           if (msg.settings) {
             settingsStore.markLoaded(msg.settings as Settings);
@@ -127,6 +161,7 @@ export function App() {
           if (payload.branchSnapshots) {
             tokenStore.hydrateBranchSnapshots(payload.branchSnapshots);
           }
+          restoreUiSelection(payload, tokenStore);
           break;
         }
 

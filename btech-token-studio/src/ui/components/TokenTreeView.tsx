@@ -22,7 +22,7 @@
  * which the parent uses to open the editor modal.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import type { DTCGToken, DTCGType, TokenSet } from '../../shared/types.js';
 import { treeToFlatTokens, type FlatToken } from '../../shared/transform.js';
 import type { ResolvedToken } from '../../shared/tenant-resolver.js';
@@ -165,19 +165,113 @@ interface TooltipProps {
   resolved?: string | null;
   /** Tenant id that supplied this value — adds an "Overridden by …" line */
   override?: string | null;
+  /**
+   * The element the tooltip should track. We listen to its hover/focus
+   * events to toggle visibility, and measure its bounding rect to anchor
+   * the tooltip in viewport coordinates.
+   */
+  anchorRef: RefObject<HTMLElement>;
 }
 
+/** Px gap between the trigger and the tooltip body. */
+const TT_GAP = 8;
+/** Min viewport padding the tooltip will keep on every edge. */
+const TT_MARGIN = 8;
+
 /**
- * Pure CSS hover tooltip: positioned above the wrapped preview, with a small
- * arrow pointing down. Visibility flips via the parent's `:hover` state, so
- * this component itself is purely declarative.
+ * JS-anchored hover tooltip rendered with `position: fixed`. We can't use the
+ * pure-CSS `position: absolute` + `:hover` approach here because the tree
+ * panel clips its overflow horizontally — a swatch near the left edge would
+ * have its tooltip cut off (visible in the screenshot reported by users).
  *
- * When the leaf was overridden by a tenant, we add a third line so the
- * designer immediately sees *why* the value differs from base.
+ * Strategy:
+ *   1. Subscribe to mouseenter/leave + focusin/out on the anchor element.
+ *   2. On show, measure the anchor + the tooltip and clamp the resulting
+ *      coordinates inside the viewport with TT_MARGIN.
+ *   3. If there isn't room above the anchor, flip below it (the arrow swaps
+ *      direction via the `--below` modifier).
+ *   4. The arrow's horizontal offset is exposed as `--tt-arrow-x` so it
+ *      keeps pointing at the anchor's center even when the tooltip body
+ *      slides sideways to fit on screen.
  */
-function LeafTooltip({ title, value, resolved, override }: TooltipProps) {
+function LeafTooltip({ title, value, resolved, override, anchorRef }: TooltipProps) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [pos, setPos] = useState<{
+    top: number;
+    left: number;
+    arrowX: number;
+    below: boolean;
+  } | null>(null);
+
+  // Hover/focus → visibility, attached to the anchor (not the tooltip itself,
+  // which is `pointer-events: none`).
+  useEffect(() => {
+    const el = anchorRef.current;
+    if (!el) return;
+    const show = () => setVisible(true);
+    const hide = () => setVisible(false);
+    el.addEventListener('mouseenter', show);
+    el.addEventListener('mouseleave', hide);
+    el.addEventListener('focusin', show);
+    el.addEventListener('focusout', hide);
+    return () => {
+      el.removeEventListener('mouseenter', show);
+      el.removeEventListener('mouseleave', hide);
+      el.removeEventListener('focusin', show);
+      el.removeEventListener('focusout', hide);
+    };
+  }, [anchorRef]);
+
+  // Compute clamped viewport position whenever the tooltip becomes visible
+  // or its content changes (so the measured tooltip width is up to date).
+  useLayoutEffect(() => {
+    if (!visible) return;
+    const anchor = anchorRef.current;
+    const tip = tooltipRef.current;
+    if (!anchor || !tip) return;
+    const a = anchor.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const center = a.left + a.width / 2;
+
+    let left = Math.round(center - t.width / 2);
+    left = Math.max(TT_MARGIN, Math.min(left, vw - t.width - TT_MARGIN));
+
+    let top = Math.round(a.top - t.height - TT_GAP);
+    let below = false;
+    if (top < TT_MARGIN) {
+      top = Math.round(a.bottom + TT_GAP);
+      below = true;
+    }
+    if (top + t.height > vh - TT_MARGIN) {
+      top = Math.max(TT_MARGIN, vh - t.height - TT_MARGIN);
+    }
+
+    // Arrow x is in tooltip-local coordinates (so it can travel from the
+    // tooltip's left edge to its right edge as the body shifts to fit).
+    const arrowX = Math.max(8, Math.min(t.width - 8, Math.round(center - left)));
+    setPos({ top, left, arrowX, below });
+  }, [visible, title, value, resolved, override, anchorRef]);
+
+  const style: CSSProperties = {
+    position: 'fixed',
+    top: pos ? `${pos.top}px` : 0,
+    left: pos ? `${pos.left}px` : 0,
+    opacity: visible && pos ? 1 : 0,
+    pointerEvents: 'none',
+    // Custom property for the arrow's horizontal offset.
+    ['--tt-arrow-x' as unknown as keyof CSSProperties]: pos ? `${pos.arrowX}px` : '50%',
+  } as CSSProperties;
+
   return (
-    <div className="leaf-tooltip" role="tooltip">
+    <div
+      ref={tooltipRef}
+      className={`leaf-tooltip${pos?.below ? ' leaf-tooltip--below' : ''}`}
+      role="tooltip"
+      style={style}
+    >
       <div className="leaf-tooltip__title">{title}</div>
       <div className="leaf-tooltip__row">
         <span className="leaf-tooltip__value">{value}</span>
@@ -233,9 +327,13 @@ function ColorSwatch({ leaf, resolved, onEdit }: LeafPreviewProps) {
   const swatchColor = isReference(leaf.token.$value) ? (resolved ?? '#888') : raw;
   const isUnresolved = isReference(leaf.token.$value) && resolved === null;
   const override = overriddenBy(leaf.token);
+  // The wrap is the tooltip anchor — its rect drives the tooltip's pinned
+  // viewport coordinates so the tooltip stays on-screen even when the swatch
+  // sits flush against the left/right edge of the panel.
+  const wrapRef = useRef<HTMLSpanElement>(null);
 
   return (
-    <span className="leaf-wrap">
+    <span className="leaf-wrap" ref={wrapRef}>
       <button
         type="button"
         className={`swatch${override ? ' swatch--overridden' : ''}`}
@@ -257,6 +355,7 @@ function ColorSwatch({ leaf, resolved, onEdit }: LeafPreviewProps) {
         value={raw}
         resolved={resolved}
         override={override}
+        anchorRef={wrapRef}
       />
     </span>
   );
@@ -270,8 +369,10 @@ function ColorSwatch({ leaf, resolved, onEdit }: LeafPreviewProps) {
 function TextPill({ leaf, resolved, onEdit }: LeafPreviewProps) {
   const raw = formatValue(leaf.token.$value);
   const override = overriddenBy(leaf.token);
+  // See ColorSwatch — the wrap anchors the tooltip in viewport space.
+  const wrapRef = useRef<HTMLSpanElement>(null);
   return (
-    <span className="leaf-wrap">
+    <span className="leaf-wrap" ref={wrapRef}>
       <button
         type="button"
         className={`pill${override ? ' pill--overridden' : ''}`}
@@ -284,6 +385,7 @@ function TextPill({ leaf, resolved, onEdit }: LeafPreviewProps) {
         value={raw}
         resolved={resolved}
         override={override}
+        anchorRef={wrapRef}
       />
     </span>
   );
@@ -474,9 +576,15 @@ export function TokenTreeView({ activeSet, allSets, onEdit, onAddOfType }: Token
       }
     }
 
-    // Stable alpha order inside each type bucket
+    // Stable alpha-with-numeric order inside each type bucket. The
+    // `numeric: true` option makes "50" sort before "100" instead of after
+    // "400" — without it, color ramp keys would land in lexicographic order
+    // (100, 200, 300, 400, 50, 500, …) and the lightest shade ends up in the
+    // middle of the row instead of at the start.
     for (const items of byTypeMap.values()) {
-      items.sort((a, b) => a.path.localeCompare(b.path));
+      items.sort((a, b) =>
+        a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: 'base' }),
+      );
     }
     return { byType: byTypeMap, lookup: lookupMap };
   }, [activeSet, allSets]);

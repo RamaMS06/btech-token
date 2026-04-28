@@ -136,6 +136,20 @@ export interface TokenStorageState {
    * deserialise; the store seeds `{}` on load.
    */
   branchSnapshots?: Partial<Record<ActiveBranch, BranchSnapshot>>;
+  /**
+   * Last selected set id ("core/color.brand" etc.) so reopening the plugin
+   * lands the designer back on the panel they were editing instead of the
+   * "Select a token set from the sidebar" empty state. Optional for
+   * backward compat with pre-feature persisted blobs.
+   */
+  activeSetId?: string | null;
+  /**
+   * Last selected tenant filter (e.g. "bspace") so override badges (`@N`
+   * in the sidebar) and the override-merged tree view survive a modal
+   * close/reopen. `null` = "Default" (no tenant filter). Optional for
+   * backward compat.
+   */
+  activeTenant?: string | null;
 }
 
 // ── Settings model ──────────────────────────────────────────────────────────
