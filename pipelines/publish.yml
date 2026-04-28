@@ -30,6 +30,13 @@ pr: none
 pool:
   vmImage: ubuntu-latest
 
+# Pre-declare PUBLISH_TENANT so unset full-release tags substitute to empty
+# string in env: blocks instead of leaking the literal "$(PUBLISH_TENANT)"
+# token, which previously broke publish-changed.ts on full releases.
+variables:
+  - name: PUBLISH_TENANT
+    value: ''
+
 jobs:
   - job: publish
     displayName: 'Build & Publish to Azure Artifacts'
