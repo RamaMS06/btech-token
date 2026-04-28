@@ -196,27 +196,38 @@ jobs:
 
       - script: |
           set -e
-          # twine --skip-existing makes this idempotent across reruns.
+          # Azure Artifacts PyPI feed REJECTS twine's --skip-existing flag with
+          # "UnsupportedConfiguration", so we re-implement skip-existing in
+          # shell: capture twine output and swallow exit 1 when the only
+          # failure is "File already exists" / 400 / 409. Anything else
+          # propagates as a real error.
+          twine_upload_skip_existing() {
+            local logfile
+            logfile=$(mktemp)
+            if python -m twine upload -r btech --config-file "$(PYPIRC_PATH)" "$@" 2>&1 | tee "$logfile"; then
+              return 0
+            fi
+            if grep -qE "already exists|400 Bad Request.*[Ff]ile.*exists|409 Conflict" "$logfile"; then
+              echo "ℹ️   Some files were already on the feed — treated as success."
+              return 0
+            fi
+            return 1
+          }
+
           if [ -n "$(PUBLISH_TENANT)" ]; then
             tenant_dir="packages/tokens/platforms/python/tenants/$(PUBLISH_TENANT)"
             if [ -d "$tenant_dir/dist" ]; then
-              python -m twine upload -r btech --skip-existing \
-                --config-file $(PYPIRC_PATH) \
-                "$tenant_dir"/dist/*
+              twine_upload_skip_existing "$tenant_dir"/dist/*
             else
               echo "No Python dist for tenant '$(PUBLISH_TENANT)' — nothing to upload."
             fi
           else
-            python -m twine upload -r btech --skip-existing \
-              --config-file $(PYPIRC_PATH) \
-              packages/tokens/platforms/python/token/dist/*
+            twine_upload_skip_existing packages/tokens/platforms/python/token/dist/*
 
             if [ "$(NPM_TAG)" != "rc" ]; then
               for tenant_dir in packages/tokens/platforms/python/tenants/*/; do
-                [ -d "$tenant_dir/dist" ] || continue
-                python -m twine upload -r btech --skip-existing \
-                  --config-file $(PYPIRC_PATH) \
-                  "$tenant_dir"dist/*
+                [ -d "${tenant_dir}dist" ] || continue
+                twine_upload_skip_existing "${tenant_dir}dist"/*
               done
             fi
           fi
