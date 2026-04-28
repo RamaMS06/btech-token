@@ -96,7 +96,16 @@ jobs:
           git config user.name "Azure Pipelines"
           git config user.email "azure-pipelines@users.noreply.azure.com"
 
-          BRANCH="$(Build.SourceBranchName)"
+          # Build.SourceBranchName is the LAST PATH SEGMENT of the source
+          # branch ref — for refs/heads/figma/<timestamp>-<scope> it returns
+          # just `<timestamp>-<scope>`, dropping the `figma/` namespace. The
+          # Figma plugin pushes to `figma/<timestamp>-<scope>` branches, so
+          # using SourceBranchName here makes git fetch fail with:
+          #   fatal: couldn't find remote ref <truncated>
+          # because the truncated name doesn't exist on origin.
+          # Use Build.SourceBranch (the FULL ref) and strip the refs/heads/
+          # prefix instead — that preserves nested branch names.
+          BRANCH="${BUILD_SOURCEBRANCH#refs/heads/}"
           MAX_RETRIES=5
           BACKOFF=2
 
@@ -166,3 +175,9 @@ jobs:
         displayName: 'Commit generated outputs'
         env:
           AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+          # Built-in Azure DevOps variable; explicit mapping here keeps the
+          # bash parameter expansion `${BUILD_SOURCEBRANCH#refs/heads/}`
+          # readable without using $(Build.SourceBranch) macro syntax (which
+          # is expanded by the YAML preprocessor and would mangle a branch
+          # name containing dollar signs or quote characters).
+          BUILD_SOURCEBRANCH: $(Build.SourceBranch)

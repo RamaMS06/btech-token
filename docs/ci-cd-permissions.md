@@ -216,17 +216,44 @@ the step exits 0. This is the common case when two pipelines run in
 parallel against the same source change — whichever lands first
 completes the work and the other no-ops.
 
+### Nested branch names: generate
+
+`Build.SourceBranchName` returns **only the last path segment** of
+the source ref, not the full branch name. For a ref like
+`refs/heads/figma/20260429-063149-scope-tenant-bspace` it returns just
+`20260429-063149-scope-tenant-bspace`, silently dropping the
+`figma/` namespace. Fetching that truncated name then fails:
+
+```
+fatal: couldn't find remote ref 20260429-063149-scope-tenant-bspace
+```
+
+This is what the Figma plugin trips into — it always pushes to
+`figma/<timestamp>-<scope>` branches.
+
+`generate.yml` reads the full ref via `Build.SourceBranch` (mapped
+to env `BUILD_SOURCEBRANCH`) and strips `refs/heads/` itself:
+
+```bash
+BRANCH="${BUILD_SOURCEBRANCH#refs/heads/}"
+```
+
+This preserves nested branch names. Don't use
+`$(Build.SourceBranchName)` in this script — it will silently
+break for any branch that contains a slash.
+
 ### Deleted-branch handling: generate
 
 The Figma plugin pushes its tenant edits to a feature branch
-(e.g. `20260429-062110-scope-tenant-bspace`) and immediately opens a
-PR with auto-complete + delete-source-branch enabled. By the time
-`generate.yml` finishes install + generate + flutter analyze (~3-5
-minutes later), the PR is often already merged and the source branch
-is gone from origin. A naive `git fetch origin "$BRANCH"` then errors:
+(e.g. `figma/20260429-062110-scope-tenant-bspace`) and immediately
+opens a PR with auto-complete + delete-source-branch enabled. By the
+time `generate.yml` finishes install + generate + flutter analyze
+(~3-5 minutes later), the PR is often already merged and the source
+branch is gone from origin. A naive `git fetch origin "$BRANCH"`
+then errors:
 
 ```
-fatal: couldn't find remote ref 20260429-062110-scope-tenant-bspace
+fatal: couldn't find remote ref figma/20260429-062110-scope-tenant-bspace
 ```
 
 `generate.yml` defends against this by calling
