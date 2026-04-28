@@ -343,11 +343,14 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
         // still slip an unnormalised set in — fall back to the current tree.
         const baseline = s.originalTree ?? s.tree ?? {};
 
-        // Tenant override files that were created locally have an empty
-        // originalTree. Reverting one of those would leave an empty `tree`
-        // and an id pointing at a file that doesn't exist in repo. Drop it
-        // entirely so the sidebar / push picks up the absence cleanly.
-        if (s.id.startsWith('tenants/') && Object.keys(baseline).length === 0) {
+        // A set with an empty `originalTree` was created locally — either
+        // a tenant override file fabricated on first edit, or a set
+        // materialised by a Figma import. It doesn't exist server-side,
+        // so reverting to baseline means dropping it entirely. Otherwise
+        // the sidebar would keep an empty placeholder set after Clear /
+        // tenant switch even though there is genuinely nothing to revert
+        // to.
+        if (Object.keys(baseline).length === 0) {
           continue;
         }
         reverted[id] = {
@@ -357,9 +360,24 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
           dirty: false,
         };
       }
+
+      // If the active set was one of the dropped locally-created sets,
+      // null it out so the right pane doesn't render against a phantom
+      // id. Same for activeTenant when its override file gets dropped.
+      const activeSetId =
+        state.activeSetId && reverted[state.activeSetId]
+          ? state.activeSetId
+          : null;
+      const activeTenant =
+        state.activeTenant && reverted[`tenants/${state.activeTenant}/overrides`]
+          ? state.activeTenant
+          : null;
+
       const next = {
         ...state,
         sets: reverted,
+        activeSetId,
+        activeTenant,
       };
       schedulePersist(next);
       return next;
@@ -372,13 +390,17 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
 
       const baseline = existing.originalTree ?? existing.tree ?? {};
 
-      // Same locally-created-override rule as discardAll
-      if (existing.id.startsWith('tenants/') && Object.keys(baseline).length === 0) {
+      // Same locally-created rule as discardAll — drop any set whose
+      // baseline is empty regardless of id prefix (covers tenant
+      // overrides AND figma-imported sets).
+      if (Object.keys(baseline).length === 0) {
         const remaining = { ...state.sets };
         delete remaining[setId];
-        const next = { ...state, sets: remaining };
-        schedulePersist(next);
-        return next;
+        const next: Partial<typeof state> = { sets: remaining };
+        if (state.activeSetId === setId) next.activeSetId = null;
+        const merged = { ...state, ...next };
+        schedulePersist(merged);
+        return merged;
       }
 
       const reverted: TokenSet = {
