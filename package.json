@@ -1,6 +1,6 @@
 {
   "name": "@btech/design-system",
-  "version": "1.0.0-rc.8",
+  "version": "1.0.0-rc.9",
   "private": true,
   "packageManager": "pnpm@9.15.9",
   "description": "Multi-tenant design token source of truth — React, Vue, Flutter",
