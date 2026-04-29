@@ -1,0 +1,130 @@
+name: Publish Figma Plugin
+
+# Triggered by the plugin-v* tag pushed by auto-version.yml after a
+# PR with scope:plugin label is merged. Never triggered by branch pushes.
+#
+# Flow:
+#   1. Type-check + build the plugin (same as figma-plugin-build.yml but
+#      with an explicit dist output verification step).
+#   2. Run package-plugin.ts to stage manifest + dist into a versioned zip.
+#   3. Publish the zip to Azure Artifacts Universal Package feed "btech"
+#      as package name "btech-token-studio".
+#   4. Print a summary with the download command so an admin can grab the
+#      zip and upload it to the Figma Org admin console (manual last mile —
+#      Figma has no public REST API for private plugin uploads).
+
+trigger:
+  tags:
+    include:
+      - plugin-v*
+  branches:
+    exclude:
+      - '*'
+
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: publish_plugin
+    displayName: 'Build, package & publish @btech/token-studio'
+
+    steps:
+      - checkout: self
+
+      # ── Node / pnpm ────────────────────────────────────────────────────────
+      - task: NodeTool@0
+        displayName: 'Setup Node.js 20'
+        inputs:
+          versionSpec: '20.x'
+
+      - script: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+        displayName: 'Setup pnpm 9'
+
+      # npmAuthenticate reads .npmrc at the repo root — same pattern used by
+      # publish.yml for the @btech/tokens npm package.
+      - task: npmAuthenticate@0
+        displayName: 'Authenticate with Azure Artifacts'
+        inputs:
+          workingFile: .npmrc
+
+      - script: pnpm install --frozen-lockfile
+        displayName: 'Install JS dependencies'
+
+      # ── Validate ───────────────────────────────────────────────────────────
+      - script: pnpm validate
+        displayName: 'Run validators (includes plugin manifest check)'
+
+      # ── TypeScript type-check ──────────────────────────────────────────────
+      - script: pnpm --filter @btech/token-studio tsc
+        displayName: 'TypeScript type-check'
+
+      # ── Build ──────────────────────────────────────────────────────────────
+      - script: pnpm --filter @btech/token-studio build
+        displayName: 'Build plugin (dist/code.js + dist/ui.html)'
+
+      - script: |
+          test -f btech-token-studio/dist/code.js  || { echo "❌  dist/code.js missing"; exit 1; }
+          test -f btech-token-studio/dist/ui.html  || { echo "❌  dist/ui.html missing"; exit 1; }
+          echo "✓ dist outputs present"
+        displayName: 'Verify dist outputs'
+
+      # ── Package release zip ────────────────────────────────────────────────
+      - script: pnpm exec tsx scripts/package-plugin.ts
+        displayName: 'Package release .zip'
+
+      # ── Read version from tag ──────────────────────────────────────────────
+      - script: |
+          # $(Build.SourceBranch) = "refs/tags/plugin-v0.2.0"
+          TAG="${BUILD_SOURCEBRANCH#refs/tags/}"
+          VERSION="${TAG#plugin-v}"
+          echo "Plugin version: $VERSION"
+          echo "##vso[task.setvariable variable=PLUGIN_VERSION]$VERSION"
+        displayName: 'Extract version from tag'
+        env:
+          BUILD_SOURCEBRANCH: $(Build.SourceBranch)
+
+      # ── Publish to Azure Artifacts (Universal Package) ─────────────────────
+      # Publishes btech-token-studio/release/ directory contents as a versioned
+      # Universal Package. The zip itself is the only file in release/ at this
+      # point (staging subdir is cleaned by package-plugin.ts before zip).
+      - task: UniversalPackages@0
+        displayName: 'Publish to Azure Artifacts (btech feed)'
+        inputs:
+          command: publish
+          publishDirectory: 'btech-token-studio/release'
+          vstsFeedPublish: 'BUMA - Bspace Design System/btech'
+          vstsFeedPackagePublish: 'btech-token-studio'
+          versionOption: custom
+          versionPublish: $(PLUGIN_VERSION)
+          packagePublishDescription: |
+            BTech Token Studio Figma plugin v$(PLUGIN_VERSION).
+            Download, unzip, and upload to Figma Org admin console
+            (Resources → Plugins → Upload).
+
+      # ── Pipeline summary with download instructions ────────────────────────
+      - script: |
+          FEED_URL="https://dev.azure.com/buma/BUMA%20-%20Bspace%20Design%20System/_artifacts/feed/btech/UPack/btech-token-studio/overview/$(PLUGIN_VERSION)"
+          echo "##[section]Released BTech Token Studio v$(PLUGIN_VERSION)"
+          echo ""
+          echo "📦  Universal Package: btech-token-studio@$(PLUGIN_VERSION)"
+          echo "🔗  $FEED_URL"
+          echo ""
+          echo "── Download (az CLI) ───────────────────────────────────────────"
+          echo "  az artifacts universal download \\"
+          echo "    --organization https://dev.azure.com/buma \\"
+          echo "    --project 'BUMA - Bspace Design System' \\"
+          echo "    --feed btech \\"
+          echo "    --name btech-token-studio \\"
+          echo "    --version $(PLUGIN_VERSION) \\"
+          echo "    --path ./btech-token-studio-v$(PLUGIN_VERSION)"
+          echo ""
+          echo "── Upload to Figma (admin only) ────────────────────────────────"
+          echo "  1. Figma desktop / web → klik avatar org (top-left) → Admin"
+          echo "  2. Resources → Plugins → Upload plugin"
+          echo "  3. Pilih file btech-token-studio-v$(PLUGIN_VERSION).zip"
+          echo "  4. Submit. Plugin tersedia di seluruh org."
+        displayName: 'Release summary'

@@ -165,10 +165,30 @@ Hybrid auto-scope: every package tracks its own version. `pnpm bump [type] [flag
 ## CI / Azure DevOps
 
 - **Repo:** `https://dev.azure.com/buma/BUMA%20-%20Bspace%20Design%20System/_git/btech-ds`
-- **Pipelines:** `pipelines/validate.yml`, `pipelines/generate.yml`, `pipelines/publish.yml`, `pipelines/auto-version.yml`
-- **Feed:** Azure Artifacts `btech` feed — `@btech/tokens` npm package
+- **Pipelines:** `pipelines/validate.yml`, `pipelines/generate.yml`, `pipelines/publish.yml`, `pipelines/auto-version.yml`, `pipelines/publish-plugin.yml`
+- **Feed:** Azure Artifacts `btech` feed — `@btech/tokens` npm package + `btech-token-studio` Universal package (plugin ZIPs)
 - **Auth:** `System.AccessToken` via `npmAuthenticate@0` task (no personal PAT needed in CI)
 - **Pre-commit hook:** `.githooks/pre-commit` — auto-regenerates tokens when sources change
+
+---
+
+## Figma Plugin (`btech-token-studio`)
+
+The plugin ships **separately** from `@btech/tokens` — independent
+semver, independent release cadence, independent tag namespace
+(`plugin-v*`). It lets designers pull/edit/push tokens from Figma
+without leaving the canvas.
+
+- **Source:** `btech-token-studio/`
+- **Manifest:** `btech-token-studio/manifest.json`
+- **Assets:** `btech-token-studio/assets/{icon.png,cover.png}` — uploaded by Figma admin at publish (NOT bundled in `dist/`)
+- **Build:** `pnpm --filter @btech/token-studio build` → `dist/code.js` + `dist/ui.html`
+- **Release pipeline:** `pipelines/publish-plugin.yml` triggers on `plugin-v*` tags → builds → ZIP → Azure Artifacts Universal feed → admin uploads to Figma org manually (Figma has no public publish API for org plugins)
+- **PAT model:** per-user, stored in Figma `clientStorage` (encrypted)
+
+Docs:
+- `docs/plugin-publishing.md` — maintainer + admin release runbook
+- `docs/plugin-onboarding.md` — designer first-time setup guide
 
 ---
 

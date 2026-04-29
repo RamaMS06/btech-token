@@ -21,8 +21,10 @@
  *   --scope=base    bump base packages only (web/flutter/python token)
  *   --scope=tenants bump every tenant (skip base)
  *   --scope=tenant:<id> bump a single tenant
+ *   --scope=plugin  bump btech-token-studio ONLY (independent track, excluded from all/auto)
  *   --auto          infer scope from git diff (sources/{core|semantic|components}
  *                   → all; sources/tenants/<id> → tenant:<id>; multiple → tenants)
+ *                   NOTE: plugin is never detected by --auto — it has its own tag namespace
  *
  * Each tenant tracks its own patch counter, which resets to `.0` whenever
  * the reset rule fires (i.e. major/minor/prerelease moves). Override JSON
@@ -35,6 +37,8 @@
  *   pnpm bump set 1.0.0                     # rc graduate → resetAll fires
  *   pnpm bump set 1.5.4 --scope=base        # patch-level set, base only
  *   pnpm bump patch --scope=tenant:bspace   # tenant patch, root untouched
+ *   pnpm bump patch --scope=plugin          # plugin patch, token versions untouched
+ *   pnpm bump set 0.3.0 --scope=plugin      # set exact plugin version
  *   pnpm bump patch --auto                  # detect scope from git diff
  *   pnpm bump patch --dry-run               # print plan, no writes
  *
@@ -59,10 +63,16 @@ const FLUTTER_PUBSPEC = resolve(ROOT, 'packages/tokens/platforms/flutter/token/p
 const PYTHON_BASE_PYPROJECT = resolve(ROOT, 'packages/tokens/platforms/python/token/pyproject.toml');
 const WEB_PLATFORM_DIR = resolve(ROOT, 'packages/tokens/platforms/web');
 const PYTHON_TENANTS_DIR = resolve(ROOT, 'packages/tokens/platforms/python/tenants');
+const PLUGIN_PKG = resolve(ROOT, 'btech-token-studio/package.json');
 
 // ── Types ────────────────────────────────────────────────────────────────
 type BumpType = 'patch' | 'minor' | 'major' | 'rc' | 'set';
-type Scope    = { kind: 'all' } | { kind: 'base' } | { kind: 'tenants' } | { kind: 'tenant'; id: string };
+type Scope    =
+  | { kind: 'all' }
+  | { kind: 'base' }
+  | { kind: 'tenants' }
+  | { kind: 'tenant'; id: string }
+  | { kind: 'plugin' };
 
 /**
  * Loose-but-strict semver guard for the `set` mode. Same shape that
@@ -127,8 +137,9 @@ function parseScope(raw: string): Scope {
   if (raw === 'all' || raw === '')    return { kind: 'all' };
   if (raw === 'base')                 return { kind: 'base' };
   if (raw === 'tenants')              return { kind: 'tenants' };
+  if (raw === 'plugin')               return { kind: 'plugin' };
   if (raw.startsWith('tenant:'))      return { kind: 'tenant', id: raw.slice('tenant:'.length) };
-  console.error(`❌  Invalid --scope="${raw}". Use all | base | tenants | tenant:<id>.`);
+  console.error(`❌  Invalid --scope="${raw}". Use all | base | tenants | tenant:<id> | plugin.`);
   process.exit(1);
 }
 
@@ -174,9 +185,69 @@ const scope: Scope = flagAuto
     })()
   : parseScope(rawScope);
 
+// Plugin scope is fully independent — handle it and exit before any
+// root-version logic runs. Token versions are never touched.
+if (scope.kind === 'plugin') {
+  handlePluginScope();
+}
+
 function scopeLabel(s: Scope): string {
   if (s.kind === 'tenant') return `tenant:${s.id}`;
   return s.kind;
+}
+
+// ── Plugin scope — fully independent track ───────────────────────────────
+// When --scope=plugin, we bump ONLY btech-token-studio/package.json and exit.
+// Plugin version is independent of the token platform version: it never
+// participates in --scope=all, never triggered by --auto, and pushes its
+// own tag namespace (plugin-v*) recognised by publish-plugin.yml.
+function handlePluginScope(): never {
+  if (!existsSync(PLUGIN_PKG)) {
+    console.error(`❌  Plugin package not found: ${PLUGIN_PKG}`);
+    process.exit(1);
+  }
+
+  const pluginPkg = JSON.parse(readFileSync(PLUGIN_PKG, 'utf8'));
+  const prevVersion: string = pluginPkg.version;
+
+  // For `set` mode the setTarget holds the literal version; otherwise bump
+  // using the same semver helper as the token packages.
+  const nextVersion = bump(prevVersion, bumpType);
+
+  console.log(`\n📋  Plan — bump=${bumpType} · scope=plugin` + (flagDryRun ? ' · DRY-RUN' : ''));
+  console.log(`    @btech/token-studio: ${prevVersion} → ${nextVersion}`);
+
+  if (!flagDryRun && nextVersion !== prevVersion) {
+    pluginPkg.version = nextVersion;
+    writeFileSync(PLUGIN_PKG, JSON.stringify(pluginPkg, null, 2) + '\n', 'utf8');
+    console.log(`\n✅  Wrote ${PLUGIN_PKG}`);
+  } else if (nextVersion === prevVersion) {
+    console.log('\nℹ️   Version unchanged — nothing written.');
+  }
+
+  console.log('\n---BUMP_RESULT_JSON---');
+  console.log(JSON.stringify({
+    bumpType,
+    scope: 'plugin',
+    effectiveScope: 'plugin',
+    resetAll: false,
+    prevRoot: prevVersion,   // plugin treats its own version as "root"
+    newRoot: nextVersion,
+    bumpedTenant: null,
+    setTarget,
+    changed: nextVersion !== prevVersion
+      ? [{ pkg: '@btech/token-studio', from: prevVersion, to: nextVersion }]
+      : [],
+  }));
+  console.log('---END_BUMP_RESULT_JSON---');
+
+  // CI vars consumed by auto-version.yml to compose the plugin-v* tag
+  console.log(`##vso[task.setvariable variable=PLUGIN_NEW_VERSION]${nextVersion}`);
+  console.log(`##vso[task.setvariable variable=NEW_ROOT_VERSION]${nextVersion}`);
+  console.log(`##vso[task.setvariable variable=PREV_ROOT_VERSION]${prevVersion}`);
+  console.log(`##vso[task.setvariable variable=RESET_ALL]false`);
+
+  process.exit(0);
 }
 
 // ── Semver ───────────────────────────────────────────────────────────────
@@ -284,6 +355,9 @@ function collectTargets(s: Scope): PlanTarget[] {
       break;
     case 'tenant':
       addTenant(s.id);
+      break;
+    case 'plugin':
+      // Never reached — handlePluginScope() exits before collectTargets is called.
       break;
   }
   return targets;

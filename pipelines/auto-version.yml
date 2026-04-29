@@ -111,6 +111,8 @@ jobs:
             SCOPE_FLAG="--scope=base"
           elif echo "$TAGS" | grep -q "scope:tenants"; then
             SCOPE_FLAG="--scope=tenants"
+          elif echo "$TAGS" | grep -q "scope:plugin"; then
+            SCOPE_FLAG="--scope=plugin"
           else
             TENANT=$(echo "$TAGS" | grep -oE "scope:tenant:[A-Za-z0-9_-]+" | head -n1 | cut -d: -f3)
             if [ -n "$TENANT" ]; then
@@ -179,7 +181,8 @@ jobs:
             packages/tokens/platforms/flutter/token/pubspec.yaml \
             packages/tokens/platforms/web/*/package.json \
             packages/tokens/platforms/python/token/pyproject.toml \
-            packages/tokens/platforms/python/tenants/*/pyproject.toml || true
+            packages/tokens/platforms/python/tenants/*/pyproject.toml \
+            btech-token-studio/package.json || true
 
           # Skip empty commits — `set 1.0.0` on an already-1.0.0 tree is a no-op.
           if git diff --staged --quiet; then
@@ -195,7 +198,14 @@ jobs:
           Root:      @btech/design-system@$(NEW_ROOT_VERSION)"
 
           TAGS=()
-          if [ "$(NEW_ROOT_VERSION)" != "$(PREV_ROOT_VERSION)" ]; then
+          if [ "$(SCOPE_FLAG)" = "--scope=plugin" ]; then
+            # Plugin bump path — tag plugin-v<version>, never touches token versions
+            PV=$(node -p "require('./btech-token-studio/package.json').version")
+            PLUGIN_TAG="plugin-v${PV}"
+            echo "Plugin bumped → tagging $PLUGIN_TAG"
+            git tag "$PLUGIN_TAG" -m "Release $PLUGIN_TAG"
+            TAGS+=("$PLUGIN_TAG")
+          elif [ "$(NEW_ROOT_VERSION)" != "$(PREV_ROOT_VERSION)" ]; then
             # Root moved → single root tag covers base + tenants in publish.yml
             echo "Root version changed ($(PREV_ROOT_VERSION) → $(NEW_ROOT_VERSION)) — tagging $(NEW_TAG)."
             git tag $(NEW_TAG) -m "Release $(NEW_TAG)"

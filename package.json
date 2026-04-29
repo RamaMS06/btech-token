@@ -9,7 +9,7 @@
     "generate": "pnpm exec tsx packages/tokens/sd.config.ts && pnpm --filter @btech/tokens build && pnpm install --lockfile-only --silent",
     "generate:web": "pnpm exec tsx packages/tokens/sd.config.ts --skip-flutter && pnpm --filter @btech/tokens build && pnpm install --lockfile-only --silent",
     "build": "pnpm generate && turbo run build",
-    "validate": "pnpm exec tsx tools/validators/lockfile-sync.ts && pnpm exec tsx tools/validators/schema.ts && pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts && pnpm exec tsx tools/validators/workspace-deps.ts && pnpm exec tsx tools/validators/figma-shape.ts && pnpm exec tsx tools/validators/version-consistency.ts",
+    "validate": "pnpm exec tsx tools/validators/lockfile-sync.ts && pnpm exec tsx tools/validators/schema.ts && pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts && pnpm exec tsx tools/validators/workspace-deps.ts && pnpm exec tsx tools/validators/figma-shape.ts && pnpm exec tsx tools/validators/version-consistency.ts && pnpm exec tsx tools/validators/plugin-manifest.ts",
     "add-tenant": "pnpm exec tsx scripts/add-tenant.ts",
     "tokens:watch": "node scripts/watch-tokens.mjs",
     "bootstrap": "pnpm install && melos bootstrap",
