@@ -111,8 +111,8 @@ importers:
   packages/tokens/platforms/web/bspace:
     dependencies:
       '@btech/tokens':
-        specifier: '>=1.0.0-rc.3 <2.0.0'
-        version: 1.0.0-rc.3
+        specifier: workspace:^
+        version: link:../token
     devDependencies:
       tsup:
         specifier: ^8.0.2
@@ -217,9 +217,6 @@ packages:
   '@babel/types@7.29.0':
     resolution: {integrity: sha512-LwdZHpScM4Qz8Xw2iKSzS+cfglZzJGvofQICy7W7v4caru4EaAmyUuO6BGrbyQ2mYV11W0U8j5mBhd14dd3B0A==}
     engines: {node: '>=6.9.0'}
-
-  '@btech/tokens@1.0.0-rc.3':
-    resolution: {integrity: sha1-DOTU4b6tZoOBJVLQM5c04urkXlI=}
 
   '@bundled-es-modules/deepmerge@4.3.1':
     resolution: {integrity: sha512-Rk453EklPUPC3NRWc3VUNI/SSUjdBaFoaQvFRmNBNtMHVtOFD5AntiWg5kEE1hqcPqedYFDzxE3ZcMYPcA195w==}
@@ -2189,8 +2186,6 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
-
-  '@btech/tokens@1.0.0-rc.3': {}
 
   '@bundled-es-modules/deepmerge@4.3.1':
     dependencies:

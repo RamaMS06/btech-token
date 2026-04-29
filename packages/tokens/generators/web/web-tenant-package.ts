@@ -27,7 +27,6 @@ export function ensureTenantPackageJson(tenantId: string): void {
     const version: string = existsSync(rootPkgPath)
       ? JSON.parse(readFileSync(rootPkgPath, 'utf-8')).version ?? '1.0.0'
       : '1.0.0';
-    const baseMajor = parseInt(version.split('.')[0], 10);
 
     const pkgJson = {
       name:        `@btech/tokens-${tenantId}`,
@@ -49,8 +48,10 @@ export function ensureTenantPackageJson(tenantId: string): void {
       scripts: {
         build: 'tsup --config tsup.config.ts',
       },
+      // workspace:^ → resolves to the local @btech/tokens during dev; pnpm
+      // publish replaces it with `^<resolved-version>` (== `>=X <X+1.0.0`).
       dependencies: {
-        '@btech/tokens': `>=${version} <${baseMajor + 1}.0.0`,
+        '@btech/tokens': 'workspace:^',
       },
       devDependencies: {
         tsup:       '^8.0.2',

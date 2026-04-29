@@ -208,9 +208,13 @@ function generateWebTenantPackage(
   //   * tenant `version` is preserved across regenerations — tenant only
   //     bumps when its own source changes (or when an explicit scope=all
   //     bump is used).
-  //   * tenant `dependencies['@btech/tokens']` floor is preserved once written.
-  //     Updating it requires intent (a tenant relying on a newly-added base
-  //     token) — the generator never auto-widens it on every generate.
+  //   * `dependencies['@btech/tokens']` is fixed at `workspace:^`. At publish
+  //     time pnpm replaces this with `^<resolved-version>` (e.g. `^1.0.0-rc.11`),
+  //     which translates to `>=1.0.0-rc.11 <2.0.0` — the same shape the previous
+  //     hand-written ranges used, but now derived automatically from the actual
+  //     workspace base version. During local dev pnpm resolves it to the in-repo
+  //     workspace package, so frozen-lockfile installs in CI no longer go stale
+  //     when the tenant lockfile entry doesn't match a freshly-written range.
   //
   // Seed source: the repo-root package.json holds the canonical platform
   // version (single source of truth). Reading from root rather than from
@@ -220,17 +224,13 @@ function generateWebTenantPackage(
   const baseVersion: string = existsSync(rootPkgPath)
     ? JSON.parse(readFileSync(rootPkgPath, 'utf-8')).version ?? '1.0.0'
     : '1.0.0';
-  const baseMajor = parseInt(baseVersion.split('.')[0], 10);
 
   const existingPkg = existsSync(pkgJsonPath)
     ? JSON.parse(readFileSync(pkgJsonPath, 'utf-8'))
     : null;
 
   const version: string = existingPkg?.version ?? baseVersion;
-  const baseDepRange: string =
-    existingPkg?.dependencies?.['@btech/tokens'] ??
-    existingPkg?.peerDependencies?.['@btech/tokens'] ?? // migrate any old peerDep range
-    `>=${baseVersion} <${baseMajor + 1}.0.0`;
+  const baseDepRange = 'workspace:^';
 
   const pkgJson = {
     name:        `@btech/tokens-${tenantId}`,
