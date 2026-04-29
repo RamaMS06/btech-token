@@ -47,6 +47,7 @@ export function ensureTenantPackageJson(tenantId: string): void {
       files: ['dist'],
       scripts: {
         build: 'tsup --config tsup.config.ts',
+        prepublishOnly: 'tsup --config tsup.config.ts',
       },
       // workspace:^ → resolves to the local @btech/tokens during dev; pnpm
       // publish replaces it with `^<resolved-version>` (== `>=X <X+1.0.0`).

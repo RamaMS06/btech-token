@@ -257,6 +257,11 @@ function generateWebTenantPackage(
       // untouched in the output — at consume-time, bundlers resolve it relative
       // to dist/, finding the standalone styles.css we wrote here.
       build: 'tsup --config tsup.config.ts',
+      // Runs automatically before `pnpm publish`. Ensures dist/index.{js,mjs,d.ts}
+      // are built by tsup before the tarball is packed — `pnpm generate` only writes
+      // styles.css + src/index.ts; without this hook the published package ships
+      // without JS/TS files (the rc.12 regression).
+      prepublishOnly: 'tsup --config tsup.config.ts',
     },
     // @btech/tokens is a runtime dep — consumers should NOT need to install it
     // separately. Range is preserved across regenerations; bump deliberately.
