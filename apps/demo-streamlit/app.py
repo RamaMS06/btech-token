@@ -8,10 +8,15 @@ Two token sources are available:
   2. token_loader (fallback) — reads DTCG JSON directly, supports dark/tenant
 
 Run:
-    streamlit run apps/demo-streamlit/app.py
+    cd apps/demo-streamlit && .venv/bin/streamlit run app.py
 """
+import sys, os
+# Allow running from any working directory
+sys.path.insert(0, os.path.dirname(__file__))
+
 import streamlit as st
 from token_loader import build_token_map, available_tenants
+from components.token_showcase import token_showcase
 
 try:
     import btech_tokens as _btech
@@ -29,7 +34,6 @@ st.set_page_config(
 
 # ── Session state defaults ────────────────────────────────────────────────────
 if "dark"   not in st.session_state: st.session_state.dark   = False
-if "tab"    not in st.session_state: st.session_state.tab    = "all"
 if "search" not in st.session_state: st.session_state.search = ""
 if "tenant" not in st.session_state: st.session_state.tenant = "default"
 
@@ -84,37 +88,11 @@ st.markdown(f"""
     gap: 16px;
   }}
 
-  /* ── Topbar ── */
-  .topbar {{
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    background: {BG_PRIMARY};
-    border: 1px solid {BORDER};
-    border-radius: {RADIUS_MD};
-    padding: 10px 16px;
-  }}
-  .tabs {{ display: flex; gap: 4px; flex-wrap: wrap; }}
-  .tab-btn {{
-    padding: 5px 14px;
-    border-radius: {RADIUS_SM};
-    border: 1.5px solid transparent;
-    background: transparent;
-    color: {TEXT_SEC};
-    font-size: 13px;
-    font-weight: 400;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: {FONT_SANS};
-    text-decoration: none;
-  }}
-  .tab-btn:hover {{ background: {BG_SUBTLER}; color: {TEXT_PRI}; }}
-  .tab-btn.active {{
-    background: {t('color.background.success.subtle','#dcfce7')};
-    color: {t('color.text.success.base','#15803d')};
-    border-color: {t('color.background.primary.subtle','#f0fdf4')};
-    font-weight: 600;
+  /* ── St.pills native widget styling tweak ── */
+  [data-testid="stPillsGroup"] button {{
+    border-radius: {RADIUS_SM} !important;
+    font-family: {FONT_SANS} !important;
+    font-size: 13px !important;
   }}
 
   /* ── Table ── */
@@ -389,7 +367,7 @@ def preview_html(tab: str, kind: str, row: tuple) -> str:
         return f'<div class="swatch" style="background:{color}"></div>'
 
     if kind == "text":
-        fs, fw = row[7], row[8]
+        fs, fw = row[6], row[7]
         fs_clamped = max(8, min(fs, 22))
         return (f'<span class="aa-text" style="font-size:{fs_clamped}px;'
                 f'font-weight:{fw};color:{TEXT_PRI};font-family:{FONT_SANS}">Aa</span>')
@@ -601,15 +579,77 @@ def _status_badges() -> str:
 
 
 # ── Render ────────────────────────────────────────────────────────────────────
-tenants  = available_tenants()
-TABS     = ["all", "color", "typography", "spacing", "stroke", "radius", "shadow", "examples"]
-TAB_LABELS = {"all":"All","color":"Color","typography":"Typography",
-               "spacing":"Spacing","stroke":"Stroke","radius":"Radius",
-               "shadow":"Shadow","examples":"Usage"}
+tenants = available_tenants()
 
-active_tab = st.session_state.tab
+TABS = ["all", "color", "typography", "spacing", "stroke", "radius", "shadow", "examples"]
+TAB_LABELS = {
+    "all": "🔍 All", "color": "🎨 Color", "typography": "Aa Typography",
+    "spacing": "↔ Spacing", "stroke": "〰 Stroke", "radius": "◜ Radius",
+    "shadow": "🔳 Shadow", "examples": "⚡ Usage",
+}
 
-# Filter tokens
+st.markdown('<div class="ds-wrap">', unsafe_allow_html=True)
+
+# ── Header row: logo + package badge ─────────────────────────────────────────
+_pkg_badge = (
+    f'<span style="font-size:11px;padding:2px 10px;border-radius:20px;'
+    f'background:{t("color.background.success.subtle","#dcfce7")};'
+    f'color:{t("color.text.success.base","#15803d")};font-weight:600">'
+    f'btech_tokens v{_btech.__version__} ✓</span>'
+    if _BT_AVAILABLE else
+    f'<span style="font-size:11px;padding:2px 10px;border-radius:20px;'
+    f'background:{t("color.background.warning.subtle","#fff7ed")};'
+    f'color:{t("color.text.warning.base","#ea580c")}">token_loader only</span>'
+)
+st.markdown(f"""
+<div style="display:flex;align-items:center;justify-content:space-between;
+            padding:12px 16px;background:{BG_PRIMARY};border:1px solid {BORDER};
+            border-radius:{RADIUS_MD}">
+  <div style="font-size:16px;font-weight:700;color:{TEXT_PRI}">
+    🎨 BTech Design System
+  </div>
+  {_pkg_badge}
+</div>
+""", unsafe_allow_html=True)
+
+# ── st.pills tab navigation ───────────────────────────────────────────────────
+active_tab = st.pills(
+    "Tabs",
+    options=TABS,
+    format_func=lambda x: TAB_LABELS[x],
+    default="all",
+    key="pills_tab",
+    label_visibility="collapsed",
+)
+active_tab = active_tab or "all"
+
+# ── Filter / search row ───────────────────────────────────────────────────────
+filter_cols = st.columns([3, 2, 1])
+with filter_cols[0]:
+    search_val = st.text_input(
+        "Search", value=st.session_state.search,
+        placeholder="🔍 Search token name or value…",
+        label_visibility="collapsed",
+    )
+with filter_cols[1]:
+    tenant_choice = st.selectbox(
+        "Tenant", tenants,
+        index=tenants.index(tenant) if tenant in tenants else 0,
+        label_visibility="collapsed",
+    )
+with filter_cols[2]:
+    dark_toggle = st.toggle("🌙 Dark", value=dark)
+
+# Persist search/tenant/dark changes
+if (search_val    != st.session_state.search or
+    tenant_choice != st.session_state.tenant or
+    dark_toggle   != st.session_state.dark):
+    st.session_state.search = search_val
+    st.session_state.tenant = tenant_choice
+    st.session_state.dark   = dark_toggle
+    st.rerun()
+
+# ── Filter tokens for table views ────────────────────────────────────────────
 search = st.session_state.search.lower().strip()
 filtered = []
 for row in TOKENS:
@@ -619,71 +659,30 @@ for row in TOKENS:
     if tab_ok and q_ok:
         filtered.append(row)
 
-# ── Tab buttons HTML ──
-tab_btns = "".join(
-    f'<span class="tab-btn{"  active" if active_tab == tid else ""}">{TAB_LABELS[tid]}</span>'
-    for tid in TABS
-)
-
-st.markdown(f'<div class="ds-wrap">', unsafe_allow_html=True)
-
-# Topbar (static display only — interaction via st widgets below)
-_pkg_badge = (
-    f'<span style="font-size:11px;padding:2px 8px;border-radius:20px;'
-    f'background:{t("color.background.success.subtle","#dcfce7")};'
-    f'color:{t("color.text.success.base","#15803d")};font-weight:600">'
-    f'btech_tokens v{_btech.__version__}</span>'
-    if _BT_AVAILABLE else
-    f'<span style="font-size:11px;padding:2px 8px;border-radius:20px;'
-    f'background:{t("color.background.warning.subtle","#fff7ed")};'
-    f'color:{t("color.text.warning.base","#ea580c")}">token_loader only</span>'
-)
-st.markdown(f"""
-<div class="topbar">
-  <div class="tabs">{tab_btns}</div>
-  <div style="display:flex;align-items:center;gap:8px">
-    {_pkg_badge}
-  </div>
-</div>
-""", unsafe_allow_html=True)
-
-# ── Controls row (Streamlit native — for interactivity) ───────────────────────
-ctrl_cols = st.columns([6, 2, 1.2, 1.2])
-with ctrl_cols[0]:
-    tab_choice = st.selectbox(
-        "Tab", TABS, index=TABS.index(active_tab),
-        format_func=lambda x: TAB_LABELS[x], label_visibility="collapsed"
-    )
-with ctrl_cols[1]:
-    search_val = st.text_input("Search", value=st.session_state.search,
-                               placeholder="🔍 Search token…", label_visibility="collapsed")
-with ctrl_cols[2]:
-    tenant_choice = st.selectbox("Tenant", tenants,
-                                 index=tenants.index(tenant) if tenant in tenants else 0,
-                                 label_visibility="collapsed")
-with ctrl_cols[3]:
-    dark_toggle = st.toggle("🌙 Dark", value=dark)
-
-# Apply changes and rerun if needed
-if (tab_choice    != st.session_state.tab    or
-    search_val    != st.session_state.search or
-    tenant_choice != st.session_state.tenant or
-    dark_toggle   != st.session_state.dark):
-    st.session_state.tab    = tab_choice
-    st.session_state.search = search_val
-    st.session_state.tenant = tenant_choice
-    st.session_state.dark   = dark_toggle
-    st.rerun()
-
 # ── Main content ──────────────────────────────────────────────────────────────
 if active_tab == "examples":
+    # ── Custom component: live token showcase ─────────────────────────────────
+    st.markdown(
+        f'<p style="font-size:12px;color:{TEXT_TER};margin-bottom:4px">'
+        f'Custom Streamlit component rendering live token values via '
+        f'<code>streamlit.components.v1.declare_component()</code></p>',
+        unsafe_allow_html=True,
+    )
+    token_showcase(T, height=600, key="main_showcase")
+
+    # ── Code examples ─────────────────────────────────────────────────────────
+    st.markdown(
+        f'<div style="margin-top:8px;font-size:13px;font-weight:600;color:{TEXT_PRI}">Code examples</div>',
+        unsafe_allow_html=True,
+    )
     st.markdown(examples_html(), unsafe_allow_html=True)
+
 else:
     if not filtered:
         st.markdown(
             f'<div style="padding:40px;text-align:center;color:{TEXT_TER};'
-            f'font-size:14px">No tokens found</div>',
-            unsafe_allow_html=True
+            f'font-size:14px">No tokens found for <b>"{st.session_state.search}"</b></div>',
+            unsafe_allow_html=True,
         )
     else:
         table_html = f"""
