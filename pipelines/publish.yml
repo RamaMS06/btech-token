@@ -30,6 +30,14 @@ pr: none
 pool:
   vmImage: ubuntu-latest
 
+variables:
+  # Default empty — overridden by "Classify release tag" step when a
+  # <tenant>-v* tag is detected. Without this default, Azure DevOps passes
+  # the literal string "$(PUBLISH_TENANT)" to the env var, causing
+  # publish-changed.ts to look for a folder named "$(PUBLISH_TENANT)".
+  - name: PUBLISH_TENANT
+    value: ''
+
 jobs:
   - job: publish
     displayName: 'Build & Publish to Azure Artifacts'
