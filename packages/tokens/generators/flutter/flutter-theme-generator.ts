@@ -44,7 +44,12 @@ export function buildColorTree(): ColorTree {
 
   const tree: ColorTree = {};
   for (const [category, categoryNode] of Object.entries(colorJson.color)) {
-    tree[category] = Object.keys(categoryNode).filter(k => !k.startsWith('$'));
+    tree[category] = Object.keys(categoryNode)
+      .filter(k => !k.startsWith('$'))
+      // Strip `-default` suffix used in source files to avoid SD path collisions
+      // (e.g. `color.brand.primary` collides with primitive `color.brand.primary.{50..900}`).
+      // Consumer-facing API stays clean: `c.brand.primary` (not `c.brand.primaryDefault`).
+      .map(k => k.replace(/-default$/, ''));
   }
   return tree;
 }
@@ -76,12 +81,23 @@ export function buildFontSans(resolvedMap: Record<string, string>): string {
 // Helpers
 // =============================================================================
 
-/** Resolve a raw flat map in two passes to handle chained references. */
+/** Resolve a raw flat map in two passes to handle chained references.
+ *  After resolution, the `-default` disambiguator suffix is stripped from key
+ *  paths so consumer lookups stay clean. The internal suffix exists only in
+ *  source files where a flat semantic name would collide with a primitive
+ *  group of the same name (see `token-loader.ts` for the rationale). */
 function resolveMap(rawMap: Record<string, string>): Record<string, string> {
   const resolved: Record<string, string> = {};
   for (const [k, v] of Object.entries(rawMap)) resolved[k] = resolveRef(v, rawMap);
   for (const [k, v] of Object.entries(resolved)) resolved[k] = resolveRef(v, resolved);
-  return resolved;
+  // Strip `-default` from keys after resolution (refs were resolved against the
+  // suffixed source paths, so this rename is safe — no alias targets remain).
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(resolved)) {
+    const cleanKey = k.replace(/-default(\.|$)/, '$1');
+    out[cleanKey] = v;
+  }
+  return out;
 }
 
 /**
@@ -167,11 +183,15 @@ function cap(s: string): string {
 // Color theme dart emitter
 // =============================================================================
 
-function emitColorThemeDart(tree: ColorTree, resolvedMap: Record<string, string>): string {
+function emitColorThemeDart(
+  tree: ColorTree,
+  resolvedMap: Record<string, string>,
+  primitiveGroups: string[],
+): string {
   const L: string[] = [];
   L.push(HEADER);
   L.push("import 'package:flutter/material.dart';");
-  L.push("import 'shades.color.dart';\n");
+  L.push("import 'swatches.color.dart';\n");
 
   // ── Per-category accessor classes — each field is a plain Color ──────────
   for (const [category, fields] of Object.entries(tree)) {
@@ -234,8 +254,12 @@ function emitColorThemeDart(tree: ColorTree, resolvedMap: Record<string, string>
   for (const cat of categories) {
     L.push(`  static BTechColor${cap(cat)} get ${cat} => _light.${cat};`);
   }
-  L.push('  // Raw primitive color swatches — BTechColor.shades.green[500]');
-  L.push('  static const BTechShadesColor shades = BTechShadesColor();');
+  L.push('');
+  L.push('  // Primitive color swatches — direct access (BTechColor.green[500], BTechColor.blue.shade700).');
+  L.push('  // Each group is a MaterialColor so Flutter ButtonStyle / gradient APIs work natively.');
+  for (const group of primitiveGroups) {
+    L.push(`  static MaterialColor get ${group} => btechColor${cap(group)};`);
+  }
   L.push('');
   L.push('  /// Called by [buildBtechTheme] — do not call directly.');
   L.push('  static void activateBoth(BTechColorTheme light, BTechColorTheme dark) {');
@@ -424,14 +448,27 @@ function emitContextDart(): string {
 /**
  * Main entry — generates all 5 Dart files under platforms/flutter/token/lib/src/.
  * If resolvedBaseMap is not provided, one is built internally from core + semantic sources.
+ * primitiveGroups (e.g. ['green','blue','neutral',…]) drives BTechColor.<group> static
+ * getters; if omitted, derived from sources/core/color.primitive.json.
  */
-export function generateFlutterThemeFiles(resolvedBaseMap?: Record<string, string>): void {
+export function generateFlutterThemeFiles(
+  resolvedBaseMap?: Record<string, string>,
+  primitiveGroups?: string[],
+): void {
   // Use pure light map — dark values are NOT merged here so _defaultLight stays light-only.
   const resolved = resolvedBaseMap ?? buildResolvedBaseMap();
 
   const tree = buildColorTree();
   const radiusFields = buildRadiusFields(resolved);
   const fontSans = buildFontSans(resolved);
+
+  // Derive primitive groups from core/color.primitive.json when not passed in
+  // (standalone CLI mode). Same source the flutter-generator already reads.
+  const groups = primitiveGroups ?? Object.keys(
+    (JSON.parse(readFileSync(`${ROOT}/sources/core/color.primitive.json`, 'utf-8')) as {
+      color: Record<string, unknown>;
+    }).color,
+  ).filter(k => !k.startsWith('$'));
 
   const DART_SRC = `${ROOT}/platforms/flutter/token/lib/src`;
   const colorDir = `${DART_SRC}/color`;
@@ -441,7 +478,7 @@ export function generateFlutterThemeFiles(resolvedBaseMap?: Record<string, strin
   mkdirSync(radiusDir, { recursive: true });
   mkdirSync(typoDir,   { recursive: true });
 
-  writeFileSync(`${colorDir}/color.theme.dart`,   emitColorThemeDart(tree, resolved));
+  writeFileSync(`${colorDir}/color.theme.dart`,   emitColorThemeDart(tree, resolved, groups));
   writeFileSync(`${radiusDir}/radius.theme.dart`,  emitRadiusThemeDart(radiusFields));
   // font.theme.dart lives alongside the other typography files — single font folder.
   writeFileSync(`${typoDir}/font.theme.dart`,      emitFontThemeDart(fontSans));

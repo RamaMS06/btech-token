@@ -18,7 +18,7 @@
 // between calls is the pre-resolved color maps passed in.
 
 import { mkdirSync, writeFileSync } from 'fs';
-import { ROOT } from '../utils.js';
+import { ROOT, toPascalCase } from '../utils.js';
 import type { ResolvedTokenMap } from '../token-loader.js';
 import {
   buildColorTree,
@@ -27,6 +27,7 @@ import {
 import { generatePythonColor } from './python-color.js';
 import { generatePythonShadow } from './python-shadow.js';
 import { generatePythonHelpers } from './python-helpers.js';
+import { generatePythonSwatches } from './python-swatches.js';
 import {
   pySafeName,
   pyStr,
@@ -123,6 +124,13 @@ function generateData(
 
   emitColorDict(L, 'COLOR_LIGHT', lightColors);
   emitColorDict(L, 'COLOR_DARK',  darkColors);
+
+  // Brand primitive swatches — primary/secondary 50..900 ramps. Tenant
+  // overrides re-target these to different primitive ramps (e.g. bspace →
+  // rose for primary, teal for secondary). Mirrors web's btechColorBrand*
+  // and Flutter's MaterialColor btechColorBrandPrimary/Secondary.
+  // Shape: { 'primary': {'50': '#...', ..., '900': '#...'}, 'secondary': {...} }
+  emitColorDict(L, 'BRAND_SWATCHES', data.brandSwatches);
 
   emitFloatDict(L, 'SPACING', snakeKeyed(data.spacing));
   emitFloatDict(L, 'RADIUS',  snakeKeyed(data.radius));
@@ -246,13 +254,16 @@ function generateState(outDir: string): void {
 }
 
 /** __init__.py — public API surface. */
-function generateInit(outDir: string): void {
+function generateInit(outDir: string, brandNames: string[]): void {
+  const swatchExports = brandNames.map(b => `BTechColorBrand${toPascalCase(b)}`);
   const body = [
     '"""BTech design tokens for Python UI consumers (Streamlit, Gradio, NiceGUI, ...).',
     '',
     'Public surface:',
     '  * ``BTechColor``, ``BTechSpacing``, ``BTechRadius``, ``BTechStroke``,',
     '    ``BTechFont``, ``BTechShadow`` — token values.',
+    '  * ``BTechColorBrandPrimary`` / ``BTechColorBrandSecondary`` —',
+    '    primitive brand color ramps (50..900), tenant-overridable.',
     "  * ``set_mode('light' | 'dark')`` — toggle ``BTechColor``’s mode-aware accessors.",
     '    Module-level state; safe for single-process UI apps and notebooks.',
     '  * ``LIGHT``, ``DARK`` — namespace constants for deterministic side-by-side',
@@ -281,6 +292,9 @@ function generateInit(outDir: string): void {
     '    BTechLineHeight,',
     ')',
     'from .shadow import BTechShadow',
+    'from .swatches import (',
+    ...swatchExports.map(n => `    ${n},`),
+    ')',
     'from .helpers import to_css',
     '',
     '',
@@ -295,6 +309,7 @@ function generateInit(outDir: string): void {
     "    'BTechFontWeight',",
     "    'BTechLineHeight',",
     "    'BTechShadow',",
+    ...swatchExports.map(n => `    '${n}',`),
     "    'LIGHT',",
     "    'DARK',",
     "    'set_mode',",
@@ -362,6 +377,7 @@ export function generatePythonPackageContents(
 
   generateData(outDir, data, lightColors, darkColors);
   generatePythonColor(outDir, { light: lightColors, dark: darkColors });
+  generatePythonSwatches(outDir, data.brandSwatches);
   generateScalarCategory(outDir, 'spacing.py', 'BTechSpacing', 'SPACING', data.spacing);
   generateScalarCategory(outDir, 'radius.py',  'BTechRadius',  'RADIUS',  data.radius);
   generateScalarCategory(outDir, 'stroke.py',  'BTechStroke',  'STROKE',  data.stroke);
@@ -369,7 +385,7 @@ export function generatePythonPackageContents(
   generatePythonShadow(outDir, data.shadow);
   generatePythonHelpers(outDir);
   generateState(outDir);
-  generateInit(outDir);
+  generateInit(outDir, Object.keys(data.brandSwatches).sort());
 
   writeFileSync(`${outDir}/py.typed`, '');
 }

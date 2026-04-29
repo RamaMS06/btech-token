@@ -25,7 +25,13 @@
  */
 
 import { create } from 'zustand';
-import type { TokenSet, DTCGToken, DTCGGroup } from '../../shared/types.js';
+import type {
+  TokenSet,
+  DTCGToken,
+  DTCGGroup,
+  ActiveBranch,
+  BranchSnapshot,
+} from '../../shared/types.js';
 import { ensureTenantOverrideSet } from '../../shared/tenant-resolver.js';
 
 // ── State shape ──────────────────────────────────────────────────────────────
@@ -37,10 +43,29 @@ interface TokenState {
   activeTenant: string | null;
   lastPullSha: string | null;
   lastPullAt: number | null;
-  /** Currently published @btech/tokens version, fetched at pull. */
+  /** Currently published canonical platform version, fetched at pull. */
   baseVersion: string | null;
-  /** Designer-proposed next version (mirrors baseVersion until edited). */
-  nextVersion: string | null;
+  /**
+   * Latest version observed on the remote `main` branch — fetched silently
+   * on plugin mount and after each push. When this differs from
+   * `baseVersion`, the header surfaces a "new version available" badge so
+   * the designer can pull before they keep editing on a stale baseline.
+   *
+   * Intentionally NOT persisted: the value is cheap to refetch and we want
+   * a fresh check on every plugin open rather than risk showing a stale
+   * "new" badge from an old session.
+   */
+  remoteVersion: string | null;
+  /**
+   * Per-branch frozen pull snapshots — populated by `commitBranchPull` and
+   * read by `swapToBranch`. Lets the designer switch between `main` and
+   * `dev` without re-pulling each time. Persisted alongside the rest of
+   * the token state so the cache survives plugin reloads.
+   *
+   * Keys are `ActiveBranch` values; missing entry means "this branch has
+   * never been pulled in the current installation".
+   */
+  branchSnapshots: Partial<Record<ActiveBranch, BranchSnapshot>>;
 }
 
 interface TokenActions {
@@ -58,13 +83,19 @@ interface TokenActions {
   markCleanAll: () => void;
   dirtySets: () => TokenSet[];
 
-  /** Revert every dirty set to its `originalTree`. Resets nextVersion. */
+  /** Revert every dirty set to its `originalTree`. */
   discardAll: () => void;
   /** Revert a single set. */
   discardSet: (setId: string) => void;
 
   setBaseVersion: (v: string | null) => void;
-  setNextVersion: (v: string | null) => void;
+  /**
+   * Record the latest version seen on remote `main`. Called by the
+   * background check that fires on plugin mount and after each push.
+   * Pass `null` to clear (e.g. when the check fails — never leave a
+   * stale value lying around).
+   */
+  setRemoteVersion: (v: string | null) => void;
 
   /**
    * Reconcile in-memory state after a successful push: replace each set's
@@ -73,6 +104,48 @@ interface TokenActions {
    * reverts to "what's in flight to repo" rather than "what we last pulled".
    */
   snapshotAfterPush: () => void;
+
+  /**
+   * Merge an incoming sets map into the store. Used by ImportDiffModal
+   * after the designer has resolved which rows to import — only ids
+   * listed in `overwriteIds` get replaced, the rest are left alone.
+   * Resulting sets are marked dirty so the next push surfaces them.
+   */
+  mergeSets: (
+    incoming: Record<string, TokenSet>,
+    opts?: { overwriteIds?: string[] },
+  ) => void;
+
+  /**
+   * Record a fresh pull for `branch`. Always writes the snapshot into
+   * `branchSnapshots[branch]`. When `branch === activeBranch`, also
+   * mirrors the snapshot into the top-level fields so the UI sees the
+   * pull immediately. Use this from `useSync.pull` for both single-branch
+   * and `target='all'` flows — call it once per branch that was fetched.
+   */
+  commitBranchPull: (
+    branch: ActiveBranch,
+    snapshot: BranchSnapshot,
+    activeBranch: ActiveBranch,
+  ) => void;
+
+  /**
+   * Replace the entire `branchSnapshots` cache. Used at hydration time
+   * (App.tsx → init-done / tokens-loaded) to restore what was persisted
+   * to figma.clientStorage in the previous session.
+   */
+  hydrateBranchSnapshots: (
+    snapshots: Partial<Record<ActiveBranch, BranchSnapshot>>,
+  ) => void;
+
+  /**
+   * Swap the active view to `target`'s cached snapshot without re-pulling.
+   * Saves the current top-level state into `branchSnapshots[currentBranch]`
+   * first so any in-progress (clean) state on the old branch is retained.
+   * Then loads `branchSnapshots[target]` if present, otherwise clears
+   * top-level fields back to "never pulled" defaults.
+   */
+  swapToBranch: (currentBranch: ActiveBranch, target: ActiveBranch) => void;
 }
 
 export type TokenStore = TokenState & TokenActions;
@@ -169,7 +242,17 @@ function schedulePersist(state: TokenState): void {
       lastPullSha: state.lastPullSha,
       lastPullAt: state.lastPullAt,
       baseVersion: state.baseVersion,
-      nextVersion: state.nextVersion,
+      // Per-branch cache: persist so designers don't lose the cross-branch
+      // state when the plugin window closes.
+      branchSnapshots: state.branchSnapshots,
+      // UI selection: persist what the designer was looking at so reopening
+      // the modal lands them back on the same set + tenant filter.
+      // Without this, the panel resets to "Select a token set from the
+      // sidebar" and the tenant dropdown drops back to "Default", which
+      // hides the override badges (@N) even though the dirty edits underneath
+      // are still in `sets`.
+      activeSetId: state.activeSetId,
+      activeTenant: state.activeTenant,
     };
     // postMessage to main thread — main thread writes to figma.clientStorage
     parent.postMessage({ pluginMessage: { type: 'save-tokens', payload } }, '*');
@@ -186,7 +269,8 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
   lastPullSha: null,
   lastPullAt: null,
   baseVersion: null,
-  nextVersion: null,
+  remoteVersion: null,
+  branchSnapshots: {},
 
   // ── Actions
   setSets: (sets) =>
@@ -198,9 +282,22 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
       return next;
     }),
 
-  setActiveSet: (id) => set({ activeSetId: id }),
+  // Both selectors below are now persisted (they used to be ephemeral).
+  // Hydration runs on plugin open via `init-done` / `tokens-loaded` so the
+  // designer reopens the modal with the last-viewed set + tenant restored.
+  setActiveSet: (id) =>
+    set((state) => {
+      const next = { ...state, activeSetId: id };
+      schedulePersist(next);
+      return next;
+    }),
 
-  setActiveTenant: (id) => set({ activeTenant: id }),
+  setActiveTenant: (id) =>
+    set((state) => {
+      const next = { ...state, activeTenant: id };
+      schedulePersist(next);
+      return next;
+    }),
 
   setLastPull: (sha, at) =>
     set((state) => {
@@ -318,11 +415,14 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
         // still slip an unnormalised set in — fall back to the current tree.
         const baseline = s.originalTree ?? s.tree ?? {};
 
-        // Tenant override files that were created locally have an empty
-        // originalTree. Reverting one of those would leave an empty `tree`
-        // and an id pointing at a file that doesn't exist in repo. Drop it
-        // entirely so the sidebar / push picks up the absence cleanly.
-        if (s.id.startsWith('tenants/') && Object.keys(baseline).length === 0) {
+        // A set with an empty `originalTree` was created locally — either
+        // a tenant override file fabricated on first edit, or a set
+        // materialised by a Figma import. It doesn't exist server-side,
+        // so reverting to baseline means dropping it entirely. Otherwise
+        // the sidebar would keep an empty placeholder set after Clear /
+        // tenant switch even though there is genuinely nothing to revert
+        // to.
+        if (Object.keys(baseline).length === 0) {
           continue;
         }
         reverted[id] = {
@@ -332,11 +432,24 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
           dirty: false,
         };
       }
+
+      // If the active set was one of the dropped locally-created sets,
+      // null it out so the right pane doesn't render against a phantom
+      // id. Same for activeTenant when its override file gets dropped.
+      const activeSetId =
+        state.activeSetId && reverted[state.activeSetId]
+          ? state.activeSetId
+          : null;
+      const activeTenant =
+        state.activeTenant && reverted[`tenants/${state.activeTenant}/overrides`]
+          ? state.activeTenant
+          : null;
+
       const next = {
         ...state,
         sets: reverted,
-        // Reset proposed version to whatever's currently published.
-        nextVersion: state.baseVersion,
+        activeSetId,
+        activeTenant,
       };
       schedulePersist(next);
       return next;
@@ -349,13 +462,17 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
 
       const baseline = existing.originalTree ?? existing.tree ?? {};
 
-      // Same locally-created-override rule as discardAll
-      if (existing.id.startsWith('tenants/') && Object.keys(baseline).length === 0) {
+      // Same locally-created rule as discardAll — drop any set whose
+      // baseline is empty regardless of id prefix (covers tenant
+      // overrides AND figma-imported sets).
+      if (Object.keys(baseline).length === 0) {
         const remaining = { ...state.sets };
         delete remaining[setId];
-        const next = { ...state, sets: remaining };
-        schedulePersist(next);
-        return next;
+        const next: Partial<typeof state> = { sets: remaining };
+        if (state.activeSetId === setId) next.activeSetId = null;
+        const merged = { ...state, ...next };
+        schedulePersist(merged);
+        return merged;
       }
 
       const reverted: TokenSet = {
@@ -373,23 +490,22 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
 
   setBaseVersion: (v) =>
     set((state) => {
-      // Pull just landed — refresh both fields so the editor starts at the
-      // currently published value.
+      // Pull just landed — record the published version so the header
+      // VersionLabel renders it. The number is read-only in the UI; bumps
+      // are derived from the active branch by CI.
       const next = {
         ...state,
         baseVersion: v,
-        nextVersion: v,
       };
       schedulePersist(next);
       return next;
     }),
 
-  setNextVersion: (v) =>
-    set((state) => {
-      const next = { ...state, nextVersion: v };
-      schedulePersist(next);
-      return next;
-    }),
+  // remoteVersion is intentionally NOT persisted — schedulePersist isn't
+  // called here. A stale "new version available" badge from a previous
+  // session would be more confusing than a brief moment of no badge while
+  // the background check completes on next mount.
+  setRemoteVersion: (v) => set({ remoteVersion: v }),
 
   // ── Post-push reconciliation ─────────────────────────────────────────────
 
@@ -404,6 +520,142 @@ export const useTokenStore = create<TokenStore>((set, get) => ({
         };
       }
       const next = { ...state, sets: reconciled };
+      schedulePersist(next);
+      return next;
+    }),
+
+  mergeSets: (incoming, opts) =>
+    set((state) => {
+      const overwrite = new Set(opts?.overwriteIds ?? []);
+      const merged: Record<string, TokenSet> = { ...state.sets };
+
+      for (const [id, incomingSet] of Object.entries(incoming)) {
+        const existing = merged[id];
+        if (existing && !overwrite.has(id)) {
+          // Caller didn't ask for an overwrite — leave the existing set
+          // alone. This protects against accidental data loss from a
+          // half-built incoming map.
+          continue;
+        }
+        merged[id] = { ...incomingSet, dirty: true };
+      }
+
+      const next = { ...state, sets: merged };
+      schedulePersist(next);
+      return next;
+    }),
+
+  // ── Per-branch cache ─────────────────────────────────────────────────────
+  //
+  // The plugin caches a frozen "what was last pulled" snapshot per branch so
+  // that `<BranchSwitcher>` can swap between `main` / `dev` without forcing
+  // a network round-trip. The active branch's snapshot is mirrored into the
+  // top-level fields for the rest of the UI to read; the inactive branch
+  // sits dormant until the designer flips back.
+
+  hydrateBranchSnapshots: (snapshots) =>
+    set((state) => {
+      // Defensive normalisation — older persisted snapshots may have sets
+      // without the new `originalTree` field. Use the same `normaliseSets`
+      // path we use for top-level state so swap semantics match.
+      const out: Partial<Record<ActiveBranch, BranchSnapshot>> = {};
+      for (const [branch, snap] of Object.entries(snapshots)) {
+        if (!snap) continue;
+        out[branch as ActiveBranch] = {
+          sets: normaliseSets(snap.sets),
+          baseVersion: snap.baseVersion,
+          lastPullSha: snap.lastPullSha,
+          lastPullAt: snap.lastPullAt,
+        };
+      }
+      return { ...state, branchSnapshots: out };
+    }),
+
+  commitBranchPull: (branch, snapshot, activeBranch) =>
+    set((state) => {
+      // Deep-clone the sets map on the way in so subsequent edits to the
+      // top-level state can't mutate the cached snapshot by reference.
+      const frozenSets: Record<string, TokenSet> = {};
+      for (const [id, s] of Object.entries(snapshot.sets)) {
+        frozenSets[id] = {
+          ...s,
+          tree: cloneTree(s.tree),
+          originalTree: cloneTree(s.originalTree ?? s.tree),
+        };
+      }
+
+      const branchSnapshots = {
+        ...state.branchSnapshots,
+        [branch]: { ...snapshot, sets: frozenSets },
+      };
+
+      // If we just pulled the branch the designer is currently looking at,
+      // mirror the snapshot into the live top-level fields so the UI
+      // reflects the pull immediately. For the OTHER branch (e.g. pulled
+      // as part of `target='all'`) we just stash it in the cache and let
+      // `swapToBranch` pick it up when needed.
+      if (branch === activeBranch) {
+        const next = {
+          ...state,
+          sets: normaliseSets(snapshot.sets),
+          baseVersion: snapshot.baseVersion,
+          lastPullSha: snapshot.lastPullSha,
+          lastPullAt: snapshot.lastPullAt,
+          branchSnapshots,
+        };
+        schedulePersist(next);
+        return next;
+      }
+
+      const next = { ...state, branchSnapshots };
+      schedulePersist(next);
+      return next;
+    }),
+
+  swapToBranch: (currentBranch, target) =>
+    set((state) => {
+      if (currentBranch === target) return state;
+
+      // Snapshot the current top-level state under the OLD branch so any
+      // post-pull tweaks survive a round trip. We stash whatever's live
+      // (including dirty flags) — discardAll is the caller's job before
+      // calling this if a clean swap is desired.
+      const currentFrozen: BranchSnapshot = {
+        sets: state.sets,
+        baseVersion: state.baseVersion,
+        lastPullSha: state.lastPullSha,
+        lastPullAt: state.lastPullAt,
+      };
+
+      const branchSnapshots = {
+        ...state.branchSnapshots,
+        [currentBranch]: currentFrozen,
+      };
+
+      // Load the target branch's cached snapshot if we have one. If the
+      // designer never pulled the target branch, fall back to "empty"
+      // top-level state — the silent remote-version poll will refill the
+      // header placeholder and the designer can pull when ready.
+      const cached = branchSnapshots[target];
+
+      const next = cached
+        ? {
+            ...state,
+            sets: normaliseSets(cached.sets),
+            baseVersion: cached.baseVersion,
+            lastPullSha: cached.lastPullSha,
+            lastPullAt: cached.lastPullAt,
+            branchSnapshots,
+          }
+        : {
+            ...state,
+            sets: {},
+            baseVersion: null,
+            lastPullSha: null,
+            lastPullAt: null,
+            branchSnapshots,
+          };
+
       schedulePersist(next);
       return next;
     }),

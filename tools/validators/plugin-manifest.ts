@@ -1,102 +1,104 @@
 /**
- * plugin-manifest.ts
+ * Plugin manifest validator
+ * --------------------------
+ * Lint-time guard for `btech-token-studio/manifest.json`. Catches the kind
+ * of regression that bricks a published Figma plugin without the build
+ * itself failing — Vite happily emits dist/{code.js,ui.html} even when
+ * manifest.{main,ui} point at non-existent files, so the broken paths only
+ * surface when an admin tries to load the uploaded plugin.
  *
- * Validates btech-token-studio/manifest.json to catch path regressions
- * (e.g. "ui": "dist/index.html" instead of "dist/ui.html") before they
- * reach a published release zip.
+ * Why this exists:
+ *   We hit exactly that bug in the wild — manifest.json shipped with
+ *   "ui": "dist/index.html" but Vite outputs `dist/ui.html` (input key
+ *   "ui" → output `ui.html`). Plugin loaded with a blank UI iframe in
+ *   Figma; nothing in the build pipeline noticed because the dist files
+ *   were both present (just at the right names, not the manifest's names).
  *
- * Checks:
- *   - manifest.main === "dist/code.js"
- *   - manifest.ui   === "dist/ui.html"
- *   - manifest.id   matches /^com\.btech\..+$/
- *   - manifest.api  === "1.0.0"
- *   - networkAccess.allowedDomains contains only "https://dev.azure.com"
+ *   This validator runs in `pnpm validate` so:
+ *     1. Local pre-commit hook catches it before push.
+ *     2. CI (`validate.yml`) catches it before merge.
+ *     3. `publish-plugin.yml` re-runs it as the last gate before tagging
+ *        the immutable Universal Package.
  *
- * Run as part of `pnpm validate`:
- *   pnpm exec tsx tools/validators/plugin-manifest.ts
+ * Checked invariants:
+ *   - manifest.main === "dist/code.js"        (matches `pnpm build` output)
+ *   - manifest.ui   === "dist/ui.html"         (matches `pnpm build` output)
+ *   - manifest.id   matches /^com\.btech\..+$/ (no hijacked plugin ids)
+ *   - manifest.api  === "1.0.0"                (Figma plugin API target)
+ *   - manifest.networkAccess.allowedDomains contains only known hosts
+ *
+ * Exit codes follow the convention used by sibling validators:
+ *   0 — all checks pass
+ *   1 — one or more violations found (messages written to stderr)
  */
 
-import { readFileSync, existsSync } from 'fs';
-import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT          = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const MANIFEST_PATH = resolve(ROOT, 'btech-token-studio/manifest.json');
 
-type ManifestJson = {
-  name?: string;
-  id?: string;
-  api?: string;
-  main?: string;
-  ui?: string;
-  networkAccess?: {
-    allowedDomains?: string[];
-  };
-};
+// ── Allowed values ──────────────────────────────────────────────────────────
+const EXPECTED_MAIN = 'dist/code.js';
+const EXPECTED_UI = 'dist/ui.html';
+const EXPECTED_API = '1.0.0';
+const ID_RE = /^com\.btech\..+$/;
 
-function main(): void {
-  if (!existsSync(MANIFEST_PATH)) {
-    // Plugin directory is optional — monorepo might be checked out without it.
-    console.log('ℹ️   btech-token-studio/manifest.json not found — skipping plugin manifest check.');
-    return;
-  }
+// Hosts the plugin is allowed to talk to. Anything else is a red flag —
+// Figma plugin permissions are an exfiltration vector if the manifest is
+// quietly extended with a third-party domain.
+const ALLOWED_DOMAINS = new Set<string>([
+  'https://dev.azure.com',
+]);
 
-  let manifest: ManifestJson;
-  try {
-    manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as ManifestJson;
-  } catch (err) {
-    console.error(`❌  Could not parse ${MANIFEST_PATH}: ${(err as Error).message}`);
-    process.exit(1);
-  }
-
-  const errors: string[] = [];
-
-  // ── Build output paths ────────────────────────────────────────────────
-  if (manifest.main !== 'dist/code.js') {
-    errors.push(
-      `"main" must be "dist/code.js" (got ${JSON.stringify(manifest.main)}). ` +
-      `Vite emits dist/code.js for the main thread build.`,
-    );
-  }
-  if (manifest.ui !== 'dist/ui.html') {
-    errors.push(
-      `"ui" must be "dist/ui.html" (got ${JSON.stringify(manifest.ui)}). ` +
-      `Vite emits dist/ui.html because the rollupOptions input is keyed as "ui".`,
-    );
-  }
-
-  // ── Plugin identity ───────────────────────────────────────────────────
-  if (!manifest.id || !/^com\.btech\..+$/.test(manifest.id)) {
-    errors.push(
-      `"id" must match /^com\\.btech\\..+$/ (got ${JSON.stringify(manifest.id)}).`,
-    );
-  }
-  if (manifest.api !== '1.0.0') {
-    errors.push(
-      `"api" must be "1.0.0" (got ${JSON.stringify(manifest.api)}).`,
-    );
-  }
-
-  // ── Network access ────────────────────────────────────────────────────
-  const domains = manifest.networkAccess?.allowedDomains ?? [];
-  const invalid = domains.filter((d) => d !== 'https://dev.azure.com');
-  if (invalid.length > 0) {
-    errors.push(
-      `networkAccess.allowedDomains must only contain "https://dev.azure.com". ` +
-      `Unexpected: ${invalid.map((d) => JSON.stringify(d)).join(', ')}.`,
-    );
-  }
-
-  // ── Report ────────────────────────────────────────────────────────────
-  if (errors.length > 0) {
-    console.error('❌  Plugin manifest invalid:');
-    for (const e of errors) {
-      console.error(`     ${e}`);
-    }
-    process.exit(1);
-  }
-
-  console.log('✓ Plugin manifest valid');
+// ── Read manifest ───────────────────────────────────────────────────────────
+let manifest: Record<string, unknown>;
+try {
+  manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'));
+} catch (err) {
+  console.error(`❌  Could not read ${MANIFEST_PATH}: ${(err as Error).message}`);
+  process.exit(1);
 }
 
-main();
+// ── Run checks ──────────────────────────────────────────────────────────────
+const errors: string[] = [];
+
+if (manifest.main !== EXPECTED_MAIN) {
+  errors.push(`manifest.main must be "${EXPECTED_MAIN}" (got "${String(manifest.main)}")`);
+}
+if (manifest.ui !== EXPECTED_UI) {
+  errors.push(`manifest.ui must be "${EXPECTED_UI}" (got "${String(manifest.ui)}")`);
+}
+if (typeof manifest.id !== 'string' || !ID_RE.test(manifest.id)) {
+  errors.push(`manifest.id must match /^com\\.btech\\..+$/ (got "${String(manifest.id)}")`);
+}
+if (manifest.api !== EXPECTED_API) {
+  errors.push(`manifest.api must be "${EXPECTED_API}" (got "${String(manifest.api)}")`);
+}
+
+// networkAccess.allowedDomains: optional, but if present, every entry must
+// be on the allowlist. We don't require its presence — a plugin without
+// network access is fine — but unexpected hosts must fail the build.
+const networkAccess = manifest.networkAccess as
+  | { allowedDomains?: unknown }
+  | undefined;
+if (networkAccess && Array.isArray(networkAccess.allowedDomains)) {
+  for (const host of networkAccess.allowedDomains) {
+    if (typeof host !== 'string' || !ALLOWED_DOMAINS.has(host)) {
+      errors.push(
+        `networkAccess.allowedDomains contains unexpected host "${String(host)}". ` +
+        `Allowed: ${[...ALLOWED_DOMAINS].join(', ')}.`,
+      );
+    }
+  }
+}
+
+// ── Report ──────────────────────────────────────────────────────────────────
+if (errors.length > 0) {
+  console.error('❌  Plugin manifest invalid:');
+  for (const e of errors) console.error(`    • ${e}`);
+  process.exit(1);
+}
+
+console.log('✓  Plugin manifest valid (main/ui/id/api/network).');

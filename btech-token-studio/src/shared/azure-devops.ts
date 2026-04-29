@@ -52,6 +52,20 @@ interface CreatePROptions {
   title: string;
   description: string;
   labels: string[];
+  /**
+   * When true, the PR is configured to auto-complete: Azure DevOps will
+   * automatically merge the PR + delete the source branch as soon as all
+   * required policies pass (validate pipeline, reviewers, etc.).
+   * Defaults to true — the Figma plugin flow expects hands-off completion.
+   */
+  autoComplete?: boolean;
+  /**
+   * Merge strategy used when auto-complete fires. Defaults to 'squash'
+   * because each Figma plugin push is conceptually a single design change,
+   * and squashing keeps the target branch history clean (one commit per PR).
+   * Note: Azure DevOps API uses the literal string "squash", not "Squash".
+   */
+  mergeStrategy?: 'squash' | 'rebase' | 'rebaseMerge' | 'noFastForward';
 }
 
 interface CreatePRResult {
@@ -82,7 +96,10 @@ export class AzureDevOpsClient {
 
   private apiBase(): string {
     const { orgUrl, project, repo } = this.settings;
-    return `${orgUrl}/${encodeURIComponent(project)}/_apis/git/repositories/${encodeURIComponent(repo)}`;
+    // Strip trailing slash — common user paste mistake produces URLs like
+    // `https://dev.azure.com/buma//PROJECT/...` which Azure DevOps rejects.
+    const org = orgUrl.replace(/\/+$/, '');
+    return `${org}/${encodeURIComponent(project)}/_apis/git/repositories/${encodeURIComponent(repo)}`;
   }
 
   // ── Error helper ──────────────────────────────────────────────────────────
@@ -105,11 +122,16 @@ export class AzureDevOpsClient {
   /**
    * Quick connectivity check — returns true on 200, false otherwise.
    * Does NOT throw so the Settings UI can display a friendly status.
+   *
+   * Uses the project-scoped repository endpoint (not /_apis/connectionData,
+   * which returns HTTP 400 on dev.azure.com regardless of auth state). This
+   * single GET validates all four settings fields at once: orgUrl + project +
+   * repo + PAT must all resolve correctly for it to return 200.
    */
   async testConnection(): Promise<boolean> {
     try {
       const res = await fetch(
-        `${this.settings.orgUrl}/_apis/connectionData?api-version=7.1`,
+        `${this.apiBase()}?api-version=7.1`,
         { headers: this.headers() },
       );
       return res.ok;
@@ -265,8 +287,21 @@ export class AzureDevOpsClient {
   }
 
   /**
-   * Create a pull request, then attach the given labels one-by-one.
-   * Azure DevOps requires separate API calls per label — no batch endpoint.
+   * Create a pull request, attach labels, then optionally configure
+   * auto-complete (auto-merge + delete source branch on policy success).
+   *
+   * Auto-complete cannot be set in the initial POST — Azure DevOps requires
+   * a follow-up PATCH on the created PR. The PATCH carries:
+   *   - autoCompleteSetBy.id   = the identity that "set" auto-complete
+   *                              (we use the PR creator's id, returned in
+   *                              the create response — no separate API call)
+   *   - completionOptions      = how to merge once policies pass
+   *
+   * Failure to set auto-complete is non-fatal: the PR is already open, the
+   * designer can still complete it manually. We log and return success.
+   *
+   * Reference:
+   *   https://learn.microsoft.com/en-us/rest/api/azure/devops/git/pull-requests/update
    */
   async createPullRequest(opts: CreatePROptions): Promise<CreatePRResult> {
     const url = `${this.apiBase()}/pullrequests?api-version=7.1`;
@@ -285,9 +320,14 @@ export class AzureDevOpsClient {
     });
     await this.assertOk(res, 'POST pullrequests');
 
-    const data = (await res.json()) as { pullRequestId: number; url: string };
+    const data = (await res.json()) as {
+      pullRequestId: number;
+      url: string;
+      createdBy: { id: string };
+    };
     const prId = data.pullRequestId;
     const prUrl = data.url;
+    const creatorId = data.createdBy?.id;
 
     // Attach each label — one request per label (Azure DevOps limitation)
     for (const label of opts.labels) {
@@ -301,6 +341,40 @@ export class AzureDevOpsClient {
       if (!labelRes.ok) {
         console.warn(`[BTech Token Studio] Failed to attach label "${label}" to PR #${prId}`);
       }
+    }
+
+    // Configure auto-complete: when validate pipeline + required reviewers
+    // pass, Azure auto-merges the PR using the chosen strategy and deletes
+    // the source branch. Defaults: enabled, squash strategy.
+    const autoComplete = opts.autoComplete ?? true;
+    if (autoComplete && creatorId) {
+      const patchUrl = `${this.apiBase()}/pullrequests/${prId}?api-version=7.1`;
+      const patchBody = {
+        autoCompleteSetBy: { id: creatorId },
+        completionOptions: {
+          deleteSourceBranch: true,
+          mergeStrategy: opts.mergeStrategy ?? 'squash',
+          transitionWorkItems: false,
+          bypassPolicy: false,
+        },
+      };
+      const patchRes = await fetch(patchUrl, {
+        method: 'PATCH',
+        headers: this.headers(),
+        body: JSON.stringify(patchBody),
+      });
+      if (!patchRes.ok) {
+        console.warn(
+          `[BTech Token Studio] PR #${prId} created but auto-complete could not be set ` +
+            `(HTTP ${patchRes.status}). The PR is open — complete it manually if needed.`,
+        );
+      }
+    } else if (autoComplete && !creatorId) {
+      // Azure didn't return createdBy.id — extremely rare. Log and skip.
+      console.warn(
+        `[BTech Token Studio] PR #${prId} created but auto-complete was skipped: ` +
+          `creator id missing from response.`,
+      );
     }
 
     return { id: prId, url: prUrl };

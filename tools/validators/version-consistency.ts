@@ -35,6 +35,7 @@ const ROOT_PKG = resolve(ROOT, 'package.json');
 const WEB_BASE_PKG          = resolve(ROOT, 'packages/tokens/platforms/web/token/package.json');
 const WEB_PLATFORM_DIR      = resolve(ROOT, 'packages/tokens/platforms/web');
 const FLUTTER_PUBSPEC       = resolve(ROOT, 'packages/tokens/platforms/flutter/token/pubspec.yaml');
+const FLUTTER_PLATFORM_DIR  = resolve(ROOT, 'packages/tokens/platforms/flutter');
 const PYTHON_BASE_PYPROJECT = resolve(ROOT, 'packages/tokens/platforms/python/token/pyproject.toml');
 const PYTHON_TENANTS_DIR    = resolve(ROOT, 'packages/tokens/platforms/python/tenants');
 
@@ -101,6 +102,21 @@ function collectTargets(): Target[] {
       const pkg = resolve(WEB_PLATFORM_DIR, entry, 'package.json');
       if (existsSync(pkg)) {
         targets.push({ label: `@btech/tokens-${entry}`, file: pkg, read: readPkgJson });
+      }
+    }
+  }
+
+  // Flutter tenants — every directory under platforms/flutter/ except
+  // `token` that carries a pubspec.yaml. Mirrors the web-tenants block so
+  // a tenant package drifting on the flutter side (e.g. a missed bump
+  // leaving btech_tokens_<id> behind on rc.8 while root moved to rc.9)
+  // is caught before publish, not after consumers report the mismatch.
+  if (existsSync(FLUTTER_PLATFORM_DIR)) {
+    for (const entry of readdirSync(FLUTTER_PLATFORM_DIR)) {
+      if (entry === 'token') continue;
+      const pubspec = resolve(FLUTTER_PLATFORM_DIR, entry, 'pubspec.yaml');
+      if (existsSync(pubspec)) {
+        targets.push({ label: `btech_tokens_${entry} (flutter)`, file: pubspec, read: readPubspec });
       }
     }
   }

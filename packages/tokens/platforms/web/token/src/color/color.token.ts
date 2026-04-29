@@ -7,7 +7,7 @@ import { BTechBorderColor } from './border.color';
 import { BTechBgColor } from './bg.color';
 import { BTechBrandColor } from './brand.color';
 import { BTechExtColor } from './ext.color';
-import { BTechShadesColor } from './shades.color';
+import { btechColorGreen, btechColorLightblue, btechColorOrange, btechColorBlue, btechColorPurple, btechColorTeal, btechColorIndigo, btechColorRose, btechColorYellow, btechColorNeutral, btechColorRed, btechColorAmber, btechColorSky, btechColorBrandPrimary, btechColorBrandSecondary } from './swatches.color';
 
 export const BTechColor = {
   text: new BTechTextColor(),
@@ -16,6 +16,24 @@ export const BTechColor = {
   bg: new BTechBgColor(),
   brand: new BTechBrandColor(),
   ext: new BTechExtColor(),
-  shades: new BTechShadesColor(),
+
+  // Primitive color groups — direct numeric-key access.
+  green: btechColorGreen,
+  lightblue: btechColorLightblue,
+  orange: btechColorOrange,
+  blue: btechColorBlue,
+  purple: btechColorPurple,
+  teal: btechColorTeal,
+  indigo: btechColorIndigo,
+  rose: btechColorRose,
+  yellow: btechColorYellow,
+  neutral: btechColorNeutral,
+  red: btechColorRed,
+  amber: btechColorAmber,
+  sky: btechColorSky,
+
+  // Brand primitive swatches (tenant-overridable).
+  brandPrimary: btechColorBrandPrimary,
+  brandSecondary: btechColorBrandSecondary,
 } as const;
 

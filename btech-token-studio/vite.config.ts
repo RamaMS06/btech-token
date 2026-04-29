@@ -66,8 +66,9 @@ export default defineConfig(({ mode }) => {
   // the entire UI lives in dist/ui.html (required by Figma's ui manifest key).
   //
   // vite-plugin-singlefile rewrites the HTML to inline all JS and CSS assets.
-  // The HTML output filename is derived from the input key in rollupOptions —
-  // keying the input as "ui" causes Rollup to emit "ui.html" (not "index.html").
+  // The HTML output filename is derived from the *basename* of the input
+  // file (Rollup behaviour, not the input key) — so the source file is named
+  // `ui.html` to make Vite emit `dist/ui.html` to match manifest.json.
   return {
     root: resolve(__dirname, 'src/ui'),
     plugins: [
@@ -78,8 +79,8 @@ export default defineConfig(({ mode }) => {
       outDir: resolve(__dirname, 'dist'),
       emptyOutDir: false,
       rollupOptions: {
-        // Key "ui" → output becomes dist/ui.html, which matches manifest.json
-        input: { ui: resolve(__dirname, 'src/ui/index.html') },
+        // Source basename `ui.html` → output `dist/ui.html` (matches manifest.json)
+        input: { ui: resolve(__dirname, 'src/ui/ui.html') },
         output: {
           entryFileNames: '[name].js',
           assetFileNames: '[name].[ext]',

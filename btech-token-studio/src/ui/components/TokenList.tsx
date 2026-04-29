@@ -47,6 +47,27 @@ export function TokenList() {
     return resolveSetForTenant(baseSet, override, activeTenant);
   }, [baseSet, sets, activeTenant]);
 
+  /**
+   * Tenant-resolved view of every loaded set. Passed to TokenTreeView so
+   * cross-set alias resolution (e.g. a brand alias `{color.green.500}`
+   * targeting a primitive in a sibling set) works after tenant overrides
+   * have been spliced in. Without this the right pane would render correct
+   * values for the active set's own leaves but show ↗ unresolved markers
+   * for any leaf that aliases out into another file.
+   *
+   * No-op when no tenant is active — we just hand back the raw `sets` map.
+   */
+  const allSets = useMemo(() => {
+    if (!activeTenant) return sets;
+    const override = findTenantOverrideSet(sets, activeTenant);
+    if (!override) return sets;
+    const out: Record<string, typeof sets[string]> = {};
+    for (const [id, s] of Object.entries(sets)) {
+      out[id] = resolveSetForTenant(s, override, activeTenant);
+    }
+    return out;
+  }, [sets, activeTenant]);
+
   const [mode, setMode] = useState<ViewMode>('preview');
   const [editingPath, setEditingPath] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -132,6 +153,7 @@ export function TokenList() {
       {mode === 'preview' ? (
         <TokenTreeView
           activeSet={activeSet}
+          allSets={allSets}
           onEdit={(p) => { setEditingPath(p); setIsAdding(false); }}
           onAddOfType={openAdd}
         />

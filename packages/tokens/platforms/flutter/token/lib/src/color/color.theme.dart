@@ -3,7 +3,7 @@
 // ignore_for_file: lines_longer_than_80_chars
 
 import 'package:flutter/material.dart';
-import 'shades.color.dart';
+import 'swatches.color.dart';
 
 class BTechColorText {
   const BTechColorText({
@@ -196,7 +196,7 @@ class BTechColorTheme extends ThemeExtension<BTechColorTheme> {
 // ── Default light theme (resolved from semantic/color.json) ─────
 const BTechColorTheme _defaultLight = BTechColorTheme(
   text: BTechColorText(
-    primary: Color(0xFF181C20),
+    primary: Color(0xFF292F37),
     secondary: Color(0xFF64748B),
     tertiary: Color(0xFF98A2B0),
     inverse: Color(0xFFFFFFFF),
@@ -204,11 +204,11 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
     link: Color(0xFF0D766C),
     success: Color(0xFF0A632F),
     error: Color(0xFF991515),
-    warning: Color(0xFF885A0D),
+    warning: Color(0xFF8F760B),
     info: Color(0xFF0F5E81),
   ),
   icon: BTechColorIcon(
-    primary: Color(0xFF181C20),
+    primary: Color(0xFF292F37),
     secondary: Color(0xFF64748B),
     tertiary: Color(0xFF98A2B0),
     inverse: Color(0xFFFFFFFF),
@@ -216,7 +216,7 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
     link: Color(0xFF0D766C),
     success: Color(0xFF0A632F),
     error: Color(0xFF991515),
-    warning: Color(0xFF885A0D),
+    warning: Color(0xFF8F760B),
     info: Color(0xFF0F5E81),
   ),
   border: BTechColorBorder(
@@ -230,19 +230,19 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
     primary: Color(0xFFFFFFFF),
     secondary: Color(0xFFECEDEE),
     tertiary: Color(0xFF64748B),
-    inverse: Color(0xFF181C20),
+    inverse: Color(0xFF292F37),
     subtle: Color(0xFFF4F5F6),
     subtler: Color(0xFFDBDDE1),
     subtlest: Color(0xFFC1C6CD),
     overlay: Color(0xCC181C20),
   ),
   brand: BTechColorBrand(
-    primarySubtle: Color(0xFFF0F8F4),
-    primary: Color(0xFF08A94C),
-    primaryBold: Color(0xFF0A853E),
-    secondarySubtle: Color(0xFFF0F8F7),
-    secondary: Color(0xFF0D9488),
-    secondaryBold: Color(0xFF0D766C),
+    primarySubtle: Color(0xFFE7EFF9),
+    primary: Color(0xFF145BC3),
+    primaryBold: Color(0xFF10499C),
+    secondarySubtle: Color(0xFFF9F6F1),
+    secondary: Color(0xFFF59E0B),
+    secondaryBold: Color(0xFFBD7C0C),
   ),
   ext: BTechColorExt(
     successSubtler: Color(0xFFE2F3E9),
@@ -253,10 +253,10 @@ const BTechColorTheme _defaultLight = BTechColorTheme(
     infoSubtle: Color(0xFFD0E4ED),
     info: Color(0xFF0EA5E9),
     infoBold: Color(0xFF0F81B4),
-    warningSubtler: Color(0xFFF5F0E7),
-    warningSubtle: Color(0xFFEFE3D0),
-    warning: Color(0xFFF59E0B),
-    warningBold: Color(0xFFBD7C0C),
+    warningSubtler: Color(0xFFFCF3D0),
+    warningSubtle: Color(0xFFF8E8A1),
+    warning: Color(0xFFEEC513),
+    warningBold: Color(0xFFBE9E0F),
     errorSubtler: Color(0xFFF6EAEA),
     errorSubtle: Color(0xFFF0D9D9),
     error: Color(0xFFEF4444),
@@ -277,8 +277,22 @@ abstract class BTechColor {
   static BTechColorBg get bg => _light.bg;
   static BTechColorBrand get brand => _light.brand;
   static BTechColorExt get ext => _light.ext;
-  // Raw primitive color swatches — BTechColor.shades.green[500]
-  static const BTechShadesColor shades = BTechShadesColor();
+
+  // Primitive color swatches — direct access (BTechColor.green[500], BTechColor.blue.shade700).
+  // Each group is a MaterialColor so Flutter ButtonStyle / gradient APIs work natively.
+  static MaterialColor get green => btechColorGreen;
+  static MaterialColor get lightblue => btechColorLightblue;
+  static MaterialColor get orange => btechColorOrange;
+  static MaterialColor get blue => btechColorBlue;
+  static MaterialColor get purple => btechColorPurple;
+  static MaterialColor get teal => btechColorTeal;
+  static MaterialColor get indigo => btechColorIndigo;
+  static MaterialColor get rose => btechColorRose;
+  static MaterialColor get yellow => btechColorYellow;
+  static MaterialColor get neutral => btechColorNeutral;
+  static MaterialColor get red => btechColorRed;
+  static MaterialColor get amber => btechColorAmber;
+  static MaterialColor get sky => btechColorSky;
 
   /// Called by [buildBtechTheme] — do not call directly.
   static void activateBoth(BTechColorTheme light, BTechColorTheme dark) {

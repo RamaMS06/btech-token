@@ -21,10 +21,8 @@
  *   --scope=base    bump base packages only (web/flutter/python token)
  *   --scope=tenants bump every tenant (skip base)
  *   --scope=tenant:<id> bump a single tenant
- *   --scope=plugin  bump btech-token-studio ONLY (independent track, excluded from all/auto)
  *   --auto          infer scope from git diff (sources/{core|semantic|components}
  *                   → all; sources/tenants/<id> → tenant:<id>; multiple → tenants)
- *                   NOTE: plugin is never detected by --auto — it has its own tag namespace
  *
  * Each tenant tracks its own patch counter, which resets to `.0` whenever
  * the reset rule fires (i.e. major/minor/prerelease moves). Override JSON
@@ -37,8 +35,6 @@
  *   pnpm bump set 1.0.0                     # rc graduate → resetAll fires
  *   pnpm bump set 1.5.4 --scope=base        # patch-level set, base only
  *   pnpm bump patch --scope=tenant:bspace   # tenant patch, root untouched
- *   pnpm bump patch --scope=plugin          # plugin patch, token versions untouched
- *   pnpm bump set 0.3.0 --scope=plugin      # set exact plugin version
  *   pnpm bump patch --auto                  # detect scope from git diff
  *   pnpm bump patch --dry-run               # print plan, no writes
  *
@@ -63,6 +59,7 @@ const FLUTTER_PUBSPEC = resolve(ROOT, 'packages/tokens/platforms/flutter/token/p
 const PYTHON_BASE_PYPROJECT = resolve(ROOT, 'packages/tokens/platforms/python/token/pyproject.toml');
 const WEB_PLATFORM_DIR = resolve(ROOT, 'packages/tokens/platforms/web');
 const PYTHON_TENANTS_DIR = resolve(ROOT, 'packages/tokens/platforms/python/tenants');
+const FLUTTER_PLATFORM_DIR = resolve(ROOT, 'packages/tokens/platforms/flutter');
 const PLUGIN_PKG = resolve(ROOT, 'btech-token-studio/package.json');
 
 // ── Types ────────────────────────────────────────────────────────────────
@@ -84,7 +81,7 @@ const STRICT_SEMVER = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
 interface PlanTarget {
   label: string;            // human-friendly name, e.g. "@btech/tokens"
-  kind: 'web-base' | 'flutter-base' | 'python-base' | 'web-tenant' | 'python-tenant';
+  kind: 'web-base' | 'flutter-base' | 'python-base' | 'web-tenant' | 'flutter-tenant' | 'python-tenant';
   file: string;             // path to package.json / pubspec.yaml / pyproject.toml
   tenantId?: string;        // only for web-tenant / python-tenant
 }
@@ -147,10 +144,20 @@ function parseScope(raw: string): Scope {
 function detectScope(): Scope | null {
   let changed: string[] = [];
   try {
-    const diff = execSync(
-      'git diff --name-only origin/main...HEAD 2>/dev/null; git diff --name-only HEAD 2>/dev/null; git diff --name-only --cached 2>/dev/null',
-      { encoding: 'utf8', cwd: ROOT },
-    );
+    // In CI (Azure Pipelines sets TF_BUILD=True) we inspect only the last
+    // merge commit — `HEAD~1 HEAD`. Using `origin/main...HEAD` in CI would
+    // cover the entire dev branch history, so any previous core-token commit
+    // would set coreChanged=true and force scope=all even for tenant-only PRs.
+    //
+    // Locally `origin/main...HEAD` is still used so developers see the full
+    // diff of their working branch (uncommitted + staged + unpushed commits).
+    const inCI = process.env['TF_BUILD'] === 'True';
+    const diff = inCI
+      ? execSync('git diff --name-only HEAD~1 HEAD 2>/dev/null', { encoding: 'utf8', cwd: ROOT })
+      : execSync(
+          'git diff --name-only origin/main...HEAD 2>/dev/null; git diff --name-only HEAD 2>/dev/null; git diff --name-only --cached 2>/dev/null',
+          { encoding: 'utf8', cwd: ROOT },
+        );
     changed = Array.from(new Set(diff.split('\n').filter(Boolean)));
   } catch {
     console.warn('⚠️   Could not read git diff — falling back to scope=all.');
@@ -185,8 +192,7 @@ const scope: Scope = flagAuto
     })()
   : parseScope(rawScope);
 
-// Plugin scope is fully independent — handle it and exit before any
-// root-version logic runs. Token versions are never touched.
+// Plugin scope exits before any root-version logic runs.
 if (scope.kind === 'plugin') {
   handlePluginScope();
 }
@@ -197,21 +203,17 @@ function scopeLabel(s: Scope): string {
 }
 
 // ── Plugin scope — fully independent track ───────────────────────────────
-// When --scope=plugin, we bump ONLY btech-token-studio/package.json and exit.
-// Plugin version is independent of the token platform version: it never
-// participates in --scope=all, never triggered by --auto, and pushes its
-// own tag namespace (plugin-v*) recognised by publish-plugin.yml.
+// When --scope=plugin, bump ONLY btech-token-studio/package.json and exit.
+// Plugin version is independent of the token platform version: never part
+// of --scope=all, never triggered by --auto, pushes its own tag namespace
+// (plugin-v*) recognised by plugin-publish.yml.
 function handlePluginScope(): never {
   if (!existsSync(PLUGIN_PKG)) {
     console.error(`❌  Plugin package not found: ${PLUGIN_PKG}`);
     process.exit(1);
   }
-
   const pluginPkg = JSON.parse(readFileSync(PLUGIN_PKG, 'utf8'));
   const prevVersion: string = pluginPkg.version;
-
-  // For `set` mode the setTarget holds the literal version; otherwise bump
-  // using the same semver helper as the token packages.
   const nextVersion = bump(prevVersion, bumpType);
 
   console.log(`\n📋  Plan — bump=${bumpType} · scope=plugin` + (flagDryRun ? ' · DRY-RUN' : ''));
@@ -227,26 +229,19 @@ function handlePluginScope(): never {
 
   console.log('\n---BUMP_RESULT_JSON---');
   console.log(JSON.stringify({
-    bumpType,
-    scope: 'plugin',
-    effectiveScope: 'plugin',
-    resetAll: false,
-    prevRoot: prevVersion,   // plugin treats its own version as "root"
-    newRoot: nextVersion,
-    bumpedTenant: null,
-    setTarget,
+    bumpType, scope: 'plugin', effectiveScope: 'plugin', resetAll: false,
+    prevRoot: prevVersion, newRoot: nextVersion,
+    bumpedTenant: null, setTarget,
     changed: nextVersion !== prevVersion
       ? [{ pkg: '@btech/token-studio', from: prevVersion, to: nextVersion }]
       : [],
   }));
   console.log('---END_BUMP_RESULT_JSON---');
 
-  // CI vars consumed by auto-version.yml to compose the plugin-v* tag
   console.log(`##vso[task.setvariable variable=PLUGIN_NEW_VERSION]${nextVersion}`);
   console.log(`##vso[task.setvariable variable=NEW_ROOT_VERSION]${nextVersion}`);
   console.log(`##vso[task.setvariable variable=PREV_ROOT_VERSION]${prevVersion}`);
   console.log(`##vso[task.setvariable variable=RESET_ALL]false`);
-
   process.exit(0);
 }
 
@@ -329,6 +324,22 @@ function collectTargets(s: Scope): PlanTarget[] {
       process.exit(1);
     }
     targets.push({ label: `@btech/tokens-${id}`, kind: 'web-tenant', file: webPkg, tenantId: id });
+    // Flutter tenant pubspec — same lockstep semantics as the web-tenant
+    // package.json. Was missing from the target list previously, which
+    // caused tenant Flutter packages to drift from root version after a
+    // few bump cycles (e.g. root rc.9 while flutter/<id>/pubspec stayed
+    // pinned to whatever the generator scaffolded). Including it here
+    // means every scope-respecting bump that touches a tenant also
+    // updates its Flutter pubspec.yaml.
+    const flutterTenantPubspec = resolve(FLUTTER_PLATFORM_DIR, id, 'pubspec.yaml');
+    if (existsSync(flutterTenantPubspec)) {
+      targets.push({
+        label: `btech_tokens_${id}`,
+        kind: 'flutter-tenant',
+        file: flutterTenantPubspec,
+        tenantId: id,
+      });
+    }
     const pyTenantPyproject = resolve(PYTHON_TENANTS_DIR, id, 'pyproject.toml');
     if (existsSync(pyTenantPyproject)) {
       targets.push({
@@ -368,7 +379,7 @@ function collectTargets(s: Scope): PlanTarget[] {
 // ── I/O helpers ──────────────────────────────────────────────────────────
 
 function readVersion(t: PlanTarget): string {
-  if (t.kind === 'flutter-base') {
+  if (t.kind === 'flutter-base' || t.kind === 'flutter-tenant') {
     const pubspec = readFileSync(t.file, 'utf8');
     const match = pubspec.match(/^version:\s*(.+)$/m);
     if (!match) throw new Error(`No version in ${t.file}`);
@@ -384,7 +395,7 @@ function readVersion(t: PlanTarget): string {
 }
 
 function writeVersion(t: PlanTarget, to: string): void {
-  if (t.kind === 'flutter-base') {
+  if (t.kind === 'flutter-base' || t.kind === 'flutter-tenant') {
     const pubspec = readFileSync(t.file, 'utf8');
     writeFileSync(t.file, pubspec.replace(/^version:\s*.+$/m, `version: ${to}`), 'utf8');
     return;

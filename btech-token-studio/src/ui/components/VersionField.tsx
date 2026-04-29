@@ -1,102 +1,79 @@
 /**
- * VersionField — editable next-version input in the header
- * ---------------------------------------------------------
- * Replaces the "BTech Token Studio" title with a designer-controllable
- * version number. The value committed in this field is sent on push as a
- * `version:<x>` PR label, which `auto-version.yml` honours by writing that
- * exact version into the affected `package.json`s instead of semver-bumping.
+ * VersionLabel — read-only platform version in the header
+ * --------------------------------------------------------
+ * Replaces the editable `<VersionField>` input. Versions are now driven
+ * entirely by the active branch (chosen in `<BranchSwitcher>`):
+ *   - branch `main` → CI auto-bumps PATCH on merge (`v1.5.4`)
+ *   - branch `dev`  → CI auto-bumps prerelease (`v1.5.4-rc.N`)
  *
- * State sources:
- *   - `baseVersion` (read-only) — populated on pull from
- *     packages/tokens/platforms/web/token/package.json
- *   - `nextVersion` (editable) — defaults to `baseVersion`; cleared back to
- *     `baseVersion` by `discardAll()` and the Clear changes flow.
+ * Designers no longer type a target version. The header just displays
+ * what was pulled, plus a clickable "↓ new" badge when the silent
+ * background poll spots a newer version on the active branch.
  *
- * Validation:
- *   We accept any non-empty string that loosely resembles semver
- *   (digits, dots, dashes, alphanum). A wrong value is recoverable —
- *   `bump-version.ts set <v>` enforces strict semver server-side, and the
- *   field reverts to baseVersion on blur if left empty.
+ * Why the rename?
+ *   The previous component was a borderless `<input>`, which read like
+ *   a label even though it was editable. Designers couldn't tell whether
+ *   they were supposed to interact with it. Killing the input removes
+ *   the ambiguity entirely.
  *
- * Why an inline borderless input?
- *   Designers shouldn't think of this as "filling out a form" — it's the
- *   product version, sitting where the title used to. The styling is meant
- *   to feel like a label that turns into an input on hover/focus.
+ * The file name is kept (`VersionField.tsx`) so the rest of the bundle's
+ * import paths are stable; only the exported component is renamed.
  */
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useTokens } from '../hooks/useTokens.js';
 
-// Loose semver-ish guard: digits + dots + optional pre-release/build metadata
-const SEMVER_LIKE = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
+interface VersionLabelProps {
+  /**
+   * Click handler for the "new version available" badge. Wired by App
+   * to open the pull modal — the badge is the user's invitation to pull,
+   * so clicking it should land them in the same place as ⚙ Pull.
+   */
+  onPullRequest?: () => void;
+}
 
-export function VersionField() {
-  const { baseVersion, nextVersion, setNextVersion } = useTokens();
+export function VersionLabel({ onPullRequest }: VersionLabelProps = {}) {
+  const { baseVersion, remoteVersion } = useTokens();
 
-  // Local draft state so the user can type freely without each keystroke
-  // dispatching to the store (and triggering a postMessage debounce).
-  const [draft, setDraft] = useState<string>(nextVersion ?? baseVersion ?? '');
-
-  // Re-sync the draft when baseVersion/nextVersion change externally
-  // (e.g. after a pull or a Clear changes confirm).
-  useEffect(() => {
-    setDraft(nextVersion ?? baseVersion ?? '');
-  }, [nextVersion, baseVersion]);
-
-  function commit() {
-    const trimmed = draft.trim();
-    // Empty or invalid → revert to baseVersion (never persists garbage)
-    if (!trimmed || !SEMVER_LIKE.test(trimmed)) {
-      const fallback = baseVersion ?? '';
-      setDraft(fallback);
-      setNextVersion(baseVersion);
-      return;
-    }
-    setNextVersion(trimmed);
-  }
-
-  const isCustom = baseVersion && nextVersion && nextVersion !== baseVersion;
-  const placeholder = baseVersion ?? '1.0.0';
-
-  // No base version yet (designer hasn't pulled) → show static label so the
-  // header still reads as a product surface rather than an empty input.
+  // No base version yet (designer hasn't pulled) → show static label so
+  // the header still reads as a product surface rather than an empty
+  // space. Same fallback as the old VersionField.
   if (!baseVersion) {
     return (
-      <div className="version-field version-field--placeholder" title="Pull from Azure DevOps to load the current published version.">
+      <div
+        className="version-field version-field--placeholder"
+        title="Pull from Azure DevOps to load the current published version."
+      >
         <span className="version-field__label-static">BTech Token Studio</span>
       </div>
     );
   }
 
+  // "New version available" — fires when the silent poll finds a value
+  // on the active branch's root package.json different from what we
+  // pulled. The badge clears itself when designer pulls (baseVersion
+  // catches up) or when the hook fails (remoteVersion goes back to null).
+  const hasUpdate = Boolean(remoteVersion && remoteVersion !== baseVersion);
+
   return (
-    <div className="version-field" title="Sets the version that will be tagged when this push is merged. Defaults to the current published version.">
+    <div
+      className="version-field"
+      title="Platform version pulled from the active branch. CI bumps it automatically when this work merges."
+    >
       <span className="version-field__prefix" aria-hidden>v</span>
-      <input
-        className="version-field__input"
-        type="text"
-        value={draft}
-        placeholder={placeholder}
-        spellCheck={false}
-        aria-label="Next version"
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.currentTarget.blur();
-          } else if (e.key === 'Escape') {
-            setDraft(nextVersion ?? baseVersion ?? '');
-            e.currentTarget.blur();
-          }
-        }}
-      />
-      {/* Diff cue — only shown when the designer proposed a version that
-          differs from the currently published root. We deliberately render
-          nothing in the steady state: the input itself IS the label, and
-          showing the package name here is misleading after the move to
-          root-canonical versioning (it's @btech/design-system now, but
-          calling that out adds noise the designer doesn't need). */}
-      {isCustom && (
-        <span className="version-field__current">was {baseVersion}</span>
+      <span className="version-field__static">{baseVersion}</span>
+
+      {hasUpdate && (
+        <button
+          type="button"
+          className="version-field__update-badge"
+          onClick={onPullRequest}
+          title={`Active branch is at v${remoteVersion}. Click to pull.`}
+        >
+          <span aria-hidden>↓</span>
+          <span>v{remoteVersion}</span>
+          <span className="version-field__update-badge__label">new</span>
+        </button>
       )}
     </div>
   );

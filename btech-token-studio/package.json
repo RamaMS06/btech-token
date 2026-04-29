@@ -1,6 +1,6 @@
 {
   "name": "@btech/token-studio",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "BTech Token Studio — Figma plugin for editing and syncing DTCG tokens with Azure DevOps",
   "type": "module",

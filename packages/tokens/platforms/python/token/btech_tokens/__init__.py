@@ -5,6 +5,8 @@
 Public surface:
   * ``BTechColor``, ``BTechSpacing``, ``BTechRadius``, ``BTechStroke``,
     ``BTechFont``, ``BTechShadow`` — token values.
+  * ``BTechColorBrandPrimary`` / ``BTechColorBrandSecondary`` —
+    primitive brand color ramps (50..900), tenant-overridable.
   * ``set_mode('light' | 'dark')`` — toggle ``BTechColor``’s mode-aware accessors.
     Module-level state; safe for single-process UI apps and notebooks.
   * ``LIGHT``, ``DARK`` — namespace constants for deterministic side-by-side
@@ -33,6 +35,10 @@ from .typography import (
     BTechLineHeight,
 )
 from .shadow import BTechShadow
+from .swatches import (
+    BTechColorBrandPrimary,
+    BTechColorBrandSecondary,
+)
 from .helpers import to_css
 
 
@@ -47,6 +53,8 @@ __all__ = [
     'BTechFontWeight',
     'BTechLineHeight',
     'BTechShadow',
+    'BTechColorBrandPrimary',
+    'BTechColorBrandSecondary',
     'LIGHT',
     'DARK',
     'set_mode',

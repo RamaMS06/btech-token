@@ -2,21 +2,21 @@
 // Run `pnpm generate` to regenerate from tokens/.
 
 export class BTechExtColor {
-  readonly successSubtler = 'var(--ext-success-subtler)' as const;
-  readonly successSubtle = 'var(--ext-success-subtle)' as const;
-  readonly success = 'var(--ext-success)' as const;
-  readonly successBold = 'var(--ext-success-bold)' as const;
-  readonly infoSubtler = 'var(--ext-info-subtler)' as const;
-  readonly infoSubtle = 'var(--ext-info-subtle)' as const;
-  readonly info = 'var(--ext-info)' as const;
-  readonly infoBold = 'var(--ext-info-bold)' as const;
-  readonly warningSubtler = 'var(--ext-warning-subtler)' as const;
-  readonly warningSubtle = 'var(--ext-warning-subtle)' as const;
-  readonly warning = 'var(--ext-warning)' as const;
-  readonly warningBold = 'var(--ext-warning-bold)' as const;
-  readonly errorSubtler = 'var(--ext-error-subtler)' as const;
-  readonly errorSubtle = 'var(--ext-error-subtle)' as const;
-  readonly error = 'var(--ext-error)' as const;
-  readonly errorBold = 'var(--ext-error-bold)' as const;
+  readonly successSubtler = 'var(--color-ext-success-subtler)' as const;
+  readonly successSubtle = 'var(--color-ext-success-subtle)' as const;
+  readonly success = 'var(--color-ext-success)' as const;
+  readonly successBold = 'var(--color-ext-success-bold)' as const;
+  readonly infoSubtler = 'var(--color-ext-info-subtler)' as const;
+  readonly infoSubtle = 'var(--color-ext-info-subtle)' as const;
+  readonly info = 'var(--color-ext-info)' as const;
+  readonly infoBold = 'var(--color-ext-info-bold)' as const;
+  readonly warningSubtler = 'var(--color-ext-warning-subtler)' as const;
+  readonly warningSubtle = 'var(--color-ext-warning-subtle)' as const;
+  readonly warning = 'var(--color-ext-warning)' as const;
+  readonly warningBold = 'var(--color-ext-warning-bold)' as const;
+  readonly errorSubtler = 'var(--color-ext-error-subtler)' as const;
+  readonly errorSubtle = 'var(--color-ext-error-subtle)' as const;
+  readonly error = 'var(--color-ext-error)' as const;
+  readonly errorBold = 'var(--color-ext-error-bold)' as const;
 }
 

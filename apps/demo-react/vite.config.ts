@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['@btech/tokens'],
+    exclude: ['@btech/tokens', '@btech/tokens-bspace'],
   },
   server: {
     watch: {

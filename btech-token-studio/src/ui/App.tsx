@@ -29,10 +29,41 @@ import { SyncPanel } from './components/SyncPanel.js';
 import { SettingsPanel } from './components/Settings.js';
 import { BottomActionBar } from './components/BottomActionBar.js';
 import { ConfirmDialog } from './components/ConfirmDialog.js';
-import { VersionField } from './components/VersionField.js';
+import { VersionLabel } from './components/VersionField.js';
+import { BranchSwitcher } from './components/BranchSwitcher.js';
+import { ExportFigmaModal } from './components/ExportFigmaModal.js';
+import { ImportStylesModal } from './components/ImportStylesModal.js';
+import { ImportDiffModal } from './components/ImportDiffModal.js';
 import { useTokenStore } from './store/tokens.js';
+import type { TokenStore } from './store/tokens.js';
 import { useSettingsStore } from './store/settings.js';
-import type { MainToUIMessage, TokenStorageState, Settings } from '../shared/types.js';
+import { useRemoteVersionCheck } from './hooks/useRemoteVersionCheck.js';
+import type { MainToUIMessage, TokenStorageState, Settings, TokenSet } from '../shared/types.js';
+
+/**
+ * Re-apply the activeSetId / activeTenant carried in a hydrated
+ * `TokenStorageState`. We validate `activeSetId` against the freshly-loaded
+ * sets map so a stale id (set that was removed from repo, or renamed)
+ * doesn't leave the panel pointing at a non-existent target. `activeTenant`
+ * is left as-is — the tenant resolver tolerates unknown ids by simply not
+ * rendering any override badges.
+ */
+function restoreUiSelection(payload: TokenStorageState, store: TokenStore): void {
+  if (payload.activeSetId !== undefined) {
+    const id = payload.activeSetId;
+    if (id === null || (id && store.sets[id])) {
+      store.setActiveSet(id);
+    } else {
+      // Persisted id no longer resolves — fall back to the empty state so
+      // the designer picks a valid set rather than seeing a phantom
+      // selection that produces no content.
+      store.setActiveSet(null);
+    }
+  }
+  if (payload.activeTenant !== undefined) {
+    store.setActiveTenant(payload.activeTenant);
+  }
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -46,6 +77,21 @@ export function App() {
   // top level so the modal renders above everything else and the action
   // can't be lost mid-render of the bottom bar.
   const [showConfirmDiscard, setShowConfirmDiscard] = useState(false);
+  // Figma Variables import/export — modal-id pointer + post-import diff
+  // payload. Diff payload is set once ImportStylesModal returns the freshly
+  // built incoming sets; ImportDiffModal owns the resolution UI.
+  const [showImportExport, setShowImportExport] =
+    useState<'export' | 'import' | null>(null);
+  const [pendingDiff, setPendingDiff] = useState<{
+    incoming: Record<string, TokenSet>;
+    warnings: string[];
+  } | null>(null);
+
+  // Silently poll the remote `main` for a newer root version. The hook
+  // fires on mount (once settings hydrate) and exposes `check()` so we can
+  // re-poll after a push lands. The result populates `tokenStore.remoteVersion`
+  // which `VersionField` reads to decide whether to render the "new" badge.
+  const { check: checkRemoteVersion } = useRemoteVersionCheck();
 
   // Dirty-set count for the confirm-discard message body. Computed here so
   // the dialog can show "Discard 3 unsaved changes?" with the live total.
@@ -73,15 +119,27 @@ export function App() {
             if (msg.tokens.lastPullSha && msg.tokens.lastPullAt) {
               tokenStore.setLastPull(msg.tokens.lastPullSha, msg.tokens.lastPullAt);
             }
-            // Restore version state so the VersionField rehydrates without
-            // requiring an immediate pull. nextVersion may differ from
-            // baseVersion if the designer was mid-edit when they reloaded.
+            // Restore the read-only base version so the header VersionLabel
+            // renders without waiting for a pull. There's no longer a
+            // designer-editable nextVersion to rehydrate — bumps are derived
+            // from the active branch by CI.
             if (msg.tokens.baseVersion) {
               tokenStore.setBaseVersion(msg.tokens.baseVersion);
             }
-            if (msg.tokens.nextVersion && msg.tokens.nextVersion !== msg.tokens.baseVersion) {
-              tokenStore.setNextVersion(msg.tokens.nextVersion);
+            // Restore per-branch pull cache so a designer who pulled both
+            // branches in the previous session can flip between them
+            // without re-pulling.
+            if (msg.tokens.branchSnapshots) {
+              tokenStore.hydrateBranchSnapshots(msg.tokens.branchSnapshots);
             }
+            // Restore the last-viewed set + tenant filter. Validate the set
+            // id still resolves to one of the freshly-hydrated sets — pulls
+            // can rename / drop sets between sessions and we don't want a
+            // dangling activeSetId stuck pointing at something that no
+            // longer exists. `activeTenant` doesn't need a similar check
+            // because it's just a free-form id; the override resolver
+            // tolerates an unknown tenant by rendering no badges.
+            restoreUiSelection(msg.tokens, tokenStore);
           }
           if (msg.settings) {
             settingsStore.markLoaded(msg.settings as Settings);
@@ -100,9 +158,10 @@ export function App() {
           if (payload.baseVersion) {
             tokenStore.setBaseVersion(payload.baseVersion);
           }
-          if (payload.nextVersion && payload.nextVersion !== payload.baseVersion) {
-            tokenStore.setNextVersion(payload.nextVersion);
+          if (payload.branchSnapshots) {
+            tokenStore.hydrateBranchSnapshots(payload.branchSnapshots);
           }
+          restoreUiSelection(payload, tokenStore);
           break;
         }
 
@@ -129,13 +188,16 @@ export function App() {
 
   return (
     <div className="app">
-      {/* ── Header: editable next-version on the left, tenant filter right
-              The version field replaces the static "BTech Token Studio"
-              title — it's the single most important piece of metadata
-              attached to a push, so it lives where the eye lands first. */}
+      {/* ── Header: read-only platform version on the left, branch + tenant
+              filters on the right. The version label sits where the eye
+              lands first — it's the single most important piece of state
+              the designer needs to confirm before they push. Branch and
+              Tenant are peer filters: branch retargets the repo line,
+              tenant retargets the override layer. */}
       <header className="app-header">
-        <VersionField />
+        <VersionLabel onPullRequest={() => setShowSync('pull')} />
         <div className="app-header__controls">
+          <BranchSwitcher />
           <ThemeSwitcher />
         </div>
       </header>
@@ -152,13 +214,21 @@ export function App() {
         onShowPush={() => setShowSync('push')}
         onShowSettings={() => setShowSettings(true)}
         onShowDiscard={() => setShowConfirmDiscard(true)}
+        onShowImportExport={(mode) => setShowImportExport(mode)}
       />
 
       {/* ── Modals ── */}
       {showSync && (
         <SyncPanel
           initialMode={showSync}
-          onClose={() => setShowSync(null)}
+          onClose={() => {
+            setShowSync(null);
+            // Refresh the "new version available" indicator after any sync.
+            // After a pull → baseVersion now matches remote, badge clears.
+            // After a push → main may have advanced (CI bumped + merged in
+            // a parallel PR); re-checking keeps the badge honest.
+            void checkRemoteVersion();
+          }}
           onSwitchToPush={() => setShowSync('push')}
         />
       )}
@@ -182,6 +252,32 @@ export function App() {
             setShowConfirmDiscard(false);
           }}
           onClose={() => setShowConfirmDiscard(false)}
+        />
+      )}
+
+      {/* ── Figma sync modals ───────────────────────────────────────────
+          Mounted siblings rather than a single switch so transient state
+          (e.g. busy flags inside ExportFigmaModal) doesn't unmount when
+          the popover toggles. ImportDiffModal mounts ON TOP of nothing —
+          ImportStylesModal closes itself before handing the payload off,
+          so the diff runs against a single visible modal layer. */}
+      {showImportExport === 'export' && (
+        <ExportFigmaModal onClose={() => setShowImportExport(null)} />
+      )}
+      {showImportExport === 'import' && (
+        <ImportStylesModal
+          onClose={() => setShowImportExport(null)}
+          onImportComplete={(incoming, warnings) => {
+            setShowImportExport(null);
+            setPendingDiff({ incoming, warnings });
+          }}
+        />
+      )}
+      {pendingDiff && (
+        <ImportDiffModal
+          incoming={pendingDiff.incoming}
+          warnings={pendingDiff.warnings}
+          onClose={() => setPendingDiff(null)}
         />
       )}
     </div>

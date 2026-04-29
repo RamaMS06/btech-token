@@ -5,8 +5,8 @@
 
 import 'package:flutter/material.dart';
 
-/// Green color swatch — BTechColor.shades.green[500]
-const MaterialColor btechShadesGreen = MaterialColor(
+/// Green color swatch — btechColorGreen[500]
+const MaterialColor btechColorGreen = MaterialColor(
   0xFF08A94C,
   <int, Color>{
       50: Color(0xFFF0F8F4),
@@ -22,8 +22,8 @@ const MaterialColor btechShadesGreen = MaterialColor(
   },
 );
 
-/// Lightblue color swatch — BTechColor.shades.lightblue[500]
-const MaterialColor btechShadesLightblue = MaterialColor(
+/// Lightblue color swatch — btechColorLightblue[500]
+const MaterialColor btechColorLightblue = MaterialColor(
   0xFF30AEE1,
   <int, Color>{
       50: Color(0xFFF2F6F8),
@@ -39,8 +39,8 @@ const MaterialColor btechShadesLightblue = MaterialColor(
   },
 );
 
-/// Orange color swatch — BTechColor.shades.orange[500]
-const MaterialColor btechShadesOrange = MaterialColor(
+/// Orange color swatch — btechColorOrange[500]
+const MaterialColor btechColorOrange = MaterialColor(
   0xFFF8981D,
   <int, Color>{
       50: Color(0xFFF9F6F1),
@@ -56,8 +56,8 @@ const MaterialColor btechShadesOrange = MaterialColor(
   },
 );
 
-/// Blue color swatch — BTechColor.shades.blue[500]
-const MaterialColor btechShadesBlue = MaterialColor(
+/// Blue color swatch — btechColorBlue[500]
+const MaterialColor btechColorBlue = MaterialColor(
   0xFF145BC3,
   <int, Color>{
       50: Color(0xFFE7EFF9),
@@ -73,8 +73,8 @@ const MaterialColor btechShadesBlue = MaterialColor(
   },
 );
 
-/// Purple color swatch — BTechColor.shades.purple[500]
-const MaterialColor btechShadesPurple = MaterialColor(
+/// Purple color swatch — btechColorPurple[500]
+const MaterialColor btechColorPurple = MaterialColor(
   0xFF8A59C2,
   <int, Color>{
       50: Color(0xFFF3EEF9),
@@ -90,8 +90,8 @@ const MaterialColor btechShadesPurple = MaterialColor(
   },
 );
 
-/// Teal color swatch — BTechColor.shades.teal[500]
-const MaterialColor btechShadesTeal = MaterialColor(
+/// Teal color swatch — btechColorTeal[500]
+const MaterialColor btechColorTeal = MaterialColor(
   0xFF0D9488,
   <int, Color>{
       50: Color(0xFFF0F8F7),
@@ -107,8 +107,8 @@ const MaterialColor btechShadesTeal = MaterialColor(
   },
 );
 
-/// Indigo color swatch — BTechColor.shades.indigo[500]
-const MaterialColor btechShadesIndigo = MaterialColor(
+/// Indigo color swatch — btechColorIndigo[500]
+const MaterialColor btechColorIndigo = MaterialColor(
   0xFF6366F1,
   <int, Color>{
       50: Color(0xFFF3F3F9),
@@ -124,8 +124,8 @@ const MaterialColor btechShadesIndigo = MaterialColor(
   },
 );
 
-/// Rose color swatch — BTechColor.shades.rose[500]
-const MaterialColor btechShadesRose = MaterialColor(
+/// Rose color swatch — btechColorRose[500]
+const MaterialColor btechColorRose = MaterialColor(
   0xFFE11D48,
   <int, Color>{
       50: Color(0xFFF8F2F3),
@@ -141,8 +141,25 @@ const MaterialColor btechShadesRose = MaterialColor(
   },
 );
 
-/// Neutral color swatch — BTechColor.shades.neutral[500]
-const MaterialColor btechShadesNeutral = MaterialColor(
+/// Yellow color swatch — btechColorYellow[500]
+const MaterialColor btechColorYellow = MaterialColor(
+  0xFFEEC513,
+  <int, Color>{
+      50: Color(0xFFFDF9E7),
+      100: Color(0xFFFCF3D0),
+      200: Color(0xFFF8E8A1),
+      300: Color(0xFFF5DC71),
+      400: Color(0xFFF1D142),
+      500: Color(0xFFEEC513),
+      600: Color(0xFFBE9E0F),
+      700: Color(0xFF8F760B),
+      800: Color(0xFF5F4F08),
+      900: Color(0xFF302704),
+  },
+);
+
+/// Neutral color swatch — btechColorNeutral[500]
+const MaterialColor btechColorNeutral = MaterialColor(
   0xFF64748B,
   <int, Color>{
       50: Color(0xFFF4F5F6),
@@ -159,8 +176,8 @@ const MaterialColor btechShadesNeutral = MaterialColor(
   },
 );
 
-/// Red color swatch — BTechColor.shades.red[500]
-const MaterialColor btechShadesRed = MaterialColor(
+/// Red color swatch — btechColorRed[500]
+const MaterialColor btechColorRed = MaterialColor(
   0xFFEF4444,
   <int, Color>{
       50: Color(0xFFF9F2F2),
@@ -176,8 +193,8 @@ const MaterialColor btechShadesRed = MaterialColor(
   },
 );
 
-/// Amber color swatch — BTechColor.shades.amber[500]
-const MaterialColor btechShadesAmber = MaterialColor(
+/// Amber color swatch — btechColorAmber[500]
+const MaterialColor btechColorAmber = MaterialColor(
   0xFFF59E0B,
   <int, Color>{
       50: Color(0xFFF9F6F1),
@@ -193,8 +210,8 @@ const MaterialColor btechShadesAmber = MaterialColor(
   },
 );
 
-/// Sky color swatch — BTechColor.shades.sky[500]
-const MaterialColor btechShadesSky = MaterialColor(
+/// Sky color swatch — btechColorSky[500]
+const MaterialColor btechColorSky = MaterialColor(
   0xFF0EA5E9,
   <int, Color>{
       50: Color(0xFFF1F6F9),
@@ -210,23 +227,37 @@ const MaterialColor btechShadesSky = MaterialColor(
   },
 );
 
-/// Primitive color palette as MaterialColor swatches.
-/// Access: BTechColor.shades.blue        → primary 500
-///         BTechColor.shades.blue[400]   → shade 400
-///         BTechColor.shades.green.shade700
-class BTechShadesColor {
-  const BTechShadesColor();
-  MaterialColor get green => btechShadesGreen;
-  MaterialColor get lightblue => btechShadesLightblue;
-  MaterialColor get orange => btechShadesOrange;
-  MaterialColor get blue => btechShadesBlue;
-  MaterialColor get purple => btechShadesPurple;
-  MaterialColor get teal => btechShadesTeal;
-  MaterialColor get indigo => btechShadesIndigo;
-  MaterialColor get rose => btechShadesRose;
-  MaterialColor get neutral => btechShadesNeutral;
-  MaterialColor get red => btechShadesRed;
-  MaterialColor get amber => btechShadesAmber;
-  MaterialColor get sky => btechShadesSky;
-}
+/// Brand primary color swatch (tenant-overridable) — btechColorBrandPrimary[500]
+const MaterialColor btechColorBrandPrimary = MaterialColor(
+  0xFF145BC3,
+  <int, Color>{
+      50: Color(0xFFE7EFF9),
+      100: Color(0xFFD0DEF3),
+      200: Color(0xFFA1BDE7),
+      300: Color(0xFF729DDB),
+      400: Color(0xFF437CCF),
+      500: Color(0xFF145BC3),
+      600: Color(0xFF10499C),
+      700: Color(0xFF0C3775),
+      800: Color(0xFF08244E),
+      900: Color(0xFF041227),
+  },
+);
+
+/// Brand secondary color swatch (tenant-overridable) — btechColorBrandSecondary[500]
+const MaterialColor btechColorBrandSecondary = MaterialColor(
+  0xFFF59E0B,
+  <int, Color>{
+      50: Color(0xFFF9F6F1),
+      100: Color(0xFFF5F0E7),
+      200: Color(0xFFEFE3D0),
+      300: Color(0xFFE9D2AB),
+      400: Color(0xFFE8BA6C),
+      500: Color(0xFFF59E0B),
+      600: Color(0xFFBD7C0C),
+      700: Color(0xFF885A0D),
+      800: Color(0xFF5A3D0B),
+      900: Color(0xFF332307),
+  },
+);
 

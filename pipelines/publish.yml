@@ -30,11 +30,10 @@ pr: none
 pool:
   vmImage: ubuntu-latest
 
+# Pre-declare PUBLISH_TENANT so unset full-release tags substitute to empty
+# string in env: blocks instead of leaking the literal "$(PUBLISH_TENANT)"
+# token, which previously broke publish-changed.ts on full releases.
 variables:
-  # Default empty — overridden by "Classify release tag" step when a
-  # <tenant>-v* tag is detected. Without this default, Azure DevOps passes
-  # the literal string "$(PUBLISH_TENANT)" to the env var, causing
-  # publish-changed.ts to look for a folder named "$(PUBLISH_TENANT)".
   - name: PUBLISH_TENANT
     value: ''
 
@@ -89,8 +88,13 @@ jobs:
         inputs:
           workingFile: .npmrc
 
+      # NODE_AUTH_TOKEN substitutes the placeholder in .npmrc so pnpm can
+      # authenticate to the private @btech feed. Without it pnpm falls back
+      # to registry.npmjs.org (404) on @btech/* deps recorded in the lockfile.
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # ── Flutter ───────────────────────────────────────────────────────────
       - template: templates/flutter-setup.yml
@@ -102,14 +106,19 @@ jobs:
       # ── Validate → Generate → Build → Publish ─────────────────────────────
       - script: pnpm validate
         displayName: 'Run validators (contrast + boundary + workspace-deps)'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # IMPORTANT: 'pnpm generate' (not 'pnpm build') — produces both:
       #   - Style Dictionary outputs (styles.css, utilities.css) via sd.config.ts
       #   - TypeScript bundles (index.js, index.mjs, index.d.ts) via tsup
       # Using 'pnpm --filter @btech/tokens build' alone runs tsup only,
       # resulting in a published tarball missing styles.css (rc.1 bug).
+      # generate runs pnpm install --lockfile-only internally → needs auth.
       - script: pnpm generate
         displayName: 'Generate tokens (CSS + JS + types)'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       - script: flutter analyze --no-fatal-infos
         displayName: 'Flutter analyze'
@@ -144,6 +153,7 @@ jobs:
         env:
           NPM_TAG: $(NPM_TAG)
           PUBLISH_ONLY_TENANT: $(PUBLISH_TENANT)
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # ── Python — build & publish to btech feed (PyPI side of same feed) ───
       - task: UsePythonVersion@0
@@ -186,19 +196,19 @@ jobs:
 
       - script: |
           set -e
-
-          # Azure Artifacts PyPI does NOT support --skip-existing (unlike pypi.org).
-          # Instead we catch HTTP 409 "File already exists" and treat it as success.
-          twine_upload() {
-            local dist_glob="$1"
-            local out
-            out=$(python -m twine upload -r btech \
-              --config-file "$(PYPIRC_PATH)" \
-              $dist_glob 2>&1) && echo "$out" && return 0
-            # Non-zero exit — check if it's just "already exists"
-            echo "$out"
-            if echo "$out" | grep -qiE "already exists|HTTPError: 409|File already|409 Conflict"; then
-              echo "ℹ️   Version already published — skipping (idempotent)."
+          # Azure Artifacts PyPI feed REJECTS twine's --skip-existing flag with
+          # "UnsupportedConfiguration", so we re-implement skip-existing in
+          # shell: capture twine output and swallow exit 1 when the only
+          # failure is "File already exists" / 400 / 409. Anything else
+          # propagates as a real error.
+          twine_upload_skip_existing() {
+            local logfile
+            logfile=$(mktemp)
+            if python -m twine upload -r btech --config-file "$(PYPIRC_PATH)" "$@" 2>&1 | tee "$logfile"; then
+              return 0
+            fi
+            if grep -qE "already exists|400 Bad Request.*[Ff]ile.*exists|409 Conflict" "$logfile"; then
+              echo "ℹ️   Some files were already on the feed — treated as success."
               return 0
             fi
             return 1
@@ -207,21 +217,21 @@ jobs:
           if [ -n "$(PUBLISH_TENANT)" ]; then
             tenant_dir="packages/tokens/platforms/python/tenants/$(PUBLISH_TENANT)"
             if [ -d "$tenant_dir/dist" ]; then
-              twine_upload "$tenant_dir/dist/*"
+              twine_upload_skip_existing "$tenant_dir"/dist/*
             else
               echo "No Python dist for tenant '$(PUBLISH_TENANT)' — nothing to upload."
             fi
           else
-            twine_upload "packages/tokens/platforms/python/token/dist/*"
+            twine_upload_skip_existing packages/tokens/platforms/python/token/dist/*
 
             if [ "$(NPM_TAG)" != "rc" ]; then
               for tenant_dir in packages/tokens/platforms/python/tenants/*/; do
-                [ -d "$tenant_dir/dist" ] || continue
-                twine_upload "$tenant_dir/dist/*"
+                [ -d "${tenant_dir}dist" ] || continue
+                twine_upload_skip_existing "${tenant_dir}dist"/*
               done
             fi
           fi
-        displayName: 'Publish Python packages to btech feed (idempotent)'
+        displayName: 'Publish Python packages to btech feed'
 
       # ── Summary ───────────────────────────────────────────────────────────
       - script: |

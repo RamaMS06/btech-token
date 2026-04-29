@@ -59,6 +59,13 @@ export interface DTCGGroup {
 // ── Plugin token set model ──────────────────────────────────────────────────
 
 /**
+ * Currently active git branch — pulls and pushes target this. Declared up
+ * here (above the storage types) so `BranchSnapshot` / `TokenStorageState`
+ * can reference it without a forward dependency.
+ */
+export type ActiveBranch = 'main' | 'dev';
+
+/**
  * A TokenSet maps 1:1 to a JSON file in packages/tokens/sources/**
  * The `id` is derived from the relative path: e.g.
  *   "packages/tokens/sources/core/color.primitive.json" → "core/color.primitive"
@@ -90,24 +97,59 @@ export interface TokenSet {
   dirty: boolean;
 }
 
+/**
+ * Per-branch frozen snapshot of "what was last pulled". The plugin caches
+ * one of these per branch so that switching branches via `<BranchSwitcher>`
+ * doesn't need a fresh network round-trip every time — the designer sees
+ * the same state they'd see immediately after a pull.
+ *
+ * Sets are stored INCLUDING their dirty flags + originalTree, so a designer
+ * who edits on `dev`, switches to `main`, then comes back to `dev` finds
+ * their unsaved work intact.
+ */
+export interface BranchSnapshot {
+  sets: Record<string, TokenSet>;
+  baseVersion: string | null;
+  lastPullSha: string | null;
+  lastPullAt: number | null;
+}
+
 /** Serialisable slice persisted to figma.clientStorage under 'btech.tokens' */
 export interface TokenStorageState {
+  /** Mirror of `branchSnapshots[activeBranch].sets` — the in-view set map. */
   sets: Record<string, TokenSet>;
   lastPullSha: string | null;
   lastPullAt: number | null;
   /**
-   * Currently published `@btech/tokens` version, fetched from
-   * packages/tokens/platforms/web/token/package.json on pull. Null when the
-   * plugin has never pulled.
+   * Currently published canonical platform version (root `package.json`),
+   * fetched on pull from the active branch. Read-only in the UI — versioning
+   * is now driven by the active branch (main → patch, dev → rc) rather than
+   * by a manually-entered field. Null when the plugin has never pulled.
    */
   baseVersion: string | null;
   /**
-   * Designer-proposed version for the next push. Defaults to `baseVersion`
-   * after pull; designer can edit it through the header VersionField.
-   * Sent as a `version:<x>` PR label so auto-version.yml can set the new
-   * version explicitly instead of semver-bumping.
+   * Per-branch cached pull snapshots. Populated by `useSync.pull(target)`
+   * — `target='active'` writes one entry, `target='all'` writes both.
+   * `<BranchSwitcher>` reads from here to swap branches without re-pulling.
+   *
+   * Optional on the type so older persisted blobs (pre-feature) still
+   * deserialise; the store seeds `{}` on load.
    */
-  nextVersion: string | null;
+  branchSnapshots?: Partial<Record<ActiveBranch, BranchSnapshot>>;
+  /**
+   * Last selected set id ("core/color.brand" etc.) so reopening the plugin
+   * lands the designer back on the panel they were editing instead of the
+   * "Select a token set from the sidebar" empty state. Optional for
+   * backward compat with pre-feature persisted blobs.
+   */
+  activeSetId?: string | null;
+  /**
+   * Last selected tenant filter (e.g. "bspace") so override badges (`@N`
+   * in the sidebar) and the override-merged tree view survive a modal
+   * close/reopen. `null` = "Default" (no tenant filter). Optional for
+   * backward compat.
+   */
+  activeTenant?: string | null;
 }
 
 // ── Settings model ──────────────────────────────────────────────────────────
@@ -115,13 +157,35 @@ export interface TokenStorageState {
 /**
  * Designer-configurable connection settings stored in figma.clientStorage
  * under 'btech.settings'. PAT is encrypted by Figma's clientStorage layer.
+ *
+ * Branch selection moved out of Settings — designers pick the active branch
+ * via the header `<BranchSwitcher>`, mapped to one of the fixed channel
+ * values below. We still persist it under the same Settings blob (to share
+ * the existing debounced postMessage path) but the UI no longer exposes it.
+ *
+ * (`ActiveBranch` itself is declared above near the storage types — keep
+ * this comment so `git blame` still tells the story.)
  */
+
 export interface Settings {
   orgUrl: string;
   project: string;
   repo: string;
   pat: string;
-  baseBranch: string;
+  /** Currently active git branch — pulls and pushes target this. */
+  activeBranch: ActiveBranch;
+  /**
+   * Per-type export filter for the "Export to Figma" modal. Maps each
+   * resolved Figma Variable type → include/exclude. Persisted so the
+   * designer's last selection survives plugin reloads. Optional on the
+   * type so older snapshots remain assignable; default is all `true`.
+   */
+  exportTypes?: {
+    color: boolean;
+    string: boolean;
+    number: boolean;
+    boolean: boolean;
+  };
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -129,7 +193,8 @@ export const DEFAULT_SETTINGS: Settings = {
   project: 'BUMA - Bspace Design System',
   repo: 'btech-ds',
   pat: '',
-  baseBranch: 'main',
+  activeBranch: 'main',
+  exportTypes: { color: true, string: true, number: true, boolean: true },
 };
 
 // ── postMessage protocol ────────────────────────────────────────────────────
@@ -147,6 +212,17 @@ export type UIToMainMessage =
   | { type: 'get-settings' }
   | { type: 'save-settings'; payload: Settings }
   | { type: 'apply-snapshot' }
+  // Figma import/export — see src/shared/figma-types.ts for payload shapes.
+  | { type: 'figma-import-scan' }
+  | {
+      type: 'figma-import-apply';
+      selection: import('./figma-types.js').ImportSelection;
+      options: import('./figma-types.js').ImportOptions;
+    }
+  | {
+      type: 'figma-export';
+      payload: import('./figma-types.js').FigmaExportPayload;
+    }
   /**
    * Ask the main thread to relay an error notification to the Figma canvas
    * via figma.notify — used when the iframe needs a visible canvas alert.
@@ -158,6 +234,24 @@ export type MainToUIMessage =
   | { type: 'init-done'; tokens: TokenStorageState | null; settings: Settings | null }
   | { type: 'tokens-loaded'; payload: TokenStorageState }
   | { type: 'settings-loaded'; payload: Settings | null }
+  // Figma import/export results.
+  | {
+      type: 'figma-import-scan-done';
+      payload: import('./figma-types.js').FigmaImportTree;
+    }
+  | {
+      type: 'figma-import-apply-done';
+      sets: Record<string, TokenSet>;
+      warnings: string[];
+    }
+  | {
+      type: 'figma-export-done';
+      created: number;
+      updated: number;
+      warnings: string[];
+    }
+  | { type: 'figma-import-error'; message: string }
+  | { type: 'figma-export-error'; message: string }
   | { type: 'error'; message: string };
 
 /** Union for the full postMessage protocol — used at type-narrowing callsites */

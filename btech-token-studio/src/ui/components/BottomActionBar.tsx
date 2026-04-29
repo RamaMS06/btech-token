@@ -20,8 +20,10 @@
  * clicks back up to the App via callbacks.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTokens } from '../hooks/useTokens.js';
+import { countLeafChanges } from '../../shared/transform.js';
+import { ImportExportMenu } from './ImportExportMenu.js';
 
 interface BottomActionBarProps {
   onShowPull: () => void;
@@ -33,6 +35,12 @@ interface BottomActionBarProps {
    * don't dispatch directly here so the destructive action stays gated.
    */
   onShowDiscard: () => void;
+  /**
+   * Raised when the designer picks Export-to-Figma or Import-Styles from
+   * the Import/Export menu next to the Settings cog. Owner (App) mounts
+   * the corresponding modal.
+   */
+  onShowImportExport: (mode: 'export' | 'import') => void;
 }
 
 export function BottomActionBar({
@@ -40,16 +48,38 @@ export function BottomActionBar({
   onShowPush,
   onShowSettings,
   onShowDiscard,
+  onShowImportExport,
 }: BottomActionBarProps) {
   const { sets } = useTokens();
-  // Recompute dirty count from the live sets map; using `dirtySets()` from
-  // the store would also work but a derived count keeps this component a
-  // pure render of state without invoking the action selector.
-  const dirtyCount = Object.values(sets).filter((s) => s.dirty).length;
-  const hasChanges = dirtyCount > 0;
+  // We count two things:
+  //   - dirtySetCount  → "this set has unsaved edits" (drives button enabled state)
+  //   - changeCount    → number of *leaf-level* edits across every dirty set
+  //                       (drives the user-visible label)
+  // Earlier the label used dirtySetCount, which made "edited 17 tokens in one
+  // file" show up as "Push 1 change …" — confusing because the sidebar shows
+  // tenant-override counts in the same `@N` shape, so designers expected the
+  // push button to talk in tokens too. We compute changes per-set and only
+  // sum the dirty ones (an unedited set has tree === originalTree by
+  // contract, so it would always score 0 anyway, but skipping is cheaper for
+  // large repos).
+  const { dirtySetCount, changeCount } = useMemo(() => {
+    let dirtySets = 0;
+    let changes = 0;
+    for (const s of Object.values(sets)) {
+      if (!s.dirty) continue;
+      dirtySets++;
+      changes += countLeafChanges(s.tree, s.originalTree ?? s.tree);
+    }
+    return { dirtySetCount: dirtySets, changeCount: changes };
+  }, [sets]);
+  const hasChanges = dirtySetCount > 0;
+  // If the dirty flag flipped but no leaf actually differs (rare — happens
+  // when an edit is reverted by hand without the editor flipping `dirty`
+  // back to false), fall back to the set count so we never display "Push 0".
+  const displayCount = changeCount > 0 ? changeCount : dirtySetCount;
 
   const pushLabel = hasChanges
-    ? `Push ${dirtyCount} ${dirtyCount === 1 ? 'change' : 'changes'} to Azure DevOps`
+    ? `Push ${displayCount} ${displayCount === 1 ? 'change' : 'changes'} to Azure DevOps`
     : 'No changes to push';
 
   return (
@@ -74,6 +104,10 @@ export function BottomActionBar({
             />
           </svg>
         </button>
+
+        {/* Sits adjacent to Settings — same icon-button visual weight,
+            but opens its own popover with the two Figma sync actions. */}
+        <ImportExportMenu onSelect={onShowImportExport} />
 
         <button
           type="button"
@@ -108,7 +142,7 @@ export function BottomActionBar({
         aria-disabled={!hasChanges}
         title={
           hasChanges
-            ? `Revert ${dirtyCount} ${dirtyCount === 1 ? 'change' : 'changes'} to last pulled state`
+            ? `Revert ${displayCount} ${displayCount === 1 ? 'change' : 'changes'} to last pulled state`
             : 'Edit a token to enable Clear'
         }
       >

@@ -105,10 +105,23 @@ export function toYaml(obj: unknown, indent = 0): string {
 //   radius.* / shadow.* → kept as-is
 // =============================================================================
 
-const PRIMITIVE_COLOR_KEYS = new Set([
-  'blue', 'red', 'green', 'orange', 'neutral',
-  'yellow', 'pink', 'purple', 'teal', 'slate',
-]);
+/**
+ * Semantic color groups whose `color.` prefix is dropped to avoid redundancy
+ * (these names already convey "color" by their property semantics).
+ *
+ *   color.bg.primary          → bg-primary
+ *   color.text.subtle         → text-subtle
+ *   color.icon.danger         → icon-danger
+ *   color.border.neutral      → border-neutral
+ *   color.stroke.neutral      → border-neutral   (legacy alias: stroke → border)
+ *
+ * Everything else under `color.*` keeps the `color-` prefix:
+ *   color.blue.500            → color-blue-500
+ *   color.brand.primary.50    → color-brand-primary-50
+ *   color.amber.500           → color-amber-500
+ *   color.ext.success         → color-ext-success
+ */
+const COLOR_SEMANTIC_GROUPS = new Set(['bg', 'text', 'icon', 'border']);
 
 /**
  * Converts a token dot-path array to an Atlassian-aligned CSS variable stem
@@ -116,13 +129,16 @@ const PRIMITIVE_COLOR_KEYS = new Set([
  * — call `.replace(/([A-Z])/g, m => `-${m.toLowerCase()}`)` on the result.
  *
  * @example
- * pathToCssVarStem(['color', 'background', 'primary'])  → 'background-primary'
- * pathToCssVarStem(['color', 'stroke', 'primary'])       → 'border-primary'
- * pathToCssVarStem(['color', 'blue', '500'])             → 'color-blue-500'
- * pathToCssVarStem(['spacing', 'md'])                    → 'space-md'
- * pathToCssVarStem(['typography', 'fontFamily', 'sans']) → 'typography-fontFamily-sans'
- * pathToCssVarStem(['zIndex', 'modal'])                  → 'z-modal'
- * pathToCssVarStem(['motion', 'duration', 'fast'])       → 'duration-fast'
+ * pathToCssVarStem(['color', 'bg', 'primary'])             → 'bg-primary'
+ * pathToCssVarStem(['color', 'border', 'primary'])         → 'border-primary'
+ * pathToCssVarStem(['color', 'stroke', 'primary'])         → 'border-primary'
+ * pathToCssVarStem(['color', 'blue', '500'])               → 'color-blue-500'
+ * pathToCssVarStem(['color', 'brand', 'primary', '50'])    → 'color-brand-primary-50'
+ * pathToCssVarStem(['color', 'amber', '500'])              → 'color-amber-500'
+ * pathToCssVarStem(['spacing', 'md'])                      → 'space-md'
+ * pathToCssVarStem(['typography', 'fontFamily', 'sans'])   → 'typography-fontFamily-sans'
+ * pathToCssVarStem(['zIndex', 'modal'])                    → 'z-modal'
+ * pathToCssVarStem(['motion', 'duration', 'fast'])         → 'duration-fast'
  */
 export function pathToCssVarStem(path: string[]): string {
   const [cat, ...rest] = path;
@@ -130,9 +146,10 @@ export function pathToCssVarStem(path: string[]): string {
   switch (cat) {
     case 'color': {
       const sub = rest[0];
-      if (PRIMITIVE_COLOR_KEYS.has(sub)) return ['color', ...rest].join('-');
-      if (sub === 'stroke')              return ['border', ...rest.slice(1)].join('-');
-      return rest.join('-');
+      if (sub === 'stroke')                    return ['border', ...rest.slice(1)].join('-');
+      if (COLOR_SEMANTIC_GROUPS.has(sub))      return rest.join('-');
+      // Primitives (blue, amber, neutral…) and brand swatches keep `color-` prefix
+      return ['color', ...rest].join('-');
     }
     case 'spacing':
       return ['space', ...rest].join('-');

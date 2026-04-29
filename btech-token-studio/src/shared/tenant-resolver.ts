@@ -155,6 +155,38 @@ export function findTenantOverrideSet(
 }
 
 /**
+ * Count how many leaves in `baseTree` would be overridden by `overrideTree`.
+ * "Overridden" means the same dot-path exists as a leaf in both trees AND
+ * the values differ — same rule `mergeTree` uses to stamp `__overriddenBy`,
+ * so the sidebar marker stays consistent with the per-leaf badges.
+ *
+ * Returns 0 when no override file is provided, or when the override file
+ * has no overlapping leaves with this base set. Designers use the count as
+ * an at-a-glance signal: "this set has tenant divergence to look at".
+ */
+export function countOverridesForBase(
+  baseTree: DTCGGroup,
+  overrideTree: DTCGGroup | null | undefined,
+  prefix: string[] = [],
+): number {
+  if (!overrideTree) return 0;
+  let n = 0;
+  for (const [key, value] of Object.entries(baseTree)) {
+    if (value === undefined) continue;
+    if (key.startsWith('$')) continue; // metadata
+    const segments = [...prefix, key];
+
+    if (isLeafToken(value)) {
+      const overrideLeaf = findOverrideLeaf(overrideTree, segments);
+      if (overrideLeaf && overrideLeaf.$value !== value.$value) n += 1;
+    } else if (typeof value === 'object' && value !== null) {
+      n += countOverridesForBase(value as DTCGGroup, overrideTree, segments);
+    }
+  }
+  return n;
+}
+
+/**
  * Produce a list of all tenant ids that have at least one override file
  * loaded. Used by the tenant filter dropdown — only tenants with data
  * should appear as options.

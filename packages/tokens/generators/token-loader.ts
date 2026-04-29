@@ -22,6 +22,17 @@ export interface TypeScaleEntry {
 export interface ResolvedTokenMap {
   baseMap: Record<string, string>;
   coreColors: Record<string, Record<string, string>>;
+  /** Brand primitive swatches — 2-level: brand-name (primary/secondary) → shade (50..900) → resolved hex.
+   *  Loaded from sources/core/color.brand.json. Aliases to primitive ramps are resolved here so
+   *  output generators get final hex values. Tenant overrides re-target the aliases at the same
+   *  shade level (color.brand.primary.500 → {color.rose.500} etc.).
+   *
+   *  Why a separate field instead of merging into coreColors?
+   *  - Lifecycle: primitive ramps (coreColors) are immutable across tenants; brand swatches
+   *    are tenant-overridable. Keeping them separate makes the override surface explicit.
+   *  - Naming: emitted as `btechColorBrandPrimary`/`btechColorBrandSecondary` (not as if they
+   *    were yet-another base ramp like green/blue), per design-system convention. */
+  brandSwatches: Record<string, Record<string, string>>;
   /** Flat 2-level: group (text/icon/border/bg/brand/ext) → field-name → resolved hex */
   semanticColors: Record<string, Record<string, string>>;
   spacing: Record<string, string>;
@@ -70,14 +81,38 @@ export function loadTokenData(): ResolvedTokenMap {
     }
   }
 
+  // Brand primitive swatches — sources/core/color.brand.json.
+  // Each rung references a primitive ramp (e.g. color.brand.primary.500 → {color.blue.500}).
+  // Resolved against resolvedBaseMap so output generators get final hex values.
+  // Convention: 50,100,200,300,400,500,600,700,800,900 — Tailwind v3 / DTCG standard.
+  const brandPrimitive = JSON.parse(readFileSync(`${coreDir}/color.brand.json`, 'utf-8'));
+  const brandSwatches: Record<string, Record<string, string>> = {};
+  const brandRoot = (brandPrimitive.color?.brand ?? {}) as Record<string, Record<string, unknown>>;
+  for (const [brandName, shades] of Object.entries(brandRoot)) {
+    if (brandName.startsWith('$')) continue;
+    brandSwatches[brandName] = {};
+    for (const [shade, tokenDef] of Object.entries(shades as Record<string, unknown>)) {
+      if (shade.startsWith('$')) continue;
+      const ref = (tokenDef as { $value?: string }).$value ?? '';
+      brandSwatches[brandName][shade] = resolveRef(ref, resolvedBaseMap);
+    }
+  }
+
   // Semantic colors — flat 2-level: group → field-name → hex
+  // The `-default` suffix is an internal disambiguator (added in source files
+  // where a flat semantic leaf would collide with a primitive group of the same
+  // name — e.g. `color.brand.primary` collides with `color.brand.primary.{50..900}`).
+  // We strip `-default` here so consumer-facing names stay clean across all
+  // generators (Flutter, Web, Python). CSS variables get the same treatment via
+  // the post-build regex in sd.config.ts.
   const semanticColorJson = JSON.parse(readFileSync(`${semanticDir}/color.json`, 'utf-8'));
   const semanticColors: Record<string, Record<string, string>> = {};
   for (const [group, fields] of Object.entries(semanticColorJson.color as Record<string, unknown>)) {
     semanticColors[group] = {};
     for (const [fieldName, tokenDef] of Object.entries(fields as Record<string, unknown>)) {
       if (fieldName.startsWith('$')) continue;
-      semanticColors[group][fieldName] = resolveRef((tokenDef as any).$value, resolvedBaseMap);
+      const consumerField = fieldName.replace(/-default$/, '');
+      semanticColors[group][consumerField] = resolveRef((tokenDef as any).$value, resolvedBaseMap);
     }
   }
 
@@ -187,6 +222,7 @@ export function loadTokenData(): ResolvedTokenMap {
   return {
     baseMap: resolvedBaseMap,
     coreColors,
+    brandSwatches,
     semanticColors,
     spacing,
     stroke,

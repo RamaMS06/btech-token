@@ -8,14 +8,50 @@ library btech_tokens_bspace;
 import 'package:flutter/material.dart';
 import 'package:btech_tokens/btech_tokens.dart';
 
-export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, btechTheme;
+export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, btechTheme, btechColorBrandPrimary, btechColorBrandSecondary;
+
+// ── Brand swatches (tenant-overridable primitive ramps) ─────────────────
+
+/// Brand primary color swatch (bspace) — btechColorBrandPrimary[500]
+const MaterialColor btechColorBrandPrimary = MaterialColor(
+  0xFF6366F1,
+  <int, Color>{
+    50: Color(0xFFF3F3F9),
+    100: Color(0xFFECECF6),
+    200: Color(0xFFDEDEF2),
+    300: Color(0xFFC7C7ED),
+    400: Color(0xFF9FA0EB),
+    500: Color(0xFF6366F1),
+    600: Color(0xFF2328E6),
+    700: Color(0xFF181BA7),
+    800: Color(0xFF12146B),
+    900: Color(0xFF0A0B36),
+  },
+);
+
+/// Brand secondary color swatch (bspace) — btechColorBrandSecondary[500]
+const MaterialColor btechColorBrandSecondary = MaterialColor(
+  0xFFEEC513,
+  <int, Color>{
+    50: Color(0xFFFDF9E7),
+    100: Color(0xFFFCF3D0),
+    200: Color(0xFFF8E8A1),
+    300: Color(0xFFF5DC71),
+    400: Color(0xFFF1D142),
+    500: Color(0xFFEEC513),
+    600: Color(0xFFBE9E0F),
+    700: Color(0xFF8F760B),
+    800: Color(0xFF5F4F08),
+    900: Color(0xFF302704),
+  },
+);
 
 // ── Light (public — Pattern B) ────────────────────────────────────────────
 
 /// Light-mode BTech color tokens for the bspace tenant.
 const BTechColorTheme btechColor = BTechColorTheme(
   text: BTechColorText(
-    primary: Color(0xFF181C20),
+    primary: Color(0xFF292F37),
     secondary: Color(0xFF64748B),
     tertiary: Color(0xFF98A2B0),
     inverse: Color(0xFFFFFFFF),
@@ -23,11 +59,11 @@ const BTechColorTheme btechColor = BTechColorTheme(
     link: Color(0xFF0D766C),
     success: Color(0xFF0A632F),
     error: Color(0xFF991515),
-    warning: Color(0xFF885A0D),
+    warning: Color(0xFF8F760B),
     info: Color(0xFF0F5E81),
   ),
   icon: BTechColorIcon(
-    primary: Color(0xFF181C20),
+    primary: Color(0xFF292F37),
     secondary: Color(0xFF64748B),
     tertiary: Color(0xFF98A2B0),
     inverse: Color(0xFFFFFFFF),
@@ -35,7 +71,7 @@ const BTechColorTheme btechColor = BTechColorTheme(
     link: Color(0xFF0D766C),
     success: Color(0xFF0A632F),
     error: Color(0xFF991515),
-    warning: Color(0xFF885A0D),
+    warning: Color(0xFF8F760B),
     info: Color(0xFF0F5E81),
   ),
   border: BTechColorBorder(
@@ -46,22 +82,22 @@ const BTechColorTheme btechColor = BTechColorTheme(
     disabled: Color(0xFFC1C6CD),
   ),
   bg: BTechColorBg(
-    primary: Color(0xFF145BC3),
-    secondary: Color(0xFF8A59C2),
-    tertiary: Color(0xFF6E479B),
-    inverse: Color(0xFFFFFFFF),
-    subtle: Color(0xFFF3EEF9),
-    subtler: Color(0xFFE7EFF9),
-    subtlest: Color(0xFFD1D5DB),
+    primary: Color(0xFFFFFFFF),
+    secondary: Color(0xFFECEDEE),
+    tertiary: Color(0xFF64748B),
+    inverse: Color(0xFF292F37),
+    subtle: Color(0xFFF4F5F6),
+    subtler: Color(0xFFDBDDE1),
+    subtlest: Color(0xFFC1C6CD),
     overlay: Color(0xCC181C20),
   ),
   brand: BTechColorBrand(
-    primarySubtle: Color(0xFFE7EFF9),
-    primary: Color(0xFF145BC3),
-    primaryBold: Color(0xFF10499C),
-    secondarySubtle: Color(0xFFF3EEF9),
-    secondary: Color(0xFF8A59C2),
-    secondaryBold: Color(0xFF6E479B),
+    primarySubtle: Color(0xFFF3F3F9),
+    primary: Color(0xFF6366F1),
+    primaryBold: Color(0xFF2328E6),
+    secondarySubtle: Color(0xFFFDF9E7),
+    secondary: Color(0xFFEEC513),
+    secondaryBold: Color(0xFFBE9E0F),
   ),
   ext: BTechColorExt(
     successSubtler: Color(0xFFE2F3E9),
@@ -72,10 +108,10 @@ const BTechColorTheme btechColor = BTechColorTheme(
     infoSubtle: Color(0xFFD0E4ED),
     info: Color(0xFF0EA5E9),
     infoBold: Color(0xFF0F81B4),
-    warningSubtler: Color(0xFFF5F0E7),
-    warningSubtle: Color(0xFFEFE3D0),
-    warning: Color(0xFFF59E0B),
-    warningBold: Color(0xFFBD7C0C),
+    warningSubtler: Color(0xFFFCF3D0),
+    warningSubtle: Color(0xFFF8E8A1),
+    warning: Color(0xFFEEC513),
+    warningBold: Color(0xFFBE9E0F),
     errorSubtler: Color(0xFFF6EAEA),
     errorSubtle: Color(0xFFF0D9D9),
     error: Color(0xFFEF4444),
@@ -91,24 +127,24 @@ const BTechColorTheme _btechColorDark = BTechColorTheme(
     primary: Color(0xFFECEDEE),
     secondary: Color(0xFF98A2B0),
     tertiary: Color(0xFF64748B),
-    inverse: Color(0xFF181C20),
+    inverse: Color(0xFF292F37),
     disabled: Color(0xFF505C6D),
     link: Color(0xFF0D9488),
     success: Color(0xFF94E2B5),
     error: Color(0xFFEBBDBD),
-    warning: Color(0xFFE9D2AB),
+    warning: Color(0xFFF5DC71),
     info: Color(0xFFAAD4E7),
   ),
   icon: BTechColorIcon(
     primary: Color(0xFFECEDEE),
     secondary: Color(0xFF98A2B0),
     tertiary: Color(0xFF64748B),
-    inverse: Color(0xFF181C20),
+    inverse: Color(0xFF292F37),
     disabled: Color(0xFF505C6D),
     link: Color(0xFF0D9488),
     success: Color(0xFF94E2B5),
     error: Color(0xFFEBBDBD),
-    warning: Color(0xFFE9D2AB),
+    warning: Color(0xFFF5DC71),
     info: Color(0xFFAAD4E7),
   ),
   border: BTechColorBorder(
@@ -119,7 +155,7 @@ const BTechColorTheme _btechColorDark = BTechColorTheme(
     disabled: Color(0xFF3C4450),
   ),
   bg: BTechColorBg(
-    primary: Color(0xFF181C20),
+    primary: Color(0xFF292F37),
     secondary: Color(0xFF3C4450),
     tertiary: Color(0xFFECEDEE),
     inverse: Color(0xFFECEDEE),
@@ -129,12 +165,12 @@ const BTechColorTheme _btechColorDark = BTechColorTheme(
     overlay: Color(0xCC181C20),
   ),
   brand: BTechColorBrand(
-    primarySubtle: Color(0xFF072D17),
-    primary: Color(0xFF41E084),
-    primaryBold: Color(0xFF08A94C),
-    secondarySubtle: Color(0xFF082A27),
-    secondary: Color(0xFF3ED8CA),
-    secondaryBold: Color(0xFF0D766C),
+    primarySubtle: Color(0xFF12146B),
+    primary: Color(0xFF9FA0EB),
+    primaryBold: Color(0xFF6366F1),
+    secondarySubtle: Color(0xFF5F4F08),
+    secondary: Color(0xFFF1D142),
+    secondaryBold: Color(0xFFEEC513),
   ),
   ext: BTechColorExt(
     successSubtler: Color(0xFF08A94C),
@@ -145,10 +181,10 @@ const BTechColorTheme _btechColorDark = BTechColorTheme(
     infoSubtle: Color(0xFF0F5E81),
     info: Color(0xFF69BEE4),
     infoBold: Color(0xFFF1F6F9),
-    warningSubtler: Color(0xFFF59E0B),
-    warningSubtle: Color(0xFF885A0D),
-    warning: Color(0xFFE8BA6C),
-    warningBold: Color(0xFFF9F6F1),
+    warningSubtler: Color(0xFFEEC513),
+    warningSubtle: Color(0xFF8F760B),
+    warning: Color(0xFFF1D142),
+    warningBold: Color(0xFFFDF9E7),
     errorSubtler: Color(0xFFEF4444),
     errorSubtle: Color(0xFF991515),
     error: Color(0xFFE88D8D),

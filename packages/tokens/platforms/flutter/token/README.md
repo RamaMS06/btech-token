@@ -37,7 +37,7 @@ packages/tokens/platforms/flutter/
 │       │   ├── color.dart         ← barrel
 │       │   ├── color.theme.dart   ← BTechColorTheme + BTechColorText/Bg/… classes
 │       │   ├── color.token.dart   ← BTechColor static class (Pattern A)
-│       │   └── shades.color.dart  ← BTechShadesColor (raw palette)
+│       │   └── swatches.color.dart ← btechColor<Group> MaterialColor consts (BTechColor.green[500])
 │       ├── radius/
 │       │   ├── radius.theme.dart  ← BTechRadiusTheme ThemeExtension
 │       │   └── radius.token.dart  ← BTechRadius static class

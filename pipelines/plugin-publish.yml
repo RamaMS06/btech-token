@@ -1,0 +1,145 @@
+name: Publish BTech Token Studio Plugin
+
+# Triggered by a `plugin-v*` tag push (e.g. `plugin-v1.0.0`).
+#
+# Tag namespace is intentionally separated from `v*` (token releases) and
+# `<tenant>-v*` (tenant releases) so the filter is unambiguous.
+#
+# Flow:
+#   1. Bump btech-token-studio/package.json version
+#   2. Commit + push tag `plugin-v<version>`
+#   3. This pipeline builds, ZIPs, uploads to Azure Artifacts Universal feed,
+#      and pins the ZIP as a build artifact for one-click admin download.
+#   4. Figma admin downloads ZIP and uploads to Figma org (manual — Figma has
+#      no public publish API for org plugins).
+#
+# See docs/plugin-publishing.md for the end-to-end release runbook.
+trigger:
+  tags:
+    include:
+      - plugin-v*
+  branches:
+    exclude:
+      - '*'   # tags only — no branch push triggers
+
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: build_and_package
+    displayName: 'Build plugin & upload ZIP to Azure Artifacts'
+
+    steps:
+      - checkout: self
+
+      - task: NodeTool@0
+        displayName: 'Setup Node.js 20'
+        inputs:
+          versionSpec: '20.x'
+
+      - script: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+        displayName: 'Setup pnpm 9'
+
+      - task: npmAuthenticate@0
+        displayName: 'Authenticate with Azure Artifacts'
+        inputs:
+          workingFile: .npmrc
+
+      - script: pnpm install --frozen-lockfile
+        displayName: 'Install JS dependencies'
+
+      - script: pnpm --filter @btech/token-studio exec tsc --noEmit
+        displayName: 'Type-check plugin'
+
+      - script: pnpm --filter @btech/token-studio build
+        displayName: 'Build plugin (main + ui)'
+
+      # ── Derive plugin version from the tag that triggered the run ─────────
+      # Build.SourceBranchName for a tag is the bare tag name (e.g. plugin-v1.0.0).
+      - script: |
+          TAG="$(Build.SourceBranchName)"
+          VERSION="${TAG#plugin-v}"
+          if [ -z "$VERSION" ] || [ "$VERSION" = "$TAG" ]; then
+            echo "##[error]Could not parse version from tag '$TAG' — expected plugin-v<x.y.z>"
+            exit 1
+          fi
+          echo "##vso[task.setvariable variable=PLUGIN_VERSION]$VERSION"
+          echo "Plugin version: $VERSION"
+        displayName: 'Derive version from tag'
+
+      # Tag and package.json must match — prevents mis-tagged releases from
+      # landing in the feed with the wrong "canonical" version.
+      - script: |
+          PKG_VER=$(node -p "require('./btech-token-studio/package.json').version")
+          if [ "$PKG_VER" != "$(PLUGIN_VERSION)" ]; then
+            echo "##[error]Tag version $(PLUGIN_VERSION) doesn't match package.json $PKG_VER"
+            echo "##[error]Bump btech-token-studio/package.json before tagging."
+            exit 1
+          fi
+        displayName: 'Verify package.json matches tag'
+
+      # ── Stage ZIP contents: built code + manifest + assets + README ───────
+      # The ZIP mirrors the on-disk layout Figma admin expects when importing
+      # a plugin via "Manage plugins for organization → Publish new plugin".
+      - script: |
+          set -e
+          STAGE="$(Build.ArtifactStagingDirectory)/btech-token-studio"
+          mkdir -p "$STAGE"
+          cp btech-token-studio/manifest.json "$STAGE/"
+          cp -r btech-token-studio/dist "$STAGE/"
+          cp -r btech-token-studio/assets "$STAGE/"
+          cp btech-token-studio/README.md "$STAGE/"
+          cd "$(Build.ArtifactStagingDirectory)"
+          zip -r "btech-token-studio-$(PLUGIN_VERSION).zip" btech-token-studio/
+          echo "##[group]Staged contents"
+          ls -la "$STAGE"
+          echo "##[endgroup]"
+          echo "##[group]ZIP contents"
+          unzip -l "btech-token-studio-$(PLUGIN_VERSION).zip"
+          echo "##[endgroup]"
+        displayName: 'Package ZIP'
+
+      # ── Publish ZIP to Azure Artifacts Universal feed ─────────────────────
+      # Universal Packages feed is the canonical home — immutable per-version,
+      # auditable, downloadable via Azure DevOps UI or CLI.
+      - task: UniversalPackages@0
+        displayName: 'Upload ZIP to Azure Artifacts (btech feed)'
+        inputs:
+          command: publish
+          publishDirectory: $(Build.ArtifactStagingDirectory)
+          vstsFeedPublish: 'BUMA - Bspace Design System/btech'
+          vstsFeedPackagePublish: 'btech-token-studio'
+          versionOption: custom
+          versionPublish: $(PLUGIN_VERSION)
+          packagePublishDescription: 'BTech Token Studio Figma plugin v$(PLUGIN_VERSION) — manual upload to Figma org required (see docs/plugin-publishing.md)'
+
+      # Also pin as a build artifact so admin can grab the ZIP straight from
+      # the build summary without navigating to the feed.
+      - task: PublishBuildArtifacts@1
+        displayName: 'Pin ZIP as build artifact'
+        inputs:
+          PathtoPublish: $(Build.ArtifactStagingDirectory)
+          ArtifactName: btech-token-studio-$(PLUGIN_VERSION)
+          publishLocation: Container
+
+      # ── Reminder for Figma admin (no auto-publish API exists) ─────────────
+      - script: |
+          echo "##[section]Plugin v$(PLUGIN_VERSION) packaged and uploaded."
+          echo ""
+          echo "##[section]NEXT STEPS — Figma admin:"
+          echo "  1. Download ZIP:"
+          echo "     Azure DevOps → Artifacts → btech feed → Universal → btech-token-studio@$(PLUGIN_VERSION)"
+          echo "     OR from this build summary: btech-token-studio-$(PLUGIN_VERSION).zip"
+          echo "  2. Extract on local machine"
+          echo "  3. Figma desktop → top-left avatar → 'Manage plugins for organization'"
+          echo "  4. Click '+ Publish new plugin' (first release) or 'Update plugin' (subsequent)"
+          echo "  5. Select manifest.json from the extracted folder"
+          echo "  6. When prompted, upload assets/icon.png + assets/cover.png"
+          echo "  7. Submit for org publish"
+          echo ""
+          echo "##[section]Full runbook: docs/plugin-publishing.md"
+        displayName: 'Admin upload reminder'
