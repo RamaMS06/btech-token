@@ -350,8 +350,16 @@ jobs:
           )
           # Glob expansions — capture matches into the array. Set nullglob
           # so an empty match doesn't leave the literal pattern behind.
+          # Each glob covers ONE platform's per-tenant version manifest:
+          #   web     → tenant `package.json`s
+          #   flutter → tenant `pubspec.yaml`s (was missing — caused
+          #             flutter/<tenant>/pubspec.yaml to drift away from
+          #             root version after rc bumps because nothing staged
+          #             it in this commit)
+          #   python  → tenant `pyproject.toml`s
           shopt -s nullglob
           VERSION_FILES+=( packages/tokens/platforms/web/*/package.json )
+          VERSION_FILES+=( packages/tokens/platforms/flutter/*/pubspec.yaml )
           VERSION_FILES+=( packages/tokens/platforms/python/tenants/*/pyproject.toml )
           shopt -u nullglob
 

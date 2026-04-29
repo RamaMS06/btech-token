@@ -136,6 +136,37 @@ jobs:
             # regenerated files on disk).
             git reset --mixed "origin/$BRANCH"
 
+            # ── Race fix: restore version-bearing files from origin ──
+            # auto-version.yml races with generate.yml on PR merge:
+            #   1. PR merges → both pipelines trigger from the same SHA
+            #   2. auto-version bumps package versions, commits with
+            #      ***NO_CI*** so it doesn't re-trigger
+            #   3. generate.yml has already started — its checkout was at
+            #      the PRE-bump SHA, so the on-disk versions are stale
+            #      (e.g. rc.8 while origin now has rc.9)
+            #   4. The generator's `existingPkg.version` read returns the
+            #      stale rc.8, the generator preserves it, the working
+            #      tree ends up with rc.8
+            #   5. `git reset --mixed origin/$BRANCH` keeps that stale rc.8
+            #      working tree
+            #   6. `git add packages/tokens/platforms/` then stages a
+            #      rc.9 → rc.8 *regression* and we'd push a revert
+            #
+            # Pull the version-bearing files back from origin BEFORE
+            # staging so they match whatever auto-version landed. Any
+            # genuine generated-content diffs (CSS, Dart, etc.) are still
+            # in the working tree and will be staged normally.
+            #
+            # `2>/dev/null || true` because the globs may match zero files
+            # in early-stage repos (e.g. a tenant deleted between runs);
+            # we don't want one missing file to abort the whole sync.
+            git checkout "origin/$BRANCH" -- \
+              packages/tokens/platforms/web/*/package.json \
+              packages/tokens/platforms/flutter/*/pubspec.yaml \
+              packages/tokens/platforms/python/*/pyproject.toml \
+              packages/tokens/platforms/python/tenants/*/pyproject.toml \
+              2>/dev/null || true
+
             git add packages/tokens/platforms/
 
             if git diff --cached --quiet; then

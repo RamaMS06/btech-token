@@ -59,6 +59,7 @@ const FLUTTER_PUBSPEC = resolve(ROOT, 'packages/tokens/platforms/flutter/token/p
 const PYTHON_BASE_PYPROJECT = resolve(ROOT, 'packages/tokens/platforms/python/token/pyproject.toml');
 const WEB_PLATFORM_DIR = resolve(ROOT, 'packages/tokens/platforms/web');
 const PYTHON_TENANTS_DIR = resolve(ROOT, 'packages/tokens/platforms/python/tenants');
+const FLUTTER_PLATFORM_DIR = resolve(ROOT, 'packages/tokens/platforms/flutter');
 
 // ── Types ────────────────────────────────────────────────────────────────
 type BumpType = 'patch' | 'minor' | 'major' | 'rc' | 'set';
@@ -74,7 +75,7 @@ const STRICT_SEMVER = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 
 interface PlanTarget {
   label: string;            // human-friendly name, e.g. "@btech/tokens"
-  kind: 'web-base' | 'flutter-base' | 'python-base' | 'web-tenant' | 'python-tenant';
+  kind: 'web-base' | 'flutter-base' | 'python-base' | 'web-tenant' | 'flutter-tenant' | 'python-tenant';
   file: string;             // path to package.json / pubspec.yaml / pyproject.toml
   tenantId?: string;        // only for web-tenant / python-tenant
 }
@@ -256,6 +257,22 @@ function collectTargets(s: Scope): PlanTarget[] {
       process.exit(1);
     }
     targets.push({ label: `@btech/tokens-${id}`, kind: 'web-tenant', file: webPkg, tenantId: id });
+    // Flutter tenant pubspec — same lockstep semantics as the web-tenant
+    // package.json. Was missing from the target list previously, which
+    // caused tenant Flutter packages to drift from root version after a
+    // few bump cycles (e.g. root rc.9 while flutter/<id>/pubspec stayed
+    // pinned to whatever the generator scaffolded). Including it here
+    // means every scope-respecting bump that touches a tenant also
+    // updates its Flutter pubspec.yaml.
+    const flutterTenantPubspec = resolve(FLUTTER_PLATFORM_DIR, id, 'pubspec.yaml');
+    if (existsSync(flutterTenantPubspec)) {
+      targets.push({
+        label: `btech_tokens_${id}`,
+        kind: 'flutter-tenant',
+        file: flutterTenantPubspec,
+        tenantId: id,
+      });
+    }
     const pyTenantPyproject = resolve(PYTHON_TENANTS_DIR, id, 'pyproject.toml');
     if (existsSync(pyTenantPyproject)) {
       targets.push({
@@ -292,7 +309,7 @@ function collectTargets(s: Scope): PlanTarget[] {
 // ── I/O helpers ──────────────────────────────────────────────────────────
 
 function readVersion(t: PlanTarget): string {
-  if (t.kind === 'flutter-base') {
+  if (t.kind === 'flutter-base' || t.kind === 'flutter-tenant') {
     const pubspec = readFileSync(t.file, 'utf8');
     const match = pubspec.match(/^version:\s*(.+)$/m);
     if (!match) throw new Error(`No version in ${t.file}`);
@@ -308,7 +325,7 @@ function readVersion(t: PlanTarget): string {
 }
 
 function writeVersion(t: PlanTarget, to: string): void {
-  if (t.kind === 'flutter-base') {
+  if (t.kind === 'flutter-base' || t.kind === 'flutter-tenant') {
     const pubspec = readFileSync(t.file, 'utf8');
     writeFileSync(t.file, pubspec.replace(/^version:\s*.+$/m, `version: ${to}`), 'utf8');
     return;
