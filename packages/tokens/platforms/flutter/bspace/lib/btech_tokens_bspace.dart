@@ -8,7 +8,43 @@ library btech_tokens_bspace;
 import 'package:flutter/material.dart';
 import 'package:btech_tokens/btech_tokens.dart';
 
-export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, btechTheme;
+export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, btechTheme, btechColorBrandPrimary, btechColorBrandSecondary;
+
+// ── Brand swatches (tenant-overridable primitive ramps) ─────────────────
+
+/// Brand primary color swatch (bspace) — btechColorBrandPrimary[500]
+const MaterialColor btechColorBrandPrimary = MaterialColor(
+  0xFFE11D48,
+  <int, Color>{
+    50: Color(0xFFF8F2F3),
+    100: Color(0xFFF4E8EA),
+    200: Color(0xFFECD3D8),
+    300: Color(0xFFE3B0BB),
+    400: Color(0xFFDE758C),
+    500: Color(0xFFE11D48),
+    600: Color(0xFFAE1B3B),
+    700: Color(0xFF7D162D),
+    800: Color(0xFF531120),
+    900: Color(0xFF2F0B13),
+  },
+);
+
+/// Brand secondary color swatch (bspace) — btechColorBrandSecondary[500]
+const MaterialColor btechColorBrandSecondary = MaterialColor(
+  0xFF0D9488,
+  <int, Color>{
+    50: Color(0xFFF0F8F7),
+    100: Color(0xFFE2F2F0),
+    200: Color(0xFFC4E8E5),
+    300: Color(0xFF93DDD7),
+    400: Color(0xFF3ED8CA),
+    500: Color(0xFF0D9488),
+    600: Color(0xFF0D766C),
+    700: Color(0xFF0C5852),
+    800: Color(0xFF0A403B),
+    900: Color(0xFF082A27),
+  },
+);
 
 // ── Light (public — Pattern B) ────────────────────────────────────────────
 

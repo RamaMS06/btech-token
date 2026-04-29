@@ -50,12 +50,24 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
   //         BTechColor.blue[400]     → specific shade via MaterialColor
   //         BTechColor.blue.shade700 → via MaterialColor getter
   //
+  // Two emission groups in this file:
+  //   1. Base ramps from coreColors (green, blue, neutral, etc.) — tenant-immutable.
+  //   2. Brand ramps from brandSwatches (primary, secondary)     — tenant-OVERRIDABLE.
+  //      In the base package these resolve to blue/amber. Each tenant package
+  //      re-emits btechColorBrandPrimary/Secondary with its own resolved values
+  //      (e.g. bspace = rose / teal). The semantic theme tokens
+  //      (BTechColor.brand.primary, .primaryBold, .primarySubtle) continue to
+  //      live on BTechColorTheme — they alias these swatches and give consumers
+  //      intent-based access.
+  //
   // No wrapper class — group names live directly on BTechColor (see color.theme.dart).
   const groupNames: string[] = Object.keys(data.coreColors);
+  const brandSwatchNames = Object.keys(data.brandSwatches);
   {
     const L = [HEADER, "import 'package:flutter/material.dart';\n"];
 
-    for (const [group, shades] of Object.entries(data.coreColors)) {
+    /** Emit a single MaterialColor const from a shade map. */
+    const emitSwatch = (constName: string, comment: string, shades: Record<string, string>) => {
       const entries = Object.entries(shades)
         .filter(([k]) => k !== '0') // key 0 (white) is excluded from MaterialColor map
         .sort((a, b) => Number(a[0]) - Number(b[0]));
@@ -67,14 +79,33 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
         `      ${shade}: Color(${hexToArgb(hex)}),`
       ).join('\n');
 
-      L.push(`/// ${toPascalCase(group)} color swatch — BTechColor.${group}[500]`);
-      L.push(`const MaterialColor btechColor${toPascalCase(group)} = MaterialColor(`);
+      L.push(`/// ${comment}`);
+      L.push(`const MaterialColor ${constName} = MaterialColor(`);
       L.push(`  ${hexToArgb(primaryHex)},`);
       L.push(`  <int, Color>{`);
       L.push(mapEntries);
       L.push(`  },`);
       L.push(`);\n`);
+    };
+
+    // 1. Base palette ramps (green, blue, …)
+    for (const [group, shades] of Object.entries(data.coreColors)) {
+      emitSwatch(
+        `btechColor${toPascalCase(group)}`,
+        `${toPascalCase(group)} color swatch — btechColor${toPascalCase(group)}[500]`,
+        shades,
+      );
     }
+
+    // 2. Brand swatches (primary, secondary) — tenant-overridable
+    for (const [brandName, shades] of Object.entries(data.brandSwatches)) {
+      emitSwatch(
+        `btechColorBrand${toPascalCase(brandName)}`,
+        `Brand ${brandName} color swatch (tenant-overridable) — btechColorBrand${toPascalCase(brandName)}[500]`,
+        shades,
+      );
+    }
+
     writeFileSync(`${colorDir}/swatches.color.dart`, L.join('\n') + '\n');
   }
 

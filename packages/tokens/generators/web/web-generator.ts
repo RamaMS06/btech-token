@@ -23,18 +23,48 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   // objects. No wrapper class — group names live directly on BTechColor.
   // Access: BTechColor.green[500]   → '#22c55e' (typed literal)
   //         BTechColor.neutral[0]   → '#ffffff' (white, included)
+  //
+  // Two emission groups:
+  //   1. Base ramps from coreColors — tenant-immutable.
+  //   2. Brand ramps from brandSwatches — tenant-OVERRIDABLE.
+  //      Base resolves brand → blue/amber. Each tenant package re-emits its own
+  //      btechColorBrandPrimary/Secondary with overridden values. The semantic
+  //      brand tokens (BTechBrandColor.primary/primaryBold/primarySubtle) on the
+  //      BTechColor.brand object continue to alias these via CSS vars.
+  //
+  // Swatch level convention (50,100,…,900) follows Tailwind v3 / DTCG standard.
   {
     const L = [HEADER];
-    for (const [group, shades] of Object.entries(data.coreColors)) {
-      const constName = `btechColor${toPascalCase(group)}`;
+
+    /** Emit one swatch as `export const NAME = { 50: '#…', … } as const;` */
+    const emitSwatch = (constName: string, comment: string, shades: Record<string, string>) => {
       const entries = Object.entries(shades).sort((a, b) => Number(a[0]) - Number(b[0]));
-      L.push(`/** ${toPascalCase(group)} primitive swatch — BTechColor.${group}[500] */`);
+      L.push(`/** ${comment} */`);
       L.push(`export const ${constName} = {`);
       for (const [shade, hex] of entries) {
         L.push(`  ${shade}: '${hex}',`);
       }
       L.push('} as const;\n');
+    };
+
+    // 1. Base palette ramps
+    for (const [group, shades] of Object.entries(data.coreColors)) {
+      emitSwatch(
+        `btechColor${toPascalCase(group)}`,
+        `${toPascalCase(group)} primitive swatch — BTechColor.${group}[500]`,
+        shades,
+      );
     }
+
+    // 2. Brand swatches (primary, secondary) — tenant-overridable
+    for (const [brandName, shades] of Object.entries(data.brandSwatches)) {
+      emitSwatch(
+        `btechColorBrand${toPascalCase(brandName)}`,
+        `Brand ${brandName} swatch (tenant-overridable) — BTechColor.brand${toPascalCase(brandName)}[500]`,
+        shades,
+      );
+    }
+
     writeFileSync(`${colorDir}/swatches.color.ts`, L.join('\n') + '\n');
   }
 
@@ -47,14 +77,20 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   // color.token.ts — dynamic, driven by semanticGroups + primitive swatches.
   // Primitive groups (green, blue, neutral, …) are spread directly onto
   // BTechColor so consumers write BTechColor.green[500] — no .shades indirection.
+  // Brand swatches are exposed as BTechColor.brandPrimary[500] etc. (camelCase
+  // composite key — avoids collision with the semantic BTechColor.brand object).
   const primitiveGroups = Object.keys(data.coreColors);
+  const brandSwatchKeys = Object.keys(data.brandSwatches);
   {
     const L = [HEADER];
     for (const g of semanticGroups) {
       const cls = `BTech${toPascalCase(g)}Color`;
       L.push(`import { ${cls} } from './${g}.color';`);
     }
-    const swatchImports = primitiveGroups.map(g => `btechColor${toPascalCase(g)}`).join(', ');
+    const swatchImports = [
+      ...primitiveGroups.map(g => `btechColor${toPascalCase(g)}`),
+      ...brandSwatchKeys.map(b => `btechColorBrand${toPascalCase(b)}`),
+    ].join(', ');
     L.push(`import { ${swatchImports} } from './swatches.color';\n`);
     L.push('export const BTechColor = {');
     for (const g of semanticGroups) {
@@ -65,6 +101,11 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     L.push('  // Primitive color groups — direct numeric-key access.');
     for (const g of primitiveGroups) {
       L.push(`  ${g}: btechColor${toPascalCase(g)},`);
+    }
+    L.push('');
+    L.push('  // Brand primitive swatches (tenant-overridable).');
+    for (const b of brandSwatchKeys) {
+      L.push(`  brand${toPascalCase(b)}: btechColorBrand${toPascalCase(b)},`);
     }
     L.push('} as const;\n');
     writeFileSync(`${colorDir}/color.token.ts`, L.join('\n') + '\n');

@@ -185,3 +185,31 @@ export const btechColorSky = {
   900: '#082431',
 } as const;
 
+/** Brand primary swatch (tenant-overridable) — BTechColor.brandPrimary[500] */
+export const btechColorBrandPrimary = {
+  50: '#e7eff9',
+  100: '#d0def3',
+  200: '#a1bde7',
+  300: '#729ddb',
+  400: '#437ccf',
+  500: '#145bc3',
+  600: '#10499c',
+  700: '#0c3775',
+  800: '#08244e',
+  900: '#041227',
+} as const;
+
+/** Brand secondary swatch (tenant-overridable) — BTechColor.brandSecondary[500] */
+export const btechColorBrandSecondary = {
+  50: '#f9f6f1',
+  100: '#f5f0e7',
+  200: '#efe3d0',
+  300: '#e9d2ab',
+  400: '#e8ba6c',
+  500: '#f59e0b',
+  600: '#bd7c0c',
+  700: '#885a0d',
+  800: '#5a3d0b',
+  900: '#332307',
+} as const;
+

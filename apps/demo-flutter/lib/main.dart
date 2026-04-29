@@ -49,6 +49,8 @@ String _hex(Color c) {
 List<_TokenEntry> _buildEntries(BTechColorTheme c, BTechRadiusTheme r) {
   final entries = <_TokenEntry>[];
 
+  BTechColor.brand.primary;
+
   // ── Background ──
   for (final pair in [
     ('primary',   c.bg.primary),
