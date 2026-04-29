@@ -8,6 +8,9 @@
   "files": [
     "dist"
   ],
+  "peerDependencies": {
+    "@btech/tokens": "workspace:^"
+  },
   "publishConfig": {
     "registry": "https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/"
   }

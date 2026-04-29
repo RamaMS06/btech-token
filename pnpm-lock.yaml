@@ -108,7 +108,11 @@ importers:
         specifier: ^2.0.2
         version: 2.3.3(rollup@4.60.1)(vite@5.4.21(@types/node@20.19.39))
 
-  packages/tokens/platforms/web/bspace: {}
+  packages/tokens/platforms/web/bspace:
+    dependencies:
+      '@btech/tokens':
+        specifier: workspace:^
+        version: link:../token
 
   packages/tokens/platforms/web/token:
     devDependencies:
