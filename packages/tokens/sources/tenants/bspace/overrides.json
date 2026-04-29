@@ -2,11 +2,108 @@
   "$description": "bspace tenant — green/teal brand (default). Color brand layer is intentionally NOT overridden here because the default `core/color.brand.json` already aliases the green & teal primitive ramps that match the bspace identity. Future tenants would override `color.brand.primary.{50..900}` and `color.brand.secondary.{50..900}` to point at different primitive ramps. See docs/architecture/tenant-overrides.md.",
   "typography": {
     "fontFamily": {
-      "sans": { "$value": "Rubik Storm, system-ui", "$type": "fontFamily" }
+      "sans": {
+        "$value": "Rubik Storm, system-ui",
+        "$type": "fontFamily"
+      }
     }
   },
   "radius": {
-    "sm": { "$value": "6px", "$type": "dimension" },
-    "md": { "$value": "8px", "$type": "dimension" }
+    "sm": {
+      "$value": "6px",
+      "$type": "dimension"
+    },
+    "md": {
+      "$value": "8px",
+      "$type": "dimension"
+    }
+  },
+  "color": {
+    "brand": {
+      "primary": {
+        "50": {
+          "$type": "color",
+          "$value": "{color.rose.50}"
+        },
+        "100": {
+          "$type": "color",
+          "$value": "{color.rose.100}"
+        },
+        "200": {
+          "$type": "color",
+          "$value": "{color.rose.200}"
+        },
+        "300": {
+          "$type": "color",
+          "$value": "{color.rose.300}"
+        },
+        "400": {
+          "$type": "color",
+          "$value": "{color.rose.400}"
+        },
+        "500": {
+          "$type": "color",
+          "$value": "{color.rose.500}"
+        },
+        "600": {
+          "$type": "color",
+          "$value": "{color.rose.600}"
+        },
+        "700": {
+          "$type": "color",
+          "$value": "{color.rose.700}"
+        },
+        "800": {
+          "$type": "color",
+          "$value": "{color.rose.800}"
+        },
+        "900": {
+          "$type": "color",
+          "$value": "{color.rose.900}"
+        }
+      },
+      "secondary": {
+        "50": {
+          "$type": "color",
+          "$value": "{color.teal.50}"
+        },
+        "100": {
+          "$type": "color",
+          "$value": "{color.teal.100}"
+        },
+        "200": {
+          "$type": "color",
+          "$value": "{color.teal.200}"
+        },
+        "300": {
+          "$type": "color",
+          "$value": "{color.teal.300}"
+        },
+        "400": {
+          "$type": "color",
+          "$value": "{color.teal.400}"
+        },
+        "500": {
+          "$type": "color",
+          "$value": "{color.teal.500}"
+        },
+        "600": {
+          "$type": "color",
+          "$value": "{color.teal.600}"
+        },
+        "700": {
+          "$type": "color",
+          "$value": "{color.teal.700}"
+        },
+        "800": {
+          "$type": "color",
+          "$value": "{color.teal.800}"
+        },
+        "900": {
+          "$type": "color",
+          "$value": "{color.teal.900}"
+        }
+      }
+    }
   }
 }
