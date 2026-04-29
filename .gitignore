@@ -72,3 +72,4 @@ code-review-graph.zip
 # Created by scripts/package-plugin.ts; published to Azure Artifacts,
 # never committed to the repo.
 btech-token-studio/release/
+__pycache__/
