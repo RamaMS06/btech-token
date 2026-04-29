@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "btech-tokens-bspace"
-version = "1.0.0-rc.9"
+version = "1.0.0-rc.8"
 description = "BTech design tokens — bspace tenant — auto-generated, do not edit"
 readme = "README.md"
 requires-python = ">=3.10"
