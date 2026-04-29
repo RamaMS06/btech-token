@@ -23,43 +23,43 @@
       "primary": {
         "50": {
           "$type": "color",
-          "$value": "{color.orange.50}"
+          "$value": "{color.indigo.50}"
         },
         "100": {
           "$type": "color",
-          "$value": "{color.orange.100}"
+          "$value": "{color.indigo.100}"
         },
         "200": {
           "$type": "color",
-          "$value": "{color.orange.200}"
+          "$value": "{color.indigo.200}"
         },
         "300": {
           "$type": "color",
-          "$value": "{color.orange.300}"
+          "$value": "{color.indigo.300}"
         },
         "400": {
           "$type": "color",
-          "$value": "{color.orange.400}"
+          "$value": "{color.indigo.400}"
         },
         "500": {
           "$type": "color",
-          "$value": "{color.orange.500}"
+          "$value": "{color.indigo.500}"
         },
         "600": {
           "$type": "color",
-          "$value": "{color.orange.600}"
+          "$value": "{color.indigo.600}"
         },
         "700": {
           "$type": "color",
-          "$value": "{color.orange.700}"
+          "$value": "{color.indigo.700}"
         },
         "800": {
           "$type": "color",
-          "$value": "{color.orange.800}"
+          "$value": "{color.indigo.800}"
         },
         "900": {
           "$type": "color",
-          "$value": "{color.orange.900}"
+          "$value": "{color.indigo.900}"
         }
       },
       "secondary": {
