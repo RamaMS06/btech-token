@@ -295,7 +295,9 @@ function bump(current: string, type: BumpType): string {
       const n = parseInt(prerelease.split('.')[1], 10) + 1;
       return `${base}-rc.${n}`;
     }
-    return `${base}-rc.1`;
+    // From a stable release: bump patch first, then start rc.1
+    // e.g. 1.0.0 → 1.0.1-rc.1 (not 1.0.0-rc.1)
+    return `${major}.${minor}.${patch + 1}-rc.1`;
   }
   if (type === 'major') return `${major + 1}.0.0`;
   if (type === 'minor') return `${major}.${minor + 1}.0`;
