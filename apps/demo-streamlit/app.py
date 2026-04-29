@@ -1,14 +1,23 @@
 """
 BTech Design System — Streamlit Token Demo
 Mirrors the React / Vue demo apps: same tabs, same token categories,
-same visual previews. Reads token sources directly — no published
-package needed.
+same visual previews.
+
+Two token sources are available:
+  1. btech_tokens package — generated from sources, dot-access API
+  2. token_loader (fallback) — reads DTCG JSON directly, supports dark/tenant
 
 Run:
     streamlit run apps/demo-streamlit/app.py
 """
 import streamlit as st
 from token_loader import build_token_map, available_tenants
+
+try:
+    import btech_tokens as _btech
+    _BT_AVAILABLE = True
+except ImportError:
+    _BT_AVAILABLE = False
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -464,75 +473,114 @@ def examples_html() -> str:
     </div>"""
 
     cm = lambda s: f'<span style="color:#94a3b8">{s}</span>'
-    st_color = lambda s: f'<span style="color:#86efac">{s}</span>'
+    sc = lambda s: f'<span style="color:#86efac">{s}</span>'
     fn = lambda s: f'<span style="color:#7dd3fc">{s}</span>'
+    kw = lambda s: f'<span style="color:#c084fc">{s}</span>'
 
-    # Pre-resolve values outside f-strings to avoid nested quote escaping issues
+    # Pre-resolve token values
     _bg    = t("color.background.surface.raised",  "#ffffff")
     _brand = t("color.background.primary.default", "#15803d")
-    _sp    = t("spacing.md",               "12px")
-    _rad   = t("radius.md",                "12px")
+    _sp    = t("spacing.md",                       "16px")
+    _rad   = t("radius.md",                        "8px")
 
-    py_code = (
-        cm("# Install (once btech-tokens is published to PyPI)") + "\n" +
-        cm("# pip install btech-tokens") + "\n\n" +
-        cm("# ── Until then: read directly from sources ──────────────────") + "\n" +
+    # Live values from btech_tokens (or fallbacks)
+    if _BT_AVAILABLE:
+        _sp_int  = _btech.BTechSpacing.md
+        _rad_int = _btech.BTechRadius.md
+        _sp_lg   = _btech.BTechSpacing.lg
+        _bg_val  = _btech.BTechColor.background.surface.raised
+        _br_val  = _btech.BTechColor.background.primary.default
+    else:
+        _sp_int, _rad_int, _sp_lg = 16, 8, 24
+        _bg_val, _br_val = "#ffffff", "#15803d"
+
+    # ── Code block 1: btech_tokens package (dot-access) ─────────────────────
+    bt_code = (
+        cm("# pip install -e packages/tokens/platforms/python/") + "\n" +
+        fn("from") + " btech_tokens " + fn("import") + " (\n" +
+        "    token, BTechColor, BTechSpacing,\n" +
+        "    BTechRadius, BTechShadow, BTechTypography\n" +
+        ")\n\n" +
+        cm("# ── Dot-access (type-safe, IDE autocomplete) ───────────────") + "\n" +
+        "bg     = BTechColor.background.surface.raised   " + cm("# " + str(_bg_val))  + "\n" +
+        "brand  = BTechColor.background.primary.default  " + cm("# " + str(_br_val))  + "\n" +
+        "sp_md  = BTechSpacing.md                        " + cm("# " + str(_sp_int)  + " (int px)") + "\n" +
+        "rad_md = BTechRadius.md                         " + cm("# " + str(_rad_int) + " (int px)") + "\n" +
+        "shadow = BTechShadow.elevation.md               " + cm("# CSS box-shadow string") + "\n" +
+        "font   = BTechTypography.family.sans            " + cm("# Inter, system-ui, ...") + "\n\n" +
+        cm("# ── Path-based lookup ──────────────────────────────────────") + "\n" +
+        "val = " + fn("token") + "(" + sc("'color.background.primary.default'") + ")  " + cm("# " + str(_br_val)) + "\n" +
+        "sp  = " + fn("token") + "(" + sc("'spacing.md'") + ")                        " + cm("# " + str(_sp_int) + "px") + "\n"
+    )
+
+    # ── Code block 2: token_loader (dark + tenant support) ───────────────────
+    loader_code = (
+        cm("# No install needed — reads DTCG JSON sources directly") + "\n" +
         fn("from") + " token_loader " + fn("import") + " build_token_map\n\n" +
-        "tokens = " + fn("build_token_map") + "(" + st_color("tenant") + fn("=") + st_color(repr(tenant)) +
-        ", " + st_color("dark") + fn("=") + st_color("False") + ")\n\n" +
+        "tokens = " + fn("build_token_map") + "(" + sc("tenant") + fn("=") + sc(repr(tenant)) +
+        ", " + sc("dark") + fn("=") + sc("False") + ")\n\n" +
         cm("# Access resolved values") + "\n" +
-        "bg       = tokens[" + st_color("'color.background.surface.raised'")  + "]  " + cm("# " + _bg)    + "\n" +
-        "brand    = tokens[" + st_color("'color.background.primary.default'") + "]  " + cm("# " + _brand) + "\n" +
-        "sp_md    = tokens[" + st_color("'spacing.md'")              + "]         " + cm("# " + _sp) + "\n" +
-        "radius   = tokens[" + st_color("'radius.md'")               + "]          " + cm("# " + _rad) + "\n" +
-        "shadow   = tokens[" + st_color("'shadow.elevation.md'")     + "]  " + cm("# CSS box-shadow string") + "\n\n" +
-        cm("# Dark mode — just pass dark=True") + "\n" +
-        "dark_tokens = " + fn("build_token_map") + "(" + st_color("dark") + fn("=") + st_color("True") + ")\n\n" +
-        cm("# Tenant variant") + "\n" +
-        "bspace = " + fn("build_token_map") + "(" + st_color("tenant") + fn("=") + st_color("'bspace'") + ")\n"
+        "bg    = tokens[" + sc("'color.background.surface.raised'")  + "]  " + cm("# " + str(_bg_val)) + "\n" +
+        "brand = tokens[" + sc("'color.background.primary.default'") + "]  " + cm("# " + str(_br_val)) + "\n" +
+        "sp_md = tokens[" + sc("'spacing.md'")                       + "]          " + cm("# " + str(_sp_int) + "px") + "\n\n" +
+        cm("# ── Dark mode ──────────────────────────────────────────────") + "\n" +
+        "dark  = " + fn("build_token_map") + "(" + sc("dark") + fn("=") + sc("True") + ")\n\n" +
+        cm("# ── Tenant override ─────────────────────────────────────────") + "\n" +
+        "bjb   = " + fn("build_token_map") + "(" + sc("tenant") + fn("=") + sc("'bjb'") + ")\n"
     )
 
-    streamlit_code = (
-        f"{fn('import')} streamlit {fn('as')} st\n"
-        f"{fn('from')} token_loader {fn('import')} build_token_map\n\n"
-        f"T = {fn('build_token_map')}({st_color('tenant')}{fn('=')}{st_color(repr(tenant))})\n\n"
-        f"{cm('# Inject CSS variables for consistent theming')}\n"
-        f"st.{fn('markdown')}(f\"\"\"\n"
-        f"  &lt;style&gt;\n"
-        f"    .my-card {{\n"
-        f"      background: {{T[{st_color(repr('color.background.surface.raised'))}]}};\n"
-        f"      border-radius: {{T[{st_color(repr('radius.md'))}]}};\n"
-        f"      padding: {{T[{st_color(repr('spacing.md'))}]}};\n"
-        f"      box-shadow: {{T[{st_color(repr('shadow.elevation.md'))}]}};\n"
-        f"    }}\n"
-        f"  &lt;/style&gt;\n"
-        f"\"\"\", {st_color('unsafe_allow_html')}{fn('=')}{st_color('True')})\n\n"
-        f"{cm('# Render a themed component')}\n"
-        f"st.{fn('markdown')}(\n"
-        f"  f'&lt;div class=\"my-card\"&gt;Themed content&lt;/div&gt;',\n"
-        f"  {st_color('unsafe_allow_html')}{fn('=')}{st_color('True')}\n"
-        f")\n"
+    # ── Code block 3: Streamlit CSS injection ────────────────────────────────
+    st_code = (
+        fn("import") + " streamlit " + fn("as") + " st\n" +
+        fn("from") + " btech_tokens " + fn("import") + " BTechColor, BTechSpacing, BTechRadius\n\n" +
+        cm("# Inject CSS using live dot-access token values") + "\n" +
+        "css = f\"\"\"\n" +
+        "  &lt;style&gt;\n" +
+        "    .card {{\n" +
+        "      background:    {{BTechColor.background.surface.raised}};\n" +
+        "      border-radius: {{BTechRadius.md}}px;\n" +
+        "      padding:       {{BTechSpacing.lg}}px;\n" +
+        "    }}\n" +
+        "  &lt;/style&gt;\n" +
+        "\"\"\"\n\n" +
+        "st." + fn("markdown") + "(css, " + sc("unsafe_allow_html") + fn("=") + sc("True") + ")\n" +
+        "st." + fn("markdown") + "(\n" +
+        "  " + sc("'&lt;div class=\"card\"&gt;Themed!&lt;/div&gt;'") + ",\n" +
+        "  " + sc("unsafe_allow_html") + fn("=") + sc("True") + "\n" +
+        ")\n"
     )
+
+    clr_info    = t('color.background.info.subtle','#e0f2fe')
+    txt_info    = t('color.text.info.base','#0369a1')
+    clr_success = t('color.background.success.subtle','#dcfce7')
+    txt_success = t('color.text.success.base','#15803d')
+    clr_warn    = t('color.background.warning.subtle','#fff7ed')
+    txt_warn    = t('color.text.warning.base','#ea580c')
 
     return f"""
     <div class="ex-wrap">
       {preview_card}
-      <div class="ex-grid">
+      <div class="ex-grid" style="grid-template-columns:1fr 1fr 1fr">
         <div class="ex-card">
           <div class="ex-head">
-            <span class="lang-badge" style="background:{t('color.background.info.subtle','#e0f2fe')};
-                  color:{t('color.text.info.base','#0369a1')}">Python</span>
-            <span class="ex-desc">token_loader — direct JSON access, no package install</span>
+            <span class="lang-badge" style="background:{clr_success};color:{txt_success}">btech_tokens</span>
+            <span class="ex-desc">Generated package — dot-access + token()</span>
           </div>
-          <pre class="ex-code"><code>{py_code}</code></pre>
+          <pre class="ex-code"><code>{bt_code}</code></pre>
         </div>
         <div class="ex-card">
           <div class="ex-head">
-            <span class="lang-badge" style="background:{t('color.background.success.subtle','#dcfce7')};
-                  color:{t('color.text.success.base','#15803d')}">Streamlit</span>
-            <span class="ex-desc">Inject token values as CSS in your components</span>
+            <span class="lang-badge" style="background:{clr_info};color:{txt_info}">token_loader</span>
+            <span class="ex-desc">Direct JSON — dark mode &amp; tenant support</span>
           </div>
-          <pre class="ex-code"><code>{streamlit_code}</code></pre>
+          <pre class="ex-code"><code>{loader_code}</code></pre>
+        </div>
+        <div class="ex-card">
+          <div class="ex-head">
+            <span class="lang-badge" style="background:{clr_warn};color:{txt_warn}">Streamlit</span>
+            <span class="ex-desc">CSS injection with dot-access token values</span>
+          </div>
+          <pre class="ex-code"><code>{st_code}</code></pre>
         </div>
       </div>
     </div>"""
@@ -580,9 +628,22 @@ tab_btns = "".join(
 st.markdown(f'<div class="ds-wrap">', unsafe_allow_html=True)
 
 # Topbar (static display only — interaction via st widgets below)
+_pkg_badge = (
+    f'<span style="font-size:11px;padding:2px 8px;border-radius:20px;'
+    f'background:{t("color.background.success.subtle","#dcfce7")};'
+    f'color:{t("color.text.success.base","#15803d")};font-weight:600">'
+    f'btech_tokens v{_btech.__version__}</span>'
+    if _BT_AVAILABLE else
+    f'<span style="font-size:11px;padding:2px 8px;border-radius:20px;'
+    f'background:{t("color.background.warning.subtle","#fff7ed")};'
+    f'color:{t("color.text.warning.base","#ea580c")}">token_loader only</span>'
+)
 st.markdown(f"""
 <div class="topbar">
   <div class="tabs">{tab_btns}</div>
+  <div style="display:flex;align-items:center;gap:8px">
+    {_pkg_badge}
+  </div>
 </div>
 """, unsafe_allow_html=True)
 

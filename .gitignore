@@ -46,3 +46,4 @@ Thumbs.db
 
 # ── Changesets ────────────────────────────────────────────────────────────────
 .changeset/*.js
+apps/demo-streamlit/.venv/
