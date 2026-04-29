@@ -1,6 +1,6 @@
 {
   "name": "@btech/tokens-bspace",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "BTech design tokens for bspace — auto-generated, do not edit",
   "exports": {
     "./styles.css": "./dist/styles.css"
