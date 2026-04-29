@@ -14,18 +14,18 @@ export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, bt
 
 /// Brand primary color swatch (bspace) — btechColorBrandPrimary[500]
 const MaterialColor btechColorBrandPrimary = MaterialColor(
-  0xFF8A59C2,
+  0xFFF8981D,
   <int, Color>{
-    50: Color(0xFFF3EEF9),
-    100: Color(0xFFE8DEF3),
-    200: Color(0xFFD0BDE7),
-    300: Color(0xFFB99BDA),
-    400: Color(0xFFA17ACE),
-    500: Color(0xFF8A59C2),
-    600: Color(0xFF6E479B),
-    700: Color(0xFF533574),
-    800: Color(0xFF37244E),
-    900: Color(0xFF1C1227),
+    50: Color(0xFFF9F6F1),
+    100: Color(0xFFF6EFE8),
+    200: Color(0xFFF0E3D3),
+    300: Color(0xFFEBD2B1),
+    400: Color(0xFFEBB876),
+    500: Color(0xFFF8981D),
+    600: Color(0xFFCE790C),
+    700: Color(0xFF93580C),
+    800: Color(0xFF603B0A),
+    900: Color(0xFF352107),
   },
 );
 
@@ -92,9 +92,9 @@ const BTechColorTheme btechColor = BTechColorTheme(
     overlay: Color(0xCC181C20),
   ),
   brand: BTechColorBrand(
-    primarySubtle: Color(0xFFF3EEF9),
-    primary: Color(0xFF8A59C2),
-    primaryBold: Color(0xFF6E479B),
+    primarySubtle: Color(0xFFF9F6F1),
+    primary: Color(0xFFF8981D),
+    primaryBold: Color(0xFFCE790C),
     secondarySubtle: Color(0xFFFDF9E7),
     secondary: Color(0xFFEEC513),
     secondaryBold: Color(0xFFBE9E0F),
@@ -165,9 +165,9 @@ const BTechColorTheme _btechColorDark = BTechColorTheme(
     overlay: Color(0xCC181C20),
   ),
   brand: BTechColorBrand(
-    primarySubtle: Color(0xFF37244E),
-    primary: Color(0xFFA17ACE),
-    primaryBold: Color(0xFF8A59C2),
+    primarySubtle: Color(0xFF603B0A),
+    primary: Color(0xFFEBB876),
+    primaryBold: Color(0xFFF8981D),
     secondarySubtle: Color(0xFF5F4F08),
     secondary: Color(0xFFF1D142),
     secondaryBold: Color(0xFFEEC513),
