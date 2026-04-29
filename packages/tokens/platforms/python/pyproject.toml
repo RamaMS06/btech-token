@@ -10,7 +10,12 @@ requires-python = ">=3.10"
 license         = { text = "MIT" }
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "streamlit>=1.35"]
+# Core token access — no extra deps needed.
+# Streamlit adapter:  pip install btech-tokens[streamlit]
+# Full demo:          pip install btech-tokens[demo]
+streamlit = ["streamlit>=1.35"]
+demo      = ["streamlit>=1.35", "pandas>=2.0", "plotly>=5.0"]
+dev       = ["pytest>=7", "streamlit>=1.35", "pandas>=2.0", "plotly>=5.0"]
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -30,6 +30,9 @@ from .stroke       import BTechStroke
 from .shadow       import BTechShadow
 from .typography   import BTechTypography
 
+# Streamlit adapter — imported lazily to avoid hard-dep on streamlit
+# Use: from btech_tokens.streamlit_adapter import inject_theme, get_streamlit_config
+
 __all__ = [
     'token',
     'BTechColor',
