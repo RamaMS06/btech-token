@@ -19,6 +19,7 @@ import {
 } from './generators/font-registry-generator.js';
 import { generateUtilitiesCss } from './generators/web/web-utilities-generator.js';
 import { generateFlutterTenantFiles } from './generators/flutter/flutter-tenant-format.js';
+import { generatePythonFiles } from './generators/python/python-generator.js';
 
 // =============================================================================
 // Register custom Style Dictionary transforms
@@ -176,6 +177,9 @@ function buildResolvedBaseMap(): Record<string, string> {
     generateFlutterTenantFiles(resolvedBaseMap);
     console.log('  Flutter — tenant files generated');
 
+    // Generate Python package (btech_tokens) under platforms/python/btech_tokens/
+    generatePythonFiles(data);
+
     // Generate multi-file TypeScript output (framework-agnostic, in platforms/web/src/)
     generateTsFiles(data, WEB_SRC);
     generateWebFontRegistry(`${WEB_SRC}/typography`, fontRegistry);
@@ -208,6 +212,7 @@ function buildResolvedBaseMap(): Record<string, string> {
     console.log('\n pnpm generate complete\n');
     console.log('  Flutter → packages/tokens/platforms/flutter/lib/src/');
     console.log('  Web     → packages/tokens/platforms/web/src/ + dist/');
+    console.log('  Python  → packages/tokens/platforms/python/btech_tokens/');
     console.log('');
   }
 

@@ -34,19 +34,19 @@ def t(key: str, fallback: str = "") -> str:
     return T.get(key, fallback)
 
 
-# ── Theme values ──────────────────────────────────────────────────────────────
-BG_PAGE    = t("color.bg.subtle",    "#f8fafc")
-BG_PRIMARY = t("color.bg.primary",   "#ffffff")
-BG_SUBTLER = t("color.bg.subtler",   "#f1f5f9")
-TEXT_PRI   = t("color.text.primary", "#1e293b")
-TEXT_SEC   = t("color.text.secondary","#64748b")
-TEXT_TER   = t("color.text.tertiary", "#94a3b8")
-BORDER     = t("color.border.primary","#e2e8f0")
-BRAND      = t("color.brand.primary-default", "#4f46e5")
-BRAND_BOLD = t("color.brand.primary-bold",    "#3730a3")
+# ── Theme values (mapped to actual DTCG token paths) ─────────────────────────
+BG_PAGE    = t("color.background.surface.subtle",  "#f8fafc")
+BG_PRIMARY = t("color.background.surface.raised",  "#ffffff")
+BG_SUBTLER = t("color.background.neutral.subtle",  "#f1f5f9")
+TEXT_PRI   = t("color.text.neutral.default",       "#1e293b")
+TEXT_SEC   = t("color.text.neutral.subtle",        "#64748b")
+TEXT_TER   = t("color.text.neutral.disabled",      "#94a3b8")
+BORDER     = t("color.stroke.neutral.default",     "#e2e8f0")
+BRAND      = t("color.background.primary.default", "#4f46e5")
+BRAND_BOLD = t("color.background.primary.bolder",  "#3730a3")
 RADIUS_MD  = t("radius.md", "12px")
 RADIUS_SM  = t("radius.sm", "8px")
-SPACE_MD   = t("spacing.md", "12px")
+SPACE_MD   = t("spacing.md", "16px")
 SPACE_SM   = t("spacing.sm", "8px")
 FONT_SANS  = t("typography.fontFamily.sans", "system-ui, sans-serif")
 
@@ -102,9 +102,9 @@ st.markdown(f"""
   }}
   .tab-btn:hover {{ background: {BG_SUBTLER}; color: {TEXT_PRI}; }}
   .tab-btn.active {{
-    background: {t('color.ext.success-subtler','#dcfce7')};
-    color: {t('color.text.success','#15803d')};
-    border-color: {t('color.ext.success-subtle','#bbf7d0')};
+    background: {t('color.background.success.subtle','#dcfce7')};
+    color: {t('color.text.success.base','#15803d')};
+    border-color: {t('color.background.primary.subtle','#f0fdf4')};
     font-weight: 600;
   }}
 
@@ -135,7 +135,7 @@ st.markdown(f"""
     transition: background 0.1s;
   }}
   .table-row:last-child {{ border-bottom: none; }}
-  .table-row.even {{ background: {t('color.bg.subtle','#f8fafc')}; }}
+  .table-row.even {{ background: {t('color.background.surface.subtle','#f8fafc')}; }}
   .col-preview {{ width: 68px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }}
   .col-usage   {{ flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }}
   .col-value   {{ width: 180px; flex-shrink: 0; }}
@@ -187,7 +187,7 @@ st.markdown(f"""
   .ex-head {{
     padding: 10px 16px;
     border-bottom: 1px solid {BORDER};
-    background: {t('color.bg.subtle','#f8fafc')};
+    background: {t('color.background.surface.subtle','#f8fafc')};
     display: flex;
     align-items: center;
     gap: 8px;
@@ -241,63 +241,60 @@ st.markdown(f"""
 
 # ── Token data table ───────────────────────────────────────────────────────────
 TOKENS = [
-    # ── Color: Background ──
-    ("color", "color", "color.bg.primary",   "token('color.bg.primary')",   t("color.bg.primary"),   "Background"),
-    ("color", "color", "color.bg.secondary", "token('color.bg.secondary')", t("color.bg.secondary"), "Background"),
-    ("color", "color", "color.bg.tertiary",  "token('color.bg.tertiary')",  t("color.bg.tertiary"),  "Background"),
-    ("color", "color", "color.bg.inverse",   "token('color.bg.inverse')",   t("color.bg.inverse"),   "Background"),
-    ("color", "color", "color.bg.subtle",    "token('color.bg.subtle')",    t("color.bg.subtle"),    "Background"),
-    ("color", "color", "color.bg.subtler",   "token('color.bg.subtler')",   t("color.bg.subtler"),   "Background"),
-    ("color", "color", "color.bg.subtlest",  "token('color.bg.subtlest')",  t("color.bg.subtlest"),  "Background"),
+    # ── Color: Surface / Background ──
+    ("color", "color", "color.background.surface.raised",   "token('color.background.surface.raised')",   t("color.background.surface.raised"),   "Background"),
+    ("color", "color", "color.background.surface.default",  "token('color.background.surface.default')",  t("color.background.surface.default"),  "Background"),
+    ("color", "color", "color.background.surface.subtle",   "token('color.background.surface.subtle')",   t("color.background.surface.subtle"),   "Background"),
+    ("color", "color", "color.background.neutral.default",  "token('color.background.neutral.default')",  t("color.background.neutral.default"),  "Background"),
+    ("color", "color", "color.background.neutral.subtle",   "token('color.background.neutral.subtle')",   t("color.background.neutral.subtle"),   "Background"),
+    ("color", "color", "color.background.neutral.bolder",   "token('color.background.neutral.bolder')",   t("color.background.neutral.bolder"),   "Background"),
+    ("color", "color", "color.background.primary.subtle",   "token('color.background.primary.subtle')",   t("color.background.primary.subtle"),   "Background"),
+    ("color", "color", "color.background.primary.default",  "token('color.background.primary.default')",  t("color.background.primary.default"),  "Background"),
+    ("color", "color", "color.background.primary.bolder",   "token('color.background.primary.bolder')",   t("color.background.primary.bolder"),   "Background"),
     # ── Color: Text ──
-    ("color", "color", "color.text.primary",   "token('color.text.primary')",   t("color.text.primary"),   "Text"),
-    ("color", "color", "color.text.secondary", "token('color.text.secondary')", t("color.text.secondary"), "Text"),
-    ("color", "color", "color.text.tertiary",  "token('color.text.tertiary')",  t("color.text.tertiary"),  "Text"),
-    ("color", "color", "color.text.inverse",   "token('color.text.inverse')",   t("color.text.inverse"),   "Text"),
-    ("color", "color", "color.text.disabled",  "token('color.text.disabled')",  t("color.text.disabled"),  "Text"),
-    ("color", "color", "color.text.link",      "token('color.text.link')",      t("color.text.link"),      "Text"),
-    ("color", "color", "color.text.success",   "token('color.text.success')",   t("color.text.success"),   "Text"),
-    ("color", "color", "color.text.error",     "token('color.text.error')",     t("color.text.error"),     "Text"),
-    ("color", "color", "color.text.warning",   "token('color.text.warning')",   t("color.text.warning"),   "Text"),
-    ("color", "color", "color.text.info",      "token('color.text.info')",      t("color.text.info"),      "Text"),
+    ("color", "color", "color.text.neutral.default",  "token('color.text.neutral.default')",  t("color.text.neutral.default"),  "Text"),
+    ("color", "color", "color.text.neutral.subtle",   "token('color.text.neutral.subtle')",   t("color.text.neutral.subtle"),   "Text"),
+    ("color", "color", "color.text.neutral.disabled", "token('color.text.neutral.disabled')", t("color.text.neutral.disabled"), "Text"),
+    ("color", "color", "color.text.neutral.inverse",  "token('color.text.neutral.inverse')",  t("color.text.neutral.inverse"),  "Text"),
+    ("color", "color", "color.text.danger.base",      "token('color.text.danger.base')",      t("color.text.danger.base"),      "Text"),
+    ("color", "color", "color.text.success.base",     "token('color.text.success.base')",     t("color.text.success.base"),     "Text"),
+    ("color", "color", "color.text.warning.base",     "token('color.text.warning.base')",     t("color.text.warning.base"),     "Text"),
+    ("color", "color", "color.text.info.base",        "token('color.text.info.base')",        t("color.text.info.base"),        "Text"),
     # ── Color: Icon ──
-    ("color", "color", "color.icon.primary",   "token('color.icon.primary')",   t("color.icon.primary"),   "Icon"),
-    ("color", "color", "color.icon.secondary", "token('color.icon.secondary')", t("color.icon.secondary"), "Icon"),
-    ("color", "color", "color.icon.link",      "token('color.icon.link')",      t("color.icon.link"),      "Icon"),
-    ("color", "color", "color.icon.success",   "token('color.icon.success')",   t("color.icon.success"),   "Icon"),
-    ("color", "color", "color.icon.error",     "token('color.icon.error')",     t("color.icon.error"),     "Icon"),
-    ("color", "color", "color.icon.warning",   "token('color.icon.warning')",   t("color.icon.warning"),   "Icon"),
-    ("color", "color", "color.icon.info",      "token('color.icon.info')",      t("color.icon.info"),      "Icon"),
-    # ── Color: Border ──
-    ("color", "color", "color.border.primary",   "token('color.border.primary')",   t("color.border.primary"),   "Border"),
-    ("color", "color", "color.border.secondary", "token('color.border.secondary')", t("color.border.secondary"), "Border"),
-    ("color", "color", "color.border.tertiary",  "token('color.border.tertiary')",  t("color.border.tertiary"),  "Border"),
-    ("color", "color", "color.border.inverse",   "token('color.border.inverse')",   t("color.border.inverse"),   "Border"),
-    ("color", "color", "color.border.disabled",  "token('color.border.disabled')",  t("color.border.disabled"),  "Border"),
-    # ── Color: Brand ──
-    ("color", "color", "color.brand.primary-subtle",  "token('color.brand.primary-subtle')",  t("color.brand.primary-subtle"),  "Brand"),
-    ("color", "color", "color.brand.primary-default", "token('color.brand.primary')",         t("color.brand.primary-default"), "Brand"),
-    ("color", "color", "color.brand.primary-bold",    "token('color.brand.primary-bold')",    t("color.brand.primary-bold"),    "Brand"),
-    ("color", "color", "color.brand.secondary-subtle","token('color.brand.secondary-subtle')",t("color.brand.secondary-subtle"),"Brand"),
-    ("color", "color", "color.brand.secondary-default","token('color.brand.secondary')",      t("color.brand.secondary-default"),"Brand"),
-    ("color", "color", "color.brand.secondary-bold",  "token('color.brand.secondary-bold')",  t("color.brand.secondary-bold"),  "Brand"),
-    # ── Color: Extended ──
-    ("color", "color", "color.ext.success-subtler", "token('color.ext.success-subtler')", t("color.ext.success-subtler"), "Extended"),
-    ("color", "color", "color.ext.success-subtle",  "token('color.ext.success-subtle')",  t("color.ext.success-subtle"),  "Extended"),
-    ("color", "color", "color.ext.success",         "token('color.ext.success')",         t("color.ext.success"),         "Extended"),
-    ("color", "color", "color.ext.success-bold",    "token('color.ext.success-bold')",    t("color.ext.success-bold"),    "Extended"),
-    ("color", "color", "color.ext.info-subtler",    "token('color.ext.info-subtler')",    t("color.ext.info-subtler"),    "Extended"),
-    ("color", "color", "color.ext.info-subtle",     "token('color.ext.info-subtle')",     t("color.ext.info-subtle"),     "Extended"),
-    ("color", "color", "color.ext.info",            "token('color.ext.info')",            t("color.ext.info"),            "Extended"),
-    ("color", "color", "color.ext.info-bold",       "token('color.ext.info-bold')",       t("color.ext.info-bold"),       "Extended"),
-    ("color", "color", "color.ext.warning-subtler", "token('color.ext.warning-subtler')", t("color.ext.warning-subtler"), "Extended"),
-    ("color", "color", "color.ext.warning-subtle",  "token('color.ext.warning-subtle')",  t("color.ext.warning-subtle"),  "Extended"),
-    ("color", "color", "color.ext.warning",         "token('color.ext.warning')",         t("color.ext.warning"),         "Extended"),
-    ("color", "color", "color.ext.warning-bold",    "token('color.ext.warning-bold')",    t("color.ext.warning-bold"),    "Extended"),
-    ("color", "color", "color.ext.error-subtler",   "token('color.ext.error-subtler')",   t("color.ext.error-subtler"),   "Extended"),
-    ("color", "color", "color.ext.error-subtle",    "token('color.ext.error-subtle')",    t("color.ext.error-subtle"),    "Extended"),
-    ("color", "color", "color.ext.error",           "token('color.ext.error')",           t("color.ext.error"),           "Extended"),
-    ("color", "color", "color.ext.error-bold",      "token('color.ext.error-bold')",      t("color.ext.error-bold"),      "Extended"),
+    ("color", "color", "color.icon.neutral.default",  "token('color.icon.neutral.default')",  t("color.icon.neutral.default"),  "Icon"),
+    ("color", "color", "color.icon.neutral.subtle",   "token('color.icon.neutral.subtle')",   t("color.icon.neutral.subtle"),   "Icon"),
+    ("color", "color", "color.icon.neutral.inverse",  "token('color.icon.neutral.inverse')",  t("color.icon.neutral.inverse"),  "Icon"),
+    ("color", "color", "color.icon.success.base",     "token('color.icon.success.base')",     t("color.icon.success.base"),     "Icon"),
+    ("color", "color", "color.icon.danger.base",      "token('color.icon.danger.base')",      t("color.icon.danger.base"),      "Icon"),
+    ("color", "color", "color.icon.warning.base",     "token('color.icon.warning.base')",     t("color.icon.warning.base"),     "Icon"),
+    ("color", "color", "color.icon.info.base",        "token('color.icon.info.base')",        t("color.icon.info.base"),        "Icon"),
+    # ── Color: Stroke / Border ──
+    ("color", "color", "color.stroke.neutral.default",  "token('color.stroke.neutral.default')",  t("color.stroke.neutral.default"),  "Border"),
+    ("color", "color", "color.stroke.neutral.strong",   "token('color.stroke.neutral.strong')",   t("color.stroke.neutral.strong"),   "Border"),
+    ("color", "color", "color.stroke.neutral.subtle",   "token('color.stroke.neutral.subtle')",   t("color.stroke.neutral.subtle"),   "Border"),
+    ("color", "color", "color.stroke.primary.default",  "token('color.stroke.primary.default')",  t("color.stroke.primary.default"),  "Border"),
+    ("color", "color", "color.stroke.primary.bolder",   "token('color.stroke.primary.bolder')",   t("color.stroke.primary.bolder"),   "Border"),
+    # ── Color: Brand (primary interactive) ──
+    ("color", "color", "color.background.primary.subtle",   "token('color.background.primary.subtle')",   t("color.background.primary.subtle"),   "Brand"),
+    ("color", "color", "color.background.primary.default",  "token('color.background.primary.default')",  t("color.background.primary.default"),  "Brand"),
+    ("color", "color", "color.background.primary.hover",    "token('color.background.primary.hover')",    t("color.background.primary.hover"),    "Brand"),
+    ("color", "color", "color.background.primary.bolder",   "token('color.background.primary.bolder')",   t("color.background.primary.bolder"),   "Brand"),
+    ("color", "color", "color.background.secondary.subtle", "token('color.background.secondary.subtle')", t("color.background.secondary.subtle"), "Brand"),
+    ("color", "color", "color.background.secondary.default","token('color.background.secondary.default')",t("color.background.secondary.default"),"Brand"),
+    ("color", "color", "color.background.secondary.bolder", "token('color.background.secondary.bolder')", t("color.background.secondary.bolder"), "Brand"),
+    # ── Color: Semantic states ──
+    ("color", "color", "color.background.success.subtle",  "token('color.background.success.subtle')",  t("color.background.success.subtle"),  "Extended"),
+    ("color", "color", "color.background.success.default", "token('color.background.success.default')", t("color.background.success.default"), "Extended"),
+    ("color", "color", "color.background.success.bolder",  "token('color.background.success.bolder')",  t("color.background.success.bolder"),  "Extended"),
+    ("color", "color", "color.background.info.subtle",     "token('color.background.info.subtle')",     t("color.background.info.subtle"),     "Extended"),
+    ("color", "color", "color.background.info.default",    "token('color.background.info.default')",    t("color.background.info.default"),    "Extended"),
+    ("color", "color", "color.background.info.bolder",     "token('color.background.info.bolder')",     t("color.background.info.bolder"),     "Extended"),
+    ("color", "color", "color.background.warning.subtle",  "token('color.background.warning.subtle')",  t("color.background.warning.subtle"),  "Extended"),
+    ("color", "color", "color.background.warning.default", "token('color.background.warning.default')", t("color.background.warning.default"), "Extended"),
+    ("color", "color", "color.background.warning.bolder",  "token('color.background.warning.bolder')",  t("color.background.warning.bolder"),  "Extended"),
+    ("color", "color", "color.background.danger.subtle",   "token('color.background.danger.subtle')",   t("color.background.danger.subtle"),   "Extended"),
+    ("color", "color", "color.background.danger.default",  "token('color.background.danger.default')",  t("color.background.danger.default"),  "Extended"),
+    ("color", "color", "color.background.danger.bolder",   "token('color.background.danger.bolder')",   t("color.background.danger.bolder"),   "Extended"),
     # ── Typography ──
     ("typography", "text", "display",    "token('typography.heading.display')", "40px / w700", "Heading",    40, 700),
     ("typography", "text", "h1",         "token('typography.heading.h1')",      "32px / w700", "Heading",    32, 700),
@@ -356,24 +353,24 @@ TOKENS = [
 
 # ── Badge colors ───────────────────────────────────────────────────────────────
 BADGE_MAP = {
-    "Background": (t("color.ext.info-subtler",    "#e0f2fe"), t("color.text.info",    "#0369a1")),
-    "Text":       (t("color.ext.success-subtler", "#dcfce7"), t("color.text.success", "#15803d")),
-    "Icon":       (t("color.ext.success-subtler", "#dcfce7"), t("color.text.success", "#15803d")),
-    "Border":     (t("color.ext.warning-subtler", "#fef9c3"), t("color.text.warning", "#a16207")),
-    "Brand":      (t("color.ext.success-subtle",  "#bbf7d0"), t("color.text.success", "#15803d")),
-    "Extended":   (t("color.ext.info-subtle",     "#bae6fd"), t("color.text.info",    "#0369a1")),
-    "Heading":    (t("color.ext.success-subtler", "#dcfce7"), t("color.text.success", "#15803d")),
-    "Subheading": (t("color.ext.info-subtler",    "#e0f2fe"), t("color.text.info",    "#0369a1")),
-    "Body":       (t("color.ext.warning-subtler", "#fef9c3"), t("color.text.warning", "#a16207")),
-    "Scale":      (t("color.ext.warning-subtler", "#fef9c3"), t("color.text.warning", "#a16207")),
-    "Button":     (t("color.ext.error-subtler",   "#fee2e2"), t("color.text.error",   "#b91c1c")),
-    "Table":      (t("color.ext.error-subtler",   "#fee2e2"), t("color.text.error",   "#b91c1c")),
-    "Elevation":  (t("color.ext.error-subtler",   "#fee2e2"), t("color.text.error",   "#b91c1c")),
+    "Background": (t("color.background.info.subtle",     "#e0f2fe"), t("color.text.info.base",    "#0369a1")),
+    "Text":       (t("color.background.success.subtle",  "#dcfce7"), t("color.text.success.base", "#15803d")),
+    "Icon":       (t("color.background.success.subtle",  "#dcfce7"), t("color.text.success.base", "#15803d")),
+    "Border":     (t("color.background.warning.subtle",  "#fef9c3"), t("color.text.warning.base", "#a16207")),
+    "Brand":      (t("color.background.primary.subtle",  "#f0fdf4"), t("color.text.success.base", "#15803d")),
+    "Extended":   (t("color.background.info.subtle",     "#eff6ff"), t("color.text.info.base",    "#0369a1")),
+    "Heading":    (t("color.background.success.subtle",  "#dcfce7"), t("color.text.success.base", "#15803d")),
+    "Subheading": (t("color.background.info.subtle",     "#e0f2fe"), t("color.text.info.base",    "#0369a1")),
+    "Body":       (t("color.background.warning.subtle",  "#fef9c3"), t("color.text.warning.base", "#a16207")),
+    "Scale":      (t("color.background.warning.subtle",  "#fef9c3"), t("color.text.warning.base", "#a16207")),
+    "Button":     (t("color.background.danger.subtle",   "#fee2e2"), t("color.text.danger.base",  "#b91c1c")),
+    "Table":      (t("color.background.danger.subtle",   "#fee2e2"), t("color.text.danger.base",  "#b91c1c")),
+    "Elevation":  (t("color.background.danger.subtle",   "#fee2e2"), t("color.text.danger.base",  "#b91c1c")),
 }
 
 
 def badge_html(cat: str) -> str:
-    bg, fg = BADGE_MAP.get(cat, (t("color.bg.subtler","#f1f5f9"), TEXT_SEC))
+    bg, fg = BADGE_MAP.get(cat, (t("color.background.neutral.subtle","#f1f5f9"), TEXT_SEC))
     return f'<span class="badge" style="background:{bg};color:{fg}">{cat}</span>'
 
 
@@ -459,7 +456,7 @@ def examples_html() -> str:
                     border-radius:{RADIUS_MD};padding:{SPACE_MD};
                     display:flex;flex-direction:column;gap:8px">
           <p style="margin:0;font-size:11px;color:{TEXT_TER};font-family:monospace">
-            color.ext.* status palette
+            color.background.* status states
           </p>
           {_status_badges()}
         </div>
@@ -471,8 +468,8 @@ def examples_html() -> str:
     fn = lambda s: f'<span style="color:#7dd3fc">{s}</span>'
 
     # Pre-resolve values outside f-strings to avoid nested quote escaping issues
-    _bg    = t("color.bg.primary",         "#ffffff")
-    _brand = t("color.brand.primary-default", "#4f46e5")
+    _bg    = t("color.background.surface.raised",  "#ffffff")
+    _brand = t("color.background.primary.default", "#15803d")
     _sp    = t("spacing.md",               "12px")
     _rad   = t("radius.md",                "12px")
 
@@ -484,8 +481,8 @@ def examples_html() -> str:
         "tokens = " + fn("build_token_map") + "(" + st_color("tenant") + fn("=") + st_color(repr(tenant)) +
         ", " + st_color("dark") + fn("=") + st_color("False") + ")\n\n" +
         cm("# Access resolved values") + "\n" +
-        "bg       = tokens[" + st_color("'color.bg.primary'")        + "]    " + cm("# " + _bg)    + "\n" +
-        "brand    = tokens[" + st_color("'color.brand.primary-default'") + "]  " + cm("# " + _brand) + "\n" +
+        "bg       = tokens[" + st_color("'color.background.surface.raised'")  + "]  " + cm("# " + _bg)    + "\n" +
+        "brand    = tokens[" + st_color("'color.background.primary.default'") + "]  " + cm("# " + _brand) + "\n" +
         "sp_md    = tokens[" + st_color("'spacing.md'")              + "]         " + cm("# " + _sp) + "\n" +
         "radius   = tokens[" + st_color("'radius.md'")               + "]          " + cm("# " + _rad) + "\n" +
         "shadow   = tokens[" + st_color("'shadow.elevation.md'")     + "]  " + cm("# CSS box-shadow string") + "\n\n" +
@@ -503,7 +500,7 @@ def examples_html() -> str:
         f"st.{fn('markdown')}(f\"\"\"\n"
         f"  &lt;style&gt;\n"
         f"    .my-card {{\n"
-        f"      background: {{T[{st_color(repr('color.bg.primary'))}]}};\n"
+        f"      background: {{T[{st_color(repr('color.background.surface.raised'))}]}};\n"
         f"      border-radius: {{T[{st_color(repr('radius.md'))}]}};\n"
         f"      padding: {{T[{st_color(repr('spacing.md'))}]}};\n"
         f"      box-shadow: {{T[{st_color(repr('shadow.elevation.md'))}]}};\n"
@@ -523,16 +520,16 @@ def examples_html() -> str:
       <div class="ex-grid">
         <div class="ex-card">
           <div class="ex-head">
-            <span class="lang-badge" style="background:{t('color.ext.info-subtler','#e0f2fe')};
-                  color:{t('color.text.info','#0369a1')}">Python</span>
+            <span class="lang-badge" style="background:{t('color.background.info.subtle','#e0f2fe')};
+                  color:{t('color.text.info.base','#0369a1')}">Python</span>
             <span class="ex-desc">token_loader — direct JSON access, no package install</span>
           </div>
           <pre class="ex-code"><code>{py_code}</code></pre>
         </div>
         <div class="ex-card">
           <div class="ex-head">
-            <span class="lang-badge" style="background:{t('color.ext.success-subtler','#dcfce7')};
-                  color:{t('color.text.success','#15803d')}">Streamlit</span>
+            <span class="lang-badge" style="background:{t('color.background.success.subtle','#dcfce7')};
+                  color:{t('color.text.success.base','#15803d')}">Streamlit</span>
             <span class="ex-desc">Inject token values as CSS in your components</span>
           </div>
           <pre class="ex-code"><code>{streamlit_code}</code></pre>
@@ -543,10 +540,10 @@ def examples_html() -> str:
 
 def _status_badges() -> str:
     pairs = [
-        ("Success", t("color.ext.success-subtler","#dcfce7"), t("color.text.success","#15803d")),
-        ("Warning", t("color.ext.warning-subtler","#fef9c3"), t("color.text.warning","#a16207")),
-        ("Error",   t("color.ext.error-subtler",  "#fee2e2"), t("color.text.error",  "#b91c1c")),
-        ("Info",    t("color.ext.info-subtler",   "#e0f2fe"), t("color.text.info",   "#0369a1")),
+        ("Success", t("color.background.success.subtle","#dcfce7"), t("color.text.success.base","#15803d")),
+        ("Warning", t("color.background.warning.subtle","#fef9c3"), t("color.text.warning.base","#a16207")),
+        ("Error",   t("color.background.danger.subtle", "#fee2e2"), t("color.text.danger.base", "#b91c1c")),
+        ("Info",    t("color.background.info.subtle",   "#e0f2fe"), t("color.text.info.base",   "#0369a1")),
     ]
     return "".join(
         f'<span style="display:inline-block;padding:3px 10px;border-radius:9999px;'
