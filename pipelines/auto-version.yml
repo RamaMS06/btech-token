@@ -251,6 +251,8 @@ jobs:
             SCOPE_FLAG="--scope=base"
           elif echo "$TAGS" | grep -q "scope:tenants"; then
             SCOPE_FLAG="--scope=tenants"
+          elif echo "$TAGS" | grep -q "scope:plugin"; then
+            SCOPE_FLAG="--scope=plugin"
           else
             TENANT=$(echo "$TAGS" | grep -oE "scope:tenant:[A-Za-z0-9_-]+" | head -n1 | cut -d: -f3)
             if [ -n "$TENANT" ]; then
@@ -285,11 +287,20 @@ jobs:
       # bump-version.ts also exposes NEW_ROOT_VERSION / RESET_ALL via
       # ##vso[task.setvariable] but we re-read here for resilience — the
       # bump step may have been skipped if SKIP_RELEASE was set.
+      # For scope=plugin, read from btech-token-studio/package.json so
+      # the idempotency guard and commit message reference the plugin version.
       - script: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "New root version: $VERSION"
-          echo "##vso[task.setvariable variable=NEW_ROOT_VERSION]$VERSION"
-          echo "##vso[task.setvariable variable=NEW_TAG]v$VERSION"
+          if [ "$(SCOPE_FLAG)" = "--scope=plugin" ]; then
+            VERSION=$(node -p "require('./btech-token-studio/package.json').version")
+            echo "New plugin version: $VERSION"
+            echo "##vso[task.setvariable variable=NEW_ROOT_VERSION]$VERSION"
+            echo "##vso[task.setvariable variable=NEW_TAG]plugin-v$VERSION"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+            echo "New root version: $VERSION"
+            echo "##vso[task.setvariable variable=NEW_ROOT_VERSION]$VERSION"
+            echo "##vso[task.setvariable variable=NEW_TAG]v$VERSION"
+          fi
         displayName: 'Read new root version'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
@@ -348,6 +359,10 @@ jobs:
             packages/tokens/platforms/flutter/token/pubspec.yaml
             packages/tokens/platforms/python/token/pyproject.toml
           )
+          # Plugin scope: only btech-token-studio/package.json is touched.
+          if [ "$(SCOPE_FLAG)" = "--scope=plugin" ]; then
+            VERSION_FILES=( btech-token-studio/package.json )
+          fi
           # Glob expansions — capture matches into the array. Set nullglob
           # so an empty match doesn't leave the literal pattern behind.
           # Each glob covers ONE platform's per-tenant version manifest:
@@ -387,9 +402,16 @@ jobs:
             # Idempotency guard: if origin already advanced past our target
             # version (e.g. someone manually pushed the same tag), skip
             # cleanly. Prevents accidental "downgrade" commits.
-            ORIGIN_VERSION=$(git show "origin/$PUSH_BRANCH:package.json" 2>/dev/null \
-              | node -e "try{const j=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(j.version||'')}catch(e){}" \
-              || true)
+            # For scope=plugin, compare the plugin version (not root).
+            if [ "$(SCOPE_FLAG)" = "--scope=plugin" ]; then
+              ORIGIN_VERSION=$(git show "origin/$PUSH_BRANCH:btech-token-studio/package.json" 2>/dev/null \
+                | node -e "try{const j=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(j.version||'')}catch(e){}" \
+                || true)
+            else
+              ORIGIN_VERSION=$(git show "origin/$PUSH_BRANCH:package.json" 2>/dev/null \
+                | node -e "try{const j=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(j.version||'')}catch(e){}" \
+                || true)
+            fi
             if [ -n "$ORIGIN_VERSION" ] && gte_version "$ORIGIN_VERSION" "$(NEW_ROOT_VERSION)"; then
               echo "Origin already at $ORIGIN_VERSION (≥ target $(NEW_ROOT_VERSION)) — bump idempotent. Skipping commit."
               # Still try to push the tag if it's not yet on origin
@@ -421,7 +443,12 @@ jobs:
             # we only want refs once we know the commit pushed; otherwise a
             # retry leaves stale tag refs lying around.
             TAGS=()
-            if [ "$(NEW_ROOT_VERSION)" != "$(PREV_ROOT_VERSION)" ]; then
+            if [ "$(SCOPE_FLAG)" = "--scope=plugin" ]; then
+              # Plugin bump path — tag plugin-v<version>, never touches token versions.
+              PV=$(node -p "require('./btech-token-studio/package.json').version")
+              TAGS+=("plugin-v${PV}")
+              echo "Plugin bumped → will tag plugin-v${PV}"
+            elif [ "$(NEW_ROOT_VERSION)" != "$(PREV_ROOT_VERSION)" ]; then
               echo "Root version changed ($(PREV_ROOT_VERSION) → $(NEW_ROOT_VERSION)) — will tag $(NEW_TAG)."
               TAGS+=("$(NEW_TAG)")
             else
