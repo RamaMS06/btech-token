@@ -5,22 +5,19 @@
  *
  * Output: btech-token-studio/release/btech-token-studio-v<version>.zip
  *
- * Zip structure (Figma admin console expects a zip with a root folder
- * containing manifest.json + dist/):
+ * Zip structure (Figma requires manifest.json at the root of the zip,
+ * NOT inside a subfolder — otherwise the plugin fails to load):
  *
- *   btech-token-studio/
- *   ├── manifest.json
- *   ├── dist/
- *   │   ├── code.js
- *   │   └── ui.html
- *   ├── README.md
- *   └── VERSION
+ *   manifest.json          ← at zip root (Figma reads this directly)
+ *   dist/
+ *   ├── code.js
+ *   └── ui.html
  *
  * Run after `pnpm --filter @btech/token-studio build`:
  *   pnpm exec tsx scripts/package-plugin.ts
  */
 
-import { readFileSync, writeFileSync, existsSync, rmSync, mkdirSync, copyFileSync } from 'fs';
+import { readFileSync, existsSync, rmSync, mkdirSync } from 'fs';
 import { resolve } from 'path';
 import { execSync } from 'child_process';
 
@@ -77,46 +74,30 @@ if (manifest.ui !== 'dist/ui.html') {
   process.exit(1);
 }
 
-// ── Stage files into release/btech-token-studio/ ─────────────────────────
-const stage = resolve(RELEASE, 'btech-token-studio');
-const stageDist = resolve(stage, 'dist');
-
-// Clean previous staging dir (not the zip itself, in case re-run)
-if (existsSync(stage)) rmSync(stage, { recursive: true });
-mkdirSync(stageDist, { recursive: true });
-
-copyFileSync(manifestPath,                      resolve(stage, 'manifest.json'));
-copyFileSync(resolve(PLUGIN, 'dist/code.js'),   resolve(stageDist, 'code.js'));
-copyFileSync(resolve(PLUGIN, 'dist/ui.html'),   resolve(stageDist, 'ui.html'));
-
-// README is optional
-const readmePath = resolve(PLUGIN, 'README.md');
-if (existsSync(readmePath)) {
-  copyFileSync(readmePath, resolve(stage, 'README.md'));
-}
-
-// VERSION plain-text file lets admins identify the release without unzipping
-writeFileSync(resolve(stage, 'VERSION'), version + '\n', 'utf8');
-
-// ── Zip ──────────────────────────────────────────────────────────────────
+// ── Zip — manifest.json MUST be at root (Figma requirement) ─────────────
+// Zip from inside PLUGIN dir so paths are:
+//   manifest.json        ← Figma reads this at root
+//   dist/code.js
+//   dist/ui.html
+// NOT btech-token-studio/manifest.json (Figma would reject it)
 const zipName = `btech-token-studio-v${version}.zip`;
 const zipPath = resolve(RELEASE, zipName);
 
-// Remove stale zip if present
-if (existsSync(zipPath)) rmSync(zipPath);
+// Clean release dir (also removes any stale zip)
+if (existsSync(RELEASE)) rmSync(RELEASE, { recursive: true });
+mkdirSync(RELEASE, { recursive: true });
 
 execSync(
-  `cd "${RELEASE}" && zip -r "${zipName}" btech-token-studio/`,
+  `cd "${PLUGIN}" && zip -r "${zipPath}" manifest.json dist/`,
   { stdio: 'inherit' },
 );
 
 // ── Verify zip contents ──────────────────────────────────────────────────
 const zipList = execSync(`unzip -l "${zipPath}"`, { encoding: 'utf8' });
 const required = [
-  'btech-token-studio/manifest.json',
-  'btech-token-studio/dist/code.js',
-  'btech-token-studio/dist/ui.html',
-  'btech-token-studio/VERSION',
+  'manifest.json',
+  'dist/code.js',
+  'dist/ui.html',
 ];
 const missing = required.filter((f) => !zipList.includes(f));
 if (missing.length > 0) {
