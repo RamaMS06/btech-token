@@ -137,10 +137,20 @@ function parseScope(raw: string): Scope {
 function detectScope(): Scope | null {
   let changed: string[] = [];
   try {
-    const diff = execSync(
-      'git diff --name-only origin/main...HEAD 2>/dev/null; git diff --name-only HEAD 2>/dev/null; git diff --name-only --cached 2>/dev/null',
-      { encoding: 'utf8', cwd: ROOT },
-    );
+    // In CI (Azure Pipelines sets TF_BUILD=True) we inspect only the last
+    // merge commit — `HEAD~1 HEAD`. Using `origin/main...HEAD` in CI would
+    // cover the entire dev branch history, so any previous core-token commit
+    // would set coreChanged=true and force scope=all even for tenant-only PRs.
+    //
+    // Locally `origin/main...HEAD` is still used so developers see the full
+    // diff of their working branch (uncommitted + staged + unpushed commits).
+    const inCI = process.env['TF_BUILD'] === 'True';
+    const diff = inCI
+      ? execSync('git diff --name-only HEAD~1 HEAD 2>/dev/null', { encoding: 'utf8', cwd: ROOT })
+      : execSync(
+          'git diff --name-only origin/main...HEAD 2>/dev/null; git diff --name-only HEAD 2>/dev/null; git diff --name-only --cached 2>/dev/null',
+          { encoding: 'utf8', cwd: ROOT },
+        );
     changed = Array.from(new Set(diff.split('\n').filter(Boolean)));
   } catch {
     console.warn('⚠️   Could not read git diff — falling back to scope=all.');
