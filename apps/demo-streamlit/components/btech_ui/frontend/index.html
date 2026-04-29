@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans, Inter, system-ui, sans-serif);
+      background: transparent;
+      padding: 4px 0;
+    }
+
+    /* ── Button variants ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: var(--radius-sm, 8px);
+      border: 1.5px solid transparent;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+      line-height: 1;
+      user-select: none;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn[disabled] { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+
+    .btn-primary {
+      background: var(--brand,         #15803d);
+      color:      var(--text-on-brand, #ffffff);
+      border-color: var(--brand,       #15803d);
+    }
+    .btn-primary:hover:not([disabled]) { background: var(--brand-bold, #166534); }
+
+    .btn-secondary {
+      background:   transparent;
+      color:        var(--brand,          #15803d);
+      border-color: var(--stroke-primary, #15803d);
+    }
+    .btn-secondary:hover:not([disabled]) { background: var(--bg-primary-subtle, #f0fdf4); }
+
+    .btn-danger {
+      background:   var(--bg-danger, #dc2626);
+      color:        #ffffff;
+      border-color: var(--bg-danger, #dc2626);
+    }
+    .btn-danger:hover:not([disabled]) { opacity: 0.88; }
+
+    .btn-ghost {
+      background:   var(--bg-neutral, #f3f4f6);
+      color:        var(--text-sec,   #6b7280);
+      border-color: var(--border,     #e5e7eb);
+    }
+    .btn-ghost:hover:not([disabled]) { background: var(--border, #e5e7eb); }
+
+    /* ── Input field ── */
+    .field { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sec, #6b7280);
+    }
+    .input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1.5px solid var(--border, #e5e7eb);
+      border-radius: var(--radius-sm, 8px);
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--bg-raised, #ffffff);
+      color: var(--text-pri, #111827);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input:focus { border-color: var(--brand, #15803d); box-shadow: 0 0 0 3px var(--bg-primary-subtle, #f0fdf4); }
+    .input.error   { border-color: var(--bg-danger,  #dc2626); }
+    .input.success { border-color: var(--text-success, #16a34a); }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+// ── Streamlit iframe messaging ─────────────────────────────────────────────────
+function toSt(type, data) {
+  window.parent.postMessage(Object.assign({ isStreamlitMessage: true, type }, data), '*');
+}
+function setHeight() {
+  toSt('streamlit:setFrameHeight', { height: document.documentElement.scrollHeight + 2 });
+}
+function setValue(v) {
+  toSt('streamlit:setComponentValue', { value: v });
+}
+
+// ── CSS vars from token dict ───────────────────────────────────────────────────
+function applyTokens(T) {
+  var map = [
+    ['--font-sans',         T['typography.fontFamily.sans']              || 'Inter,system-ui,sans-serif'],
+    ['--brand',             T['color.background.primary.default']        || '#15803d'],
+    ['--brand-bold',        T['color.background.primary.bolder']         || '#166534'],
+    ['--bg-primary-subtle', T['color.background.primary.subtle']         || '#f0fdf4'],
+    ['--stroke-primary',    T['color.stroke.primary.default']            || '#15803d'],
+    ['--bg-danger',         T['color.background.danger.default']         || '#dc2626'],
+    ['--bg-neutral',        T['color.background.neutral.default']        || '#f3f4f6'],
+    ['--bg-raised',         T['color.background.surface.raised']         || '#ffffff'],
+    ['--text-pri',          T['color.text.neutral.default']              || '#111827'],
+    ['--text-sec',          T['color.text.neutral.subtle']               || '#6b7280'],
+    ['--text-on-brand',     T['color.text.on.primary']                   || '#ffffff'],
+    ['--text-success',      T['color.text.success.base']                 || '#16a34a'],
+    ['--border',            T['color.stroke.neutral.default']            || '#e5e7eb'],
+    ['--radius-sm',         T['radius.sm']                               || '8px'],
+  ];
+  var s = document.createElement('style');
+  s.id = 'bt-vars';
+  s.textContent = ':root{' + map.map(function(p){return p[0]+':'+p[1];}).join(';') + '}';
+  var old = document.getElementById('bt-vars');
+  if (old) old.remove();
+  document.head.appendChild(s);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+var clickCount = 0;
+var inputValue = '';
+
+function render(args) {
+  var comp     = args.component || 'button';
+  var tokens   = args.tokens    || {};
+  var label    = args.label     || 'Button';
+  var variant  = args.variant   || 'primary';
+  var disabled = args.disabled  || false;
+
+  applyTokens(tokens);
+
+  if (comp === 'button') {
+    var el = document.createElement('button');
+    el.className = 'btn btn-' + variant;
+    el.textContent = label;
+    if (disabled) el.setAttribute('disabled', '');
+    el.addEventListener('click', function () {
+      clickCount += 1;
+      setValue(clickCount);
+    });
+    document.getElementById('root').innerHTML = '';
+    document.getElementById('root').appendChild(el);
+
+  } else if (comp === 'input') {
+    var placeholder = args.placeholder || '';
+    document.getElementById('root').innerHTML =
+      '<div class="field">'
+    + (label ? '<label>' + label + '</label>' : '')
+    + '<input class="input ' + variant + '" placeholder="' + placeholder + '" value="' + inputValue + '" />'
+    + '</div>';
+    var inp = document.querySelector('.input');
+    inp.addEventListener('input', function () {
+      inputValue = inp.value;
+      setValue(inputValue);
+    });
+  }
+
+  setTimeout(setHeight, 20);
+}
+
+window.addEventListener('message', function (e) {
+  if (e.data && e.data.type === 'streamlit:render') render(e.data.args || {});
+});
+toSt('streamlit:componentReady', { apiVersion: 1 });
+</script>
+</body>
+</html>

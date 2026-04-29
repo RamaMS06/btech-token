@@ -16,7 +16,9 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 import streamlit as st
 from token_loader import build_token_map, available_tenants
-from components.token_showcase import token_showcase
+from components.btech_ui import (
+    btech_button, btech_badge, btech_alert, btech_card, btech_input,
+)
 
 try:
     import btech_tokens as _btech
@@ -42,6 +44,8 @@ tenant = st.session_state.tenant
 
 # ── Load tokens ───────────────────────────────────────────────────────────────
 T = build_token_map(tenant=tenant, dark=dark)
+# Store for btech_ui components (they read this via session state)
+st.session_state["_bt_tokens"] = T
 
 def t(key: str, fallback: str = "") -> str:
     return T.get(key, fallback)
@@ -661,21 +665,228 @@ for row in TOKENS:
 
 # ── Main content ──────────────────────────────────────────────────────────────
 if active_tab == "examples":
-    # ── Custom component: live token showcase ─────────────────────────────────
-    st.markdown(
-        f'<p style="font-size:12px;color:{TEXT_TER};margin-bottom:4px">'
-        f'Custom Streamlit component rendering live token values via '
-        f'<code>streamlit.components.v1.declare_component()</code></p>',
+    _sec = lambda title: st.markdown(
+        f'<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;'
+        f'text-transform:uppercase;color:{TEXT_TER};margin:16px 0 6px">{title}</div>',
         unsafe_allow_html=True,
     )
-    token_showcase(T, height=600, key="main_showcase")
+    _code = lambda src: st.code(src.strip(), language="python")
 
-    # ── Code examples ─────────────────────────────────────────────────────────
-    st.markdown(
-        f'<div style="margin-top:8px;font-size:13px;font-weight:600;color:{TEXT_PRI}">Code examples</div>',
-        unsafe_allow_html=True,
+    # ── 1. btech_button ──────────────────────────────────────────────────────
+    _sec("btech_button  ·  declare_component → returns True on click")
+    col_live, col_code = st.columns([1, 1], gap="large")
+
+    with col_live:
+        btech_card(
+            "Live demo",
+            '<span style="font-size:12px;color:#6b7280">Click the buttons below</span>',
+            padding=12,
+        )
+        b1 = btech_button("Save",   variant="primary",   key="ex_btn_primary")
+        b2 = btech_button("Cancel", variant="secondary", key="ex_btn_secondary")
+        b3 = btech_button("Delete", variant="danger",    key="ex_btn_danger")
+        b4 = btech_button("Ghost",  variant="ghost",     key="ex_btn_ghost")
+        b5 = btech_button("Disabled (no click)", variant="primary", disabled=True, key="ex_btn_dis")
+
+        if b1: st.toast("✅ Saved!", icon="✅")
+        if b2: st.toast("Cancelled")
+        if b3: st.toast("⚠️ Deleted!", icon="⚠️")
+
+    with col_code:
+        _code("""
+from components.btech_ui import btech_button
+
+# declare_component — returns True on the click rerun
+if btech_button("Save", variant="primary", key="save"):
+    st.success("Saved!")
+
+if btech_button("Cancel", variant="secondary", key="cancel"):
+    st.info("Cancelled")
+
+if btech_button("Delete", variant="danger", key="del"):
+    st.error("Deleted!")
+
+# Disabled state
+btech_button("Locked", variant="primary",
+             disabled=True, key="locked")
+""")
+        st.caption("Token source: `BTechColor.background.primary.default`, `BTechRadius.md`")
+
+    st.divider()
+
+    # ── 2. btech_badge ───────────────────────────────────────────────────────
+    _sec("btech_badge  ·  st.html — inline display, no iframe")
+    col_live, col_code = st.columns([1, 1], gap="large")
+
+    with col_live:
+        btech_card("Order status", "", padding=12)
+        st.write("")
+        row1, row2 = st.columns(3), st.columns(3)
+        with row1[0]: btech_badge("Active",   "success")
+        with row1[1]: btech_badge("Pending",  "warning")
+        with row1[2]: btech_badge("Failed",   "danger")
+        with row2[0]: btech_badge("Draft",    "info")
+        with row2[1]: btech_badge("Archived", "neutral")
+
+    with col_code:
+        _code("""
+from components.btech_ui import btech_badge
+
+btech_badge("Active",   variant="success")
+btech_badge("Pending",  variant="warning")
+btech_badge("Failed",   variant="danger")
+btech_badge("Draft",    variant="info")
+btech_badge("Archived", variant="neutral")
+""")
+        st.caption("Token source: `BTechColor.background.*.subtle`, `BTechColor.text.*.base`")
+
+    st.divider()
+
+    # ── 3. btech_alert ───────────────────────────────────────────────────────
+    _sec("btech_alert  ·  st.html — semantic state alerts")
+    col_live, col_code = st.columns([1, 1], gap="large")
+
+    with col_live:
+        btech_alert("Payment #TXN-00142 processed successfully.",
+                    "success", title="Transaction complete")
+        btech_alert("Your session expires in 5 minutes. Save your work.",
+                    "warning", title="Session expiring")
+        btech_alert("3 new notifications waiting for your review.",
+                    "info")
+        btech_alert("Failed to connect. Check your network and retry.",
+                    "danger", title="Connection error")
+
+    with col_code:
+        _code("""
+from components.btech_ui import btech_alert
+
+btech_alert(
+    "Payment processed successfully.",
+    variant="success",
+    title="Transaction complete",
+)
+btech_alert("Session expires in 5 min.", "warning")
+btech_alert("3 new notifications.",      "info")
+btech_alert("Connection failed.",        "danger")
+""")
+        st.caption("Token source: `BTechColor.background.*.subtle`, `BTechColor.background.*.default`")
+
+    st.divider()
+
+    # ── 4. btech_card ────────────────────────────────────────────────────────
+    _sec("btech_card  ·  st.html — surface container with header")
+    col_live, col_code = st.columns([1, 1], gap="large")
+
+    with col_live:
+        btech_card(
+            "User Profile",
+            """
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div><b>Name</b><br>Rama Sugiyanto</div>
+              <div><b>Role</b><br>Platform Engineer</div>
+              <div><b>Team</b><br>BTech DS</div>
+              <div><b>Status</b><br>Active ✅</div>
+            </div>
+            """,
+        )
+
+    with col_code:
+        _code("""
+from components.btech_ui import btech_card
+
+btech_card(
+    "User Profile",
+    \"\"\"
+    <div>
+      <b>Name</b><br>Rama Sugiyanto<br>
+      <b>Role</b><br>Platform Engineer
+    </div>
+    \"\"\",
+)
+""")
+        st.caption("Token source: `BTechColor.background.surface.raised`, `BTechRadius.md`, `BTechSpacing.lg`")
+
+    st.divider()
+
+    # ── 5. btech_input ───────────────────────────────────────────────────────
+    _sec("btech_input  ·  declare_component → returns current value")
+    col_live, col_code = st.columns([1, 1], gap="large")
+
+    with col_live:
+        val_default = btech_input("Email", "you@company.com",  "default", key="ex_input_ok")
+        val_error   = btech_input("Password", "wrong-format", "error",   key="ex_input_err")
+        val_success = btech_input("Username", "rama.s",       "success", key="ex_input_ok2")
+        if val_default:
+            st.caption(f"Value: `{val_default}`")
+
+    with col_code:
+        _code("""
+from components.btech_ui import btech_input
+
+email = btech_input(
+    "Email", "you@company.com",
+    variant="default", key="email",
+)
+
+# validate, then show state
+if not is_valid(email):
+    btech_input("Email", email, variant="error", key="email_err")
+else:
+    btech_input("Email", email, variant="success", key="email_ok")
+""")
+        st.caption("Token source: `BTechColor.stroke.neutral.default` → focus → `BTechColor.stroke.primary.default`")
+
+    st.divider()
+
+    # ── 6. Composed page example ─────────────────────────────────────────────
+    _sec("Composed — combine components to build a real page section")
+    btech_card(
+        "New Transfer",
+        """
+        <form style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px">From account</div>
+              <div style="font-family:monospace;font-size:13px">BCA •••• 4821</div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px">Amount</div>
+              <div style="font-family:monospace;font-size:16px;font-weight:700">Rp 5.000.000</div>
+            </div>
+          </div>
+        </form>
+        """,
     )
-    st.markdown(examples_html(), unsafe_allow_html=True)
+    btech_alert("Funds will arrive within 1 business day.", "info")
+    c1, c2, _ = st.columns([1, 1, 2])
+    with c1:
+        if btech_button("Confirm transfer", variant="primary", key="ex_confirm"):
+            st.toast("✅ Transfer submitted!", icon="✅")
+    with c2:
+        if btech_button("Cancel", variant="secondary", key="ex_cancel_2"):
+            st.toast("Cancelled")
+
+    # ── 7. import block for copy-paste ───────────────────────────────────────
+    _sec("Quick-start — one import, all components")
+    _code("""
+# Install once (from repo root):
+#   pip install -e packages/tokens/platforms/python/
+
+from components.btech_ui import (
+    btech_button,   # interactive  — declare_component, returns bool
+    btech_badge,    # display only — st.html, no iframe overhead
+    btech_alert,    # display only — st.html
+    btech_card,     # display only — st.html
+    btech_input,    # interactive  — declare_component, returns str
+)
+
+# Every component reads live values from btech_tokens:
+from btech_tokens import BTechColor, BTechSpacing, BTechRadius
+# BTechColor.background.primary.default → button fill
+# BTechColor.text.on.primary            → button text
+# BTechRadius.md                        → border-radius
+# BTechSpacing.lg                       → card padding
+""")
 
 else:
     if not filtered:
