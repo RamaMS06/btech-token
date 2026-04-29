@@ -57,45 +57,44 @@ jobs:
       - template: templates/flutter-setup.yml
 
       # ── Generate + sync check ────────────────────────────────────────────
-      # Re-run the generator directly so the sync check always compares
-      # committed files against a fresh generation from tokens/.
+      # Re-run the generator and diff against committed files.
+      #
+      # Runs ONLY on direct push to dev/main (not on PR events).
+      #
+      # Why skip on PR:
+      #   When the Figma plugin opens a PR it pushes only token source files
+      #   (overrides.json). The generate pipeline runs in parallel and
+      #   auto-commits Flutter/Python/Web outputs back to the PR branch.
+      #   validate.yml and generate.yml race — validate always loses because
+      #   generate hasn't committed yet. The out-of-sync state is transient
+      #   and guaranteed to be fixed before anything reaches dev/main.
+      #
+      #   On direct push (after merge / manual dev push) the generate pipeline
+      #   has already committed, so the sync check is meaningful and enforced.
       - script: pnpm exec tsx packages/tokens/sd.config.ts
         displayName: 'Run token generator'
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
 
       - script: pnpm --filter @btech/tokens build
         displayName: 'Build @btech/tokens'
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
 
       - script: |
           CHANGED=$(git diff --name-only packages/tokens/platforms/)
 
           if [ -n "$CHANGED" ]; then
-            echo ""
+            echo "❌  Generated files are out of sync with tokens/:"
             echo "$CHANGED"
             echo ""
-            if [ "$(BUILD_REASON)" = "PullRequest" ]; then
-              # PR from figma/* branch: the generate pipeline runs in parallel and
-              # will auto-commit the regenerated files to this branch — the sync
-              # failure is expected and transient. Emit a warning instead of a
-              # hard failure so the PR is not permanently blocked.
-              echo "##vso[task.logissue type=warning]⚠️  Generated files will be updated automatically by the generate pipeline."
-              echo "##vso[task.logissue type=warning]Re-run this pipeline after the generate pipeline commits, or merge and it will self-heal on dev."
-              echo "##vso[task.complete result=SucceededWithIssues;]Generated files out of sync — generate pipeline will fix."
-            else
-              # Direct push to dev/main: hard gate. Generated files MUST be
-              # committed before pushing (run 'pnpm generate' locally, or let
-              # the generate pipeline commit them first).
-              echo "❌  Generated files are out of sync with tokens/:"
-              echo "    Fix: run 'pnpm generate' locally and commit the results,"
-              echo "    OR push a change to tokens/ — the generate pipeline"
-              echo "    will auto-commit the updated outputs to your branch."
-              exit 1
-            fi
-          else
-            echo "✅  All generated files are in sync."
+            echo "    Fix: run 'pnpm generate' locally and commit the results,"
+            echo "    OR push a change to tokens/ — the generate pipeline"
+            echo "    will auto-commit the updated outputs to your branch."
+            exit 1
           fi
+
+          echo "✅  All generated files are in sync."
         displayName: 'Sync check — generated files match token sources'
-        env:
-          BUILD_REASON: $(Build.Reason)
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
 
       # ── Token + workspace validators ─────────────────────────────────────
       - script: pnpm validate
