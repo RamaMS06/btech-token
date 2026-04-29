@@ -186,31 +186,42 @@ jobs:
 
       - script: |
           set -e
-          # twine --skip-existing makes this idempotent across reruns.
+
+          # Azure Artifacts PyPI does NOT support --skip-existing (unlike pypi.org).
+          # Instead we catch HTTP 409 "File already exists" and treat it as success.
+          twine_upload() {
+            local dist_glob="$1"
+            local out
+            out=$(python -m twine upload -r btech \
+              --config-file "$(PYPIRC_PATH)" \
+              $dist_glob 2>&1) && echo "$out" && return 0
+            # Non-zero exit — check if it's just "already exists"
+            echo "$out"
+            if echo "$out" | grep -qiE "already exists|HTTPError: 409|File already|409 Conflict"; then
+              echo "ℹ️   Version already published — skipping (idempotent)."
+              return 0
+            fi
+            return 1
+          }
+
           if [ -n "$(PUBLISH_TENANT)" ]; then
             tenant_dir="packages/tokens/platforms/python/tenants/$(PUBLISH_TENANT)"
             if [ -d "$tenant_dir/dist" ]; then
-              python -m twine upload -r btech --skip-existing \
-                --config-file $(PYPIRC_PATH) \
-                "$tenant_dir"/dist/*
+              twine_upload "$tenant_dir/dist/*"
             else
               echo "No Python dist for tenant '$(PUBLISH_TENANT)' — nothing to upload."
             fi
           else
-            python -m twine upload -r btech --skip-existing \
-              --config-file $(PYPIRC_PATH) \
-              packages/tokens/platforms/python/token/dist/*
+            twine_upload "packages/tokens/platforms/python/token/dist/*"
 
             if [ "$(NPM_TAG)" != "rc" ]; then
               for tenant_dir in packages/tokens/platforms/python/tenants/*/; do
                 [ -d "$tenant_dir/dist" ] || continue
-                python -m twine upload -r btech --skip-existing \
-                  --config-file $(PYPIRC_PATH) \
-                  "$tenant_dir"dist/*
+                twine_upload "$tenant_dir/dist/*"
               done
             fi
           fi
-        displayName: 'Publish Python packages to btech feed'
+        displayName: 'Publish Python packages to btech feed (idempotent)'
 
       # ── Summary ───────────────────────────────────────────────────────────
       - script: |
