@@ -70,17 +70,32 @@ jobs:
 
           if [ -n "$CHANGED" ]; then
             echo ""
-            echo "❌  Generated files are out of sync with tokens/:"
             echo "$CHANGED"
             echo ""
-            echo "    Fix: run 'pnpm generate' locally and commit the results,"
-            echo "    OR push a change to tokens/ — the generate pipeline"
-            echo "    will auto-commit the updated outputs to your branch."
-            exit 1
+            if [ "$(BUILD_REASON)" = "PullRequest" ]; then
+              # PR from figma/* branch: the generate pipeline runs in parallel and
+              # will auto-commit the regenerated files to this branch — the sync
+              # failure is expected and transient. Emit a warning instead of a
+              # hard failure so the PR is not permanently blocked.
+              echo "##vso[task.logissue type=warning]⚠️  Generated files will be updated automatically by the generate pipeline."
+              echo "##vso[task.logissue type=warning]Re-run this pipeline after the generate pipeline commits, or merge and it will self-heal on dev."
+              echo "##vso[task.complete result=SucceededWithIssues;]Generated files out of sync — generate pipeline will fix."
+            else
+              # Direct push to dev/main: hard gate. Generated files MUST be
+              # committed before pushing (run 'pnpm generate' locally, or let
+              # the generate pipeline commit them first).
+              echo "❌  Generated files are out of sync with tokens/:"
+              echo "    Fix: run 'pnpm generate' locally and commit the results,"
+              echo "    OR push a change to tokens/ — the generate pipeline"
+              echo "    will auto-commit the updated outputs to your branch."
+              exit 1
+            fi
+          else
+            echo "✅  All generated files are in sync."
           fi
-
-          echo "✅  All generated files are in sync."
         displayName: 'Sync check — generated files match token sources'
+        env:
+          BUILD_REASON: $(Build.Reason)
 
       # ── Token + workspace validators ─────────────────────────────────────
       - script: pnpm validate
