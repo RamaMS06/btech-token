@@ -842,21 +842,14 @@ a {
   color: var(--figma-color-icon-onbrand, #fff);
 }
 
-.sidebar__dirty-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--figma-color-bg-warning, #f5a623);
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
 /*
  * Tenant override badge in the sidebar — a small "@N" pill on the right of
  * each base-set entry showing how many leaves the active tenant overrides
- * inside that set. Uses the same brand-colour palette as the per-leaf
- * override markers so the signal is consistent across the UI. Sits before
- * the dirty dot when both are visible.
+ * inside that set. Brand-blue palette signals "structural / informational"
+ * (intentional divergence from base) and is intentionally distinct from
+ * the amber `.sidebar__change-badge` so the two never read as the same
+ * thing at a glance. Always visible while a tenant is selected — a fresh
+ * pull does NOT hide it, because overrides are part of the synced state.
  */
 .sidebar__override-badge {
   margin-left: auto;
@@ -872,11 +865,31 @@ a {
 }
 
 /*
- * When both badge and dirty dot are present, the badge already grabs the
- * `margin-left: auto`, so the dot just needs a small explicit gap rather
- * than fighting the badge for the auto margin.
+ * Pending-changes badge in the sidebar — a small "+N" pill showing how many
+ * leaf edits in this set are waiting to be pushed. Amber/warning palette
+ * matches the BottomActionBar's "Push N changes" copy so the designer
+ * sees the same colour for "you have unsynced work" everywhere. Cleared
+ * automatically by pull (resets `originalTree`) and by push
+ * (`snapshotAfterPush`).
+ *
+ * When both badges show on the same row, the override badge keeps the
+ * `margin-left: auto` (it appears first in JSX) and the change badge
+ * just needs a small explicit gap.
  */
-.sidebar__override-badge + .sidebar__dirty-dot {
+.sidebar__change-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: var(--figma-color-bg-warning-tertiary, rgba(245, 166, 35, 0.16));
+  color: var(--figma-color-text-warning, #b56b00);
+  border: 1px solid var(--figma-color-border-warning, rgba(245, 166, 35, 0.55));
+}
+
+.sidebar__override-badge + .sidebar__change-badge {
   margin-left: 6px;
 }
 
@@ -1655,10 +1668,20 @@ a {
  */
 
 .bottom-action-bar__discard-btn {
+  /*
+   * Visually paired with `.bottom-action-bar__push-btn` — both are bar-level
+   * actions, so they share the same `min-height: 32px` envelope. Earlier
+   * the discard button was pinned to 28px (matching the secondary Pull /
+   * cog icons) which made the bar feel asymmetric: a tall coloured Push
+   * button next to a noticeably shorter Clear changes. Letting it stretch
+   * to the bar height keeps the action row feeling balanced regardless
+   * of bar padding changes upstream.
+   */
   display: inline-flex;
   align-items: center;
-  height: 28px;
-  padding: 0 10px;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 14px;
   border-radius: 6px;
   font-size: 11px;
   font-weight: 500;

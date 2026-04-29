@@ -14,7 +14,12 @@
  * Active state semantics:
  *   - `●` filled circle = currently focused (its tokens render in the right panel)
  *   - `○` hollow circle = not focused
- *   - dirty badge appears as a small dot on the right when the set has unsaved edits
+ *   - `@N` brand-blue pill on the right = the active tenant has N overrides
+ *     defined for this base set. Structural info, ALWAYS visible while a
+ *     tenant is selected (an override is an intentional divergence from
+ *     base, not a pending change — pull does not clear it).
+ *   - `+N` amber pill on the right = this set has N unsynced leaf edits
+ *     waiting to be pushed. Disappears after pull or push.
  */
 
 import React, { useMemo } from 'react';
@@ -24,6 +29,7 @@ import {
   countOverridesForBase,
   findTenantOverrideSet,
 } from '../../shared/tenant-resolver.js';
+import { countLeafChanges } from '../../shared/transform.js';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -125,6 +131,10 @@ export function TokenSetSidebar() {
    * tenant divergence" — the sidebar entry renders without the @ marker.
    * Memoised on `[visibleSets, overrideSet]` because override counts are
    * stable until either side changes.
+   *
+   * Note: this is STRUCTURAL information (the tenant has N overrides
+   * defined), not pending edits. It stays visible after a successful
+   * pull — pending edits get their own `+N` badge below.
    */
   const overrideCounts = useMemo(() => {
     const out: Record<string, number> = {};
@@ -134,6 +144,38 @@ export function TokenSetSidebar() {
     }
     return out;
   }, [visibleSets, overrideSet]);
+
+  /**
+   * Per-set pending-edit count: how many leaf tokens in this set differ
+   * from `originalTree` (= the snapshot from the last pull / push). Zero
+   * means "no unsynced edits in this file" — the sidebar entry renders
+   * without the `+N` badge.
+   *
+   * The amber `+N` badge is the truthful "you have changes here" signal
+   * the designer is looking for. It clears automatically after pull
+   * (because `parseJsonToSet` resets every set to `originalTree === tree`,
+   * making the diff zero).
+   */
+  const changeCounts = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const s of visibleSets) {
+      out[s.id] = s.dirty
+        ? countLeafChanges(s.tree, s.originalTree ?? s.tree)
+        : 0;
+    }
+    // Tenant override file isn't in `visibleSets` (filtered out), but its
+    // edits affect base-set rows — surface the override file's diff under
+    // the base set the edited leaves belong to. Cheaper alternative for
+    // now: roll the entire override-file diff onto the active base set,
+    // since that's the only one the designer is currently editing into.
+    if (overrideSet?.dirty && activeSetId && out[activeSetId] !== undefined) {
+      out[activeSetId] += countLeafChanges(
+        overrideSet.tree,
+        overrideSet.originalTree ?? overrideSet.tree,
+      );
+    }
+    return out;
+  }, [visibleSets, overrideSet, activeSetId]);
 
   if (visibleSets.length === 0) {
     return (
@@ -149,16 +191,28 @@ export function TokenSetSidebar() {
         {visibleSets.map((s) => {
           const isActive = activeSetId === s.id;
           const overrideCount = overrideCounts[s.id] ?? 0;
+          const changeCount = changeCounts[s.id] ?? 0;
+          // Compose the tooltip from whichever signals are present so the
+          // designer can hover any row and learn exactly what each badge
+          // means. We never show both badges' text in the title at once
+          // unless both apply — keeps the hover string short and honest.
+          const titleParts = [s.path];
+          if (overrideCount > 0) {
+            titleParts.push(
+              `${overrideCount} ${activeTenant} override${overrideCount === 1 ? '' : 's'} (intentional difference from base)`,
+            );
+          }
+          if (changeCount > 0) {
+            titleParts.push(
+              `${changeCount} unsynced ${changeCount === 1 ? 'edit' : 'edits'} (will be pushed)`,
+            );
+          }
           return (
             <li key={s.id}>
               <button
                 className={`sidebar__set-btn${isActive ? ' sidebar__set-btn--active' : ''}`}
                 onClick={() => setActiveSet(s.id)}
-                title={
-                  overrideCount > 0
-                    ? `${s.path} — ${overrideCount} override${overrideCount === 1 ? '' : 's'} from ${activeTenant}`
-                    : s.path
-                }
+                title={titleParts.join(' — ')}
               >
                 {/* Active indicator: filled when this is the focused set */}
                 <span
@@ -169,22 +223,36 @@ export function TokenSetSidebar() {
                 </span>
                 <span className="sidebar__set-name">{displayName(s)}</span>
                 {/*
-                  Tenant override marker — "@" badge with the count of leaves
-                  the active tenant overrides inside this base set. Only
-                  appears when a tenant is active AND this set has at least
-                  one diverging leaf, so designers can see at a glance which
-                  base sets are affected by the current tenant.
+                  Two visually distinct badges, each meaning a different
+                  thing — keep them apart so designers don't confuse
+                  "tenant has overrides" with "you have unsaved edits":
+
+                    @N  (brand-blue) → the active tenant overrides N leaves
+                                       in this base set. Structural info,
+                                       always visible while a tenant is
+                                       selected. Survives pull.
+                    +N  (amber)      → this set has N unsynced edits
+                                       (`tree` ≠ `originalTree`). Cleared
+                                       automatically by pull / push.
                 */}
                 {overrideCount > 0 && (
                   <span
                     className="sidebar__override-badge"
-                    aria-label={`${overrideCount} override${overrideCount === 1 ? '' : 's'} from ${activeTenant}`}
+                    aria-label={`${overrideCount} ${activeTenant} override${overrideCount === 1 ? '' : 's'}`}
+                    title={`${overrideCount} ${activeTenant} override${overrideCount === 1 ? '' : 's'} — intentional difference from base, not a pending change`}
                   >
                     @{overrideCount}
                   </span>
                 )}
-                {/* Dirty marker — small amber dot at the right edge */}
-                {s.dirty && <span className="sidebar__dirty-dot" aria-label="modified" />}
+                {changeCount > 0 && (
+                  <span
+                    className="sidebar__change-badge"
+                    aria-label={`${changeCount} unsynced ${changeCount === 1 ? 'edit' : 'edits'}`}
+                    title={`${changeCount} unsynced ${changeCount === 1 ? 'edit' : 'edits'} in this set — will be pushed`}
+                  >
+                    +{changeCount}
+                  </span>
+                )}
               </button>
             </li>
           );
