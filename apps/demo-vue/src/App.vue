@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import '@btech/tokens/styles.css';
-import { setMode, token, BTechSpacing, BTechStroke, BTechRadius } from '@btech/tokens';
+// Single import — @btech/tokens-bspace re-exports the full @btech/tokens API
+// AND auto-loads the bspace tenant CSS as a side-effect (via `import './styles.css'`
+// inside the package). One install, one import, full superset.
+import { setMode, token, BTechSpacing, BTechStroke, BTechRadius } from '@btech/tokens-bspace';
 import { ref, computed, onMounted } from 'vue';
 
 // ── Dark mode ──────────────────────────────────────────────────────────────────
@@ -79,29 +81,29 @@ const tokens: TokenEntry[] = [
   { name: 'inverse',   usage: "token('color.border.inverse')",   value: token('color.border.inverse'),   category: 'Border', tab: 'color', kind: 'color', cssVar: '--border-inverse' },
   { name: 'disabled',  usage: "token('color.border.disabled')",  value: token('color.border.disabled'),  category: 'Border', tab: 'color', kind: 'color', cssVar: '--border-disabled' },
   // ── Brand ──
-  { name: 'primarySubtle',   usage: "token('color.brand.primary-subtle')",   value: token('color.brand.primary-subtle'),   category: 'Brand', tab: 'color', kind: 'color', cssVar: '--brand-primary-subtle' },
-  { name: 'primary',         usage: "token('color.brand.primary')",           value: token('color.brand.primary'),           category: 'Brand', tab: 'color', kind: 'color', cssVar: '--brand-primary' },
-  { name: 'primaryBold',     usage: "token('color.brand.primary-bold')",     value: token('color.brand.primary-bold'),     category: 'Brand', tab: 'color', kind: 'color', cssVar: '--brand-primary-bold' },
-  { name: 'secondarySubtle', usage: "token('color.brand.secondary-subtle')", value: token('color.brand.secondary-subtle'), category: 'Brand', tab: 'color', kind: 'color', cssVar: '--brand-secondary-subtle' },
-  { name: 'secondary',       usage: "token('color.brand.secondary')",         value: token('color.brand.secondary'),         category: 'Brand', tab: 'color', kind: 'color', cssVar: '--brand-secondary' },
-  { name: 'secondaryBold',   usage: "token('color.brand.secondary-bold')",   value: token('color.brand.secondary-bold'),   category: 'Brand', tab: 'color', kind: 'color', cssVar: '--brand-secondary-bold' },
+  { name: 'primarySubtle',   usage: "token('color.brand.primary-subtle')",   value: token('color.brand.primary-subtle'),   category: 'Brand', tab: 'color', kind: 'color', cssVar: '--color-brand-primary-subtle' },
+  { name: 'primary',         usage: "token('color.brand.primary')",           value: token('color.brand.primary'),           category: 'Brand', tab: 'color', kind: 'color', cssVar: '--color-brand-primary' },
+  { name: 'primaryBold',     usage: "token('color.brand.primary-bold')",     value: token('color.brand.primary-bold'),     category: 'Brand', tab: 'color', kind: 'color', cssVar: '--color-brand-primary-bold' },
+  { name: 'secondarySubtle', usage: "token('color.brand.secondary-subtle')", value: token('color.brand.secondary-subtle'), category: 'Brand', tab: 'color', kind: 'color', cssVar: '--color-brand-secondary-subtle' },
+  { name: 'secondary',       usage: "token('color.brand.secondary')",         value: token('color.brand.secondary'),         category: 'Brand', tab: 'color', kind: 'color', cssVar: '--color-brand-secondary' },
+  { name: 'secondaryBold',   usage: "token('color.brand.secondary-bold')",   value: token('color.brand.secondary-bold'),   category: 'Brand', tab: 'color', kind: 'color', cssVar: '--color-brand-secondary-bold' },
   // ── Extended ──
-  { name: 'successSubtler', usage: "token('color.ext.success-subtler')", value: token('color.ext.success-subtler'), category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-success-subtler' },
-  { name: 'successSubtle',  usage: "token('color.ext.success-subtle')",  value: token('color.ext.success-subtle'),  category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-success-subtle' },
-  { name: 'success',        usage: "token('color.ext.success')",         value: token('color.ext.success'),         category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-success' },
-  { name: 'successBold',    usage: "token('color.ext.success-bold')",    value: token('color.ext.success-bold'),    category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-success-bold' },
-  { name: 'infoSubtler',    usage: "token('color.ext.info-subtler')",    value: token('color.ext.info-subtler'),    category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-info-subtler' },
-  { name: 'infoSubtle',     usage: "token('color.ext.info-subtle')",     value: token('color.ext.info-subtle'),     category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-info-subtle' },
-  { name: 'info',           usage: "token('color.ext.info')",            value: token('color.ext.info'),            category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-info' },
-  { name: 'infoBold',       usage: "token('color.ext.info-bold')",       value: token('color.ext.info-bold'),       category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-info-bold' },
-  { name: 'warningSubtler', usage: "token('color.ext.warning-subtler')", value: token('color.ext.warning-subtler'), category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-warning-subtler' },
-  { name: 'warningSubtle',  usage: "token('color.ext.warning-subtle')",  value: token('color.ext.warning-subtle'),  category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-warning-subtle' },
-  { name: 'warning',        usage: "token('color.ext.warning')",         value: token('color.ext.warning'),         category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-warning' },
-  { name: 'warningBold',    usage: "token('color.ext.warning-bold')",    value: token('color.ext.warning-bold'),    category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-warning-bold' },
-  { name: 'errorSubtler',   usage: "token('color.ext.error-subtler')",   value: token('color.ext.error-subtler'),   category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-error-subtler' },
-  { name: 'errorSubtle',    usage: "token('color.ext.error-subtle')",    value: token('color.ext.error-subtle'),    category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-error-subtle' },
-  { name: 'error',          usage: "token('color.ext.error')",           value: token('color.ext.error'),           category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-error' },
-  { name: 'errorBold',      usage: "token('color.ext.error-bold')",      value: token('color.ext.error-bold'),      category: 'Extended', tab: 'color', kind: 'color', cssVar: '--ext-error-bold' },
+  { name: 'successSubtler', usage: "token('color.ext.success-subtler')", value: token('color.ext.success-subtler'), category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-success-subtler' },
+  { name: 'successSubtle',  usage: "token('color.ext.success-subtle')",  value: token('color.ext.success-subtle'),  category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-success-subtle' },
+  { name: 'success',        usage: "token('color.ext.success')",         value: token('color.ext.success'),         category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-success' },
+  { name: 'successBold',    usage: "token('color.ext.success-bold')",    value: token('color.ext.success-bold'),    category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-success-bold' },
+  { name: 'infoSubtler',    usage: "token('color.ext.info-subtler')",    value: token('color.ext.info-subtler'),    category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-info-subtler' },
+  { name: 'infoSubtle',     usage: "token('color.ext.info-subtle')",     value: token('color.ext.info-subtle'),     category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-info-subtle' },
+  { name: 'info',           usage: "token('color.ext.info')",            value: token('color.ext.info'),            category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-info' },
+  { name: 'infoBold',       usage: "token('color.ext.info-bold')",       value: token('color.ext.info-bold'),       category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-info-bold' },
+  { name: 'warningSubtler', usage: "token('color.ext.warning-subtler')", value: token('color.ext.warning-subtler'), category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-warning-subtler' },
+  { name: 'warningSubtle',  usage: "token('color.ext.warning-subtle')",  value: token('color.ext.warning-subtle'),  category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-warning-subtle' },
+  { name: 'warning',        usage: "token('color.ext.warning')",         value: token('color.ext.warning'),         category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-warning' },
+  { name: 'warningBold',    usage: "token('color.ext.warning-bold')",    value: token('color.ext.warning-bold'),    category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-warning-bold' },
+  { name: 'errorSubtler',   usage: "token('color.ext.error-subtler')",   value: token('color.ext.error-subtler'),   category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-error-subtler' },
+  { name: 'errorSubtle',    usage: "token('color.ext.error-subtle')",    value: token('color.ext.error-subtle'),    category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-error-subtle' },
+  { name: 'error',          usage: "token('color.ext.error')",           value: token('color.ext.error'),           category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-error' },
+  { name: 'errorBold',      usage: "token('color.ext.error-bold')",      value: token('color.ext.error-bold'),      category: 'Extended', tab: 'color', kind: 'color', cssVar: '--color-ext-error-bold' },
   // ── Typography ──
   { name: 'display',    usage: "token('typography.heading.display')", value: '40px / w700', category: 'Heading',    tab: 'typography', kind: 'text' },
   { name: 'h1',         usage: "token('typography.heading.h1')",      value: '32px / w700', category: 'Heading',    tab: 'typography', kind: 'text' },
@@ -200,7 +202,7 @@ const fn = (t: string) => `<span style="color:#7dd3fc">${t}</span>`;  // functio
 
 const codeJs = [
   `import { ${fn('token')}, ${fn('cssVar')}, ${fn('tokenCalc')} }\n`,
-  `  from ${st("'@btech/tokens'")};\n\n`,
+  `  from ${st("'@btech/tokens-bspace'")};\n\n`,
   `${cm('// token() returns a CSS var string\n')}`,
   `const style = {\n`,
   `  background:   ${fn('token')}(${st("'color.bg.primary'")}),\n`,
@@ -254,7 +256,7 @@ const codeHtml = [
   `${cm('&lt;!-- 3. Optional: control dark/light mode at runtime --&gt;\n')}`,
   `&lt;${fn('script')} type=${st('"module"')}&gt;\n`,
   `  import { ${fn('setMode')}, ${fn('followSystemMode')} }\n`,
-  `    from ${st("'@btech/tokens'")};\n\n`,
+  `    from ${st("'@btech/tokens-bspace'")};\n\n`,
   `  ${fn('setMode')}(${st("'dark'")});\n`,
   `  // or auto-sync with OS:\n`,
   `  ${fn('followSystemMode')}();\n`,
@@ -508,9 +510,9 @@ body {
 }
 .tab-btn:hover { background: var(--bg-subtle); color: var(--text-primary); }
 .tab-btn.active {
-  background: var(--ext-success-subtler);
+  background: var(--color-ext-success-subtler);
   color: var(--text-success);
-  border-color: var(--ext-success-subtle);
+  border-color: var(--color-ext-success-subtle);
 }
 
 .search-input {
@@ -528,7 +530,7 @@ body {
   outline: none;
   transition: border-color 0.15s;
 }
-.search-input:focus { border-color: var(--brand-primary); }
+.search-input:focus { border-color: var(--color-brand-primary); }
 
 /* ── Table ── */
 .table-wrap {
@@ -583,17 +585,17 @@ body {
 }
 .spacing-bar {
   height: 8px;
-  background: var(--brand-primary);
+  background: var(--color-brand-primary);
   border-radius: 2px;
 }
 .preview-stroke {
   width: 44px;
-  background: var(--brand-primary);
+  background: var(--color-brand-primary);
   border-radius: 1px;
 }
 .preview-radius {
   width: 52px; height: 38px;
-  border: 2px solid var(--brand-primary);
+  border: 2px solid var(--color-brand-primary);
 }
 .preview-shadow {
   width: 44px; height: 34px;
@@ -645,7 +647,7 @@ body {
   height: 52px;
   border-radius: 9999px;
   border: none;
-  background: var(--brand-primary);
+  background: var(--color-brand-primary);
   color: white;
   font-size: 20px;
   cursor: pointer;
@@ -654,7 +656,7 @@ body {
   transition: background 0.2s;
   z-index: 100;
 }
-.fab:hover { background: var(--brand-primary-bold); }
+.fab:hover { background: var(--color-brand-primary-bold); }
 
 /* ── Examples panel ── */
 .examples-wrap {

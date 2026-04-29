@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue';
 export default defineConfig({
   plugins: [vue()],
   optimizeDeps: {
-    exclude: ['@btech/tokens'],
+    exclude: ['@btech/tokens', '@btech/tokens-bspace'],
   },
   server: {
     watch: {
