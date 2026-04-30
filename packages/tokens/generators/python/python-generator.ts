@@ -376,6 +376,65 @@ function loadShadows(): Record<string, string> {
 }
 
 
+// ── Shared exports (used by python-tenant-format.ts) ──────────────────────────
+
+/**
+ * Convert all keys of a flat string map to valid Python identifiers using
+ * the same `pyName` rules applied across this generator (digits prefixed
+ * with "s", hyphens → underscores). Used by the tenant format generator to
+ * normalise field names before passing them downstream.
+ */
+export function snakeKeyed(fields: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(fields)) {
+    out[pyName(k)] = v;
+  }
+  return out;
+}
+
+/**
+ * Write the full set of Python module files for one package into `moduleDir`.
+ * Called by both the base generator and the per-tenant generator; the caller
+ * supplies an already-resolved `data` (tenant overrides applied) so the same
+ * internal generators (`genColor`, `genSimple`, …) produce the correct output
+ * for both cases.
+ *
+ * `lightColors` and `darkColors` are accepted for interface compatibility but
+ * the actual output is derived from `data.semanticColors` (already tenant-
+ * specific) via the shared internal generators.
+ */
+export function generatePythonPackageContents(
+  moduleDir: string,
+  data: ResolvedTokenMap,
+  _lightColors: Record<string, Record<string, string>>,
+  _darkColors:  Record<string, Record<string, string>>,
+): void {
+  const shadows = loadShadows();
+  // data.radius is a flat Record<string,string> from token-loader; spread it
+  // directly (the base generator has a legacy .core/.semantic split that is a
+  // no-op — this is the correct form for all new callers).
+  const radius = data.radius as unknown as Record<string, string>;
+
+  writeFileSync(`${moduleDir}/_tokens.py`,    genTokensFlat(data, shadows), 'utf-8');
+  writeFileSync(`${moduleDir}/color.py`,      genColor(data),               'utf-8');
+  writeFileSync(`${moduleDir}/spacing.py`,    genSimple('spacing', 'BTechSpacing', data.spacing), 'utf-8');
+  writeFileSync(`${moduleDir}/radius.py`,     genSimple('radius',  'BTechRadius',  radius),       'utf-8');
+  writeFileSync(`${moduleDir}/typography.py`, genTypography(data),          'utf-8');
+  writeFileSync(`${moduleDir}/shadow.py`,     genShadow(shadows),           'utf-8');
+  writeFileSync(`${moduleDir}/__init__.py`,   genInit(),                    'utf-8');
+
+  try {
+    const strokeJson = JSON.parse(readFileSync(`${ROOT}/sources/stroke/stroke.json`, 'utf-8'));
+    const strokeEntries: Record<string, string> = {};
+    for (const [k, v] of Object.entries(strokeJson.stroke as Record<string, { $value: string }>)) {
+      if (!k.startsWith('$')) strokeEntries[k] = v.$value;
+    }
+    writeFileSync(`${moduleDir}/stroke.py`, genSimple('stroke', 'BTechStroke', strokeEntries), 'utf-8');
+  } catch {
+    writeFileSync(`${moduleDir}/stroke.py`, `${HEADER}\nclass BTechStroke:\n    pass\n`, 'utf-8');
+  }
+}
+
 // ── Main export ────────────────────────────────────────────────────────────────
 
 export function generatePythonFiles(data: ResolvedTokenMap): void {
