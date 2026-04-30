@@ -5,7 +5,7 @@
       "primary":   { "$value": "{color.neutral.800}", "$type": "color" },
       "secondary": { "$value": "{color.neutral.500}", "$type": "color" },
       "tertiary":  { "$value": "{color.neutral.400}", "$type": "color" },
-      "inverse":   { "$value": "{color.neutral.0}",   "$type": "color" },
+      "inverse":   { "$value": "{color.white}",   "$type": "color" },
       "disabled":  { "$value": "{color.neutral.300}", "$type": "color" },
       "link":      { "$value": "{color.teal.600}",    "$type": "color" },
       "success":   { "$value": "{color.green.700}",   "$type": "color" },
@@ -17,7 +17,7 @@
       "primary":   { "$value": "{color.neutral.800}", "$type": "color" },
       "secondary": { "$value": "{color.neutral.500}", "$type": "color" },
       "tertiary":  { "$value": "{color.neutral.400}", "$type": "color" },
-      "inverse":   { "$value": "{color.neutral.0}",   "$type": "color" },
+      "inverse":   { "$value": "{color.white}",   "$type": "color" },
       "disabled":  { "$value": "{color.neutral.300}", "$type": "color" },
       "link":      { "$value": "{color.teal.600}",    "$type": "color" },
       "success":   { "$value": "{color.green.700}",   "$type": "color" },
@@ -33,7 +33,7 @@
       "disabled":  { "$value": "{color.neutral.300}", "$type": "color" }
     },
     "bg": {
-      "primary":   { "$value": "{color.neutral.0}",   "$type": "color" },
+      "primary":   { "$value": "{color.white}",   "$type": "color" },
       "secondary": { "$value": "{color.neutral.100}", "$type": "color" },
       "tertiary":  { "$value": "{color.neutral.500}", "$type": "color" },
       "inverse":   { "$value": "{color.neutral.800}", "$type": "color" },
