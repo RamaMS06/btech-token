@@ -202,15 +202,17 @@ function buildResolvedBaseMap(): Record<string, string> {
       generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
       console.log('  Flutter — multi-file token output generated');
 
-    // Generate per-tenant Dart files:
-    //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
-    //   src/tenant.dart (BTechTenantTokens class + registry)
-    const resolvedBaseMap = buildResolvedBaseMap();
-    generateFlutterTenantFiles(resolvedBaseMap);
-    console.log('  Flutter — tenant files generated');
+      // Generate per-tenant Dart files:
+      //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
+      //   src/tenant.dart (BTechTenantTokens class + registry)
+      const resolvedBaseMap = buildResolvedBaseMap();
+      generateFlutterTenantFiles(resolvedBaseMap);
+      console.log('  Flutter — tenant files generated');
+    }
 
     // Generate Python package (btech_tokens) under platforms/python/btech_tokens/
     generatePythonFiles(data);
+    console.log('  Python  — base package generated');
 
     // Generate multi-file TypeScript output (framework-agnostic, in platforms/web/src/)
     generateTsFiles(data, WEB_SRC);
@@ -255,9 +257,7 @@ function buildResolvedBaseMap(): Record<string, string> {
     // Post-build: generate per-tenant web packages (platforms/web/tenants/{id}/)
     generateWebTenantPackages();
 
-    // Python — base package + per-tenant packages
-    generatePythonFiles(data);
-    console.log('  Python  — base package generated');
+    // Python — per-tenant packages
     generatePythonTenantPackages();
 
     console.log('\n pnpm generate complete\n');
