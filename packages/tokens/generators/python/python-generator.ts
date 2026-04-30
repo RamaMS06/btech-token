@@ -320,8 +320,8 @@ function genInit(): string {
 // ── Shadow loader (reads directly from source JSON) ───────────────────────────
 
 function loadShadows(): Record<string, string> {
-  const shadowFile = `${ROOT}/sources/core/shadow.primitive.json`;
-  const primFile   = `${ROOT}/sources/core/color.primitive.json`;
+  const shadowFile = `${ROOT}/sources/shadow/shadow.json`;
+  const primFile   = `${ROOT}/sources/primitives/color.json`;
 
   let shadowJson: Record<string, unknown>;
   let colorPrim: Record<string, Record<string, Record<string, { $value: string }>>>;
@@ -394,7 +394,7 @@ export function generatePythonFiles(data: ResolvedTokenMap): void {
 
   // Stroke — load directly from source
   try {
-    const strokeJson = JSON.parse(readFileSync(`${ROOT}/sources/core/stroke.primitive.json`, 'utf-8'));
+    const strokeJson = JSON.parse(readFileSync(`${ROOT}/sources/stroke/stroke.json`, 'utf-8'));
     const strokeEntries: Record<string, string> = {};
     for (const [k, v] of Object.entries(strokeJson.stroke as Record<string, { $value: string }>)) {
       if (!k.startsWith('$')) strokeEntries[k] = v.$value;

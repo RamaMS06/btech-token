@@ -82,9 +82,18 @@ function buildTenantMap(
   // Order matters: load LIGHT files first, then DARK files (so dark refs override
   // light at the raw level for dark-mode builds).
   const rawMap: Record<string, string> = {};
-  for (const dir of [`${ROOT}/sources/core`, `${ROOT}/sources/semantic`]) {
+  const sourceDirs = [
+    `${ROOT}/sources/primitives`,
+    `${ROOT}/sources/brand`,
+    `${ROOT}/sources/semantic-color`,
+    `${ROOT}/sources/spacing-and-radius`,
+    `${ROOT}/sources/typography`,
+    `${ROOT}/sources/shadow`,
+    `${ROOT}/sources/stroke`,
+  ];
+  for (const dir of sourceDirs) {
     if (!existsSync(dir)) continue;
-    const all = readdirSync(dir).filter(f => f.endsWith('.json'));
+    const all = readdirSync(dir).filter(f => f.endsWith('.json') && f !== 'font-registry.json');
     const lightFiles = all.filter(f => !f.includes('.dark.'));
     const darkFiles  = all.filter(f =>  f.includes('.dark.'));
     // Always load light files (the base layer).
@@ -539,10 +548,10 @@ export function generateFlutterTenantPackages(resolvedBaseMap: Record<string, st
   console.log('  Flutter defaults  — platforms/flutter/token/lib/src/defaults.dart');
 }
 
-/** Read brand names from sources/core/color.brand.json. Returns sorted top-level
+/** Read brand names from sources/brand/color.json. Returns sorted top-level
  *  keys under `color.brand`, excluding DTCG meta keys (those starting with `$`). */
 function discoverBrandNames(): string[] {
-  const brandPath = `${ROOT}/sources/core/color.brand.json`;
+  const brandPath = `${ROOT}/sources/brand/color.json`;
   if (!existsSync(brandPath)) return [];
   const json = JSON.parse(readFileSync(brandPath, 'utf-8'));
   const root = (json?.color?.brand ?? {}) as Record<string, unknown>;
@@ -645,9 +654,18 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   // Build a resolved base map the same way sd.config.ts does, so this file is
   // independently runnable for smoke testing without touching base platforms.
   const rawMap: Record<string, string> = {};
-  for (const dir of [`${ROOT}/sources/core`, `${ROOT}/sources/semantic`]) {
+  const cliSourceDirs = [
+    `${ROOT}/sources/primitives`,
+    `${ROOT}/sources/brand`,
+    `${ROOT}/sources/semantic-color`,
+    `${ROOT}/sources/spacing-and-radius`,
+    `${ROOT}/sources/typography`,
+    `${ROOT}/sources/shadow`,
+    `${ROOT}/sources/stroke`,
+  ];
+  for (const dir of cliSourceDirs) {
     if (!existsSync(dir)) continue;
-    for (const f of readdirSync(dir).filter((x) => x.endsWith('.json'))) {
+    for (const f of readdirSync(dir).filter((x) => x.endsWith('.json') && x !== 'font-registry.json')) {
       Object.assign(
         rawMap,
         flattenDTCG(JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'))),

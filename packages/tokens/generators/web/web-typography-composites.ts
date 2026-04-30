@@ -14,7 +14,7 @@ import { ROOT } from '../utils.js';
  */
 export function appendTypographyCompositesCss(stylesPath: string): void {
   const typoJson = JSON.parse(
-    readFileSync(`${ROOT}/sources/semantic/typography.json`, 'utf-8')
+    readFileSync(`${ROOT}/sources/typography/scale.json`, 'utf-8')
   ) as {
     typography?: {
       typeScale?: Record<string, Record<string, {

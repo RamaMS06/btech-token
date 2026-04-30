@@ -84,8 +84,14 @@ mkdirSync(WEB_SRC,     { recursive: true });
 // Flutter outputs are generated via custom generators, not SD platforms.
 // =============================================================================
 const BASE_SOURCE = [
-  `${ROOT}/sources/core/**/*.json`,
-  `${ROOT}/sources/semantic/**/*.json`,
+  `${ROOT}/sources/primitives/**/*.json`,
+  `${ROOT}/sources/brand/**/*.json`,
+  `${ROOT}/sources/semantic-color/**/*.json`,
+  `${ROOT}/sources/spacing-and-radius/**/*.json`,
+  `${ROOT}/sources/typography/font.json`,
+  `${ROOT}/sources/typography/scale.json`,
+  `${ROOT}/sources/shadow/**/*.json`,
+  `${ROOT}/sources/stroke/**/*.json`,
   `${ROOT}/sources/components/**/*.json`,
 ];
 
@@ -111,14 +117,23 @@ const sd = new StyleDictionary({
 // sources. Used by both modes; does NOT write any files.
 // =============================================================================
 function buildResolvedBaseMap(): Record<string, string> {
-  const coreTokenFiles = [
-    ...readdirSync(`${ROOT}/sources/core`).map((f: string) => `${ROOT}/sources/core/${f}`),
-    ...readdirSync(`${ROOT}/sources/semantic`).map((f: string) => `${ROOT}/sources/semantic/${f}`),
+  const SOURCE_DIRS = [
+    `${ROOT}/sources/primitives`,
+    `${ROOT}/sources/brand`,
+    `${ROOT}/sources/semantic-color`,
+    `${ROOT}/sources/spacing-and-radius`,
+    `${ROOT}/sources/shadow`,
+    `${ROOT}/sources/stroke`,
   ];
   const rawBaseMap: Record<string, string> = {};
-  for (const file of coreTokenFiles) {
-    if (!file.endsWith('.json')) continue;
-    Object.assign(rawBaseMap, flattenDTCG(JSON.parse(readFileSync(file, 'utf-8'))));
+  for (const dir of SOURCE_DIRS) {
+    for (const f of readdirSync(dir).filter((f: string) => f.endsWith('.json'))) {
+      Object.assign(rawBaseMap, flattenDTCG(JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'))));
+    }
+  }
+  // Also include typography token files (but not font-registry.json)
+  for (const f of ['font.json', 'scale.json']) {
+    Object.assign(rawBaseMap, flattenDTCG(JSON.parse(readFileSync(`${ROOT}/sources/typography/${f}`, 'utf-8'))));
   }
   const resolvedBaseMap: Record<string, string> = {};
   for (const [k, v] of Object.entries(rawBaseMap)) resolvedBaseMap[k] = resolveRef(v, rawBaseMap);

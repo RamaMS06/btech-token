@@ -39,7 +39,7 @@ const HEADER =
  *  of dasherized field names (e.g. 'primary-subtle'). Each field = one plain Color. */
 export function buildColorTree(): ColorTree {
   const colorJson = JSON.parse(
-    readFileSync(`${ROOT}/sources/semantic/color.json`, 'utf-8'),
+    readFileSync(`${ROOT}/sources/semantic-color/light.json`, 'utf-8'),
   ) as { color: Record<string, Record<string, unknown>> };
 
   const tree: ColorTree = {};
@@ -58,7 +58,7 @@ export function buildColorTree(): ColorTree {
  *  Applies Dart-safe naming: numeric-starting names get an 's' prefix (2xs → s2xs). */
 export function buildRadiusFields(resolvedMap: Record<string, string>): RadiusField[] {
   const radiusJson = JSON.parse(
-    readFileSync(`${ROOT}/sources/core/radius.primitive.json`, 'utf-8'),
+    readFileSync(`${ROOT}/sources/spacing-and-radius/spacing-and-radius.json`, 'utf-8'),
   ) as { radius: Record<string, { $value: string }> };
   const out: RadiusField[] = [];
   for (const name of Object.keys(radiusJson.radius)) {
@@ -108,9 +108,18 @@ function resolveMap(rawMap: Record<string, string>): Record<string, string> {
  */
 export function buildResolvedBaseMap(): Record<string, string> {
   const rawMap: Record<string, string> = {};
-  for (const dir of [`${ROOT}/sources/core`, `${ROOT}/sources/semantic`]) {
+  const sourceDirs = [
+    `${ROOT}/sources/primitives`,
+    `${ROOT}/sources/brand`,
+    `${ROOT}/sources/semantic-color`,
+    `${ROOT}/sources/spacing-and-radius`,
+    `${ROOT}/sources/typography`,
+    `${ROOT}/sources/shadow`,
+    `${ROOT}/sources/stroke`,
+  ];
+  for (const dir of sourceDirs) {
     if (!existsSync(dir)) continue;
-    for (const f of readdirSync(dir).filter(f => f.endsWith('.json') && !f.includes('.dark.'))) {
+    for (const f of readdirSync(dir).filter(f => f.endsWith('.json') && !f.includes('.dark.') && f !== 'font-registry.json')) {
       Object.assign(rawMap, flattenDTCG(JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'))));
     }
   }
@@ -124,15 +133,24 @@ export function buildResolvedBaseMap(): Record<string, string> {
  */
 export function buildDarkResolvedBaseMap(): Record<string, string> {
   const rawMap: Record<string, string> = {};
-  for (const dir of [`${ROOT}/sources/core`, `${ROOT}/sources/semantic`]) {
+  const sourceDirs = [
+    `${ROOT}/sources/primitives`,
+    `${ROOT}/sources/brand`,
+    `${ROOT}/sources/semantic-color`,
+    `${ROOT}/sources/spacing-and-radius`,
+    `${ROOT}/sources/typography`,
+    `${ROOT}/sources/shadow`,
+    `${ROOT}/sources/stroke`,
+  ];
+  for (const dir of sourceDirs) {
     if (!existsSync(dir)) continue;
     // Load all non-dark files first (establishes light base)
-    for (const f of readdirSync(dir).filter(f => f.endsWith('.json') && !f.includes('.dark.'))) {
+    for (const f of readdirSync(dir).filter(f => f.endsWith('.json') && !f.includes('.dark.') && f !== 'font-registry.json')) {
       Object.assign(rawMap, flattenDTCG(JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'))));
     }
   }
   // Apply dark overrides on top (keys that exist in dark file override the light values)
-  const darkFile = `${ROOT}/sources/semantic/color.dark.json`;
+  const darkFile = `${ROOT}/sources/semantic-color/dark.json`;
   if (existsSync(darkFile)) {
     Object.assign(rawMap, flattenDTCG(JSON.parse(readFileSync(darkFile, 'utf-8'))));
   }
@@ -449,7 +467,7 @@ function emitContextDart(): string {
  * Main entry — generates all 5 Dart files under platforms/flutter/token/lib/src/.
  * If resolvedBaseMap is not provided, one is built internally from core + semantic sources.
  * primitiveGroups (e.g. ['green','blue','neutral',…]) drives BTechColor.<group> static
- * getters; if omitted, derived from sources/core/color.primitive.json.
+ * getters; if omitted, derived from sources/primitives/color.json.
  */
 export function generateFlutterThemeFiles(
   resolvedBaseMap?: Record<string, string>,
@@ -465,7 +483,7 @@ export function generateFlutterThemeFiles(
   // Derive primitive groups from core/color.primitive.json when not passed in
   // (standalone CLI mode). Same source the flutter-generator already reads.
   const groups = primitiveGroups ?? Object.keys(
-    (JSON.parse(readFileSync(`${ROOT}/sources/core/color.primitive.json`, 'utf-8')) as {
+    (JSON.parse(readFileSync(`${ROOT}/sources/primitives/color.json`, 'utf-8')) as {
       color: Record<string, unknown>;
     }).color,
   ).filter(k => !k.startsWith('$'));

@@ -23,7 +23,7 @@ export interface ResolvedTokenMap {
   baseMap: Record<string, string>;
   coreColors: Record<string, Record<string, string>>;
   /** Brand primitive swatches — 2-level: brand-name (primary/secondary) → shade (50..900) → resolved hex.
-   *  Loaded from sources/core/color.brand.json. Aliases to primitive ramps are resolved here so
+   *  Loaded from sources/brand/color.json. Aliases to primitive ramps are resolved here so
    *  output generators get final hex values. Tenant overrides re-target the aliases at the same
    *  shade level (color.brand.primary.500 → {color.rose.500} etc.).
    *
@@ -56,13 +56,19 @@ export interface ResolvedTokenMap {
 }
 
 export function loadTokenData(): ResolvedTokenMap {
-  const coreDir = `${ROOT}/sources/core`;
-  const semanticDir = `${ROOT}/sources/semantic`;
-
   // Build + resolve base map (two passes for chained refs)
   const rawBaseMap: Record<string, string> = {};
-  for (const dir of [coreDir, semanticDir]) {
-    for (const f of readdirSync(dir).filter(f => f.endsWith('.json'))) {
+  const sourceDirs = [
+    `${ROOT}/sources/primitives`,
+    `${ROOT}/sources/brand`,
+    `${ROOT}/sources/semantic-color`,
+    `${ROOT}/sources/spacing-and-radius`,
+    `${ROOT}/sources/typography`,
+    `${ROOT}/sources/shadow`,
+    `${ROOT}/sources/stroke`,
+  ];
+  for (const dir of sourceDirs) {
+    for (const f of readdirSync(dir).filter((f: string) => f.endsWith('.json') && !f.startsWith('font-registry'))) {
       Object.assign(rawBaseMap, flattenDTCG(JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'))));
     }
   }
@@ -71,7 +77,7 @@ export function loadTokenData(): ResolvedTokenMap {
   for (const [k, v] of Object.entries(resolvedBaseMap)) resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
 
   // Core color palette
-  const corePrimitive = JSON.parse(readFileSync(`${coreDir}/color.primitive.json`, 'utf-8'));
+  const corePrimitive = JSON.parse(readFileSync(`${ROOT}/sources/primitives/color.json`, 'utf-8'));
   const coreColors: Record<string, Record<string, string>> = {};
   for (const [group, shades] of Object.entries(corePrimitive.color as Record<string, Record<string, unknown>>)) {
     coreColors[group] = {};
@@ -81,11 +87,11 @@ export function loadTokenData(): ResolvedTokenMap {
     }
   }
 
-  // Brand primitive swatches — sources/core/color.brand.json.
+  // Brand primitive swatches — sources/brand/color.json.
   // Each rung references a primitive ramp (e.g. color.brand.primary.500 → {color.blue.500}).
   // Resolved against resolvedBaseMap so output generators get final hex values.
   // Convention: 50,100,200,300,400,500,600,700,800,900 — Tailwind v3 / DTCG standard.
-  const brandPrimitive = JSON.parse(readFileSync(`${coreDir}/color.brand.json`, 'utf-8'));
+  const brandPrimitive = JSON.parse(readFileSync(`${ROOT}/sources/brand/color.json`, 'utf-8'));
   const brandSwatches: Record<string, Record<string, string>> = {};
   const brandRoot = (brandPrimitive.color?.brand ?? {}) as Record<string, Record<string, unknown>>;
   for (const [brandName, shades] of Object.entries(brandRoot)) {
@@ -105,7 +111,7 @@ export function loadTokenData(): ResolvedTokenMap {
   // We strip `-default` here so consumer-facing names stay clean across all
   // generators (Flutter, Web, Python). CSS variables get the same treatment via
   // the post-build regex in sd.config.ts.
-  const semanticColorJson = JSON.parse(readFileSync(`${semanticDir}/color.json`, 'utf-8'));
+  const semanticColorJson = JSON.parse(readFileSync(`${ROOT}/sources/semantic-color/light.json`, 'utf-8'));
   const semanticColors: Record<string, Record<string, string>> = {};
   for (const [group, fields] of Object.entries(semanticColorJson.color as Record<string, unknown>)) {
     semanticColors[group] = {};
@@ -116,16 +122,16 @@ export function loadTokenData(): ResolvedTokenMap {
     }
   }
 
-  // Spacing
-  const sizePrimitive = JSON.parse(readFileSync(`${coreDir}/size.primitive.json`, 'utf-8'));
+  // Spacing + Radius — both now live in the merged spacing-and-radius.json
+  const spacingRadiusJson = JSON.parse(readFileSync(`${ROOT}/sources/spacing-and-radius/spacing-and-radius.json`, 'utf-8'));
   const spacing: Record<string, string> = {};
-  for (const [k, v] of Object.entries(sizePrimitive.spacing as Record<string, unknown>)) {
+  for (const [k, v] of Object.entries(spacingRadiusJson.spacing as Record<string, unknown>)) {
     if (k.startsWith('$')) continue;
     spacing[k] = (v as any).$value;
   }
 
   // Stroke
-  const strokePrimitive = JSON.parse(readFileSync(`${coreDir}/stroke.primitive.json`, 'utf-8'));
+  const strokePrimitive = JSON.parse(readFileSync(`${ROOT}/sources/stroke/stroke.json`, 'utf-8'));
   const stroke: Record<string, string> = {};
   for (const [k, v] of Object.entries(strokePrimitive.stroke as Record<string, unknown>)) {
     if (k.startsWith('$')) continue;
@@ -134,8 +140,7 @@ export function loadTokenData(): ResolvedTokenMap {
 
   // Radius — core primitives only (semantic aliases removed)
   const radius: Record<string, string> = {};
-  const radiusPrimitive = JSON.parse(readFileSync(`${coreDir}/radius.primitive.json`, 'utf-8'));
-  for (const [k, v] of Object.entries(radiusPrimitive.radius as Record<string, unknown>)) {
+  for (const [k, v] of Object.entries(spacingRadiusJson.radius as Record<string, unknown>)) {
     if (k.startsWith('$')) continue;
     radius[k] = (v as any).$value;
   }
@@ -143,7 +148,7 @@ export function loadTokenData(): ResolvedTokenMap {
   // Shadow — parse DTCG shadow objects into 2-level group→variant map.
   // Preserves the Figma "/" separator hierarchy: button/pressed → shadow.button.pressed.
   const shadow: Record<string, Record<string, ShadowLayer[]>> = {};
-  const shadowPrimitive = JSON.parse(readFileSync(`${coreDir}/shadow.primitive.json`, 'utf-8'));
+  const shadowPrimitive = JSON.parse(readFileSync(`${ROOT}/sources/shadow/shadow.json`, 'utf-8'));
 
   function parsePx(v: string | number): number {
     return parseFloat(String(v).replace('px', '')) || 0;
@@ -171,7 +176,7 @@ export function loadTokenData(): ResolvedTokenMap {
   }
 
   // Typography primitives
-  const fontPrimitive = JSON.parse(readFileSync(`${coreDir}/font.primitive.json`, 'utf-8'));
+  const fontPrimitive = JSON.parse(readFileSync(`${ROOT}/sources/typography/font.json`, 'utf-8'));
   const fontFamilies: Record<string, string> = {};
   const fontSizes: Record<string, string> = {};
   const fontWeights: Record<string, string> = {};
@@ -190,7 +195,7 @@ export function loadTokenData(): ResolvedTokenMap {
   }
 
   // Semantic typography groups (flat: body, heading, label, code)
-  const typoJson = JSON.parse(readFileSync(`${semanticDir}/typography.json`, 'utf-8'));
+  const typoJson = JSON.parse(readFileSync(`${ROOT}/sources/typography/scale.json`, 'utf-8'));
   const semanticTypo: Record<string, Record<string, string>> = {};
   for (const [group, props] of Object.entries(typoJson.typography as Record<string, unknown>)) {
     if (group.startsWith('$') || group === 'typeScale') continue;
