@@ -18,7 +18,6 @@
 
 import type { UIToMainMessage, MainToUIMessage, TokenStorageState, Settings } from '../shared/types.js';
 import { runFigmaImportScan, runFigmaImportApply } from './figma-import.js';
-import { runFigmaExport } from './figma-export.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -45,6 +44,44 @@ figma.showUI(__html__, {
   // Combined with our CSS var usage, this means the plugin looks native.
   themeColors: true,
 });
+
+// ── Real-time Figma Variables change detection ────────────────────────────────
+//
+// Figma fires 'documentchange' for every mutation that happens in the canvas.
+// We only care about changes that affect Variables (VARIABLE_*) — when a
+// designer adds, edits, or removes a variable outside the plugin, we notify
+// the UI so ImportStylesModal can trigger a fresh scan immediately.
+//
+// Debounce: variables often arrive in batches (e.g. pasting a collection adds
+// many at once). We debounce for 500 ms so a single round-trip scan replaces
+// what would otherwise be N rapid re-scans in a row.
+//
+// IMPORTANT: Figma requires figma.loadAllPagesAsync() to be called before
+// registering a 'documentchange' handler when the file runs in incremental
+// mode (large files). We wrap in an async IIFE so the registration is always
+// deferred until after the await resolves — avoiding the
+// "Cannot register documentchange handler in incremental mode" error.
+
+let variableChangeTimer: ReturnType<typeof setTimeout> | null = null;
+
+void (async () => {
+  await figma.loadAllPagesAsync();
+
+  figma.on('documentchange', (event) => {
+    // Any real document mutation may affect importable content (variables,
+    // collections, paint/text/effect styles). We avoid filtering by change.type
+    // so future variable-specific change types are automatically covered.
+    if (event.documentChanges.length === 0) return;
+
+    // Debounce — multi-node pastes / batch edits arrive as many rapid events;
+    // collapse them into a single re-scan notification.
+    if (variableChangeTimer !== null) clearTimeout(variableChangeTimer);
+    variableChangeTimer = setTimeout(() => {
+      variableChangeTimer = null;
+      figma.ui.postMessage({ type: 'figma-variables-changed' } as MainToUIMessage);
+    }, 500);
+  });
+})();
 
 // ── Message handlers ──────────────────────────────────────────────────────────
 
@@ -153,17 +190,6 @@ figma.ui.onmessage = async (rawMsg: unknown) => {
         const message = (err as Error).message ?? String(err);
         send({ type: 'figma-import-error', message });
         figma.notify(`Import failed: ${message}`, { error: true });
-      }
-      break;
-    }
-
-    case 'figma-export': {
-      try {
-        await runFigmaExport(msg.payload, send);
-      } catch (err) {
-        const message = (err as Error).message ?? String(err);
-        send({ type: 'figma-export-error', message });
-        figma.notify(`Export failed: ${message}`, { error: true });
       }
       break;
     }
