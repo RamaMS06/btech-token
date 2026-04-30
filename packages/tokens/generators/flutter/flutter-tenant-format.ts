@@ -66,8 +66,8 @@ function cap(s: string): string {
 
 /** Load source raw maps + apply tenant overrides at the RAW level, then resolve.
  *  This is critical for the brand-layer override pattern: tenants alias the brand
- *  rungs (color.brand.primary.500 → {color.blue.500}), and semantic tokens alias
- *  the brand rungs (color.brand.primary-default → {color.brand.primary.500}). The
+ *  rungs (brand.primary.500 → {color.blue.500}), and semantic tokens alias
+ *  the brand rungs (color.brand.primary → {brand.primary.500}). The
  *  override must be applied BEFORE resolution so the chain re-resolves correctly.
  *  The legacy "merge already-resolved values" approach silently dropped tenant
  *  changes from propagating up through the alias chain. */
@@ -223,12 +223,12 @@ function emitTenantDart(
       const constName = `btechColorBrand${cap(brand)}`;
       L.push(`/// Brand ${brand} color swatch (${tenantId}) — ${constName}[500]`);
       L.push(`const MaterialColor ${constName} = MaterialColor(`);
-      const primaryHex = lightMap[`color.brand.${brand}.500`] ?? '#000000';
+      const primaryHex = lightMap[`brand.${brand}.500`] ?? '#000000';
       L.push(`  ${resolveArgb(primaryHex, '0xFF000000')},`);
       L.push('  <int, Color>{');
       const shades = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900'];
       for (const shade of shades) {
-        const hex = lightMap[`color.brand.${brand}.${shade}`];
+        const hex = lightMap[`brand.${brand}.${shade}`];
         if (!hex) continue;
         L.push(`    ${shade}: Color(${resolveArgb(hex, '0xFF000000')}),`);
       }
@@ -481,8 +481,8 @@ export function generateFlutterTenantPackages(resolvedBaseMap: Record<string, st
 
   const tree = buildColorTree();
 
-  // Discover brand names from the brand primitive source (color.brand.json).
-  // Each top-level key under `color.brand` (excluding $-meta) becomes a tenant-
+  // Discover brand names from the brand primitive source (brand/color.json).
+  // Each top-level key under `brand` (excluding $-meta) becomes a tenant-
   // overridable swatch name (primary, secondary, …).
   const brandNames = discoverBrandNames();
 
@@ -549,12 +549,12 @@ export function generateFlutterTenantPackages(resolvedBaseMap: Record<string, st
 }
 
 /** Read brand names from sources/brand/color.json. Returns sorted top-level
- *  keys under `color.brand`, excluding DTCG meta keys (those starting with `$`). */
+ *  keys under `brand`, excluding DTCG meta keys (those starting with `$`). */
 function discoverBrandNames(): string[] {
   const brandPath = `${ROOT}/sources/brand/color.json`;
   if (!existsSync(brandPath)) return [];
   const json = JSON.parse(readFileSync(brandPath, 'utf-8'));
-  const root = (json?.color?.brand ?? {}) as Record<string, unknown>;
+  const root = (json?.brand ?? {}) as Record<string, unknown>;
   return Object.keys(root).filter(k => !k.startsWith('$')).sort();
 }
 

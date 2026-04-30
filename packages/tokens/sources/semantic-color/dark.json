@@ -43,12 +43,12 @@
       "overlay":   { "$value": "#181c20cc",           "$type": "color", "$description": "Neutral.900 with 80% alpha; kept as a raw value because DTCG cannot express alpha-modified aliases." }
     },
     "brand": {
-      "primary-subtle":   { "$value": "{color.brand.primary.800}",   "$type": "color" },
-      "primary-default":  { "$value": "{color.brand.primary.400}",   "$type": "color" },
-      "primary-bold":     { "$value": "{color.brand.primary.500}",   "$type": "color" },
-      "secondary-subtle": { "$value": "{color.brand.secondary.800}", "$type": "color" },
-      "secondary-default":{ "$value": "{color.brand.secondary.400}", "$type": "color" },
-      "secondary-bold":   { "$value": "{color.brand.secondary.500}", "$type": "color" }
+      "primary-subtle":   { "$value": "{brand.primary.800}",   "$type": "color" },
+      "primary":          { "$value": "{brand.primary.400}",   "$type": "color" },
+      "primary-bold":     { "$value": "{brand.primary.500}",   "$type": "color" },
+      "secondary-subtle": { "$value": "{brand.secondary.800}", "$type": "color" },
+      "secondary":        { "$value": "{brand.secondary.400}", "$type": "color" },
+      "secondary-bold":   { "$value": "{brand.secondary.500}", "$type": "color" }
     },
     "ext": {
       "success-subtler": { "$value": "{color.green.500}",  "$type": "color" },

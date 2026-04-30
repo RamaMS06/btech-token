@@ -88,12 +88,12 @@ export function loadTokenData(): ResolvedTokenMap {
   }
 
   // Brand primitive swatches — sources/brand/color.json.
-  // Each rung references a primitive ramp (e.g. color.brand.primary.500 → {color.blue.500}).
+  // Each rung references a primitive ramp (e.g. brand.primary.500 → {color.blue.500}).
   // Resolved against resolvedBaseMap so output generators get final hex values.
   // Convention: 50,100,200,300,400,500,600,700,800,900 — Tailwind v3 / DTCG standard.
   const brandPrimitive = JSON.parse(readFileSync(`${ROOT}/sources/brand/color.json`, 'utf-8'));
   const brandSwatches: Record<string, Record<string, string>> = {};
-  const brandRoot = (brandPrimitive.color?.brand ?? {}) as Record<string, Record<string, unknown>>;
+  const brandRoot = (brandPrimitive.brand ?? {}) as Record<string, Record<string, unknown>>;
   for (const [brandName, shades] of Object.entries(brandRoot)) {
     if (brandName.startsWith('$')) continue;
     brandSwatches[brandName] = {};
@@ -107,7 +107,7 @@ export function loadTokenData(): ResolvedTokenMap {
   // Semantic colors — flat 2-level: group → field-name → hex
   // The `-default` suffix is an internal disambiguator (added in source files
   // where a flat semantic leaf would collide with a primitive group of the same
-  // name — e.g. `color.brand.primary` collides with `color.brand.primary.{50..900}`).
+  // name — e.g. `brand.primary` collides with `brand.primary.{50..900}`).
   // We strip `-default` here so consumer-facing names stay clean across all
   // generators (Flutter, Web, Python). CSS variables get the same treatment via
   // the post-build regex in sd.config.ts.

@@ -141,10 +141,8 @@ function buildResolvedBaseMap(): Record<string, string> {
   for (const [k, v] of Object.entries(rawBaseMap)) resolvedBaseMap[k] = resolveRef(v, rawBaseMap);
   for (const [k, v] of Object.entries(resolvedBaseMap)) resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
 
-  // Strip the `-default` disambiguator suffix from keys after resolution.
-  // Source files use `-default` (e.g. `color.brand.primary-default`) only to
-  // avoid SD path collisions with primitive groups of the same name (e.g.
-  // `color.brand.primary.{50..900}`). Consumers should look up the clean path.
+  // Strip the `-default` disambiguator suffix from keys after resolution, if any remain.
+  // (Previously used for color.brand.primary-default to avoid SD path collision — now resolved.)
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(resolvedBaseMap)) {
     const cleanKey = k.replace(/-default(\.|$)/, '$1');

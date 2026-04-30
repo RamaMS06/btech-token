@@ -42,6 +42,7 @@ const ALLOWED_OVERRIDES_KEYS = new Set([
   '$schema',
   '$description',
   'color',
+  'brand',
   'dimension',
   'fontFamily',
   'fontWeight',
