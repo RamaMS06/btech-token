@@ -1,48 +1,129 @@
-name: Auto Version & Publish
+name: Auto Version on Merge
 
-# Triggers when a PR is merged into main.
-# Reads PR tags to determine semver bump type, then:
-#   1. Bumps version in packages/tokens/platforms/web/package.json
-#   2. Syncs version to packages/tokens/platforms/flutter/pubspec.yaml (mirror versioning)
-#   3. Commits version bump back to main (***NO_CI*** to skip re-triggering)
-#   4. Creates and pushes a v* tag (triggers publish pipeline)
+# Triggers when any commit lands on `main` (stable) or `dev` (rc) — which in
+# practice means a merged PR. Version bump commits from this pipeline use
+# ***NO_CI*** so they don't re-trigger.
 #
-# PR Tag → Bump type:
+# Bump verb is derived from the merge target by default:
+#   main → patch        (X.Y.Z+1, dist-tag `latest`)
+#   dev  → rc           (X.Y.Z-rc.N, dist-tag `rc`)
+#
+# PR labels override the default when present:
 #   release:major  → X+1.0.0
 #   release:minor  → X.Y+1.0
-#   release:patch  → X.Y.Z+1  (default — no tag needed)
+#   release:patch  → X.Y.Z+1
+#   release:rc     → X.Y.Z-rc.N  (rc counter auto-increments)
+#   version:<x>    → write that exact version (overrides release:* when present)
 #   no-release     → skip entirely (docs, chore, etc.)
-
-trigger: none   # triggered by PR completion only
+#
+# Tags are pushed back to whichever branch triggered the run, so dev bumps stay
+# on the dev line until they're explicitly merged into main.
+trigger:
+  branches:
+    include:
+      - main
+      - dev
+  paths:
+    # ONLY trigger when something that affects the published package changed.
+    # Anything outside this list (docs, scripts, tools, pipelines, README,
+    # demo apps, etc.) merging to main will NOT publish a new version.
+    include:
+      - packages/tokens/sources/**                    # token JSONs (designer + Figma plugin)
+      - packages/tokens/generators/**                 # generator code
+      - packages/tokens/sd.config.ts                  # Style Dictionary config
+      - packages/tokens/platforms/**/package.json     # manual version edits (web)
+      - packages/tokens/platforms/**/pubspec.yaml     # manual version edits (flutter)
+      - packages/tokens/platforms/**/pyproject.toml   # manual version edits (python)
+    # Re-exclude derivative outputs so a generate-only commit cascade doesn't
+    # falsely trip the trigger. Real source changes still cascade through to
+    # this trigger because `sources/**` is in the include list.
+    exclude:
+      - 'packages/tokens/platforms/web/*/dist/**'
+      - 'packages/tokens/platforms/web/*/src/**'
+      - 'packages/tokens/platforms/flutter/*/lib/src/**'
+      - 'packages/tokens/platforms/flutter/*/lib/btech_tokens.dart'
 
 pr: none
-
-# This pipeline is triggered via a service hook on PR merge.
-# Set up: Project Settings → Service Hooks → Web Hooks → Pull request merged
-# Or trigger manually via az pipelines run.
 
 pool:
   vmImage: ubuntu-latest
 
-# Variables:
-#   System.AccessToken — built-in pipeline identity, no setup needed.
-#   PR_TAGS            — passed via variable group or pipeline trigger payload.
-#                        Format: comma-separated tag names e.g. "release:minor,bug-fix"
-#
-# No personal PAT is required. All auth uses System.AccessToken automatically.
 variables:
-  - group: btech-ds-secrets   # provides PR_TAGS
+  - group: btech-ds-secrets   # provides PR_TAGS, optionally GIT_PUSH_PAT
   - name: BUMP_TYPE
-    value: patch   # overridden by determine-bump step
+    value: patch               # default; overridden by determine-bump step
+  - name: SKIP_RELEASE
+    value: 'false'
+  # Optional PAT fallback for git push. Pre-declared as empty so the pipeline
+  # works even when the secrets variable group doesn't define it. When the
+  # admin sets it in `btech-ds-secrets`, the variable group value overrides
+  # this empty default and the push step auto-switches to PAT auth.
+  # See docs/ci-cd-permissions.md for when/why to set it.
+  - name: GIT_PUSH_PAT
+    value: ''
 
 jobs:
   - job: auto_version
-    displayName: 'Bump version & publish'
+    displayName: 'Bump version & tag'
 
     steps:
       - checkout: self
         persistCredentials: true
         fetchDepth: 0
+
+      # ── Preflight: confirm we can push BEFORE doing any work ───────────────
+      # Build service identity needs `Contribute` + `Create tag` on this repo
+      # (Project Settings → Repositories → btech-ds → Security). When that
+      # permission is missing, the bump commits are made locally and then the
+      # final `git push` fails with TF401027 — wasting a job run and leaving
+      # nothing to retry against.
+      #
+      # We probe BOTH push paths so we fail fast with the right diagnostic:
+      #   1. If GIT_PUSH_PAT is set in btech-ds-secrets, use that (admin
+      #      workaround when build-service perms cannot be granted).
+      #   2. Otherwise, use System.AccessToken via persistCredentials.
+      #
+      # The probe is `git push --dry-run` — server-side perms check without
+      # actually writing anything. Cheap, deterministic, accurate.
+      - script: |
+          set +e
+          PUSH_BRANCH="${BUILD_SOURCEBRANCH#refs/heads/}"
+
+          if [ -n "${GIT_PUSH_PAT:-}" ]; then
+            echo "GIT_PUSH_PAT detected — preflight will skip (PAT auth always works if scope is correct)."
+            echo "##vso[task.setvariable variable=USE_PAT]true"
+            exit 0
+          fi
+
+          echo "Probing push permission with build-service identity ($PUSH_BRANCH)…"
+          PROBE_OUTPUT=$(git push --dry-run origin "HEAD:$PUSH_BRANCH" 2>&1)
+          PROBE_RC=$?
+          echo "$PROBE_OUTPUT"
+          if [ $PROBE_RC -ne 0 ]; then
+            echo "##[error]Build service cannot push to this repo (preflight failed)."
+            echo "##[error]"
+            echo "##[error]ROOT CAUSE: pipeline identity is missing 'Contribute'"
+            echo "##[error]and/or 'Create tag' permission on repo 'btech-ds'."
+            echo "##[error]"
+            echo "##[error]FIX A — admin grants permission (preferred, one-time):"
+            echo "##[error]  1. Project Settings → Repositories → btech-ds → Security"
+            echo "##[error]  2. Find user: '<Project> Build Service (<org>)'"
+            echo "##[error]  3. Set: Contribute = Allow, Create tag = Allow"
+            echo "##[error]  4. Save. Re-run this pipeline."
+            echo "##[error]"
+            echo "##[error]FIX B — PAT fallback (admin cannot grant the perms above):"
+            echo "##[error]  1. Create PAT — scope: Code (Read & Write), 1y expiry"
+            echo "##[error]  2. Pipelines → Library → variable group 'btech-ds-secrets'"
+            echo "##[error]  3. Add SECRET variable: GIT_PUSH_PAT = <the PAT>"
+            echo "##[error]  4. Save. Re-run pipeline (auto-detects PAT)."
+            echo "##[error]"
+            echo "##[error]Full runbook: docs/ci-cd-permissions.md"
+            exit 1
+          fi
+          echo "✓ Push permission OK — build service can write to $PUSH_BRANCH."
+        displayName: 'Preflight: verify git push permission'
+        env:
+          GIT_PUSH_PAT: $(GIT_PUSH_PAT)
 
       # ── Node / pnpm ──────────────────────────────────────────────────────
       - task: NodeTool@0
@@ -55,6 +136,8 @@ jobs:
           corepack prepare pnpm@9 --activate
         displayName: 'Setup pnpm 9'
 
+      # Inject System.AccessToken into .npmrc so pnpm can fetch @btech/* from
+      # Azure Artifacts feed. No personal PAT needed.
       - task: npmAuthenticate@0
         displayName: 'Authenticate with Azure Artifacts'
         inputs:
@@ -62,109 +145,376 @@ jobs:
 
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
-      # ── Flutter ──────────────────────────────────────────────────────────
+      # ── Defensive guard: confirm the merge actually changed token sources ──
+      # The trigger paths filter is the first line of defense. This is the
+      # second — it inspects the actual diff of the merge commit and skips
+      # the release if (somehow) only derivative or unrelated files changed.
+      # This protects against:
+      #   • PRs that touch ONLY pipelines/, docs/, scripts/, tools/, README
+      #   • Path filter false positives from glob edge cases
+      #   • Manual commits to main that bypass PR review
       - script: |
-          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
-          echo "##vso[task.prependpath]$HOME/flutter/bin"
-        displayName: 'Setup Flutter (stable)'
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- \
+            'packages/tokens/sources/**' \
+            'packages/tokens/generators/**' \
+            'packages/tokens/sd.config.ts' \
+            'packages/tokens/platforms/web/*/package.json' \
+            'packages/tokens/platforms/flutter/*/pubspec.yaml' \
+            'packages/tokens/platforms/python/*/pyproject.toml' \
+            2>/dev/null || true)
 
-      - script: flutter pub get
-        displayName: 'Flutter pub get'
-        workingDirectory: packages/tokens/platforms/flutter
-
-      # ── Determine bump type from PR tags ─────────────────────────────────
-      # Set PR_TAGS as pipeline variable before running, or pass via API.
-      # Format: comma-separated list of tag names, e.g. "release:major,bug-fix"
-      - script: |
-          TAGS="${PR_TAGS:-}"
-          echo "PR tags: $TAGS"
-
-          if echo "$TAGS" | grep -q "no-release"; then
-            echo "Tag 'no-release' found — skipping release."
+          if [ -z "$CHANGED" ]; then
+            echo "##[warning]No token-source / generator / version-manifest changes in this merge."
+            echo "##[warning]Skipping release — nothing to publish."
             echo "##vso[task.setvariable variable=SKIP_RELEASE]true"
             exit 0
           fi
+
+          echo "##[section]Token-related changes detected:"
+          echo "$CHANGED"
+        displayName: 'Detect real token changes (skip release if none)'
+
+      # ── Capture root version BEFORE bump (for tag-guard later) ──────────
+      # Root `package.json` is the canonical platform version. All derived
+      # packages (web/flutter/python base + tenants) mirror it under the
+      # reset rule (see scripts/bump-version.ts).
+      - script: |
+          PREV=$(node -p "require('./package.json').version")
+          echo "Previous root version: $PREV"
+          echo "##vso[task.setvariable variable=PREV_ROOT_VERSION]$PREV"
+        displayName: 'Capture previous root version'
+
+      # ── Determine bump type & scope from branch + PR labels ──────────────
+      # PR_TAGS is set in the btech-ds-secrets variable group.
+      # Format: comma-separated label names, e.g. "release:minor,scope:tenant:bspace"
+      #
+      # Default bump verb is DERIVED FROM THE TRIGGER BRANCH:
+      #   main → patch  (stable releases, dist-tag `latest`)
+      #   dev  → rc     (prereleases, dist-tag `rc`)
+      # PR labels still take precedence when present (power-user override).
+      #
+      # Supported labels:
+      #   release:major|minor|patch|rc   → semver bump type (overrides default)
+      #   scope:all|base|tenants         → which packages to bump
+      #   scope:tenant:<id>              → bump a single tenant
+      #   version:<x>                    → write exact version (overrides release:*)
+      #   no-release                     → skip entirely
+      #
+      # If no scope:* label is present, defaults to --auto (detect from git diff).
+      - script: |
+          TAGS="${PR_TAGS:-}"
+          echo "PR labels: $TAGS"
+          echo "Source branch: $BUILD_SOURCEBRANCH"
+
+          if echo "$TAGS" | grep -q "no-release"; then
+            echo "Label 'no-release' found — skipping release."
+            echo "##vso[task.setvariable variable=SKIP_RELEASE]true"
+            exit 0
+          fi
+
+          # `version:<x.y.z>` PR label overrides everything else — used when
+          # someone (a power user, hand-merged PR) needs to set a literal
+          # version. The Figma plugin no longer produces this label.
+          TARGET=$(echo "$TAGS" | grep -oE "version:[0-9A-Za-z.+-]+" | head -n1 | cut -d: -f2-)
+          if [ -n "$TARGET" ]; then
+            echo "Detected version target: $TARGET"
+            echo "##vso[task.setvariable variable=TARGET_VERSION]$TARGET"
+          fi
+
+          # Branch-derived default. refs/heads/dev → rc; everything else → patch.
+          # Resolved here so PR-label overrides below can still win.
+          case "$BUILD_SOURCEBRANCH" in
+            refs/heads/dev) DEFAULT_BUMP=rc ;;
+            *)              DEFAULT_BUMP=patch ;;
+          esac
+          echo "Default bump verb (from branch): $DEFAULT_BUMP"
 
           if echo "$TAGS" | grep -q "release:major"; then
             BUMP=major
           elif echo "$TAGS" | grep -q "release:minor"; then
             BUMP=minor
-          else
+          elif echo "$TAGS" | grep -q "release:patch"; then
             BUMP=patch
+          elif echo "$TAGS" | grep -q "release:rc"; then
+            BUMP=rc
+          else
+            BUMP=$DEFAULT_BUMP
+          fi
+
+          SCOPE_FLAG="--auto"
+          if echo "$TAGS" | grep -q "scope:all"; then
+            SCOPE_FLAG="--scope=all"
+          elif echo "$TAGS" | grep -q "scope:base"; then
+            SCOPE_FLAG="--scope=base"
+          elif echo "$TAGS" | grep -q "scope:tenants"; then
+            SCOPE_FLAG="--scope=tenants"
+          elif echo "$TAGS" | grep -q "scope:plugin"; then
+            SCOPE_FLAG="--scope=plugin"
+          else
+            TENANT=$(echo "$TAGS" | grep -oE "scope:tenant:[A-Za-z0-9_-]+" | head -n1 | cut -d: -f3)
+            if [ -n "$TENANT" ]; then
+              SCOPE_FLAG="--scope=tenant:$TENANT"
+            fi
           fi
 
           echo "Bump type: $BUMP"
+          echo "Scope flag: $SCOPE_FLAG"
           echo "##vso[task.setvariable variable=BUMP_TYPE]$BUMP"
-        displayName: 'Determine bump type from PR tags'
+          echo "##vso[task.setvariable variable=SCOPE_FLAG]$SCOPE_FLAG"
+        displayName: 'Determine bump type & scope from PR labels'
         env:
-          PR_TAGS: $(PR_TAGS)   # pass from trigger payload or variable group
+          PR_TAGS: $(PR_TAGS)
 
       # ── Bump version ─────────────────────────────────────────────────────
-      - script: pnpm exec tsx scripts/bump-version.ts $(BUMP_TYPE)
-        displayName: 'Bump package versions'
+      # When the PR carries a `version:<x>` label, we delegate to bump-
+      # version.ts's `set` mode which writes that exact version. Otherwise
+      # we semver-bump per the release:* label.
+      - script: |
+          if [ -n "$(TARGET_VERSION)" ]; then
+            echo "Setting version to $(TARGET_VERSION) ($SCOPE_FLAG)"
+            pnpm exec tsx scripts/bump-version.ts set "$(TARGET_VERSION)" $(SCOPE_FLAG)
+          else
+            echo "Bumping $(BUMP_TYPE) ($SCOPE_FLAG)"
+            pnpm exec tsx scripts/bump-version.ts $(BUMP_TYPE) $(SCOPE_FLAG)
+          fi
+        displayName: 'Bump package versions (scoped)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
-      # ── Read new version ─────────────────────────────────────────────────
+      # ── Read new root version ────────────────────────────────────────────
+      # bump-version.ts also exposes NEW_ROOT_VERSION / RESET_ALL via
+      # ##vso[task.setvariable] but we re-read here for resilience — the
+      # bump step may have been skipped if SKIP_RELEASE was set.
+      # For scope=plugin, read from btech-token-studio/package.json so
+      # the idempotency guard and commit message reference the plugin version.
       - script: |
-          VERSION=$(node -p "require('./packages/tokens/platforms/web/package.json').version")
-          echo "New version: $VERSION"
-          echo "##vso[task.setvariable variable=NEW_VERSION]$VERSION"
-          echo "##vso[task.setvariable variable=NEW_TAG]v$VERSION"
-        displayName: 'Read new version'
+          if [ "$(SCOPE_FLAG)" = "--scope=plugin" ]; then
+            VERSION=$(node -p "require('./btech-token-studio/package.json').version")
+            echo "New plugin version: $VERSION"
+            echo "##vso[task.setvariable variable=NEW_ROOT_VERSION]$VERSION"
+            echo "##vso[task.setvariable variable=NEW_TAG]plugin-v$VERSION"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+            echo "New root version: $VERSION"
+            echo "##vso[task.setvariable variable=NEW_ROOT_VERSION]$VERSION"
+            echo "##vso[task.setvariable variable=NEW_TAG]v$VERSION"
+          fi
+        displayName: 'Read new root version'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # ── Validate tokens ──────────────────────────────────────────────────
-      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
-        displayName: 'Validate tokens (contrast + boundary)'
-        condition: ne(variables['SKIP_RELEASE'], 'true')
-
-      # ── Build all packages ───────────────────────────────────────────────
-      - script: pnpm build
-        displayName: 'Build @btech/tokens'
-        condition: ne(variables['SKIP_RELEASE'], 'true')
-
-      # ── Flutter analyze ──────────────────────────────────────────────────
-      - script: flutter analyze --no-fatal-infos
-        displayName: 'Flutter analyze'
-        workingDirectory: packages/tokens/platforms/flutter
+      - script: pnpm validate
+        displayName: 'Run validators (contrast + boundary + workspace-deps)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
 
       # ── Commit version bump back to main ─────────────────────────────────
-      # Uses System.AccessToken (built-in) via persistCredentials: true above.
-      # No personal PAT required.
+      # Tagging strategy:
+      #   - Root version changed     → push `v<root>` (publishes base + tenants
+      #                                via the reset rule in publish.yml)
+      #   - Tenant-only bump (single)→ push `<tenant>-v<version>` (publishes
+      #                                only that tenant)
+      #   - Multiple tenants bumped  → push one `<tenant>-v<version>` per
+      #                                tenant (each fires publish.yml)
+      # Both tag forms are honoured by publish.yml, so every successful bump
+      # results in an automatic release without manual intervention.
       - script: |
+          set -e
           git config user.name "Azure Pipelines"
           git config user.email "azure-pipelines@users.noreply.azure.com"
 
-          git add \
-            packages/tokens/platforms/web/package.json \
-            packages/tokens/platforms/flutter/pubspec.yaml
+          # Push back to the same branch we triggered on. Hard-coding `main`
+          # here would silently send `dev` rc bumps to `main`, which would
+          # both lose the prerelease line and skip CI re-checks on dev.
+          PUSH_BRANCH="${BUILD_SOURCEBRANCH#refs/heads/}"
+          echo "Pushing version bump to branch: $PUSH_BRANCH"
 
-          git commit -m "chore(release): bump to $(NEW_TAG) ***NO_CI***
+          # ── Pick auth strategy ──
+          # GIT_PUSH_PAT (set in btech-ds-secrets) → embed PAT in remote URL,
+          # which overrides the persistCredentials extraHeader that checkout
+          # configured. Otherwise we just push to `origin` and let the build
+          # service identity authenticate (preflight already verified perms).
+          if [ -n "${GIT_PUSH_PAT:-}" ]; then
+            echo "Auth: GIT_PUSH_PAT (PAT-based)"
+            REMOTE=$(git remote get-url origin)
+            CLEAN_URL=$(echo "$REMOTE" | sed -E 's|https://[^@]*@|https://|')
+            PUSH_URL=$(echo "$CLEAN_URL" | sed -E "s|https://|https://pat:${GIT_PUSH_PAT}@|")
+            # Drop the persistCredentials extraHeader so the URL-embedded PAT
+            # is the ONLY auth header the push request carries — otherwise
+            # both auths arrive and the server can pick the wrong one.
+            git config --unset-all http.extraHeader 2>/dev/null || true
+          else
+            echo "Auth: System.AccessToken (build-service via persistCredentials)"
+            PUSH_URL="origin"
+          fi
+
+          # The version files in the working tree already hold the BUMPED
+          # version (set by the earlier `Bump package versions` step). We use
+          # them as the source of truth across retry iterations — `git reset
+          # --mixed` keeps the working tree intact while moving HEAD.
+          VERSION_FILES=(
+            package.json
+            packages/tokens/platforms/web/token/package.json
+            packages/tokens/platforms/flutter/token/pubspec.yaml
+            packages/tokens/platforms/python/token/pyproject.toml
+          )
+          # Plugin scope: only btech-token-studio/package.json is touched.
+          if [ "$(SCOPE_FLAG)" = "--scope=plugin" ]; then
+            VERSION_FILES=( btech-token-studio/package.json )
+          fi
+          # Glob expansions — capture matches into the array. Set nullglob
+          # so an empty match doesn't leave the literal pattern behind.
+          # Each glob covers ONE platform's per-tenant version manifest:
+          #   web     → tenant `package.json`s
+          #   flutter → tenant `pubspec.yaml`s (was missing — caused
+          #             flutter/<tenant>/pubspec.yaml to drift away from
+          #             root version after rc bumps because nothing staged
+          #             it in this commit)
+          #   python  → tenant `pyproject.toml`s
+          shopt -s nullglob
+          VERSION_FILES+=( packages/tokens/platforms/web/*/package.json )
+          VERSION_FILES+=( packages/tokens/platforms/flutter/*/pubspec.yaml )
+          VERSION_FILES+=( packages/tokens/platforms/python/tenants/*/pyproject.toml )
+          shopt -u nullglob
+
+          # Compare two semver strings. Returns 0 if $1 >= $2, 1 otherwise.
+          # Works for stable (1.2.3) and prerelease (1.0.0-rc.5) versions
+          # as long as both follow the same shape, which our bumper enforces.
+          gte_version() {
+            [ "$1" = "$2" ] && return 0
+            local higher
+            higher=$(printf "%s\n%s\n" "$1" "$2" | sort -V | tail -n1)
+            [ "$higher" = "$1" ]
+          }
+
+          MAX_RETRIES=5
+          BACKOFF=2
+
+          for attempt in $(seq 1 $MAX_RETRIES); do
+            echo "── Sync attempt $attempt of $MAX_RETRIES ──"
+
+            git fetch origin "$PUSH_BRANCH"
+            # --mixed: move HEAD to origin/$BRANCH, unstage everything, but
+            # keep the working tree (with our bumped version files) intact.
+            git reset --mixed "origin/$PUSH_BRANCH"
+
+            # Idempotency guard: if origin already advanced past our target
+            # version (e.g. someone manually pushed the same tag), skip
+            # cleanly. Prevents accidental "downgrade" commits.
+            # For scope=plugin, compare the plugin version (not root).
+            if [ "$(SCOPE_FLAG)" = "--scope=plugin" ]; then
+              ORIGIN_VERSION=$(git show "origin/$PUSH_BRANCH:btech-token-studio/package.json" 2>/dev/null \
+                | node -e "try{const j=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(j.version||'')}catch(e){}" \
+                || true)
+            else
+              ORIGIN_VERSION=$(git show "origin/$PUSH_BRANCH:package.json" 2>/dev/null \
+                | node -e "try{const j=JSON.parse(require('fs').readFileSync(0,'utf8'));console.log(j.version||'')}catch(e){}" \
+                || true)
+            fi
+            if [ -n "$ORIGIN_VERSION" ] && gte_version "$ORIGIN_VERSION" "$(NEW_ROOT_VERSION)"; then
+              echo "Origin already at $ORIGIN_VERSION (≥ target $(NEW_ROOT_VERSION)) — bump idempotent. Skipping commit."
+              # Still try to push the tag if it's not yet on origin
+              if [ "$ORIGIN_VERSION" = "$(NEW_ROOT_VERSION)" ] && \
+                 ! git ls-remote --tags origin "$(NEW_TAG)" | grep -q "refs/tags/$(NEW_TAG)$"; then
+                echo "Origin at our version but tag $(NEW_TAG) missing — creating tag at origin HEAD."
+                git tag $(NEW_TAG) "origin/$PUSH_BRANCH" -m "Release $(NEW_TAG)" 2>/dev/null || true
+                git push "$PUSH_URL" "$(NEW_TAG)" || echo "##[warning]Tag push failed (may already exist remotely)."
+              fi
+              exit 0
+            fi
+
+            # Re-stage version files
+            git add "${VERSION_FILES[@]}" 2>/dev/null || true
+
+            if git diff --cached --quiet; then
+              echo "No version changes vs origin/$PUSH_BRANCH — nothing to commit."
+              exit 0
+            fi
+
+            git commit -m "chore(release): bump to $(NEW_TAG) ***NO_CI***
 
           Auto-bumped by Azure Pipelines after merging PR.
           Bump type: $(BUMP_TYPE)
-          @btech/tokens@$(NEW_VERSION)
-          btech_tokens $(NEW_VERSION)"
+          Scope:     $(SCOPE_FLAG)
+          Root:      @btech/design-system@$(NEW_ROOT_VERSION)"
 
-          git tag $(NEW_TAG) -m "Release $(NEW_TAG)"
-          git push origin HEAD:main --follow-tags
-        displayName: 'Commit version bump & push tag'
-        condition: ne(variables['SKIP_RELEASE'], 'true')
+            # Build the tag list. Don't actually create local tag refs yet —
+            # we only want refs once we know the commit pushed; otherwise a
+            # retry leaves stale tag refs lying around.
+            TAGS=()
+            if [ "$(SCOPE_FLAG)" = "--scope=plugin" ]; then
+              # Plugin bump path — tag plugin-v<version>, never touches token versions.
+              PV=$(node -p "require('./btech-token-studio/package.json').version")
+              TAGS+=("plugin-v${PV}")
+              echo "Plugin bumped → will tag plugin-v${PV}"
+            elif [ "$(NEW_ROOT_VERSION)" != "$(PREV_ROOT_VERSION)" ]; then
+              echo "Root version changed ($(PREV_ROOT_VERSION) → $(NEW_ROOT_VERSION)) — will tag $(NEW_TAG)."
+              TAGS+=("$(NEW_TAG)")
+            else
+              echo "Root version unchanged — checking tenant-only bumps."
+              for pkg in packages/tokens/platforms/web/*/package.json; do
+                dir=$(dirname "$pkg")
+                tenant=$(basename "$dir")
+                [ "$tenant" = "token" ] && continue
+                if git log -1 --name-only --pretty=format: HEAD | grep -q "$pkg"; then
+                  tv=$(node -p "require('./$pkg').version")
+                  TAGS+=("${tenant}-v${tv}")
+                fi
+              done
+            fi
 
-      # ── Publish to Azure Artifacts ────────────────────────────────────────
-      # npmAuthenticate@0 above already injected System.AccessToken into .npmrc.
-      # No NODE_AUTH_TOKEN variable needed.
-      - script: pnpm --filter @btech/tokens publish --no-git-checks
-        displayName: 'Publish @btech/tokens to Azure Artifacts'
+            # ── Push commit ──
+            if ! git push "$PUSH_URL" "HEAD:$PUSH_BRANCH"; then
+              echo "Commit push rejected on attempt $attempt — branch raced. Retry in ${BACKOFF}s."
+              sleep $BACKOFF
+              BACKOFF=$((BACKOFF * 2))
+              continue
+            fi
+
+            # ── Push tags (only after commit lands) ──
+            # Tag conflicts: if remote tag exists at our SHA, treat as
+            # idempotent re-run. If it exists at a different SHA, surface a
+            # clear error — that's a real conflict.
+            COMMIT_SHA=$(git rev-parse HEAD)
+            for tag in "${TAGS[@]}"; do
+              REMOTE_TAG_SHA=$(git ls-remote --tags "$PUSH_URL" "$tag" 2>/dev/null | awk '{print $1}' | head -n1)
+              if [ -n "$REMOTE_TAG_SHA" ]; then
+                if [ "$REMOTE_TAG_SHA" = "$COMMIT_SHA" ] || git merge-base --is-ancestor "$REMOTE_TAG_SHA" "$COMMIT_SHA" 2>/dev/null; then
+                  echo "Tag $tag already on origin at compatible SHA — skipping create."
+                  continue
+                fi
+                echo "##[error]Tag $tag exists on origin at $REMOTE_TAG_SHA but our HEAD is $COMMIT_SHA."
+                echo "##[error]Real conflict. Inspect the tag on origin and decide manually."
+                exit 1
+              fi
+              git tag "$tag" -m "Release $tag"
+              if ! git push "$PUSH_URL" "$tag"; then
+                echo "##[warning]Tag push failed for $tag (may have been created concurrently). Continuing."
+              fi
+            done
+
+            echo "✓ Bump pushed on attempt $attempt (commit $COMMIT_SHA, tags: ${TAGS[*]:-none})."
+            exit 0
+          done
+
+          echo "##[error]Failed to push bump after $MAX_RETRIES attempts."
+          echo "##[error]Likely cause: continuous concurrent pushes to $PUSH_BRANCH."
+          echo "##[error]Manual recovery: re-run this pipeline once $PUSH_BRANCH activity settles."
+          echo "##[error]Full runbook: docs/ci-cd-permissions.md"
+          exit 1
+        displayName: 'Commit version bump & push tag(s)'
         condition: ne(variables['SKIP_RELEASE'], 'true')
+        env:
+          GIT_PUSH_PAT: $(GIT_PUSH_PAT)
+
+      # Publish is handled by publish.yml — triggered by the v* tag above.
 
       # ── Summary ───────────────────────────────────────────────────────────
       - script: |
-          echo "##[section]Released $(NEW_TAG)"
+          echo "##[section]Bumped to $(NEW_TAG) — publish.yml will handle the npm/pub release."
           echo "  @btech/tokens: $(NEW_VERSION)"
           echo "  btech_tokens:  $(NEW_VERSION)"
           echo "  Bump type:     $(BUMP_TYPE)"
-        displayName: 'Release summary'
+        displayName: 'Version bump summary'
         condition: ne(variables['SKIP_RELEASE'], 'true')

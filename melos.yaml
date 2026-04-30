@@ -2,10 +2,18 @@ name: btech_design_system
 repository: https://github.com/RamaMS06/btech-token
 
 packages:
-  - packages/tokens/platforms/flutter
+  - packages/tokens/platforms/flutter/*
 
 ide:
   intellij: false
+
+command:
+  version:
+    # Automatically update pubspec.yaml versions and create git tags.
+    updateGitTagRefs: true
+    branch: main
+    # Commit message when melos version bumps packages.
+    message: "chore(release): publish packages\n\n{new_package_versions}"
 
 scripts:
   get:

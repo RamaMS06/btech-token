@@ -1,5 +1,5 @@
-import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'fs';
-import { toPascalCase, toYaml, dartSafeName } from '../utils.js';
+import { writeFileSync, mkdirSync, readFileSync, existsSync, readdirSync, unlinkSync } from 'fs';
+import { toPascalCase, toYaml, dartSafeName, pathToCssVar } from '../utils.js';
 import type { ResolvedTokenMap } from '../token-loader.js';
 import { generateTsSemanticColorGroup } from './web-color.js';
 import { generateTokensMeta } from '../flutter/flutter-color.js';
@@ -10,61 +10,116 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
 
   // ── color/ ────────────────────────────────────────────────────────────────
   const colorDir = `${outDir}/color`;
+  // Clean stale *.ts files before regen so removed categories (e.g. shades.color.ts
+  // after the swatches refactor) don't linger and confuse barrel exports.
+  if (existsSync(colorDir)) {
+    for (const f of readdirSync(colorDir).filter(f => f.endsWith('.ts'))) {
+      unlinkSync(`${colorDir}/${f}`);
+    }
+  }
   mkdirSync(colorDir, { recursive: true });
 
-  // shades.color.ts
+  // swatches.color.ts — primitive color groups as plain numeric-keyed const
+  // objects. No wrapper class — group names live directly on BTechColor.
+  // Access: BTechColor.green[500]   → '#22c55e' (typed literal)
+  //         BTechColor.neutral[0]   → '#ffffff' (white, included)
+  //
+  // Two emission groups:
+  //   1. Base ramps from coreColors — tenant-immutable.
+  //   2. Brand ramps from brandSwatches — tenant-OVERRIDABLE.
+  //      Base resolves brand → blue/amber. Each tenant package re-emits its own
+  //      btechColorBrandPrimary/Secondary with overridden values. The semantic
+  //      brand tokens (BTechBrandColor.primary/primaryBold/primarySubtle) on the
+  //      BTechColor.brand object continue to alias these via CSS vars.
+  //
+  // Swatch level convention (50,100,…,900) follows Tailwind v3 / DTCG standard.
   {
     const L = [HEADER];
-    for (const [group, shades] of Object.entries(data.coreColors)) {
-      const className = `BTechShades${toPascalCase(group)}Color`;
+
+    /** Emit one swatch as `export const NAME = { 50: '#…', … } as const;` */
+    const emitSwatch = (constName: string, comment: string, shades: Record<string, string>) => {
       const entries = Object.entries(shades).sort((a, b) => Number(a[0]) - Number(b[0]));
-      L.push(`export class ${className} {`);
+      L.push(`/** ${comment} */`);
+      L.push(`export const ${constName} = {`);
       for (const [shade, hex] of entries) {
-        L.push(`  readonly s${shade} = '${hex}' as const;`);
+        L.push(`  ${shade}: '${hex}',`);
       }
-      L.push('}\n');
+      L.push('} as const;\n');
+    };
+
+    // 1. Base palette ramps
+    for (const [group, shades] of Object.entries(data.coreColors)) {
+      emitSwatch(
+        `btechColor${toPascalCase(group)}`,
+        `${toPascalCase(group)} primitive swatch — BTechColor.${group}[500]`,
+        shades,
+      );
     }
-    L.push('export class BTechShadesColor {');
-    for (const group of Object.keys(data.coreColors)) {
-      const className = `BTechShades${toPascalCase(group)}Color`;
-      L.push(`  readonly ${group} = new ${className}();`);
+
+    // 2. Brand swatches (primary, secondary) — tenant-overridable
+    for (const [brandName, shades] of Object.entries(data.brandSwatches)) {
+      emitSwatch(
+        `btechColorBrand${toPascalCase(brandName)}`,
+        `Brand ${brandName} swatch (tenant-overridable) — BTechColor.brand${toPascalCase(brandName)}[500]`,
+        shades,
+      );
     }
-    L.push('}\n');
-    writeFileSync(`${colorDir}/shades.color.ts`, L.join('\n') + '\n');
+
+    writeFileSync(`${colorDir}/swatches.color.ts`, L.join('\n') + '\n');
   }
 
-  // text.color.ts, background.color.ts, stroke.color.ts
-  for (const groupName of ['text', 'background', 'stroke'] as const) {
+  // Per-group color files (text, icon, border, bg, brand, ext)
+  const semanticGroups = Object.keys(data.semanticColors);
+  for (const groupName of semanticGroups) {
     generateTsSemanticColorGroup(colorDir, groupName, data.semanticColors[groupName], HEADER);
   }
 
-  // color.token.ts
+  // color.token.ts — dynamic, driven by semanticGroups + primitive swatches.
+  // Primitive groups (green, blue, neutral, …) are spread directly onto
+  // BTechColor so consumers write BTechColor.green[500] — no .shades indirection.
+  // Brand swatches are exposed as BTechColor.brandPrimary[500] etc. (camelCase
+  // composite key — avoids collision with the semantic BTechColor.brand object).
+  const primitiveGroups = Object.keys(data.coreColors);
+  const brandSwatchKeys = Object.keys(data.brandSwatches);
   {
     const L = [HEADER];
-    L.push("import { BTechTextColor } from './text.color';");
-    L.push("import { BTechBackgroundColor } from './background.color';");
-    L.push("import { BTechStrokeColor } from './stroke.color';");
-    L.push("import { BTechShadesColor } from './shades.color';\n");
+    for (const g of semanticGroups) {
+      const cls = `BTech${toPascalCase(g)}Color`;
+      L.push(`import { ${cls} } from './${g}.color';`);
+    }
+    const swatchImports = [
+      ...primitiveGroups.map(g => `btechColor${toPascalCase(g)}`),
+      ...brandSwatchKeys.map(b => `btechColorBrand${toPascalCase(b)}`),
+    ].join(', ');
+    L.push(`import { ${swatchImports} } from './swatches.color';\n`);
     L.push('export const BTechColor = {');
-    L.push('  text: new BTechTextColor(),');
-    L.push('  background: new BTechBackgroundColor(),');
-    L.push('  stroke: new BTechStrokeColor(),');
-    L.push('  shades: new BTechShadesColor(),');
+    for (const g of semanticGroups) {
+      const cls = `BTech${toPascalCase(g)}Color`;
+      L.push(`  ${g}: new ${cls}(),`);
+    }
+    L.push('');
+    L.push('  // Primitive color groups — direct numeric-key access.');
+    for (const g of primitiveGroups) {
+      L.push(`  ${g}: btechColor${toPascalCase(g)},`);
+    }
+    L.push('');
+    L.push('  // Brand primitive swatches (tenant-overridable).');
+    for (const b of brandSwatchKeys) {
+      L.push(`  brand${toPascalCase(b)}: btechColorBrand${toPascalCase(b)},`);
+    }
     L.push('} as const;\n');
     writeFileSync(`${colorDir}/color.token.ts`, L.join('\n') + '\n');
   }
 
   // index.ts (barrel)
   {
-    const L = [
-      "export * from './shades.color';",
-      "export * from './text.color';",
-      "export * from './background.color';",
-      "export * from './stroke.color';",
+    const exports = [
+      ...semanticGroups.map(g => `export * from './${g}.color';`),
+      "export * from './swatches.color';",
       "export { BTechColor } from './color.token';",
       '',
     ];
-    writeFileSync(`${colorDir}/index.ts`, L.join('\n'));
+    writeFileSync(`${colorDir}/index.ts`, exports.join('\n'));
   }
 
   // tokens.meta.yaml
@@ -78,7 +133,8 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     const L = [HEADER];
     L.push('export const BTechSpacing = {');
     for (const [name, value] of Object.entries(data.spacing)) {
-      L.push(`  ${name}: ${parseFloat(String(value).replace('px', ''))},`);
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
     }
     L.push('} as const;\n');
     writeFileSync(`${spacingDir}/spacing.token.ts`, L.join('\n') + '\n');
@@ -98,6 +154,59 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     writeFileSync(`${spacingDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
   }
 
+  // ── stroke/ ───────────────────────────────────────────────────────────────
+  const strokeDir = `${outDir}/stroke`;
+  mkdirSync(strokeDir, { recursive: true });
+
+  {
+    const L = [HEADER];
+    L.push('export const BTechStroke = {');
+    for (const [name, value] of Object.entries(data.stroke)) {
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
+    }
+    L.push('} as const;\n');
+    writeFileSync(`${strokeDir}/stroke.token.ts`, L.join('\n') + '\n');
+  }
+  writeFileSync(`${strokeDir}/index.ts`, "export { BTechStroke } from './stroke.token';\n");
+  {
+    const meta = {
+      category: 'stroke',
+      figma: {
+        collection: 'BTech/Stroke',
+        tokens: Object.keys(data.stroke).map(name => ({
+          path: `stroke.${name}`,
+          figmaVariable: `Stroke/${toPascalCase(name)}`,
+        })),
+      },
+    };
+    writeFileSync(`${strokeDir}/tokens.meta.yaml`, toYaml(meta) + '\n');
+  }
+
+  // ── shadow/ ───────────────────────────────────────────────────────────
+  const shadowDir = `${outDir}/shadow`;
+  mkdirSync(shadowDir, { recursive: true });
+
+  {
+    function layerToCss(l: { color: string; offsetX: number; offsetY: number; blur: number; spread: number; inset: boolean }): string {
+      const inset = l.inset ? 'inset ' : '';
+      return `${inset}${l.offsetX}px ${l.offsetY}px ${l.blur}px ${l.spread}px ${l.color}`;
+    }
+    const L = [HEADER];
+    L.push('export const BTechShadow = {');
+    for (const [group, variants] of Object.entries(data.shadow)) {
+      L.push(`  ${group}: {`);
+      for (const [variant, layers] of Object.entries(variants)) {
+        const css = layers.map(layerToCss).join(', ');
+        L.push(`    ${variant}: '${css}',`);
+      }
+      L.push('  },');
+    }
+    L.push('} as const;\n');
+    writeFileSync(`${shadowDir}/shadow.token.ts`, L.join('\n') + '\n');
+  }
+  writeFileSync(`${shadowDir}/index.ts`, "export { BTechShadow } from './shadow.token';\n");
+
   // ── radius/ ───────────────────────────────────────────────────────────────
   const radiusDir = `${outDir}/radius`;
   mkdirSync(radiusDir, { recursive: true });
@@ -105,23 +214,20 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   {
     const L = [HEADER];
     L.push('export const BTechRadius = {');
-    for (const [name, value] of Object.entries(data.radius.core)) {
-      L.push(`  ${name}: ${parseFloat(String(value).replace('px', ''))},`);
-    }
-    for (const [name, value] of Object.entries(data.radius.semantic)) {
-      L.push(`  ${name}: ${parseFloat(String(value).replace('px', ''))},`);
+    for (const [name, value] of Object.entries(data.radius)) {
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
     }
     L.push('} as const;\n');
     writeFileSync(`${radiusDir}/radius.token.ts`, L.join('\n') + '\n');
   }
   writeFileSync(`${radiusDir}/index.ts`, "export { BTechRadius } from './radius.token';\n");
   {
-    const allKeys = [...Object.keys(data.radius.core), ...Object.keys(data.radius.semantic)];
     const meta = {
       category: 'radius',
       figma: {
         collection: 'BTech/Radius',
-        tokens: allKeys.map(name => ({
+        tokens: Object.keys(data.radius).map(name => ({
           path: `radius.${name}`,
           figmaVariable: `Radius/${toPascalCase(name)}`,
         })),
@@ -137,10 +243,12 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   {
     const L = [HEADER];
     // Primitive font data
+    // BTechFontFamily — returns CSS var strings so tenant font overrides cascade automatically.
+    // e.g. BTechFontFamily.sans === 'var(--btech-font-family-sans)'
     L.push('export const BTechFontFamily = {');
-    for (const [name, value] of Object.entries(data.typography.fontFamilies)) {
-      const fam = String(value).split(',')[0].trim().replace(/'/g, '');
-      L.push(`  ${name}: '${fam}',`);
+    for (const [name] of Object.entries(data.typography.fontFamilies)) {
+      const cssVar = pathToCssVar(['typography', 'fontFamily', name]);
+      L.push(`  ${name}: 'var(${cssVar})',`);
     }
     L.push('} as const;\n');
 
@@ -159,7 +267,8 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
 
     L.push('export const BTechLineHeight = {');
     for (const [name, value] of Object.entries(data.typography.lineHeights)) {
-      L.push(`  ${name}: ${Number(value)},`);
+      const safeName = /^[0-9]/.test(name) ? `s${name}` : name;
+      L.push(`  ${safeName}: ${parseFloat(String(value).replace('px', ''))},`);
     }
     L.push('} as const;\n');
 
@@ -168,7 +277,7 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     L.push('  heading: {');
     const heading = data.typography.semantic.heading;
     if (heading) {
-      if (heading.fontFamily) L.push(`    fontFamily: '${String(heading.fontFamily).split(',')[0].trim().replace(/'/g, '')}',`);
+      if (heading.fontFamily) L.push(`    fontFamily: 'var(${pathToCssVar(['typography', 'fontFamily', 'sans'])})',`);
       if (heading.fontWeight) L.push(`    fontWeight: ${Number(heading.fontWeight)},`);
       if (heading.lineHeight) L.push(`    lineHeight: ${Number(heading.lineHeight)},`);
     }
@@ -176,7 +285,7 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
     L.push('  body: {');
     const body = data.typography.semantic.body;
     if (body) {
-      if (body.fontFamily) L.push(`    fontFamily: '${String(body.fontFamily).split(',')[0].trim().replace(/'/g, '')}',`);
+      if (body.fontFamily) L.push(`    fontFamily: 'var(${pathToCssVar(['typography', 'fontFamily', 'sans'])})',`);
       if (body.fontSize) L.push(`    fontSize: ${parseFloat(String(body.fontSize).replace('px', ''))},`);
       if (body.fontWeight) L.push(`    fontWeight: ${Number(body.fontWeight)},`);
       if (body.lineHeight) L.push(`    lineHeight: ${Number(body.lineHeight)},`);
@@ -217,6 +326,8 @@ export function generateTsFiles(data: ResolvedTokenMap, outDir: string): void {
   const newExports = [
     "export * from './color/index';",
     "export * from './spacing/index';",
+    "export * from './shadow/index';",
+    "export * from './stroke/index';",
     "export * from './radius/index';",
     "export * from './typography/index';",
   ];

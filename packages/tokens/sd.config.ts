@@ -8,9 +8,10 @@ import { loadTokenData } from './generators/token-loader.js';
 import { generateFlutterFiles } from './generators/flutter/flutter-generator.js';
 import { generateTsFiles } from './generators/web/web-generator.js';
 import { generateTokenTypes } from './generators/web/web-token-types.js';
-import { appendTenantCSS } from './generators/web/web-tenant-css.js';
 import { generateTenantIsolatedCss } from './generators/web/web-tenant-isolated.js';
 import { ensureTenantPackageJson } from './generators/web/web-tenant-package.js';
+import { appendDarkModeCss } from './generators/web/web-dark-generator.js';
+import { generateWebTenantPackages } from './generators/web/web-tenant-format.js';
 import {
   loadFontRegistry,
   generateFlutterFontRegistry,
@@ -66,13 +67,13 @@ StyleDictionary.registerTransformGroup({
 
 // =============================================================================
 // Output paths
-//   ROOT                             = packages/tokens/
-//   ROOT/platforms/flutter/lib/src/  = packages/tokens/platforms/flutter/lib/src/
-//   ROOT/platforms/web/              = packages/tokens/platforms/web/
+//   ROOT                                    = packages/tokens/
+//   ROOT/platforms/flutter/token/lib/src/   = packages/tokens/platforms/flutter/token/lib/src/
+//   ROOT/platforms/web/token/               = packages/tokens/platforms/web/token/
 // =============================================================================
-const FLUTTER_OUT   = `${ROOT}/platforms/flutter/lib/src/`;
-const WEB_OUT       = `${ROOT}/platforms/web/dist/`;
-const WEB_SRC       = `${ROOT}/platforms/web/src/`;
+const FLUTTER_OUT   = `${ROOT}/platforms/flutter/token/lib/src/`;
+const WEB_OUT       = `${ROOT}/platforms/web/token/dist/`;
+const WEB_SRC       = `${ROOT}/platforms/web/token/src/`;
 
 mkdirSync(FLUTTER_OUT, { recursive: true });
 mkdirSync(WEB_OUT,     { recursive: true });
@@ -94,7 +95,7 @@ const sd = new StyleDictionary({
     // CSS custom properties → platforms/web/dist/styles.css (:root block)
     css: {
       transformGroup: 'css/btech',
-      prefix: 'btech',
+      prefix: '',
       buildPath: WEB_OUT,
       files: [{
         destination: 'styles.css',
@@ -122,7 +123,17 @@ function buildResolvedBaseMap(): Record<string, string> {
   const resolvedBaseMap: Record<string, string> = {};
   for (const [k, v] of Object.entries(rawBaseMap)) resolvedBaseMap[k] = resolveRef(v, rawBaseMap);
   for (const [k, v] of Object.entries(resolvedBaseMap)) resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
-  return resolvedBaseMap;
+
+  // Strip the `-default` disambiguator suffix from keys after resolution.
+  // Source files use `-default` (e.g. `color.brand.primary-default`) only to
+  // avoid SD path collisions with primitive groups of the same name (e.g.
+  // `color.brand.primary.{50..900}`). Consumers should look up the clean path.
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(resolvedBaseMap)) {
+    const cleanKey = k.replace(/-default(\.|$)/, '$1');
+    out[cleanKey] = v;
+  }
+  return out;
 }
 
 // =============================================================================
@@ -150,12 +161,12 @@ function buildResolvedBaseMap(): Record<string, string> {
     generateTenantIsolatedCss(tenantArg, resolvedBaseMap);
     ensureTenantPackageJson(tenantArg);
 
-    // Flutter — BtechToken{Id} extends BtechToken + pubspec.yaml
-    generateFlutterTenantPackage(tenantArg, resolvedBaseMap);
+    // Flutter — generate all tenant packages
+    generateFlutterTenantPackages(resolvedBaseMap);
 
-    console.log(`\n  ✅ tenant packages ready for: ${tenantArg}`);
-    console.log(`  Web     → packages/platforms/web/tenants/${tenantArg}/dist/styles.css`);
-    console.log(`  Flutter → packages/tokens/platforms/flutter/tenants/${tenantArg}/lib/btech_tokens_${tenantArg}.dart\n`);
+    console.log(`\n  tenant packages ready for: ${tenantArg}`);
+    console.log(`  Web     → packages/tokens/platforms/web/${tenantArg}/dist/styles.css`);
+    console.log(`  Flutter → packages/tokens/platforms/flutter/${tenantArg}/\n`);
 
   } else {
     // =========================================================================
@@ -165,10 +176,16 @@ function buildResolvedBaseMap(): Record<string, string> {
     const data = loadTokenData();
     const fontRegistry = loadFontRegistry();
 
-    // Generate multi-file Flutter output (color, spacing, radius, typography)
-    generateFlutterFiles(data);
-    generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
-    console.log('  Flutter — multi-file token output generated');
+    // Pass --skip-flutter to skip Flutter generation (web-only mode for local dev).
+    // Used by `pnpm generate:web` so demo apps can build styles.css without
+    // touching Dart files and causing unwanted git changes.
+    const skipFlutter = process.argv.includes('--skip-flutter');
+
+    if (!skipFlutter) {
+      // Generate multi-file Flutter output (color, spacing, radius, typography)
+      generateFlutterFiles(data);
+      generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
+      console.log('  Flutter — multi-file token output generated');
 
     // Generate per-tenant Dart files:
     //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
@@ -196,9 +213,17 @@ function buildResolvedBaseMap(): Record<string, string> {
     const cssPath = `${WEB_OUT}styles.css`;
     const rawCss  = readFileSync(cssPath, 'utf8');
     const cleanedCss = rawCss
-      .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2')
-      .replace(/(--btech-[a-z0-9-]+)-default([\s:);,])/g, '$1$2');
-    writeFileSync(cssPath, cleanedCss, 'utf8');
+      .replace(/(--[a-z][a-z0-9-]+)-default([\s:);,])/g, '$1$2')
+      .replace(/(--[a-z][a-z0-9-]+)-default([\s:);,])/g, '$1$2');
+
+    // Post-build: SD4's shadow/css/shorthand omits the `inset` keyword.
+    // Fix: prepend `inset ` to the buttonPressed shadow value.
+    const fixedCss = cleanedCss
+      .replace(
+        /(--shadow-button-pressed:\s*)(0px)/g,
+        '$1inset $2',
+      );
+    writeFileSync(cssPath, fixedCss, 'utf8');
 
     // Post-build: prepend Google Fonts @import to styles.css
     prependGoogleFontsCssImport(cssPath, fontRegistry);
@@ -206,8 +231,19 @@ function buildResolvedBaseMap(): Record<string, string> {
     // Generate utility CSS (bg-*, text-*, mt-*, rounded-*, etc.)
     generateUtilitiesCss(`${WEB_OUT}utilities.css`, data);
 
-    // Post-build: append [data-tenant="*"] overrides to styles.css
-    appendTenantCSS(resolvedBaseMap);
+    // Append composite typography CSS vars + utility classes to styles.css
+    appendTypographyCompositesCss(`${WEB_OUT}styles.css`);
+
+    // Post-build: append [data-mode="dark"] color overrides to styles.css
+    appendDarkModeCss(`${WEB_OUT}styles.css`);
+
+    // Post-build: generate per-tenant web packages (platforms/web/tenants/{id}/)
+    generateWebTenantPackages();
+
+    // Python — base package + per-tenant packages
+    generatePythonFiles(data);
+    console.log('  Python  — base package generated');
+    generatePythonTenantPackages();
 
     console.log('\n pnpm generate complete\n');
     console.log('  Flutter → packages/tokens/platforms/flutter/lib/src/');

@@ -1,0 +1,38 @@
+{
+  "name": "@btech/tokens-bspace",
+  "version": "1.0.2",
+  "description": "BTech design tokens for bspace — auto-generated, do not edit",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "sideEffects": [
+    "./dist/styles.css",
+    "./dist/index.mjs",
+    "./dist/index.js"
+  ],
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "prepublishOnly": "tsup --config tsup.config.ts"
+  },
+  "dependencies": {
+    "@btech/tokens": "workspace:^"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.5"
+  },
+  "publishConfig": {
+    "registry": "https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/"
+  }
+}

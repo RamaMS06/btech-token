@@ -1,24 +1,26 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/AlfaBTech/design-tokens/schema/token.schema.json",
+  "$id": "https://buma.pkgs.visualstudio.com/btech/schema/token.schema.json",
   "title": "Design Token (DTCG-compatible)",
-  "description": "Schema for W3C Design Token Community Group format tokens used in @btech/design-tokens",
-  "type": "object",
+  "description": "Schema for W3C Design Token Community Group format tokens used in @btech/tokens. Used by IDEs for autocomplete and by tools/validators/schema.ts in CI.",
   "definitions": {
     "tokenValue": {
       "type": "object",
+      "description": "A leaf node carrying a concrete token value. Must have $value + $type.",
       "required": ["$value", "$type"],
       "properties": {
         "$value": {
-          "description": "The token value. Can be a raw value or a reference in {path.to.token} format.",
+          "description": "Raw value (string/number/boolean), composite object (shadow/typography/border), or array of composite objects (layered shadow per DTCG spec). May also be a reference like {path.to.other.token}.",
           "oneOf": [
             { "type": "string" },
             { "type": "number" },
-            { "type": "boolean" }
+            { "type": "boolean" },
+            { "type": "object" },
+            { "type": "array", "items": { "type": "object" } }
           ]
         },
         "$type": {
-          "description": "The token type as defined by DTCG.",
+          "description": "DTCG token type.",
           "type": "string",
           "enum": [
             "color",
@@ -61,7 +63,17 @@
     },
     "tokenGroup": {
       "type": "object",
-      "description": "A group of tokens or nested token groups",
+      "description": "A group of tokens or nested token groups. May carry a group-level $description.",
+      "properties": {
+        "$schema": {
+          "description": "Optional JSON Schema reference for IDE tooling.",
+          "type": "string"
+        },
+        "$description": {
+          "description": "Human-readable description of the group.",
+          "type": "string"
+        }
+      },
       "additionalProperties": {
         "oneOf": [
           { "$ref": "#/definitions/tokenValue" },

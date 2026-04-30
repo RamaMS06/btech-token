@@ -1,127 +1,72 @@
 # BTech Design System
 
-Multi-platform, multi-tenant design tokens for Web and Flutter. One source under
-`packages/tokens/sources/` compiles into platform outputs:
+Multi-platform, multi-tenant design tokens for Web, Flutter, and Python. One
+source under `packages/tokens/sources/` compiles into platform outputs:
 
 | Package | Platform | Registry |
 |---|---|---|
-| `@btech/tokens` | Web — TypeScript API + CSS variables | Azure Artifacts `btech` |
+| `@btech/tokens` | Web — TypeScript API + CSS variables | Azure Artifacts `btech` (npm) |
 | `btech_tokens` | Flutter — Dart API + tenant themes | pub.dev (path dep in dev) |
+| `btech-tokens` | Python — typed dataclass API + `to_css()` for Streamlit / Gradio / NiceGUI | Azure Artifacts `btech` (PyPI) |
 
 ---
 
 ## Setup — Azure Artifacts Authentication
 
-`@btech/tokens` is published to the **btech** Azure Artifacts feed.
-Follow the steps for your OS — same pattern as `buma-dev`.
+`@btech/tokens` is published to the **btech** Azure Artifacts feed. Consuming
+it requires a Personal Access Token (PAT) in your global `~/.npmrc`.
 
----
+### Quick Setup (recommended)
 
-### macOS / Linux
-
-**Step 1 — Generate a Personal Access Token**
-
-1. Go to: **https://buma.visualstudio.com/_usersSettings/tokens**
-2. Click **+ New Token**
-3. Set:
-   - Name: `btech-npm` (or anything descriptive)
-   - Organization: `buma`
-   - Expiration: 1 year (recommended)
-   - Scopes: **Packaging → Read & Write**
-4. Click **Create** and copy the token
-
-**Step 2 — Base64-encode your PAT**
-
-Open Terminal and run:
+Run this once from the repo root after cloning:
 
 ```bash
-node -e "require('readline').createInterface({input:process.stdin,output:process.stdout,historySize:0}).question('PAT> ',p=>{console.log(Buffer.from(p.trim()).toString('base64'));process.exit();})"
+pnpm install
+pnpm setup:auth
 ```
 
-Paste your PAT when prompted → copy the base64 output.
+The script will:
+1. Prompt for your PAT (masked input).
+2. Validate it against the feed.
+3. Base64-encode and write the auth block to your global `~/.npmrc`.
+4. Stop — safe to re-run, never touches other feed blocks (e.g. `buma-dev`).
 
-**Step 3 — Add credentials to your global `~/.npmrc`**
+**Generate a PAT first** at
+[buma.visualstudio.com/_usersSettings/tokens](https://buma.visualstudio.com/_usersSettings/tokens)
+with scope **Packaging → Read & Write** (1 year expiration recommended).
+
+**Verify:**
 
 ```bash
-code ~/.npmrc
+npm view @btech/tokens --registry https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/
 ```
 
-Add the following block (replace `<base64-pat>` with your encoded token):
+> This script manages the `btech` feed only. Other feeds (e.g. `buma-dev`) are
+> scoped to their own projects — set them up per the instructions in those repos.
+
+### Manual Setup (fallback)
+
+If `pnpm setup:auth` is unavailable (e.g. outside the monorepo), add this block
+to your global `~/.npmrc` manually — replace `<base64-pat>` with your
+base64-encoded PAT:
 
 ```ini
-; begin auth token — btech feed
+; begin btech auth token
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:username=buma
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:_password=<base64-pat>
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:email=npm requires email to be set but doesn't use the value
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/:username=buma
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/:_password=<base64-pat>
 //buma.pkgs.visualstudio.com/_packaging/btech/npm/:email=npm requires email to be set but doesn't use the value
-; end auth token
+; end btech auth token
 ```
 
-**Step 4 — Verify**
+Base64-encode your PAT with:
 
 ```bash
-npm view @btech/tokens --registry https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/
+# macOS / Linux / Windows (PowerShell)
+node -e "process.stdout.write(Buffer.from(process.argv[1]).toString('base64'))" "YOUR_PAT_HERE"
 ```
-
----
-
-### Windows
-
-**Step 1 — Generate a Personal Access Token**
-
-1. Go to: **https://buma.visualstudio.com/_usersSettings/tokens**
-2. Click **+ New Token**
-3. Set:
-   - Name: `btech-npm`
-   - Organization: `buma`
-   - Expiration: 1 year
-   - Scopes: **Packaging → Read & Write**
-4. Click **Create** and copy the token
-
-**Step 2 — Base64-encode your PAT**
-
-Open **Command Prompt** or **PowerShell** and run:
-
-```powershell
-node -e "require('readline').createInterface({input:process.stdin,output:process.stdout,historySize:0}).question('PAT> ',p=>{console.log(Buffer.from(p.trim()).toString('base64'));process.exit();})"
-```
-
-Paste your PAT when prompted → copy the base64 output.
-
-**Step 3 — Add credentials to your global `.npmrc`**
-
-Open your global `.npmrc` file:
-
-```powershell
-# PowerShell
-code $env:USERPROFILE\.npmrc
-
-# Or Command Prompt
-code %USERPROFILE%\.npmrc
-```
-
-Add the following block (replace `<base64-pat>` with your encoded token):
-
-```ini
-; begin auth token — btech feed
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:username=buma
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:_password=<base64-pat>
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/:email=npm requires email to be set but doesn't use the value
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/:username=buma
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/:_password=<base64-pat>
-//buma.pkgs.visualstudio.com/_packaging/btech/npm/:email=npm requires email to be set but doesn't use the value
-; end auth token
-```
-
-**Step 4 — Verify**
-
-```powershell
-npm view @btech/tokens --registry https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/
-```
-
----
 
 > **CI Pipelines** — no setup needed. Pipelines authenticate automatically via
 > `System.AccessToken`. No PAT or env var required.
@@ -205,19 +150,16 @@ token('color.background.primary') // ✅
 
 ```ts
 // After login: set once, all components update automatically
-activateTenant({ tenant: 'tenant-bjb' });
+activateTenant({ tenant: 'bspace' });
 
 // Or directly via DOM
-document.documentElement.setAttribute('data-tenant', 'tenant-a');
+document.documentElement.setAttribute('data-tenant', 'bspace');
 ```
 
 ```html
-<!-- Side-by-side tenant preview -->
-<div data-tenant="tenant-a">
-  <Button /> <!-- blue theme -->
-</div>
-<div data-tenant="tenant-bjb">
-  <Button /> <!-- red theme, same component -->
+<!-- Scoped tenant region (useful for previews or mixed-tenant views) -->
+<div data-tenant="bspace">
+  <Button /> <!-- bspace theme -->
 </div>
 ```
 
@@ -251,7 +193,7 @@ dependencies:
 ```dart
 // main.dart — set tenant once
 MaterialApp(
-  theme: BTechTheme.forTenant('tenant-bjb', Brightness.light),
+  theme: BTechTheme.forTenant('bspace', Brightness.light),
   home: HomePage(),
 );
 
@@ -264,6 +206,39 @@ Container(
   ),
 )
 ```
+
+---
+
+### Python (Streamlit / Gradio / NiceGUI / notebooks)
+
+```bash
+pip install keyring artifacts-keyring
+pip install \
+  --index-url https://pkgs.dev.azure.com/buma/BUMA%20-%20Bspace%20Design%20System/_packaging/btech/pypi/simple/ \
+  btech-tokens
+# Or, for a tenant variant:
+pip install --index-url ... btech-tokens-bspace
+```
+
+```python
+from btech_tokens import BTechColor, BTechSpacing, set_mode, LIGHT, DARK, to_css
+
+BTechColor.bg.primary             # '#ffffff'
+BTechSpacing.md                   # 12.0
+
+set_mode('dark')
+BTechColor.bg.primary             # '#181c20'
+
+# CSS injection for raw HTML/CSS frameworks (Streamlit example):
+import streamlit as st
+st.markdown(f'<style>{to_css()}</style>', unsafe_allow_html=True)
+```
+
+Designed for **single-process UI consumers**. For multi-user-deployed dashboards
+where two users may want different modes, use the deterministic `LIGHT` / `DARK`
+namespace constants instead of `set_mode`. See the
+[base package README](packages/tokens/platforms/python/token/README.md) for full
+API + tenant + Streamlit / Gradio / NiceGUI examples.
 
 ---
 
@@ -311,9 +286,7 @@ packages/tokens/
 │   ├── semantic/      Semantic tokens    — meaningful names (color.background.primary)
 │   ├── components/    Component tokens   — scoped (button.primary.background)
 │   └── tenants/
-│       ├── default/   Fallback values for all tokens
-│       ├── tenant-a/  Brand overrides for Tenant A
-│       └── tenant-bjb/ Brand overrides for Tenant BJB
+│       └── bspace/    Brand overrides for bspace tenant
 ├── generators/        Style Dictionary formatters (web, flutter, python)
 ├── platforms/
 │   ├── web/           @btech/tokens — TypeScript + CSS output
@@ -392,15 +365,29 @@ pnpm install
 | `btech-ds.publish` | Push `v*` tag (manual) | Build + publish to Azure Artifacts |
 | `btech-ds.auto-version` | PR merged to `main` | Bump semver, tag, publish |
 
-**Release flow:**
-- Add PR tag `release:major`, `release:minor`, or `release:patch` before merging
-- Add `no-release` to skip publishing (docs, chore PRs)
-- Default bump is `patch` if no tag is set
+**Release flow (hybrid versioning):**
+
+Each package tracks its own version. PR labels control what gets bumped:
+
+| Label | Effect |
+|---|---|
+| `release:major\|minor\|patch\|rc` | Semver bump type (default `patch`) |
+| `scope:all` | Bump base + all tenants (lockstep) |
+| `scope:base` | Bump only base packages (`@btech/tokens`, `btech_tokens`) |
+| `scope:tenants` | Bump only tenant packages |
+| `scope:tenant:<id>` | Bump a single tenant (e.g. `scope:tenant:bspace`) |
+| `no-release` | Skip publishing (docs, chore PRs) |
+| *(no scope label)* | Auto-detect from changed files in `sources/` |
+
+Tenant-only bumps commit new package.json(s) to main **without** a git tag — run `publish.yml` manually to release them. Base-version bumps tag + auto-publish as before.
+
+Local bump (`pnpm bump`) supports the same flags: `--scope=<s>`, `--auto`, `--dry-run`. See **[docs/architecture/versioning.md](./docs/architecture/versioning.md)** for the full decision matrix.
 
 ---
 
 ## Deeper Docs
 
 - [docs/architecture.md](./docs/architecture.md) — Pipeline, token model, naming conventions
+- [docs/architecture/versioning.md](./docs/architecture/versioning.md) — Hybrid auto-scope versioning
 - [docs/contributing.md](./docs/contributing.md) — Add/modify tenants, local dev, validators
 - [docs/ci-cd.md](./docs/ci-cd.md) — Pipeline details, release flow, versioning

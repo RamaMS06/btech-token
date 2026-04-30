@@ -1,16 +1,25 @@
 name: Validate Tokens
 
-# Runs on every PR to main AND on direct pushes to main.
+# Runs on every PR to main/dev AND on direct pushes to main/dev.
 # Acts as the final gate before merge — generated files must be in sync.
+#
+# Why both branches?
+#   - main: stable line, validates production-bound merges
+#   - dev:  rc line, validates Figma plugin PRs (the plugin defaults its
+#           target branch to dev) so they show up under "Related pipelines"
+#           on the PR page just like manual PRs to main do. Without this,
+#           plugin-opened PRs into dev had no associated build run.
 trigger:
   branches:
     include:
       - main
+      - dev
 
 pr:
   branches:
     include:
       - main
+      - dev
 
 pool:
   vmImage: ubuntu-latest
@@ -31,42 +40,49 @@ jobs:
           corepack prepare pnpm@9 --activate
         displayName: 'Setup pnpm 9'
 
+      # Auth to Azure Artifacts feed so `pnpm install` can fetch
+      # @btech/tokens (tenant packages depend on it via peerDep → pnpm
+      # resolves it from the feed, not workspace link, by design).
+      - task: npmAuthenticate@0
+        displayName: 'Authenticate with Azure Artifacts'
+        inputs:
+          workingFile: .npmrc
+
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # ── Flutter ──────────────────────────────────────────────────────────
-      - script: |
-          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
-          echo "##vso[task.prependpath]$HOME/flutter/bin"
-        displayName: 'Setup Flutter (stable)'
-
-      - script: flutter --version
-        displayName: 'Flutter version check'
+      - template: templates/flutter-setup.yml
 
       # ── Generate + sync check ────────────────────────────────────────────
-      # Re-run the generator directly (bypasses Turbo cache) so the sync check
-      # always compares committed files against a fresh generation from tokens/.
+      # Re-run the generator and diff against committed files.
+      #
+      # Runs ONLY on direct push to dev/main (not on PR events).
+      #
+      # Why skip on PR:
+      #   When the Figma plugin opens a PR it pushes only token source files
+      #   (overrides.json). The generate pipeline runs in parallel and
+      #   auto-commits Flutter/Python/Web outputs back to the PR branch.
+      #   validate.yml and generate.yml race — validate always loses because
+      #   generate hasn't committed yet. The out-of-sync state is transient
+      #   and guaranteed to be fixed before anything reaches dev/main.
+      #
+      #   On direct push (after merge / manual dev push) the generate pipeline
+      #   has already committed, so the sync check is meaningful and enforced.
       - script: pnpm exec tsx packages/tokens/sd.config.ts
         displayName: 'Run token generator'
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
 
       - script: pnpm --filter @btech/tokens build
         displayName: 'Build @btech/tokens'
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
 
       - script: |
-          CHANGED=$(git diff --name-only \
-            packages/tokens/platforms/flutter/lib/btech_tokens.dart \
-            packages/tokens/platforms/flutter/lib/src/color/ \
-            packages/tokens/platforms/flutter/lib/src/spacing/ \
-            packages/tokens/platforms/flutter/lib/src/radius/ \
-            packages/tokens/platforms/flutter/lib/src/typography/ \
-            packages/tokens/platforms/flutter/lib/src/tenant.dart \
-            packages/tokens/platforms/web/src/color/ \
-            packages/tokens/platforms/web/src/spacing/ \
-            packages/tokens/platforms/web/src/radius/ \
-            packages/tokens/platforms/web/src/typography/)
+          CHANGED=$(git diff --name-only packages/tokens/platforms/)
 
           if [ -n "$CHANGED" ]; then
-            echo ""
             echo "❌  Generated files are out of sync with tokens/:"
             echo "$CHANGED"
             echo ""
@@ -77,26 +93,28 @@ jobs:
           fi
 
           echo "✅  All generated files are in sync."
-        displayName: 'Check generated files are in sync with tokens/'
+        displayName: 'Sync check — generated files match token sources'
+        condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
 
-      # ── Token validators ─────────────────────────────────────────────────
-      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
-        displayName: 'Run JS validators (contrast + boundary)'
+      # ── Token + workspace validators ─────────────────────────────────────
+      - script: pnpm validate
+        displayName: 'Run validators (contrast + boundary + workspace-deps)'
 
-      # ── Flutter: packages/tokens-flutter ────────────────────────────────
+      # ── Plugin smoke build (catches breakage before merge) ──────────────
+      # Plugin lives in btech-token-studio/ and is published independently
+      # via plugin-publish.yml. Validate here only checks build doesn't
+      # break — it does NOT publish anything.
+      - script: pnpm --filter @btech/token-studio exec tsc --noEmit
+        displayName: 'Plugin type-check'
+
+      - script: pnpm --filter @btech/token-studio build
+        displayName: 'Plugin build (smoke test)'
+
+      # ── Flutter: tokens platform only ────────────────────────────────────
       - script: flutter pub get
         displayName: 'Flutter pub get (tokens-flutter)'
-        workingDirectory: packages/tokens/platforms/flutter
+        workingDirectory: packages/tokens/platforms/flutter/token
 
       - script: flutter analyze --no-fatal-infos
         displayName: 'Flutter analyze (tokens-flutter)'
-        workingDirectory: packages/tokens/platforms/flutter
-
-      # ── Flutter: apps/demo-flutter ────────────────────────────────────────
-      - script: flutter pub get
-        displayName: 'Flutter pub get (demo-flutter)'
-        workingDirectory: apps/demo-flutter
-
-      - script: flutter analyze --no-fatal-infos
-        displayName: 'Flutter analyze (demo-flutter)'
-        workingDirectory: apps/demo-flutter
+        workingDirectory: packages/tokens/platforms/flutter/token

@@ -3,6 +3,12 @@ node_modules/
 .pnpm-store/
 
 # ── Build outputs ─────────────────────────────────────────────────────────────
+# Web dist/ is NEVER committed — it is regenerated in CI (pipelines/*.yml) and
+# included in published tarballs via each package's `files: ["dist"]`.
+# Consumers get dist via the npm registry, not git.
+#
+# Flutter is the opposite: Dart artifacts live in `lib/src/` (not `dist/`) and
+# ARE committed because Flutter consumers depend on us via `git` path.
 dist/
 **/dist/
 .turbo/
@@ -21,7 +27,10 @@ packages/**/build/
 packages/**/.flutter-plugins
 packages/**/.flutter-plugins-dependencies
 
-# ── Root-level Dart tooling ────────────────────────────────────────────────────
+
+# ── Root-level Dart tooling (Melos workspace) ─────────────────────────────────
+# pubspec.lock at root is for the Melos workspace — not a published package, not committed.
+pubspec.lock
 .dart_tool/
 build/
 
@@ -44,6 +53,27 @@ Thumbs.db
 *.swp
 *.swo
 
+# ── Demo apps — entirely local, never committed to git ────────────────────────
+# apps/
+
 # ── Changesets ────────────────────────────────────────────────────────────────
 .changeset/*.js
+<<<<<<< HEAD
 apps/demo-streamlit/.venv/
+=======
+# Added by code-review-graph
+.code-review-graph/
+
+# ── Graph viz — internal tool, never committed to main ────────────────────────
+# tools/graph-viz/ is an on-demand xyflow visualization of the
+# code-review-graph MCP cache. It is developer-local only — not part of
+# the published design system.
+tools/graph-viz/
+code-review-graph.zip
+
+# ── Figma plugin release staging ──────────────────────────────────────────────
+# Created by scripts/package-plugin.ts; published to Azure Artifacts,
+# never committed to the repo.
+btech-token-studio/release/
+__pycache__/
+>>>>>>> 4488a22d137edd13e7c9611ef85ff46b303f0d9e

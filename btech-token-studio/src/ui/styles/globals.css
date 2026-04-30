@@ -1,0 +1,2452 @@
+/**
+ * globals.css — plugin UI base styles
+ * -------------------------------------
+ * Imports the base @btech/tokens CSS custom properties (tenant-neutral)
+ * and defines layout + primitive component styles that use those variables.
+ *
+ * Why base (not bspace)?
+ *   The plugin dogfoods the design system but cannot assume a tenant — it
+ *   works across all tenants. The base package defines the neutral palette
+ *   that all tenants share. See docs/architecture/figma-plugin.md.
+ *
+ * Figma injects `themeColors: true` which overrides certain system colors
+ * (background, text) via its own CSS variables. Our variables layer on top.
+ */
+
+/* Base token package — provides --btech-* CSS custom properties */
+/* @import '@btech/tokens/dist/styles.css'; */
+/*
+ * NOTE: The import above is commented out because @btech/tokens may not be
+ * built yet in the contributor's local environment. The plugin will function
+ * with Figma's themeColors: true fallback. Uncomment after running `pnpm generate`.
+ * In CI the build pipeline runs `pnpm --filter @btech/tokens build` first.
+ */
+
+/* ── Fonts ──────────────────────────────────────────────────────────────────── */
+/*
+ * Geist Sans + Geist Mono (variable woff2 — single file covers all weights 100–900).
+ *
+ * Files live in src/ui/assets/fonts/ so vite-plugin-singlefile inlines them as
+ * base64 into dist/index.html. We don't load from a CDN — the plugin manifest
+ * restricts networkAccess to https://dev.azure.com only.
+ *
+ * `font-display: block` keeps invisible text until Geist is ready, avoiding a
+ * brief flash of system font (the file is inlined, so the wait is microscopic).
+ */
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('../assets/fonts/Geist-Variable.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('../assets/fonts/GeistMono-Variable.woff2') format('woff2');
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  /* Geist Sans is the primary UI font; system fallbacks cover the brief moment
+     before the inlined woff2 finishes decoding. Note: the previous declaration
+     accidentally referenced var(--figma-color-text), a *color*, as a font-family. */
+  font-family: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--figma-color-text);
+  background: var(--figma-color-bg);
+  overflow: hidden;
+}
+
+button {
+  cursor: pointer;
+  font: inherit;
+  border: none;
+  background: none;
+}
+
+input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--figma-color-text-brand);
+}
+
+/* ── App layout ─────────────────────────────────────────────────────────────── */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--figma-color-border);
+  flex-shrink: 0;
+}
+
+.app-header__title {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--figma-color-text);
+  flex: 1;
+}
+
+.app-header__controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────────── */
+
+.sidebar {
+  width: 160px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--figma-color-border);
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.sidebar--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar__empty-hint {
+  font-size: 10px;
+  color: var(--figma-color-text-disabled);
+  padding: 12px;
+  text-align: center;
+}
+
+.sidebar__group {
+  margin-bottom: 4px;
+}
+
+.sidebar__group-label {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--figma-color-text-secondary);
+  padding: 4px 12px 2px;
+}
+
+.sidebar__list {
+  list-style: none;
+}
+
+.sidebar__set-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 12px;
+  text-align: left;
+  border-radius: 0;
+  color: var(--figma-color-text);
+  font-size: 11px;
+}
+
+.sidebar__set-btn:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.sidebar__set-btn--active {
+  background: var(--figma-color-bg-selected);
+  color: var(--figma-color-text-onbrand);
+}
+
+.sidebar__dot {
+  font-size: 8px;
+  color: var(--figma-color-text-disabled);
+}
+
+.sidebar__dot--dirty {
+  color: var(--figma-color-bg-warning);
+}
+
+.sidebar__set-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Token list ─────────────────────────────────────────────────────────────── */
+
+.token-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+
+.token-list--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.token-list__empty-hint {
+  font-size: 10px;
+  color: var(--figma-color-text-disabled);
+}
+
+.token-list__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--figma-color-border);
+  position: sticky;
+  top: 0;
+  background: var(--figma-color-bg);
+  z-index: 1;
+}
+
+.token-list__set-name {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.token-list__dirty-badge {
+  font-size: 9px;
+  background: var(--figma-color-bg-warning);
+  color: var(--figma-color-text-onwarning);
+  padding: 1px 5px;
+  border-radius: 2px;
+}
+
+.token-list__add-btn {
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  color: var(--figma-color-text);
+}
+
+.token-list__add-btn:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.token-list__group {
+  margin-bottom: 4px;
+}
+
+.token-list__group-heading {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--figma-color-text-secondary);
+  padding: 6px 12px 3px;
+}
+
+.token-list__items {
+  list-style: none;
+}
+
+/* ── Token row ─────────────────────────────────────────────────────────────── */
+
+.token-row {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--figma-color-border);
+}
+
+.token-row__btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  text-align: left;
+  min-width: 0;
+}
+
+.token-row__btn:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.token-row__preview-slot {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Anchor the absolute-positioned override dot to this slot. */
+  position: relative;
+}
+
+.token-row__color-preview {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+.token-row__ref-badge {
+  font-size: 8px;
+  background: var(--figma-color-bg-secondary);
+  padding: 1px 3px;
+  border-radius: 2px;
+  color: var(--figma-color-text-secondary);
+}
+
+.token-row__path {
+  flex: 1;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--figma-color-text);
+}
+
+.token-row__value {
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 80px;
+}
+
+.token-row__value--complex {
+  color: var(--figma-color-text-disabled);
+}
+
+.token-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.token-row__deprecated-badge {
+  font-size: 8px;
+  background: var(--figma-color-bg-danger);
+  color: var(--figma-color-text-ondanger);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/*
+ * Tenant override marker on TokenRow. Mirrors the swatch / pill treatment
+ * used in TokenTreeView so composite types (shadow, typography, border,
+ * gradient, transition) get the same brand-coloured signal when their
+ * value comes from a tenant overrides file.
+ */
+.token-row--overridden {
+  /* Subtle tinted left border so the row reads as "different" even when
+     scrolling fast. Matches the swatch ring colour. */
+  box-shadow: inset 2px 0 0 0 var(--figma-color-border-brand, #145bc3);
+}
+
+.token-row__override-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--figma-color-bg-brand, #145bc3);
+  border: 1.5px solid var(--figma-color-bg, #fff);
+  box-sizing: content-box;
+  pointer-events: none;
+}
+
+.token-row__override-badge {
+  font-size: 8px;
+  background: var(--figma-color-bg-brand-tertiary, rgba(20, 91, 195, 0.12));
+  color: var(--figma-color-text-brand, #145bc3);
+  border: 1px solid var(--figma-color-border-brand, #145bc3);
+  padding: 1px 4px;
+  border-radius: 2px;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+
+.token-row__menu-btn {
+  padding: 6px 8px;
+  color: var(--figma-color-text-secondary);
+  opacity: 0;
+  transition: opacity 100ms;
+}
+
+.token-row:hover .token-row__menu-btn {
+  opacity: 1;
+}
+
+/* ── Theme switcher ─────────────────────────────────────────────────────────── */
+
+.theme-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.theme-switcher__label {
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+}
+
+.theme-switcher__select {
+  font-size: 11px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  background: var(--figma-color-bg);
+  color: var(--figma-color-text);
+}
+
+/* ── Branch switcher ────────────────────────────────────────────────────────── */
+/*
+ * Mirrors `.theme-switcher` exactly — same label-and-select layout. Two
+ * dropdowns sit side-by-side in the header (Branch | Tenant) so designers
+ * can read them as peer filters at a glance.
+ */
+
+.branch-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.branch-switcher__label {
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+}
+
+.branch-switcher__select {
+  font-size: 11px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  background: var(--figma-color-bg);
+  color: var(--figma-color-text);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────── */
+
+.btn {
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.btn--primary {
+  background: var(--figma-color-bg-brand);
+  color: var(--figma-color-text-onbrand);
+}
+
+.btn--primary:hover {
+  background: var(--figma-color-bg-brand-hover);
+}
+
+.btn--secondary {
+  background: var(--figma-color-bg-secondary);
+  color: var(--figma-color-text);
+  border: 1px solid var(--figma-color-border);
+}
+
+.btn--secondary:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.btn--danger {
+  background: var(--figma-color-bg-danger);
+  color: var(--figma-color-text-ondanger);
+}
+
+.btn--icon {
+  font-size: 11px;
+  padding: 3px 7px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  color: var(--figma-color-text);
+}
+
+.btn--icon:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Modal ──────────────────────────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: var(--figma-color-bg);
+  border-radius: 8px;
+  width: 360px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+.modal__title {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--figma-color-text);
+}
+
+.modal__close-btn {
+  font-size: 13px;
+  color: var(--figma-color-text-secondary);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.modal__close-btn:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.modal__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal__footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--figma-color-border);
+}
+
+/* ── Form fields ────────────────────────────────────────────────────────────── */
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-field--row {
+  flex-direction: row;
+  align-items: center;
+}
+
+.form-field__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--figma-color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-field__help-link {
+  font-size: 10px;
+  font-weight: normal;
+}
+
+.form-field__input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  background: var(--figma-color-bg);
+  color: var(--figma-color-text);
+  font-size: 11px;
+}
+
+.form-field__input:focus {
+  outline: 2px solid var(--figma-color-border-selected);
+  outline-offset: -1px;
+}
+
+.form-field__input--textarea {
+  resize: vertical;
+  min-height: 52px;
+}
+
+.form-field__color-picker {
+  width: 32px;
+  height: 24px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.form-field__static {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  padding: 5px 8px;
+  background: var(--figma-color-bg-secondary);
+  border-radius: 4px;
+}
+
+.form-field__static--path {
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+}
+
+.form-errors {
+  list-style: none;
+  background: var(--figma-color-bg-danger);
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.form-errors__item {
+  font-size: 10px;
+  color: var(--figma-color-text-ondanger);
+  margin-bottom: 2px;
+}
+
+/* ── Sync panel ─────────────────────────────────────────────────────────────── */
+
+.sync-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  align-items: center;
+}
+
+.sync-info__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--figma-color-text-secondary);
+}
+
+.sync-info__value {
+  font-size: 11px;
+  color: var(--figma-color-text);
+}
+
+.sync-info__value--mono {
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+}
+
+/*
+ * Pull-target picker — sits between sync-info and the warning panel in the
+ * SyncPanel pull mode. Mirrors `.branch-switcher` styles so it reads as a
+ * peer of the header dropdowns. Without explicit dark-theme bg/color the
+ * native <select> renders white-on-white in Figma's dark UI.
+ */
+.sync-target {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.sync-target__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--figma-color-text-secondary);
+  flex-shrink: 0;
+}
+
+.sync-target__select {
+  flex: 1;
+  font-size: 11px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  background: var(--figma-color-bg);
+  color: var(--figma-color-text);
+}
+
+.sync-target__select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sync-warning {
+  background: var(--figma-color-bg-warning);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.sync-warning__text {
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.sync-warning__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sync-notice {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  background: var(--figma-color-bg-secondary);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.sync-empty {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+}
+
+.sync-changed-list {
+  list-style: none;
+  margin-top: 4px;
+}
+
+.sync-changed-list__item {
+  font-size: 10px;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--figma-color-text-secondary);
+  padding: 2px 0;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+.sync-validation-errors {
+  background: var(--figma-color-bg-danger);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 11px;
+}
+
+.sync-validation-errors__heading {
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--figma-color-text-ondanger);
+}
+
+.sync-error {
+  font-size: 11px;
+  color: var(--figma-color-text-ondanger);
+  background: var(--figma-color-bg-danger);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.sync-success {
+  font-size: 11px;
+  color: var(--figma-color-text);
+  background: var(--figma-color-bg-success);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.sync-success__pr-link {
+  display: inline-block;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.sync-progress {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  padding: 4px 0;
+}
+
+/* ── Connection status ───────────────────────────────────────────────────────── */
+
+.connection-status {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.connection-status--ok {
+  background: var(--figma-color-bg-success);
+  color: var(--figma-color-text-onsuccess, #fff);
+}
+
+.connection-status--fail {
+  background: var(--figma-color-bg-danger);
+  color: var(--figma-color-text-ondanger);
+}
+
+/* ============================================================================
+ * Refactor — flat sidebar, tree view, JSON view, view-mode toggle
+ *
+ * These styles supersede a few selectors above (older grouped sidebar layout).
+ * The old class names are kept intact; they're simply no longer rendered.
+ * ============================================================================ */
+
+/* ── Sidebar (flat list) ────────────────────────────────────────────────────── */
+
+.sidebar__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar__indicator {
+  font-size: 9px;
+  width: 12px;
+  display: inline-flex;
+  justify-content: center;
+  color: var(--figma-color-text-disabled);
+  flex-shrink: 0;
+}
+
+.sidebar__indicator--on {
+  color: var(--figma-color-icon-onbrand, #fff);
+}
+
+/*
+ * Tenant override badge in the sidebar — a small "@N" pill on the right of
+ * each base-set entry showing how many leaves the active tenant overrides
+ * inside that set. Brand-blue palette signals "structural / informational"
+ * (intentional divergence from base) and is intentionally distinct from
+ * the amber `.sidebar__change-badge` so the two never read as the same
+ * thing at a glance. Always visible while a tenant is selected — a fresh
+ * pull does NOT hide it, because overrides are part of the synced state.
+ */
+.sidebar__override-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: var(--figma-color-bg-brand-tertiary, rgba(20, 91, 195, 0.14));
+  color: var(--figma-color-text-brand, #145bc3);
+  border: 1px solid var(--figma-color-border-brand, rgba(20, 91, 195, 0.45));
+}
+
+/*
+ * Pending-changes badge in the sidebar — a small "+N" pill showing how many
+ * leaf edits in this set are waiting to be pushed. Amber/warning palette
+ * matches the BottomActionBar's "Push N changes" copy so the designer
+ * sees the same colour for "you have unsynced work" everywhere. Cleared
+ * automatically by pull (resets `originalTree`) and by push
+ * (`snapshotAfterPush`).
+ *
+ * When both badges show on the same row, the override badge keeps the
+ * `margin-left: auto` (it appears first in JSX) and the change badge
+ * just needs a small explicit gap.
+ */
+.sidebar__change-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: var(--figma-color-bg-warning-tertiary, rgba(245, 166, 35, 0.16));
+  color: var(--figma-color-text-warning, #b56b00);
+  border: 1px solid var(--figma-color-border-warning, rgba(245, 166, 35, 0.55));
+}
+
+.sidebar__override-badge + .sidebar__change-badge {
+  margin-left: 6px;
+}
+
+/* ── View-mode toggle (segmented control in TokenList toolbar) ─────────────── */
+
+.view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.view-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  color: var(--figma-color-icon-secondary, var(--figma-color-text-secondary));
+  background: transparent;
+  border-radius: 0;
+  border: none;
+}
+
+.view-toggle__btn + .view-toggle__btn {
+  border-left: 1px solid var(--figma-color-border);
+}
+
+.view-toggle__btn:hover {
+  background: var(--figma-color-bg-hover);
+  color: var(--figma-color-text);
+}
+
+.view-toggle__btn--active {
+  background: var(--figma-color-bg-selected);
+  color: var(--figma-color-text-onbrand, var(--figma-color-text));
+  border-color: var(--figma-color-border-brand, var(--figma-color-border));
+}
+
+.view-toggle__btn--active:hover {
+  /* Keep the active highlight when hovered */
+  background: var(--figma-color-bg-selected);
+}
+
+/* ── Tree view (preview mode) ──────────────────────────────────────────────── */
+
+.tree-view {
+  padding: 4px 0 24px;
+}
+
+.tree-view--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.tree-view__empty-hint {
+  font-size: 11px;
+  color: var(--figma-color-text-disabled);
+}
+
+.tree-section {
+  /* Horizontal padding is now applied per-row (header / branch heading /
+     leaf row) instead of on the section, so hover highlights can run wider
+     than the title and align with the leaf chips below. */
+  padding: 4px 4px 6px;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+.tree-section:last-child {
+  border-bottom: none;
+}
+
+/*
+ * Section header — same row-rhythm as `.tree-branch__heading` so the visual
+ * hierarchy reads "section title → sub-branch title → chips" with uniform
+ * vertical step. The header is also a hoverable row (Figma-native pattern):
+ * subtle bg-hover background + a 2 px brand accent on the left, just like
+ * `.tree-branch__heading`. The `+` button at the trailing edge keeps its
+ * own brighter hover treatment so it stands out within the row.
+ */
+.tree-section__header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  position: relative;
+  transition: background 80ms ease, box-shadow 80ms ease;
+}
+
+.tree-section__header:hover {
+  background: var(--figma-color-bg-hover);
+  box-shadow: inset 2px 0 0 var(--figma-color-bg-brand);
+}
+
+/* Header is split into a clickable toggle (caret + title, fills the row)
+   and the trailing `+` button. The toggle takes flex:1 so the click target
+   is generous, but the `+` button stays clickable on the far right. */
+.tree-section__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  flex: 1;
+  text-align: left;
+  color: var(--figma-color-text);
+}
+
+.tree-section__title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--figma-color-text);
+  margin: 0;
+}
+
+/* Single SVG triangle caret used by both section header and branch header.
+   Rotates 90° clockwise when open so the same path renders both states.
+   `flex-shrink: 0` keeps the icon stable when the label truncates. */
+.caret {
+  flex-shrink: 0;
+  color: var(--figma-color-text-secondary);
+  transition: transform 100ms ease, color 100ms ease;
+}
+
+.caret--open {
+  transform: rotate(90deg);
+  color: var(--figma-color-text);
+}
+
+.tree-section__add {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--figma-color-text-secondary);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.tree-section__add:hover {
+  background: var(--figma-color-bg-hover);
+  color: var(--figma-color-text);
+}
+
+/* ── Recursive branch — uniform, indentation comes from body padding ─────── */
+
+.tree-branch {
+  /* Margin is unified at the top — no per-level horizontal margin (we used to
+     stair-step 8/16/24 px which made the tree feel deep). Indentation is now
+     produced by the body's padding-left so each level adds exactly one step. */
+  margin: 0;
+}
+
+/*
+ * Branch heading — full-width hoverable row matching the section header's
+ * rhythm. Becoming `display: flex; width: 100%` (was inline-flex) makes the
+ * hover background extend across the whole row instead of hugging the
+ * label, which is the Figma-native pattern users expect: hover anywhere on
+ * the row → reveal that the row is interactive.
+ *
+ * The 2 px inset box-shadow on hover doubles as a "selected"-style accent —
+ * a thin brand-coloured rule on the leading edge — without taking layout
+ * space (a real border would shift the caret right by 2 px on hover).
+ */
+.tree-branch__heading {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--figma-color-text);
+  border-radius: 4px;
+  text-align: left;
+  transition: background 80ms ease, box-shadow 80ms ease;
+}
+
+.tree-branch__heading:hover {
+  background: var(--figma-color-bg-hover);
+  box-shadow: inset 2px 0 0 var(--figma-color-bg-brand);
+}
+
+.tree-branch__label {
+  font-weight: 500;
+}
+
+/*
+ * Branch body — the indented region under a heading containing leaves and
+ * sub-branches. We draw the tree line via a ::before pseudo-element so we
+ * can give it a rounded bottom-left corner (a curved "╰" connector that
+ * ends pointing toward the first piece of content), instead of a flat
+ * border-left that runs to a hard stop.
+ *
+ *   ┃            ← border-left of ::before
+ *   ┃
+ *   ╰─           ← border-bottom + border-bottom-left-radius
+ *
+ * The pseudo's height is anchored to the body's first child via `top: 0`
+ * and `bottom: calc(100% - <first-row-height>)` would be ideal, but pure
+ * CSS doesn't know first-row height. Instead we let the line span the full
+ * body height; the curve always sits at the bottom edge and visually hooks
+ * into whatever row is last.
+ */
+.tree-branch__body {
+  position: relative;
+  margin-left: 4px;
+  padding: 0 0 2px 14px;
+}
+
+.tree-branch__body::before {
+  content: '';
+  position: absolute;
+  /*
+   * Vertical line sits directly under the parent caret's centre column.
+   *   parent heading: padding-left 8 + caret half-width 4 = 12 px from the
+   *   tree-branch's left edge. The body has margin-left: 4, so a tree-line
+   *   `left` of 8 puts the rule at 4 + 8 = 12 px — flush below the caret's
+   *   ▾ glyph instead of floating 8 px to its left.
+   */
+  left: 8px;
+  top: 0;
+  /*
+   * Anchor the curve by HEIGHT (not bottom) so the bend aligns with the
+   * vertical centre of the first child:
+   *   - leaf-row first child  → swatch / pill centre sits at ~16 px from
+   *     top of body (4 px row padding + 12 px = half of the 24 px chip).
+   *   - tree-branch first     → heading centre sits at ~12 px (2 px padding
+   *     + ~10 px = half a 20 px line-height row).
+   * `:has()` lets us pick the right height per case while keeping the
+   * default at 16 px so the leaf row case (the most visible one) is right.
+   */
+  height: 16px;
+  /*
+   * Horizontal stub extends from the parent-caret column toward the first
+   * child, but stops short of the content so the bend has breathing room.
+   * Body content starts at padding-left: 14 px; leaf-row pads another 8 px
+   * before the first chip → chip left edge at 22 px from body left. We
+   * end the stub at left + width = 8 + 10 = 18 px, leaving a 4 px gap
+   * between `╰─` and the swatch (and ~8 px before a nested caret at 26 px).
+   * Looks like a guideline pointing at the content rather than touching it.
+   */
+  width: 10px;
+  border-left: 1px solid var(--figma-color-border);
+  border-bottom: 1px solid var(--figma-color-border);
+  border-bottom-left-radius: 6px;
+  pointer-events: none;
+}
+
+/* When the first child is another nested branch (its caret sits higher up),
+   shorten the connector so the curve still lands on the heading's centre. */
+.tree-branch__body:has(> .tree-branch:first-child)::before {
+  height: 12px;
+}
+
+/*
+ * Synthetic root (the unlabeled top of each $type bucket) is rendered flush
+ * — no connector, no extra indent. The tree line should only start once we
+ * cross into a real, named sub-group.
+ */
+.tree-branch__body--root {
+  margin-left: 0;
+  padding: 0;
+}
+
+.tree-branch__body--root::before {
+  /* Disable the connector entirely on the synthetic root */
+  content: none;
+}
+
+/* ── Leaf row (compact previews laid out horizontally) ─────────────────────── */
+
+.leaf-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  /* Horizontal padding mirrors `.tree-branch__heading` so each chip column
+     starts directly under the heading's label text — gives the section /
+     sub-branch / chips column a single consistent left edge. Bottom padding
+     is slightly larger than top so the next branch isn't crammed under the
+     last chip. */
+  padding: 4px 8px 8px;
+}
+
+.leaf-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+/* ── Color swatch ──────────────────────────────────────────────────────────── */
+
+.swatch {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  position: relative;
+  display: inline-block;
+  border: 1px solid var(--figma-color-border);
+  background: transparent;
+  cursor: pointer;
+  transition: transform 80ms;
+}
+
+.swatch:hover {
+  transform: scale(1.08);
+  border-color: var(--figma-color-border-brand, var(--figma-color-border));
+}
+
+.swatch__fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.swatch__alias-marker {
+  /* Tiny corner indicator for unresolved aliases — purely informational */
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  font-size: 8px;
+  background: var(--figma-color-bg);
+  border-radius: 50%;
+  padding: 1px 2px;
+  line-height: 1;
+  color: var(--figma-color-text-secondary);
+}
+
+/* ── Text pill (dimension / number / weight / etc.) ────────────────────────── */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--figma-color-text);
+  background: var(--figma-color-bg-secondary, rgba(127, 127, 127, 0.12));
+  border: 1px solid var(--figma-color-border);
+  cursor: pointer;
+  transition: background 80ms, border-color 80ms;
+}
+
+.pill:hover {
+  background: var(--figma-color-bg-hover);
+  border-color: var(--figma-color-border-brand, var(--figma-color-border));
+}
+
+/* ── Composite-type fallback list (shadow, typography…) ────────────────────── */
+
+.composite-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Tooltip on leaf hover ─────────────────────────────────────────────────── */
+
+.leaf-tooltip {
+  /*
+   * Position is set inline (`position: fixed` + top/left) by LeafTooltip in
+   * JS so the tooltip can be clamped to the viewport — a swatch flush against
+   * the panel's left edge would otherwise have its tooltip cut off. CSS here
+   * only owns the visual chrome and the visibility transition.
+   *
+   * Visibility is also driven by inline `opacity` from the component (we no
+   * longer rely on `:hover` because the tooltip lives in the viewport
+   * coordinate space, not under the .leaf-wrap's hover scope).
+   */
+  min-width: 80px;
+  max-width: 240px;
+  padding: 6px 8px;
+  background: #1c1c1c;
+  color: #fff;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 80ms ease;
+  z-index: 100;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.leaf-tooltip::after {
+  /*
+   * Arrow pointing DOWN from the tooltip (default — tooltip sits above the
+   * trigger). `--tt-arrow-x` is the trigger center expressed in tooltip-local
+   * coordinates, so when the body slides sideways to fit on screen the arrow
+   * keeps pointing at the actual swatch/pill.
+   */
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: var(--tt-arrow-x, 50%);
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1c1c1c;
+}
+
+.leaf-tooltip--below::after {
+  /* Tooltip flipped below the trigger — arrow points UP instead. */
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: #1c1c1c;
+}
+
+.leaf-tooltip__title {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.leaf-tooltip__row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.leaf-tooltip__value {
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.leaf-tooltip__resolved {
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 500;
+}
+
+/* ── JSON view (read-only) ─────────────────────────────────────────────────── */
+
+.json-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.json-view__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--figma-color-border);
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+  flex-shrink: 0;
+}
+
+.json-view__path {
+  flex: 1;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.json-view__copy {
+  font-size: 10px;
+  padding: 3px 8px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--figma-color-text);
+}
+
+.json-view__copy:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.json-view__pre {
+  flex: 1;
+  margin: 0;
+  padding: 8px 0 24px;
+  overflow: auto;
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  /* Allow text selection so designers can copy a slice */
+  user-select: text;
+  white-space: pre;
+  background: var(--figma-color-bg);
+}
+
+.json-view__line {
+  display: block;
+}
+
+.json-view__lineno {
+  display: inline-block;
+  width: 36px;
+  padding-right: 10px;
+  text-align: right;
+  color: var(--figma-color-text-disabled);
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.json-view__code {
+  /* The actual coloured spans live here */
+}
+
+/* Token spans — colours map to Figma's text variables for light/dark parity.
+   Falls back to literal hexes so the highlighter is readable even before
+   any --figma-* variable is injected (eg. local dev). */
+.tok--key      { color: var(--figma-color-text-brand, #4dabf7); }
+.tok--string   { color: #50c878; }
+.tok--number   { color: #d291ff; }
+.tok--boolean  { color: #ffa14d; font-weight: 500; }
+.tok--null     { color: var(--figma-color-text-disabled, #999); font-style: italic; }
+.tok--alias    { color: #ffd86b; }
+.tok--plain    { color: var(--figma-color-text); }
+
+/* ── Bottom action bar ─────────────────────────────────────────────────────── */
+/*
+ * Pinned to the bottom of the plugin. Push is the headline action and gets
+ * brand-coloured + full-height; Settings + Pull are quiet icon buttons on the
+ * left. The bar sits *outside* `.app-body` (which is the flex-grow region) so
+ * it never scrolls — designers always know where the push button lives.
+ */
+
+.bottom-action-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--figma-color-border);
+  background: var(--figma-color-bg);
+  flex-shrink: 0;
+}
+
+.bottom-action-bar__secondary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.bottom-action-bar__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--figma-color-text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background 80ms, border-color 80ms, color 80ms;
+}
+
+.bottom-action-bar__icon-btn:hover {
+  background: var(--figma-color-bg-hover);
+  color: var(--figma-color-text);
+  border-color: var(--figma-color-border);
+}
+
+.bottom-action-bar__pull-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--figma-color-text);
+  background: transparent;
+  border: 1px solid var(--figma-color-border);
+  transition: background 80ms, border-color 80ms;
+}
+
+.bottom-action-bar__pull-btn:hover {
+  background: var(--figma-color-bg-hover);
+  border-color: var(--figma-color-border-strong, var(--figma-color-border));
+}
+
+.bottom-action-bar__push-btn {
+  /* The big primary action. Full-height of the bar, takes all remaining
+     horizontal space, brand colour, designer-friendly copy. The arrow icon
+     reinforces "ship it" without leaning on jargon. */
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--figma-color-text-onbrand, #ffffff);
+  background: var(--figma-color-bg-brand, #145bc3);
+  border: 1px solid transparent;
+  transition: background 100ms, opacity 100ms;
+  letter-spacing: 0.01em;
+}
+
+.bottom-action-bar__push-btn:hover:not(:disabled) {
+  background: var(--figma-color-bg-brand-hover, #0e4a9e);
+}
+
+.bottom-action-bar__push-btn:disabled {
+  /* Disabled = no dirty sets. Drop to a muted secondary so the bar doesn't
+     look like a CTA when there's nothing to ship. The copy itself flips to
+     "No changes to push" so there's no ambiguity. */
+  background: var(--figma-color-bg-secondary, rgba(127, 127, 127, 0.12));
+  color: var(--figma-color-text-disabled);
+  cursor: not-allowed;
+  opacity: 1; /* override .btn:disabled — we already styled to look muted */
+}
+
+.bottom-action-bar__push-label {
+  /* Truncate gracefully if a future copy gets long (translations etc.) */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bottom-action-bar__push-icon {
+  flex-shrink: 0;
+}
+
+/* ── Tenant override markers ───────────────────────────────────────────────── */
+/*
+ * When a leaf's value came from a tenant override, the swatch / pill gets a
+ * subtle brand-coloured ring + corner dot. The signal must read at a glance
+ * so designers can scan a long list and see which tokens differ from base.
+ */
+
+.swatch--overridden {
+  border-color: var(--figma-color-border-brand, #145bc3);
+  box-shadow: 0 0 0 1px var(--figma-color-border-brand, #145bc3);
+}
+
+.swatch__override-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--figma-color-bg-brand, #145bc3);
+  border: 1.5px solid var(--figma-color-bg, #fff);
+  box-sizing: content-box;
+  pointer-events: none;
+}
+
+.pill--overridden {
+  border-color: var(--figma-color-border-brand, #145bc3);
+  color: var(--figma-color-text-brand, #145bc3);
+  background: var(--figma-color-bg-brand-tertiary, rgba(20, 91, 195, 0.08));
+}
+
+.leaf-tooltip__override {
+  margin-top: 4px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ── Version label (header) ────────────────────────────────────────────────── */
+/*
+ * Read-only display of the version pulled from the active branch. There's no
+ * editable input anymore — bumps are derived in CI from the merge target
+ * (`main` → patch, `dev` → rc), so the designer never types a version.
+ *
+ * The "↓ vX.Y.Z new" badge appears when the silent background poll spots a
+ * newer version on the active branch and is the only interactive element here.
+ */
+
+.version-field {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.version-field--placeholder .version-field__label-static {
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--figma-color-text);
+}
+
+.version-field__prefix {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--figma-color-text-secondary);
+  user-select: none;
+}
+
+.version-field__static {
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--figma-color-text);
+  letter-spacing: 0.01em;
+  user-select: text; /* designers occasionally copy the version number */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+/*
+ * "New version available" badge — appears when the silent background poll
+ * spots a `main` version different from the locally pulled base. Uses the
+ * brand tint so it's noticeable without screaming, and sits as a pill so
+ * it reads as an actionable chip rather than passive text. Clicking it
+ * routes through to the Pull modal — same destination as the ⚙ Pull
+ * button, just placed where the eye is already looking.
+ */
+.version-field__update-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid var(--figma-color-border-brand, transparent);
+  background: var(--figma-color-bg-brand-tertiary, rgba(24, 160, 251, 0.12));
+  color: var(--figma-color-text-brand, var(--figma-color-text));
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition: background 80ms, border-color 80ms, transform 80ms;
+}
+
+.version-field__update-badge:hover {
+  background: var(--figma-color-bg-brand-secondary, rgba(24, 160, 251, 0.22));
+  transform: translateY(-1px);
+}
+
+.version-field__update-badge:active {
+  transform: translateY(0);
+}
+
+.version-field__update-badge:focus-visible {
+  outline: 2px solid var(--figma-color-border-brand, currentColor);
+  outline-offset: 1px;
+}
+
+.version-field__update-badge__label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 9px;
+  opacity: 0.85;
+}
+
+/* ── Clear changes button (bottom action bar) ──────────────────────────────── */
+/*
+ * A muted secondary action sitting between the icons and the primary push.
+ * Disabled state is the resting state (no dirty sets) — kept very quiet so it
+ * never competes with Push for attention. When dirty, the danger-tinted
+ * border hints at the destructive nature without screaming.
+ */
+
+.bottom-action-bar__discard-btn {
+  /*
+   * Visually paired with `.bottom-action-bar__push-btn` — both are bar-level
+   * actions, so they share the same `min-height: 32px` envelope. Earlier
+   * the discard button was pinned to 28px (matching the secondary Pull /
+   * cog icons) which made the bar feel asymmetric: a tall coloured Push
+   * button next to a noticeably shorter Clear changes. Letting it stretch
+   * to the bar height keeps the action row feeling balanced regardless
+   * of bar padding changes upstream.
+   */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--figma-color-text);
+  background: transparent;
+  border: 1px solid var(--figma-color-border);
+  transition: background 80ms, border-color 80ms, color 80ms, opacity 80ms;
+  flex-shrink: 0;
+}
+
+.bottom-action-bar__discard-btn:hover:not(:disabled) {
+  background: var(--figma-color-bg-danger-tertiary, rgba(217, 67, 67, 0.08));
+  border-color: var(--figma-color-border-danger, #d94343);
+  color: var(--figma-color-text-danger, #d94343);
+}
+
+.bottom-action-bar__discard-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Confirm dialog ───────────────────────────────────────────────────────── */
+/*
+ * Smaller than the token editor modal — the message is a single sentence and
+ * two buttons. Reuses .modal-overlay for backdrop. Cancel sits on the LEFT
+ * (the safer default) and gets primary focus, mirroring native macOS confirm
+ * patterns where the destructive option is on the right.
+ */
+
+.confirm-dialog {
+  background: var(--figma-color-bg);
+  border-radius: 8px;
+  width: 320px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.confirm-dialog__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--figma-color-text);
+  padding: 14px 16px 4px;
+  margin: 0;
+}
+
+.confirm-dialog__body {
+  padding: 4px 16px 14px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--figma-color-text-secondary);
+}
+
+.confirm-dialog__footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--figma-color-border);
+  background: var(--figma-color-bg-secondary, transparent);
+}
+
+/* ── Editor "Saves to" routing hint ────────────────────────────────────────── */
+/*
+ * A tiny inline pill at the top of the TokenEditor body that surfaces where
+ * the value will land. Keeps designers oriented — especially important after
+ * switching tenants, where the answer changes.
+ */
+
+.form-routing-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--figma-color-bg-secondary, rgba(127, 127, 127, 0.08));
+  font-size: 10px;
+  align-self: flex-start;
+}
+
+.form-routing-hint__label {
+  color: var(--figma-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+
+.form-routing-hint__target {
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--figma-color-text);
+  font-weight: 500;
+}
+
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Figma Variables / Styles import-export feature
+   ────────────────────────────────────────────────────────────────────────────
+   Adds:
+     - Import/Export popover menu next to the Settings cog
+     - Reusable ToggleSwitch + CheckboxTree primitives (used by both modals)
+     - Wide-modal variant + body-scoped utility classes (blurb / loading /
+       error / success / warnings) shared by Export + Import + Diff modals
+     - Diff list visuals (badges, swatches, side-by-side value picker, bulk
+       header buttons)
+   All colors driven by --figma-color-* so light/dark inherits automatically.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── Wide modal variant (used by Import + Diff which need horizontal room) ── */
+.modal--wide {
+  width: 520px;
+  max-width: calc(100vw - 32px);
+}
+
+/* ── Body-scoped utility classes shared across Export/Import/Diff ─────────── */
+.modal__blurb {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal__loading {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  padding: 16px 0;
+  text-align: center;
+}
+
+.modal__error {
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: var(--figma-color-bg-danger-tertiary, rgba(220, 50, 50, 0.08));
+  color: var(--figma-color-text-danger, #b71c1c);
+  border: 1px solid var(--figma-color-border-danger, rgba(220, 50, 50, 0.3));
+}
+
+.modal__success {
+  font-size: 11px;
+  padding: 8px 10px;
+  border-radius: 4px;
+  background: var(--figma-color-bg-success-tertiary, rgba(20, 130, 70, 0.08));
+  color: var(--figma-color-text-success, #1b6c3a);
+  border: 1px solid var(--figma-color-border-success, rgba(20, 130, 70, 0.3));
+}
+
+.modal__warnings {
+  font-size: 11px;
+  margin-top: 6px;
+  color: var(--figma-color-text-secondary);
+}
+
+.modal__warnings summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  padding: 2px 0;
+}
+
+.modal__warnings ul {
+  margin: 6px 0 0 18px;
+  padding: 0;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* ── Import / Export popover trigger + menu ───────────────────────────────── */
+.import-export-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.import-export-menu__popover {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  min-width: 160px;
+  background: var(--figma-color-bg);
+  border: 1px solid var(--figma-color-border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  z-index: 50;
+}
+
+.import-export-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--figma-color-text);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.import-export-menu__item:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.import-export-menu__item-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  color: var(--figma-color-text-secondary);
+}
+
+/* ── Toggle switch (reusable) ─────────────────────────────────────────────── */
+.toggle-switch__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+.toggle-switch__row:last-child {
+  border-bottom: none;
+}
+
+.toggle-switch {
+  flex-shrink: 0;
+  width: 28px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+}
+
+.toggle-switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.toggle-switch__track {
+  display: block;
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--figma-color-bg-tertiary, var(--figma-color-bg-secondary));
+  border: 1px solid var(--figma-color-border);
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.toggle-switch__track--on {
+  background: var(--figma-color-bg-brand);
+  border-color: var(--figma-color-bg-brand);
+}
+
+.toggle-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 120ms ease;
+}
+
+.toggle-switch__track--on + .toggle-switch__thumb,
+.toggle-switch[aria-checked="true"] .toggle-switch__thumb {
+  transform: translateX(12px);
+}
+
+.toggle-switch__label-block {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle-switch__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--figma-color-text);
+}
+
+.toggle-switch__description {
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+  line-height: 1.45;
+}
+
+/* ── Checkbox tree (reusable) ─────────────────────────────────────────────── */
+.checkbox-tree {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.checkbox-tree__toggle-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--figma-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--figma-color-bg-secondary);
+  border: none;
+  border-bottom: 1px solid var(--figma-color-border);
+  cursor: pointer;
+  text-align: left;
+}
+
+.checkbox-tree__toggle-all:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.checkbox-tree__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--figma-color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-tree__row:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.checkbox-tree__row--child {
+  padding-left: 26px;
+}
+
+.checkbox-tree__row--grandchild {
+  padding-left: 42px;
+}
+
+.checkbox-tree__checkbox {
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--figma-color-border-strong, var(--figma-color-border));
+  border-radius: 3px;
+  background: var(--figma-color-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.checkbox-tree__checkbox--checked {
+  background: var(--figma-color-bg-brand);
+  border-color: var(--figma-color-bg-brand);
+}
+
+.checkbox-tree__checkbox--checked::after {
+  content: '';
+  width: 7px;
+  height: 4px;
+  border-left: 1.5px solid var(--figma-color-text-onbrand, #fff);
+  border-bottom: 1.5px solid var(--figma-color-text-onbrand, #fff);
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.checkbox-tree__checkbox--indeterminate {
+  background: var(--figma-color-bg-brand);
+  border-color: var(--figma-color-bg-brand);
+}
+
+.checkbox-tree__checkbox--indeterminate::after {
+  content: '';
+  width: 7px;
+  height: 1.5px;
+  background: var(--figma-color-text-onbrand, #fff);
+}
+
+.checkbox-tree__count {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+}
+
+.checkbox-tree__empty {
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  padding: 12px;
+  text-align: center;
+}
+
+/* ── Import options block ─────────────────────────────────────────────────── */
+.import-styles__options {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--figma-color-border);
+  border-bottom: 1px solid var(--figma-color-border);
+  padding: 4px 0;
+}
+
+/* ── Diff modal — counter + bulk-actions header ───────────────────────────── */
+.import-diff__counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  background: var(--figma-color-bg-secondary);
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+.import-diff__counter strong {
+  color: var(--figma-color-text);
+  font-weight: 600;
+}
+
+.import-diff__bulk {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+.import-diff__bulk-btn {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  background: var(--figma-color-bg);
+  color: var(--figma-color-text);
+  border: 1px solid var(--figma-color-border);
+  cursor: pointer;
+}
+
+.import-diff__bulk-btn:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+/* Resting (inactive) state — both buttons share neutral chrome so the
+   designer doesn't think one is pre-selected before they click. */
+.import-diff__bulk-btn--import,
+.import-diff__bulk-btn--main {
+  border-color: var(--figma-color-border, rgba(255, 255, 255, 0.12));
+  color: var(--figma-color-text);
+  background: transparent;
+}
+
+/* Active state — applied when EVERY row currently resolves to this side.
+   We use a filled background + brand colour for "import" (the additive,
+   forward-going action) and a quieter strong-bordered fill for "main"
+   (the conservative keep-existing action), so the two are distinguishable
+   even at a glance. */
+.import-diff__bulk-btn--import.import-diff__bulk-btn--active {
+  background: var(--figma-color-bg-brand);
+  border-color: var(--figma-color-bg-brand);
+  color: var(--figma-color-text-onbrand, #fff);
+}
+
+.import-diff__bulk-btn--main.import-diff__bulk-btn--active {
+  background: var(--figma-color-bg-secondary);
+  border-color: var(--figma-color-text);
+  color: var(--figma-color-text);
+  font-weight: 600;
+}
+
+.import-diff__bulk-btn--active:hover {
+  /* Filter rather than colour swap so each variant tints its own
+     active background instead of collapsing to the same hover gray. */
+  filter: brightness(0.95);
+  background: var(--figma-color-bg-brand);
+}
+
+.import-diff__bulk-btn--main.import-diff__bulk-btn--active:hover {
+  background: var(--figma-color-bg-secondary);
+  filter: brightness(1.05);
+}
+
+/* ── Diff modal — list and rows ──────────────────────────────────────────── */
+.import-diff__list {
+  /* Reuses .modal__body so flex-column + scroll is inherited; this just
+     tightens the gap so grouped rows stack densely. */
+  gap: 0;
+  padding-top: 0;
+  /* `position: sticky` on a child element looks for the nearest scrolling
+     ancestor; that's already this list (.modal__body has overflow-y: auto).
+     We just need to make sure no intermediate ancestor introduces its own
+     stacking/clipping context. */
+}
+
+.import-diff__group {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--figma-color-border);
+  /* No `overflow: hidden` — it would clip the sticky header. The list as
+     a whole already lives inside the modal body's scroll container so
+     visual containment is handled there. */
+}
+
+.import-diff__group:last-child {
+  border-bottom: none;
+}
+
+.import-diff__group-header {
+  /* Sticks to the top of the modal body's scroll container so the
+     designer always sees which group's rows are currently in view. */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--figma-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  background: var(--figma-color-bg-secondary);
+  border: none;
+  border-bottom: 1px solid transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  /* Slight shadow so the header reads as a layer above the rows when it
+     sticks during scroll. Subtle in light, tuned for both themes. */
+  box-shadow: 0 1px 0 0 var(--figma-color-border);
+}
+
+.import-diff__group-header:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.import-diff__group--open .import-diff__group-header {
+  border-bottom-color: var(--figma-color-border);
+}
+
+.import-diff__group-caret {
+  flex: 0 0 auto;
+  color: var(--figma-color-text-secondary);
+  transition: transform 0.15s ease;
+}
+
+.import-diff__group-caret--open {
+  transform: rotate(90deg);
+}
+
+.import-diff__group-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-diff__group-meta {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.import-diff__group-stat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  background: var(--figma-color-bg);
+}
+
+.import-diff__group-stat--add {
+  color: rgb(20, 130, 70);
+  background: rgba(20, 130, 70, 0.12);
+}
+
+.import-diff__group-stat--change {
+  color: rgb(180, 130, 30);
+  background: rgba(180, 130, 30, 0.14);
+}
+
+.import-diff__group-stat--remove {
+  color: rgb(190, 60, 60);
+  background: rgba(190, 60, 60, 0.12);
+}
+
+.import-diff__expand-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 16px 0;
+}
+
+.import-diff__expand-all {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--figma-color-text-brand, var(--figma-color-text));
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.import-diff__expand-all:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.import-diff__row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
+/* Last row inside an expanded group should not draw a divider —
+   the group itself owns the bottom separator. */
+.import-diff__group .import-diff__row:last-child {
+  border-bottom: none;
+}
+
+.import-diff__row--add {
+  background: rgba(20, 130, 70, 0.05);
+}
+.import-diff__row--change {
+  background: rgba(180, 130, 30, 0.05);
+}
+.import-diff__row--remove {
+  background: rgba(220, 50, 50, 0.05);
+}
+
+.import-diff__row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.import-diff__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.import-diff__badge--add {
+  background: rgba(20, 130, 70, 0.2);
+  color: #1b6c3a;
+}
+.import-diff__badge--change {
+  background: rgba(180, 130, 30, 0.2);
+  color: #8a5a00;
+}
+.import-diff__badge--remove {
+  background: rgba(220, 50, 50, 0.2);
+  color: #b71c1c;
+}
+
+.import-diff__path {
+  font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--figma-color-text);
+  flex: 1;
+  word-break: break-all;
+}
+
+.import-diff__type {
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+  background: var(--figma-color-bg-secondary);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.import-diff__values {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.import-diff__value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--figma-color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: var(--figma-color-bg);
+}
+
+.import-diff__value:hover {
+  background: var(--figma-color-bg-hover);
+}
+
+.import-diff__value--import {
+  border-left: 3px solid var(--figma-color-bg-brand);
+}
+
+.import-diff__value--main {
+  border-left: 3px solid var(--figma-color-text-secondary);
+}
+
+.import-diff__value--skip {
+  border-left: 3px dashed var(--figma-color-border-strong, var(--figma-color-border));
+  color: var(--figma-color-text-secondary);
+}
+
+.import-diff__radio {
+  flex-shrink: 0;
+}
+
+.import-diff__value-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--figma-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  min-width: 72px;
+}
+
+.import-diff__value-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.import-diff__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--figma-color-border);
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%),
+    linear-gradient(-45deg, #ccc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #ccc 75%),
+    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+  background-size: 6px 6px;
+  background-position: 0 0, 0 3px, 3px -3px, -3px 0;
+  flex-shrink: 0;
+}

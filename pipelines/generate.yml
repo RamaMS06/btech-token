@@ -2,13 +2,15 @@ name: Auto-generate token outputs
 
 # Triggers ONLY when token source files or the generator itself changes.
 # Runs generate, then commits the updated generated files back to the branch.
+# Does NOT run on main (main is protected — validate pipeline handles that).
 trigger:
   branches:
     exclude:
-      - main          # main is protected — handled by validate pipeline
+      - main
   paths:
     include:
       - packages/tokens/sources/**
+      - packages/tokens/generators/**
       - packages/tokens/sd.config.ts
 
 pr: none   # generate runs on push only, not on PR events
@@ -36,17 +38,20 @@ jobs:
           corepack prepare pnpm@9 --activate
         displayName: 'Setup pnpm 9'
 
+      # Auth to Azure Artifacts feed so `pnpm install` can fetch
+      # @btech/tokens (tenant packages consume base from the feed by design).
+      - task: npmAuthenticate@0
+        displayName: 'Authenticate with Azure Artifacts'
+        inputs:
+          workingFile: .npmrc
+
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # ── Flutter ──────────────────────────────────────────────────────────
-      - script: |
-          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
-          echo "##vso[task.prependpath]$HOME/flutter/bin"
-        displayName: 'Setup Flutter (stable)'
-
-      - script: flutter --version
-        displayName: 'Flutter version check'
+      - template: templates/flutter-setup.yml
 
       # ── Generate ─────────────────────────────────────────────────────────
       - script: pnpm exec tsx packages/tokens/sd.config.ts
@@ -55,53 +60,155 @@ jobs:
       - script: pnpm --filter @btech/tokens build
         displayName: 'Build @btech/tokens'
 
-      # ── Flutter: tokens-flutter ───────────────────────────────────────────
+      # ── Flutter: tokens platform ─────────────────────────────────────────
       - script: flutter pub get
         displayName: 'Flutter pub get (tokens-flutter)'
-        workingDirectory: packages/tokens/platforms/flutter
+        workingDirectory: packages/tokens/platforms/flutter/token
 
       - script: flutter analyze --no-fatal-infos
         displayName: 'Flutter analyze (tokens-flutter)'
-        workingDirectory: packages/tokens/platforms/flutter
-
-      # ── Flutter: demo-flutter ─────────────────────────────────────────────
-      - script: flutter pub get
-        displayName: 'Flutter pub get (demo-flutter)'
-        workingDirectory: apps/demo-flutter
-
-      - script: flutter analyze --no-fatal-infos
-        displayName: 'Flutter analyze (demo-flutter)'
-        workingDirectory: apps/demo-flutter
+        workingDirectory: packages/tokens/platforms/flutter/token
 
       # ── Commit back generated files if anything changed ───────────────────
+      # This step races with auto-version.yml, manual pushes, AND with PR
+      # auto-completion (which deletes the source branch). We use a re-stage-
+      # on-fresh-base loop instead of a single push:
+      #
+      #   0. is the branch still on origin?       (PR may have been
+      #                                             auto-completed and the
+      #                                             source branch deleted
+      #                                             between trigger and now —
+      #                                             nothing to push back to)
+      #   1. fetch origin
+      #   2. reset --mixed to origin/$BRANCH       (discard any prior local
+      #                                             commit, keep worktree)
+      #   3. re-stage generated files
+      #   4. if no diff vs origin → exit clean    (someone else's push
+      #                                             already covered our regen)
+      #   5. commit + push
+      #   6. push rejected? backoff + retry from (0) up to MAX_RETRIES
+      #
+      # This converges as long as racing pushes eventually stop. Manual pushes
+      # always win — generate just rebases on top and retries. PR completions
+      # also short-circuit cleanly (step 0).
       - script: |
+          set -e
           git config user.name "Azure Pipelines"
           git config user.email "azure-pipelines@users.noreply.azure.com"
 
-          git add \
-            packages/tokens/platforms/flutter/lib/btech_tokens.dart \
-            packages/tokens/platforms/flutter/lib/src/color/ \
-            packages/tokens/platforms/flutter/lib/src/spacing/ \
-            packages/tokens/platforms/flutter/lib/src/radius/ \
-            packages/tokens/platforms/flutter/lib/src/typography/ \
-            packages/tokens/platforms/flutter/lib/src/tenant.dart \
-            packages/tokens/platforms/web/src/color/ \
-            packages/tokens/platforms/web/src/spacing/ \
-            packages/tokens/platforms/web/src/radius/ \
-            packages/tokens/platforms/web/src/typography/ \
-            packages/tokens/platforms/web/dist/styles.css
+          # Build.SourceBranchName is the LAST PATH SEGMENT of the source
+          # branch ref — for refs/heads/figma/<timestamp>-<scope> it returns
+          # just `<timestamp>-<scope>`, dropping the `figma/` namespace. The
+          # Figma plugin pushes to `figma/<timestamp>-<scope>` branches, so
+          # using SourceBranchName here makes git fetch fail with:
+          #   fatal: couldn't find remote ref <truncated>
+          # because the truncated name doesn't exist on origin.
+          # Use Build.SourceBranch (the FULL ref) and strip the refs/heads/
+          # prefix instead — that preserves nested branch names.
+          BRANCH="${BUILD_SOURCEBRANCH#refs/heads/}"
+          MAX_RETRIES=5
+          BACKOFF=2
 
-          if git diff --cached --quiet; then
-            echo "No generated files changed — nothing to commit."
-            exit 0
-          fi
+          for attempt in $(seq 1 $MAX_RETRIES); do
+            echo "── Sync attempt $attempt of $MAX_RETRIES ($BRANCH) ──"
 
-          git commit -m "chore(generate): sync generated outputs from tokens/ changes ***NO_CI***
+            # ── Step 0: branch still alive on origin? ──
+            # Common case for plugin-driven flows: the Figma plugin pushes a
+            # feature branch + opens a PR with auto-complete + delete-source-
+            # branch enabled. By the time we land here (~3-5 min after
+            # trigger), the PR may already be merged and the source branch
+            # gone. Trying to `git fetch origin "$BRANCH"` then errors with
+            #   fatal: couldn't find remote ref <branch>
+            # and aborts the whole pipeline. Detect that case and exit clean
+            # — the generated outputs we'd have pushed back to the feature
+            # branch are now moot; the PR merge already brought the source
+            # changes onto the target branch and the target branch's own
+            # generate.yml run will produce its own outputs.
+            if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+              echo "Branch $BRANCH no longer exists on origin — nothing to commit back."
+              echo "(Most likely cause: PR was auto-completed with 'delete source branch' enabled.)"
+              exit 0
+            fi
+
+            git fetch origin "$BRANCH"
+            # --mixed (default): move HEAD to origin/$BRANCH, unstage
+            # everything, but DO NOT touch the working tree (keep our
+            # regenerated files on disk).
+            git reset --mixed "origin/$BRANCH"
+
+            # ── Race fix: restore version-bearing files from origin ──
+            # auto-version.yml races with generate.yml on PR merge:
+            #   1. PR merges → both pipelines trigger from the same SHA
+            #   2. auto-version bumps package versions, commits with
+            #      ***NO_CI*** so it doesn't re-trigger
+            #   3. generate.yml has already started — its checkout was at
+            #      the PRE-bump SHA, so the on-disk versions are stale
+            #      (e.g. rc.8 while origin now has rc.9)
+            #   4. The generator's `existingPkg.version` read returns the
+            #      stale rc.8, the generator preserves it, the working
+            #      tree ends up with rc.8
+            #   5. `git reset --mixed origin/$BRANCH` keeps that stale rc.8
+            #      working tree
+            #   6. `git add packages/tokens/platforms/` then stages a
+            #      rc.9 → rc.8 *regression* and we'd push a revert
+            #
+            # Pull the version-bearing files back from origin BEFORE
+            # staging so they match whatever auto-version landed. Any
+            # genuine generated-content diffs (CSS, Dart, etc.) are still
+            # in the working tree and will be staged normally.
+            #
+            # `2>/dev/null || true` because the globs may match zero files
+            # in early-stage repos (e.g. a tenant deleted between runs);
+            # we don't want one missing file to abort the whole sync.
+            git checkout "origin/$BRANCH" -- \
+              packages/tokens/platforms/web/*/package.json \
+              packages/tokens/platforms/flutter/*/pubspec.yaml \
+              packages/tokens/platforms/python/*/pyproject.toml \
+              packages/tokens/platforms/python/tenants/*/pyproject.toml \
+              2>/dev/null || true
+
+            git add packages/tokens/platforms/
+
+            if git diff --cached --quiet; then
+              echo "No generated changes vs origin/$BRANCH — nothing to commit."
+              exit 0
+            fi
+
+            git commit -m "chore(generate): sync generated outputs from tokens/ changes ***NO_CI***
 
           Auto-generated by Azure Pipelines — do not edit generated files manually.
-          Run \`pnpm exec tsx packages/tokens/sd.config.ts\` locally to preview changes."
+          Run pnpm generate locally to preview changes."
 
-          git push origin HEAD:$(Build.SourceBranchName)
+            if git push origin "HEAD:$BRANCH"; then
+              echo "✓ Pushed generated outputs on attempt $attempt."
+              exit 0
+            fi
+
+            # Push could fail for two reasons we want to handle differently:
+            #   (a) branch raced — someone pushed between our fetch and push
+            #   (b) branch deleted — PR auto-completed mid-loop
+            # Re-check existence on origin: if it's gone, exit clean rather
+            # than burn retries on a ref that will never come back.
+            if ! git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+              echo "Branch $BRANCH was deleted on origin during this attempt — exiting clean."
+              exit 0
+            fi
+
+            echo "Push rejected on attempt $attempt — branch raced. Retry in ${BACKOFF}s."
+            sleep $BACKOFF
+            BACKOFF=$((BACKOFF * 2))
+          done
+
+          echo "##[error]Failed to push generated outputs after $MAX_RETRIES attempts."
+          echo "##[error]Likely cause: continuous concurrent pushes to $BRANCH."
+          echo "##[error]Re-run this pipeline once activity on $BRANCH settles."
+          exit 1
         displayName: 'Commit generated outputs'
         env:
           AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
+          # Built-in Azure DevOps variable; explicit mapping here keeps the
+          # bash parameter expansion `${BUILD_SOURCEBRANCH#refs/heads/}`
+          # readable without using $(Build.SourceBranch) macro syntax (which
+          # is expanded by the YAML preprocessor and would mangle a branch
+          # name containing dollar signs or quote characters).
+          BUILD_SOURCEBRANCH: $(Build.SourceBranch)

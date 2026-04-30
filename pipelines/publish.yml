@@ -1,21 +1,26 @@
-name: Publish Packages (Manual / Emergency)
+name: Publish Packages
 
-# This pipeline is the MANUAL / EMERGENCY release path.
-# Normal releases are handled automatically by auto-version pipeline on PR merge.
+# Triggered by any release tag — whether pushed by auto-version.yml (normal
+# flow) or manually by a developer (hotfix / emergency).
 #
-# Use this pipeline when you need to:
-#   - Re-publish a version that failed mid-publish
-#   - Publish a hotfix tag manually
-#   - Release without going through a PR
+# Tag format → publish scope:
+#   v1.2.3                    → base + every tenant (full coordinated release)
+#   <tenant>-v1.2.3           → only that tenant package (e.g. bspace-v1.0.0)
 #
-# Trigger: push a v* tag manually
-#   git tag v1.2.3 -m "hotfix"
-#   git push origin v1.2.3
-
+# Auto-version.yml selects the right tag form based on what changed in the
+# bumped package.json files; both flows land here so designers never have
+# to manually fire publish.yml after a tenant-only edit.
+#
+# Normal flow:
+#   PR merged → auto-version.yml bumps + pushes tag(s) → this pipeline publishes
+#
+# Manual / emergency flow:
+#   git tag v1.2.3 -m "hotfix" && git push origin v1.2.3 → this pipeline publishes
 trigger:
   tags:
     include:
       - v*
+      - '*-v*'
   branches:
     exclude:
       - '*'   # tags only — no branch push triggers
@@ -25,13 +30,48 @@ pr: none
 pool:
   vmImage: ubuntu-latest
 
+# Pre-declare PUBLISH_TENANT so unset full-release tags substitute to empty
+# string in env: blocks instead of leaking the literal "$(PUBLISH_TENANT)"
+# token, which previously broke publish-changed.ts on full releases.
+variables:
+  - name: PUBLISH_TENANT
+    value: ''
+
 jobs:
   - job: publish
     displayName: 'Build & Publish to Azure Artifacts'
-    # Skip if the tag was pushed by the auto-version pipeline (it already published inline).
-    condition: ne(variables['Build.RequestedFor'], 'Azure Pipelines')
 
     steps:
+      # ── Detect tag form: full release vs tenant-only ─────────────────────
+      # Build.SourceBranch holds "refs/tags/<tagName>" when triggered by a tag.
+      # We classify the tag once here and let later steps branch on the
+      # PUBLISH_TENANT variable so each step has a single, obvious purpose.
+      - script: |
+          TAG="${BUILD_SOURCEBRANCH#refs/tags/}"
+          echo "Triggered by tag: $TAG"
+
+          # `<tenant>-v<version>` form? Capture the tenant id and gate the
+          # downstream publish to that tenant alone. Anything else is
+          # treated as a full base+tenants release.
+          if [[ "$TAG" =~ ^([A-Za-z0-9_-]+)-v[0-9] ]]; then
+            TENANT="${BASH_REMATCH[1]}"
+            # Guard against a tag that just *starts* with "v" looking like
+            # a tenant (e.g. someone tags `vnext-v1.0.0`). The fallthrough
+            # is intentional: if we can't find a matching package, treat
+            # as a full release rather than risk publishing nothing.
+            if [ -d "packages/tokens/platforms/web/$TENANT" ]; then
+              echo "Tenant-only release detected: $TENANT"
+              echo "##vso[task.setvariable variable=PUBLISH_TENANT]$TENANT"
+            else
+              echo "Tag matched <name>-v<version> but no tenant package '$TENANT' found — treating as full release."
+            fi
+          else
+            echo "Full release tag — publishing base + all tenants."
+          fi
+        displayName: 'Classify release tag'
+        env:
+          BUILD_SOURCEBRANCH: $(Build.SourceBranch)
+
       # ── Node / pnpm ───────────────────────────────────────────────────────
       - task: NodeTool@0
         displayName: 'Setup Node.js 20'
@@ -48,31 +88,157 @@ jobs:
         inputs:
           workingFile: .npmrc
 
+      # NODE_AUTH_TOKEN substitutes the placeholder in .npmrc so pnpm can
+      # authenticate to the private @btech feed. Without it pnpm falls back
+      # to registry.npmjs.org (404) on @btech/* deps recorded in the lockfile.
       - script: pnpm install --frozen-lockfile
         displayName: 'Install JS dependencies'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       # ── Flutter ───────────────────────────────────────────────────────────
-      - script: |
-          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
-          echo "##vso[task.prependpath]$HOME/flutter/bin"
-        displayName: 'Setup Flutter (stable)'
+      - template: templates/flutter-setup.yml
 
       - script: flutter pub get
         displayName: 'Flutter pub get'
-        workingDirectory: packages/tokens/platforms/flutter
+        workingDirectory: packages/tokens/platforms/flutter/token
 
-      # ── Validate → Build → Publish ────────────────────────────────────────
-      - script: pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts
-        displayName: 'Validate tokens (JS)'
+      # ── Validate → Generate → Build → Publish ─────────────────────────────
+      - script: pnpm validate
+        displayName: 'Run validators (contrast + boundary + workspace-deps)'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
-      - script: pnpm build
-        displayName: 'Build all packages'
+      # IMPORTANT: 'pnpm generate' (not 'pnpm build') — produces both:
+      #   - Style Dictionary outputs (styles.css, utilities.css) via sd.config.ts
+      #   - TypeScript bundles (index.js, index.mjs, index.d.ts) via tsup
+      # Using 'pnpm --filter @btech/tokens build' alone runs tsup only,
+      # resulting in a published tarball missing styles.css (rc.1 bug).
+      # generate runs pnpm install --lockfile-only internally → needs auth.
+      - script: pnpm generate
+        displayName: 'Generate tokens (CSS + JS + types)'
+        env:
+          NODE_AUTH_TOKEN: $(System.AccessToken)
 
       - script: flutter analyze --no-fatal-infos
         displayName: 'Flutter analyze'
-        workingDirectory: packages/tokens/platforms/flutter
+        workingDirectory: packages/tokens/platforms/flutter/token
 
-      # npmAuthenticate@0 above already injected System.AccessToken into .npmrc.
-      # No NODE_AUTH_TOKEN variable needed.
-      - script: pnpm --filter @btech/tokens publish --no-git-checks
-        displayName: 'Publish @btech/tokens'
+      # Determine dist-tag: RC versions publish to "rc", stable to "latest".
+      # When a tenant-only tag triggered the run, read the version from THAT
+      # tenant's package.json — base may be a stable while a tenant ships rc.
+      # Otherwise read the canonical platform version from the repo-root
+      # package.json (single source of truth for full releases).
+      - script: |
+          if [ -n "$(PUBLISH_TENANT)" ]; then
+            VERSION=$(node -p "require('./packages/tokens/platforms/web/$(PUBLISH_TENANT)/package.json').version")
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          if echo "$VERSION" | grep -q '\-rc\.'; then
+            echo "##vso[task.setvariable variable=NPM_TAG]rc"
+          else
+            echo "##vso[task.setvariable variable=NPM_TAG]latest"
+          fi
+        displayName: 'Determine npm dist-tag (latest vs rc)'
+
+      # Idempotent publish — only packages whose local version is NOT yet
+      # on the registry are published. Safe to re-run, tolerant of hybrid
+      # versioning (scoped bumps where only some packages advanced).
+      # PUBLISH_ONLY_TENANT (when set) restricts publish-changed.ts to a
+      # single tenant — so a `<tenant>-v<x>` tag never accidentally races
+      # an unrelated base release.
+      - script: pnpm exec tsx scripts/publish-changed.ts
+        displayName: 'Publish npm packages with new versions (skip existing)'
+        env:
+          NPM_TAG: $(NPM_TAG)
+          PUBLISH_ONLY_TENANT: $(PUBLISH_TENANT)
+          NODE_AUTH_TOKEN: $(System.AccessToken)
+
+      # ── Python — build & publish to btech feed (PyPI side of same feed) ───
+      - task: UsePythonVersion@0
+        displayName: 'Setup Python 3.11'
+        inputs:
+          versionSpec: '3.11'
+
+      - script: python -m pip install --upgrade build twine
+        displayName: 'Install Python build + twine'
+
+      - task: TwineAuthenticate@1
+        displayName: 'Authenticate twine to btech feed'
+        inputs:
+          artifactFeed: 'BUMA - Bspace Design System/btech'
+
+      - script: |
+          set -e
+          if [ -n "$(PUBLISH_TENANT)" ]; then
+            # Tenant-only tag — build only that tenant's Python package
+            # (if it exists). Base is left alone.
+            tenant_dir="packages/tokens/platforms/python/tenants/$(PUBLISH_TENANT)"
+            if [ -f "$tenant_dir/pyproject.toml" ]; then
+              python -m build "$tenant_dir"
+            else
+              echo "No Python package for tenant '$(PUBLISH_TENANT)' — skipping Python build."
+            fi
+          else
+            # Always build base
+            python -m build packages/tokens/platforms/python/token
+
+            # Tenants only on stable releases — RC bumps are base-only.
+            if [ "$(NPM_TAG)" != "rc" ]; then
+              for tenant_dir in packages/tokens/platforms/python/tenants/*/; do
+                [ -f "$tenant_dir/pyproject.toml" ] || continue
+                python -m build "$tenant_dir"
+              done
+            fi
+          fi
+        displayName: 'Build Python packages (wheel + sdist)'
+
+      - script: |
+          set -e
+          # Azure Artifacts PyPI feed REJECTS twine's --skip-existing flag with
+          # "UnsupportedConfiguration", so we re-implement skip-existing in
+          # shell: capture twine output and swallow exit 1 when the only
+          # failure is "File already exists" / 400 / 409. Anything else
+          # propagates as a real error.
+          twine_upload_skip_existing() {
+            local logfile
+            logfile=$(mktemp)
+            if python -m twine upload -r btech --config-file "$(PYPIRC_PATH)" "$@" 2>&1 | tee "$logfile"; then
+              return 0
+            fi
+            if grep -qE "already exists|400 Bad Request.*[Ff]ile.*exists|409 Conflict" "$logfile"; then
+              echo "ℹ️   Some files were already on the feed — treated as success."
+              return 0
+            fi
+            return 1
+          }
+
+          if [ -n "$(PUBLISH_TENANT)" ]; then
+            tenant_dir="packages/tokens/platforms/python/tenants/$(PUBLISH_TENANT)"
+            if [ -d "$tenant_dir/dist" ]; then
+              twine_upload_skip_existing "$tenant_dir"/dist/*
+            else
+              echo "No Python dist for tenant '$(PUBLISH_TENANT)' — nothing to upload."
+            fi
+          else
+            twine_upload_skip_existing packages/tokens/platforms/python/token/dist/*
+
+            if [ "$(NPM_TAG)" != "rc" ]; then
+              for tenant_dir in packages/tokens/platforms/python/tenants/*/; do
+                [ -d "${tenant_dir}dist" ] || continue
+                twine_upload_skip_existing "${tenant_dir}dist"/*
+              done
+            fi
+          fi
+        displayName: 'Publish Python packages to btech feed'
+
+      # ── Summary ───────────────────────────────────────────────────────────
+      - script: |
+          ROOT_VERSION=$(node -p "require('./package.json').version")
+          WEB_VERSION=$(node -p "require('./packages/tokens/platforms/web/token/package.json').version")
+          PY_VERSION=$(grep -m1 '^version = "' packages/tokens/platforms/python/token/pyproject.toml | sed -E 's/version = "([^"]+)"/\1/')
+          echo "##[section]Platform @btech/design-system@$ROOT_VERSION (canonical)"
+          echo "##[section]Published @btech/tokens@$WEB_VERSION + tenants (tag: $(NPM_TAG))"
+          echo "##[section]Published btech-tokens==$PY_VERSION + Python tenants"
+        displayName: 'Publish summary'

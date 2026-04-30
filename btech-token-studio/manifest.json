@@ -1,0 +1,13 @@
+{
+  "name": "BTech Token Studio",
+  "id": "com.btech.token-studio",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["https://dev.azure.com"],
+    "reasoning": "Required to pull and push design tokens from/to the Azure DevOps Git repository via REST API."
+  }
+}

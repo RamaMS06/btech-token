@@ -1,2 +1,4 @@
 packages:
-  - 'packages/tokens/platforms/web'
+  - 'packages/tokens/platforms/web/*'
+  - 'apps/*'
+  - 'btech-token-studio'
