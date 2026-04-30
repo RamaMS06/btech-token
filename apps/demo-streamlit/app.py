@@ -1,14 +1,30 @@
 """
 BTech Design System — Streamlit Token Demo
 Mirrors the React / Vue demo apps: same tabs, same token categories,
-same visual previews. Reads token sources directly — no published
-package needed.
+same visual previews.
+
+Two token sources are available:
+  1. btech_tokens package — generated from sources, dot-access API
+  2. token_loader (fallback) — reads DTCG JSON directly, supports dark/tenant
 
 Run:
-    streamlit run apps/demo-streamlit/app.py
+    cd apps/demo-streamlit && .venv/bin/streamlit run app.py
 """
+import sys, os
+# Allow running from any working directory
+sys.path.insert(0, os.path.dirname(__file__))
+
 import streamlit as st
 from token_loader import build_token_map, available_tenants
+from components.btech_ui import (
+    btech_button, btech_badge, btech_alert, btech_card, btech_input,
+)
+
+try:
+    import btech_tokens as _btech
+    _BT_AVAILABLE = True
+except ImportError:
+    _BT_AVAILABLE = False
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -20,7 +36,6 @@ st.set_page_config(
 
 # ── Session state defaults ────────────────────────────────────────────────────
 if "dark"   not in st.session_state: st.session_state.dark   = False
-if "tab"    not in st.session_state: st.session_state.tab    = "all"
 if "search" not in st.session_state: st.session_state.search = ""
 if "tenant" not in st.session_state: st.session_state.tenant = "default"
 
@@ -29,24 +44,26 @@ tenant = st.session_state.tenant
 
 # ── Load tokens ───────────────────────────────────────────────────────────────
 T = build_token_map(tenant=tenant, dark=dark)
+# Store for btech_ui components (they read this via session state)
+st.session_state["_bt_tokens"] = T
 
 def t(key: str, fallback: str = "") -> str:
     return T.get(key, fallback)
 
 
-# ── Theme values ──────────────────────────────────────────────────────────────
-BG_PAGE    = t("color.bg.subtle",    "#f8fafc")
-BG_PRIMARY = t("color.bg.primary",   "#ffffff")
-BG_SUBTLER = t("color.bg.subtler",   "#f1f5f9")
-TEXT_PRI   = t("color.text.primary", "#1e293b")
-TEXT_SEC   = t("color.text.secondary","#64748b")
-TEXT_TER   = t("color.text.tertiary", "#94a3b8")
-BORDER     = t("color.border.primary","#e2e8f0")
-BRAND      = t("color.brand.primary-default", "#4f46e5")
-BRAND_BOLD = t("color.brand.primary-bold",    "#3730a3")
+# ── Theme values (mapped to actual DTCG token paths) ─────────────────────────
+BG_PAGE    = t("color.background.surface.subtle",  "#f8fafc")
+BG_PRIMARY = t("color.background.surface.raised",  "#ffffff")
+BG_SUBTLER = t("color.background.neutral.subtle",  "#f1f5f9")
+TEXT_PRI   = t("color.text.neutral.default",       "#1e293b")
+TEXT_SEC   = t("color.text.neutral.subtle",        "#64748b")
+TEXT_TER   = t("color.text.neutral.disabled",      "#94a3b8")
+BORDER     = t("color.stroke.neutral.default",     "#e2e8f0")
+BRAND      = t("color.background.primary.default", "#4f46e5")
+BRAND_BOLD = t("color.background.primary.bolder",  "#3730a3")
 RADIUS_MD  = t("radius.md", "12px")
 RADIUS_SM  = t("radius.sm", "8px")
-SPACE_MD   = t("spacing.md", "12px")
+SPACE_MD   = t("spacing.md", "16px")
 SPACE_SM   = t("spacing.sm", "8px")
 FONT_SANS  = t("typography.fontFamily.sans", "system-ui, sans-serif")
 
@@ -75,37 +92,11 @@ st.markdown(f"""
     gap: 16px;
   }}
 
-  /* ── Topbar ── */
-  .topbar {{
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    background: {BG_PRIMARY};
-    border: 1px solid {BORDER};
-    border-radius: {RADIUS_MD};
-    padding: 10px 16px;
-  }}
-  .tabs {{ display: flex; gap: 4px; flex-wrap: wrap; }}
-  .tab-btn {{
-    padding: 5px 14px;
-    border-radius: {RADIUS_SM};
-    border: 1.5px solid transparent;
-    background: transparent;
-    color: {TEXT_SEC};
-    font-size: 13px;
-    font-weight: 400;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: {FONT_SANS};
-    text-decoration: none;
-  }}
-  .tab-btn:hover {{ background: {BG_SUBTLER}; color: {TEXT_PRI}; }}
-  .tab-btn.active {{
-    background: {t('color.ext.success-subtler','#dcfce7')};
-    color: {t('color.text.success','#15803d')};
-    border-color: {t('color.ext.success-subtle','#bbf7d0')};
-    font-weight: 600;
+  /* ── St.pills native widget styling tweak ── */
+  [data-testid="stPillsGroup"] button {{
+    border-radius: {RADIUS_SM} !important;
+    font-family: {FONT_SANS} !important;
+    font-size: 13px !important;
   }}
 
   /* ── Table ── */
@@ -135,7 +126,7 @@ st.markdown(f"""
     transition: background 0.1s;
   }}
   .table-row:last-child {{ border-bottom: none; }}
-  .table-row.even {{ background: {t('color.bg.subtle','#f8fafc')}; }}
+  .table-row.even {{ background: {t('color.background.surface.subtle','#f8fafc')}; }}
   .col-preview {{ width: 68px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }}
   .col-usage   {{ flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }}
   .col-value   {{ width: 180px; flex-shrink: 0; }}
@@ -187,7 +178,7 @@ st.markdown(f"""
   .ex-head {{
     padding: 10px 16px;
     border-bottom: 1px solid {BORDER};
-    background: {t('color.bg.subtle','#f8fafc')};
+    background: {t('color.background.surface.subtle','#f8fafc')};
     display: flex;
     align-items: center;
     gap: 8px;
@@ -241,63 +232,60 @@ st.markdown(f"""
 
 # ── Token data table ───────────────────────────────────────────────────────────
 TOKENS = [
-    # ── Color: Background ──
-    ("color", "color", "color.bg.primary",   "token('color.bg.primary')",   t("color.bg.primary"),   "Background"),
-    ("color", "color", "color.bg.secondary", "token('color.bg.secondary')", t("color.bg.secondary"), "Background"),
-    ("color", "color", "color.bg.tertiary",  "token('color.bg.tertiary')",  t("color.bg.tertiary"),  "Background"),
-    ("color", "color", "color.bg.inverse",   "token('color.bg.inverse')",   t("color.bg.inverse"),   "Background"),
-    ("color", "color", "color.bg.subtle",    "token('color.bg.subtle')",    t("color.bg.subtle"),    "Background"),
-    ("color", "color", "color.bg.subtler",   "token('color.bg.subtler')",   t("color.bg.subtler"),   "Background"),
-    ("color", "color", "color.bg.subtlest",  "token('color.bg.subtlest')",  t("color.bg.subtlest"),  "Background"),
+    # ── Color: Surface / Background ──
+    ("color", "color", "color.background.surface.raised",   "token('color.background.surface.raised')",   t("color.background.surface.raised"),   "Background"),
+    ("color", "color", "color.background.surface.default",  "token('color.background.surface.default')",  t("color.background.surface.default"),  "Background"),
+    ("color", "color", "color.background.surface.subtle",   "token('color.background.surface.subtle')",   t("color.background.surface.subtle"),   "Background"),
+    ("color", "color", "color.background.neutral.default",  "token('color.background.neutral.default')",  t("color.background.neutral.default"),  "Background"),
+    ("color", "color", "color.background.neutral.subtle",   "token('color.background.neutral.subtle')",   t("color.background.neutral.subtle"),   "Background"),
+    ("color", "color", "color.background.neutral.bolder",   "token('color.background.neutral.bolder')",   t("color.background.neutral.bolder"),   "Background"),
+    ("color", "color", "color.background.primary.subtle",   "token('color.background.primary.subtle')",   t("color.background.primary.subtle"),   "Background"),
+    ("color", "color", "color.background.primary.default",  "token('color.background.primary.default')",  t("color.background.primary.default"),  "Background"),
+    ("color", "color", "color.background.primary.bolder",   "token('color.background.primary.bolder')",   t("color.background.primary.bolder"),   "Background"),
     # ── Color: Text ──
-    ("color", "color", "color.text.primary",   "token('color.text.primary')",   t("color.text.primary"),   "Text"),
-    ("color", "color", "color.text.secondary", "token('color.text.secondary')", t("color.text.secondary"), "Text"),
-    ("color", "color", "color.text.tertiary",  "token('color.text.tertiary')",  t("color.text.tertiary"),  "Text"),
-    ("color", "color", "color.text.inverse",   "token('color.text.inverse')",   t("color.text.inverse"),   "Text"),
-    ("color", "color", "color.text.disabled",  "token('color.text.disabled')",  t("color.text.disabled"),  "Text"),
-    ("color", "color", "color.text.link",      "token('color.text.link')",      t("color.text.link"),      "Text"),
-    ("color", "color", "color.text.success",   "token('color.text.success')",   t("color.text.success"),   "Text"),
-    ("color", "color", "color.text.error",     "token('color.text.error')",     t("color.text.error"),     "Text"),
-    ("color", "color", "color.text.warning",   "token('color.text.warning')",   t("color.text.warning"),   "Text"),
-    ("color", "color", "color.text.info",      "token('color.text.info')",      t("color.text.info"),      "Text"),
+    ("color", "color", "color.text.neutral.default",  "token('color.text.neutral.default')",  t("color.text.neutral.default"),  "Text"),
+    ("color", "color", "color.text.neutral.subtle",   "token('color.text.neutral.subtle')",   t("color.text.neutral.subtle"),   "Text"),
+    ("color", "color", "color.text.neutral.disabled", "token('color.text.neutral.disabled')", t("color.text.neutral.disabled"), "Text"),
+    ("color", "color", "color.text.neutral.inverse",  "token('color.text.neutral.inverse')",  t("color.text.neutral.inverse"),  "Text"),
+    ("color", "color", "color.text.danger.base",      "token('color.text.danger.base')",      t("color.text.danger.base"),      "Text"),
+    ("color", "color", "color.text.success.base",     "token('color.text.success.base')",     t("color.text.success.base"),     "Text"),
+    ("color", "color", "color.text.warning.base",     "token('color.text.warning.base')",     t("color.text.warning.base"),     "Text"),
+    ("color", "color", "color.text.info.base",        "token('color.text.info.base')",        t("color.text.info.base"),        "Text"),
     # ── Color: Icon ──
-    ("color", "color", "color.icon.primary",   "token('color.icon.primary')",   t("color.icon.primary"),   "Icon"),
-    ("color", "color", "color.icon.secondary", "token('color.icon.secondary')", t("color.icon.secondary"), "Icon"),
-    ("color", "color", "color.icon.link",      "token('color.icon.link')",      t("color.icon.link"),      "Icon"),
-    ("color", "color", "color.icon.success",   "token('color.icon.success')",   t("color.icon.success"),   "Icon"),
-    ("color", "color", "color.icon.error",     "token('color.icon.error')",     t("color.icon.error"),     "Icon"),
-    ("color", "color", "color.icon.warning",   "token('color.icon.warning')",   t("color.icon.warning"),   "Icon"),
-    ("color", "color", "color.icon.info",      "token('color.icon.info')",      t("color.icon.info"),      "Icon"),
-    # ── Color: Border ──
-    ("color", "color", "color.border.primary",   "token('color.border.primary')",   t("color.border.primary"),   "Border"),
-    ("color", "color", "color.border.secondary", "token('color.border.secondary')", t("color.border.secondary"), "Border"),
-    ("color", "color", "color.border.tertiary",  "token('color.border.tertiary')",  t("color.border.tertiary"),  "Border"),
-    ("color", "color", "color.border.inverse",   "token('color.border.inverse')",   t("color.border.inverse"),   "Border"),
-    ("color", "color", "color.border.disabled",  "token('color.border.disabled')",  t("color.border.disabled"),  "Border"),
-    # ── Color: Brand ──
-    ("color", "color", "color.brand.primary-subtle",  "token('color.brand.primary-subtle')",  t("color.brand.primary-subtle"),  "Brand"),
-    ("color", "color", "color.brand.primary-default", "token('color.brand.primary')",         t("color.brand.primary-default"), "Brand"),
-    ("color", "color", "color.brand.primary-bold",    "token('color.brand.primary-bold')",    t("color.brand.primary-bold"),    "Brand"),
-    ("color", "color", "color.brand.secondary-subtle","token('color.brand.secondary-subtle')",t("color.brand.secondary-subtle"),"Brand"),
-    ("color", "color", "color.brand.secondary-default","token('color.brand.secondary')",      t("color.brand.secondary-default"),"Brand"),
-    ("color", "color", "color.brand.secondary-bold",  "token('color.brand.secondary-bold')",  t("color.brand.secondary-bold"),  "Brand"),
-    # ── Color: Extended ──
-    ("color", "color", "color.ext.success-subtler", "token('color.ext.success-subtler')", t("color.ext.success-subtler"), "Extended"),
-    ("color", "color", "color.ext.success-subtle",  "token('color.ext.success-subtle')",  t("color.ext.success-subtle"),  "Extended"),
-    ("color", "color", "color.ext.success",         "token('color.ext.success')",         t("color.ext.success"),         "Extended"),
-    ("color", "color", "color.ext.success-bold",    "token('color.ext.success-bold')",    t("color.ext.success-bold"),    "Extended"),
-    ("color", "color", "color.ext.info-subtler",    "token('color.ext.info-subtler')",    t("color.ext.info-subtler"),    "Extended"),
-    ("color", "color", "color.ext.info-subtle",     "token('color.ext.info-subtle')",     t("color.ext.info-subtle"),     "Extended"),
-    ("color", "color", "color.ext.info",            "token('color.ext.info')",            t("color.ext.info"),            "Extended"),
-    ("color", "color", "color.ext.info-bold",       "token('color.ext.info-bold')",       t("color.ext.info-bold"),       "Extended"),
-    ("color", "color", "color.ext.warning-subtler", "token('color.ext.warning-subtler')", t("color.ext.warning-subtler"), "Extended"),
-    ("color", "color", "color.ext.warning-subtle",  "token('color.ext.warning-subtle')",  t("color.ext.warning-subtle"),  "Extended"),
-    ("color", "color", "color.ext.warning",         "token('color.ext.warning')",         t("color.ext.warning"),         "Extended"),
-    ("color", "color", "color.ext.warning-bold",    "token('color.ext.warning-bold')",    t("color.ext.warning-bold"),    "Extended"),
-    ("color", "color", "color.ext.error-subtler",   "token('color.ext.error-subtler')",   t("color.ext.error-subtler"),   "Extended"),
-    ("color", "color", "color.ext.error-subtle",    "token('color.ext.error-subtle')",    t("color.ext.error-subtle"),    "Extended"),
-    ("color", "color", "color.ext.error",           "token('color.ext.error')",           t("color.ext.error"),           "Extended"),
-    ("color", "color", "color.ext.error-bold",      "token('color.ext.error-bold')",      t("color.ext.error-bold"),      "Extended"),
+    ("color", "color", "color.icon.neutral.default",  "token('color.icon.neutral.default')",  t("color.icon.neutral.default"),  "Icon"),
+    ("color", "color", "color.icon.neutral.subtle",   "token('color.icon.neutral.subtle')",   t("color.icon.neutral.subtle"),   "Icon"),
+    ("color", "color", "color.icon.neutral.inverse",  "token('color.icon.neutral.inverse')",  t("color.icon.neutral.inverse"),  "Icon"),
+    ("color", "color", "color.icon.success.base",     "token('color.icon.success.base')",     t("color.icon.success.base"),     "Icon"),
+    ("color", "color", "color.icon.danger.base",      "token('color.icon.danger.base')",      t("color.icon.danger.base"),      "Icon"),
+    ("color", "color", "color.icon.warning.base",     "token('color.icon.warning.base')",     t("color.icon.warning.base"),     "Icon"),
+    ("color", "color", "color.icon.info.base",        "token('color.icon.info.base')",        t("color.icon.info.base"),        "Icon"),
+    # ── Color: Stroke / Border ──
+    ("color", "color", "color.stroke.neutral.default",  "token('color.stroke.neutral.default')",  t("color.stroke.neutral.default"),  "Border"),
+    ("color", "color", "color.stroke.neutral.strong",   "token('color.stroke.neutral.strong')",   t("color.stroke.neutral.strong"),   "Border"),
+    ("color", "color", "color.stroke.neutral.subtle",   "token('color.stroke.neutral.subtle')",   t("color.stroke.neutral.subtle"),   "Border"),
+    ("color", "color", "color.stroke.primary.default",  "token('color.stroke.primary.default')",  t("color.stroke.primary.default"),  "Border"),
+    ("color", "color", "color.stroke.primary.bolder",   "token('color.stroke.primary.bolder')",   t("color.stroke.primary.bolder"),   "Border"),
+    # ── Color: Brand (primary interactive) ──
+    ("color", "color", "color.background.primary.subtle",   "token('color.background.primary.subtle')",   t("color.background.primary.subtle"),   "Brand"),
+    ("color", "color", "color.background.primary.default",  "token('color.background.primary.default')",  t("color.background.primary.default"),  "Brand"),
+    ("color", "color", "color.background.primary.hover",    "token('color.background.primary.hover')",    t("color.background.primary.hover"),    "Brand"),
+    ("color", "color", "color.background.primary.bolder",   "token('color.background.primary.bolder')",   t("color.background.primary.bolder"),   "Brand"),
+    ("color", "color", "color.background.secondary.subtle", "token('color.background.secondary.subtle')", t("color.background.secondary.subtle"), "Brand"),
+    ("color", "color", "color.background.secondary.default","token('color.background.secondary.default')",t("color.background.secondary.default"),"Brand"),
+    ("color", "color", "color.background.secondary.bolder", "token('color.background.secondary.bolder')", t("color.background.secondary.bolder"), "Brand"),
+    # ── Color: Semantic states ──
+    ("color", "color", "color.background.success.subtle",  "token('color.background.success.subtle')",  t("color.background.success.subtle"),  "Extended"),
+    ("color", "color", "color.background.success.default", "token('color.background.success.default')", t("color.background.success.default"), "Extended"),
+    ("color", "color", "color.background.success.bolder",  "token('color.background.success.bolder')",  t("color.background.success.bolder"),  "Extended"),
+    ("color", "color", "color.background.info.subtle",     "token('color.background.info.subtle')",     t("color.background.info.subtle"),     "Extended"),
+    ("color", "color", "color.background.info.default",    "token('color.background.info.default')",    t("color.background.info.default"),    "Extended"),
+    ("color", "color", "color.background.info.bolder",     "token('color.background.info.bolder')",     t("color.background.info.bolder"),     "Extended"),
+    ("color", "color", "color.background.warning.subtle",  "token('color.background.warning.subtle')",  t("color.background.warning.subtle"),  "Extended"),
+    ("color", "color", "color.background.warning.default", "token('color.background.warning.default')", t("color.background.warning.default"), "Extended"),
+    ("color", "color", "color.background.warning.bolder",  "token('color.background.warning.bolder')",  t("color.background.warning.bolder"),  "Extended"),
+    ("color", "color", "color.background.danger.subtle",   "token('color.background.danger.subtle')",   t("color.background.danger.subtle"),   "Extended"),
+    ("color", "color", "color.background.danger.default",  "token('color.background.danger.default')",  t("color.background.danger.default"),  "Extended"),
+    ("color", "color", "color.background.danger.bolder",   "token('color.background.danger.bolder')",   t("color.background.danger.bolder"),   "Extended"),
     # ── Typography ──
     ("typography", "text", "display",    "token('typography.heading.display')", "40px / w700", "Heading",    40, 700),
     ("typography", "text", "h1",         "token('typography.heading.h1')",      "32px / w700", "Heading",    32, 700),
@@ -356,24 +344,24 @@ TOKENS = [
 
 # ── Badge colors ───────────────────────────────────────────────────────────────
 BADGE_MAP = {
-    "Background": (t("color.ext.info-subtler",    "#e0f2fe"), t("color.text.info",    "#0369a1")),
-    "Text":       (t("color.ext.success-subtler", "#dcfce7"), t("color.text.success", "#15803d")),
-    "Icon":       (t("color.ext.success-subtler", "#dcfce7"), t("color.text.success", "#15803d")),
-    "Border":     (t("color.ext.warning-subtler", "#fef9c3"), t("color.text.warning", "#a16207")),
-    "Brand":      (t("color.ext.success-subtle",  "#bbf7d0"), t("color.text.success", "#15803d")),
-    "Extended":   (t("color.ext.info-subtle",     "#bae6fd"), t("color.text.info",    "#0369a1")),
-    "Heading":    (t("color.ext.success-subtler", "#dcfce7"), t("color.text.success", "#15803d")),
-    "Subheading": (t("color.ext.info-subtler",    "#e0f2fe"), t("color.text.info",    "#0369a1")),
-    "Body":       (t("color.ext.warning-subtler", "#fef9c3"), t("color.text.warning", "#a16207")),
-    "Scale":      (t("color.ext.warning-subtler", "#fef9c3"), t("color.text.warning", "#a16207")),
-    "Button":     (t("color.ext.error-subtler",   "#fee2e2"), t("color.text.error",   "#b91c1c")),
-    "Table":      (t("color.ext.error-subtler",   "#fee2e2"), t("color.text.error",   "#b91c1c")),
-    "Elevation":  (t("color.ext.error-subtler",   "#fee2e2"), t("color.text.error",   "#b91c1c")),
+    "Background": (t("color.background.info.subtle",     "#e0f2fe"), t("color.text.info.base",    "#0369a1")),
+    "Text":       (t("color.background.success.subtle",  "#dcfce7"), t("color.text.success.base", "#15803d")),
+    "Icon":       (t("color.background.success.subtle",  "#dcfce7"), t("color.text.success.base", "#15803d")),
+    "Border":     (t("color.background.warning.subtle",  "#fef9c3"), t("color.text.warning.base", "#a16207")),
+    "Brand":      (t("color.background.primary.subtle",  "#f0fdf4"), t("color.text.success.base", "#15803d")),
+    "Extended":   (t("color.background.info.subtle",     "#eff6ff"), t("color.text.info.base",    "#0369a1")),
+    "Heading":    (t("color.background.success.subtle",  "#dcfce7"), t("color.text.success.base", "#15803d")),
+    "Subheading": (t("color.background.info.subtle",     "#e0f2fe"), t("color.text.info.base",    "#0369a1")),
+    "Body":       (t("color.background.warning.subtle",  "#fef9c3"), t("color.text.warning.base", "#a16207")),
+    "Scale":      (t("color.background.warning.subtle",  "#fef9c3"), t("color.text.warning.base", "#a16207")),
+    "Button":     (t("color.background.danger.subtle",   "#fee2e2"), t("color.text.danger.base",  "#b91c1c")),
+    "Table":      (t("color.background.danger.subtle",   "#fee2e2"), t("color.text.danger.base",  "#b91c1c")),
+    "Elevation":  (t("color.background.danger.subtle",   "#fee2e2"), t("color.text.danger.base",  "#b91c1c")),
 }
 
 
 def badge_html(cat: str) -> str:
-    bg, fg = BADGE_MAP.get(cat, (t("color.bg.subtler","#f1f5f9"), TEXT_SEC))
+    bg, fg = BADGE_MAP.get(cat, (t("color.background.neutral.subtle","#f1f5f9"), TEXT_SEC))
     return f'<span class="badge" style="background:{bg};color:{fg}">{cat}</span>'
 
 
@@ -383,7 +371,7 @@ def preview_html(tab: str, kind: str, row: tuple) -> str:
         return f'<div class="swatch" style="background:{color}"></div>'
 
     if kind == "text":
-        fs, fw = row[7], row[8]
+        fs, fw = row[6], row[7]
         fs_clamped = max(8, min(fs, 22))
         return (f'<span class="aa-text" style="font-size:{fs_clamped}px;'
                 f'font-weight:{fw};color:{TEXT_PRI};font-family:{FONT_SANS}">Aa</span>')
@@ -459,7 +447,7 @@ def examples_html() -> str:
                     border-radius:{RADIUS_MD};padding:{SPACE_MD};
                     display:flex;flex-direction:column;gap:8px">
           <p style="margin:0;font-size:11px;color:{TEXT_TER};font-family:monospace">
-            color.ext.* status palette
+            color.background.* status states
           </p>
           {_status_badges()}
         </div>
@@ -467,75 +455,114 @@ def examples_html() -> str:
     </div>"""
 
     cm = lambda s: f'<span style="color:#94a3b8">{s}</span>'
-    st_color = lambda s: f'<span style="color:#86efac">{s}</span>'
+    sc = lambda s: f'<span style="color:#86efac">{s}</span>'
     fn = lambda s: f'<span style="color:#7dd3fc">{s}</span>'
+    kw = lambda s: f'<span style="color:#c084fc">{s}</span>'
 
-    # Pre-resolve values outside f-strings to avoid nested quote escaping issues
-    _bg    = t("color.bg.primary",         "#ffffff")
-    _brand = t("color.brand.primary-default", "#4f46e5")
-    _sp    = t("spacing.md",               "12px")
-    _rad   = t("radius.md",                "12px")
+    # Pre-resolve token values
+    _bg    = t("color.background.surface.raised",  "#ffffff")
+    _brand = t("color.background.primary.default", "#15803d")
+    _sp    = t("spacing.md",                       "16px")
+    _rad   = t("radius.md",                        "8px")
 
-    py_code = (
-        cm("# Install (once btech-tokens is published to PyPI)") + "\n" +
-        cm("# pip install btech-tokens") + "\n\n" +
-        cm("# ── Until then: read directly from sources ──────────────────") + "\n" +
+    # Live values from btech_tokens (or fallbacks)
+    if _BT_AVAILABLE:
+        _sp_int  = _btech.BTechSpacing.md
+        _rad_int = _btech.BTechRadius.md
+        _sp_lg   = _btech.BTechSpacing.lg
+        _bg_val  = _btech.BTechColor.background.surface.raised
+        _br_val  = _btech.BTechColor.background.primary.default
+    else:
+        _sp_int, _rad_int, _sp_lg = 16, 8, 24
+        _bg_val, _br_val = "#ffffff", "#15803d"
+
+    # ── Code block 1: btech_tokens package (dot-access) ─────────────────────
+    bt_code = (
+        cm("# pip install -e packages/tokens/platforms/python/") + "\n" +
+        fn("from") + " btech_tokens " + fn("import") + " (\n" +
+        "    token, BTechColor, BTechSpacing,\n" +
+        "    BTechRadius, BTechShadow, BTechTypography\n" +
+        ")\n\n" +
+        cm("# ── Dot-access (type-safe, IDE autocomplete) ───────────────") + "\n" +
+        "bg     = BTechColor.background.surface.raised   " + cm("# " + str(_bg_val))  + "\n" +
+        "brand  = BTechColor.background.primary.default  " + cm("# " + str(_br_val))  + "\n" +
+        "sp_md  = BTechSpacing.md                        " + cm("# " + str(_sp_int)  + " (int px)") + "\n" +
+        "rad_md = BTechRadius.md                         " + cm("# " + str(_rad_int) + " (int px)") + "\n" +
+        "shadow = BTechShadow.elevation.md               " + cm("# CSS box-shadow string") + "\n" +
+        "font   = BTechTypography.family.sans            " + cm("# Inter, system-ui, ...") + "\n\n" +
+        cm("# ── Path-based lookup ──────────────────────────────────────") + "\n" +
+        "val = " + fn("token") + "(" + sc("'color.background.primary.default'") + ")  " + cm("# " + str(_br_val)) + "\n" +
+        "sp  = " + fn("token") + "(" + sc("'spacing.md'") + ")                        " + cm("# " + str(_sp_int) + "px") + "\n"
+    )
+
+    # ── Code block 2: token_loader (dark + tenant support) ───────────────────
+    loader_code = (
+        cm("# No install needed — reads DTCG JSON sources directly") + "\n" +
         fn("from") + " token_loader " + fn("import") + " build_token_map\n\n" +
-        "tokens = " + fn("build_token_map") + "(" + st_color("tenant") + fn("=") + st_color(repr(tenant)) +
-        ", " + st_color("dark") + fn("=") + st_color("False") + ")\n\n" +
+        "tokens = " + fn("build_token_map") + "(" + sc("tenant") + fn("=") + sc(repr(tenant)) +
+        ", " + sc("dark") + fn("=") + sc("False") + ")\n\n" +
         cm("# Access resolved values") + "\n" +
-        "bg       = tokens[" + st_color("'color.bg.primary'")        + "]    " + cm("# " + _bg)    + "\n" +
-        "brand    = tokens[" + st_color("'color.brand.primary-default'") + "]  " + cm("# " + _brand) + "\n" +
-        "sp_md    = tokens[" + st_color("'spacing.md'")              + "]         " + cm("# " + _sp) + "\n" +
-        "radius   = tokens[" + st_color("'radius.md'")               + "]          " + cm("# " + _rad) + "\n" +
-        "shadow   = tokens[" + st_color("'shadow.elevation.md'")     + "]  " + cm("# CSS box-shadow string") + "\n\n" +
-        cm("# Dark mode — just pass dark=True") + "\n" +
-        "dark_tokens = " + fn("build_token_map") + "(" + st_color("dark") + fn("=") + st_color("True") + ")\n\n" +
-        cm("# Tenant variant") + "\n" +
-        "bspace = " + fn("build_token_map") + "(" + st_color("tenant") + fn("=") + st_color("'bspace'") + ")\n"
+        "bg    = tokens[" + sc("'color.background.surface.raised'")  + "]  " + cm("# " + str(_bg_val)) + "\n" +
+        "brand = tokens[" + sc("'color.background.primary.default'") + "]  " + cm("# " + str(_br_val)) + "\n" +
+        "sp_md = tokens[" + sc("'spacing.md'")                       + "]          " + cm("# " + str(_sp_int) + "px") + "\n\n" +
+        cm("# ── Dark mode ──────────────────────────────────────────────") + "\n" +
+        "dark  = " + fn("build_token_map") + "(" + sc("dark") + fn("=") + sc("True") + ")\n\n" +
+        cm("# ── Tenant override ─────────────────────────────────────────") + "\n" +
+        "bjb   = " + fn("build_token_map") + "(" + sc("tenant") + fn("=") + sc("'bjb'") + ")\n"
     )
 
-    streamlit_code = (
-        f"{fn('import')} streamlit {fn('as')} st\n"
-        f"{fn('from')} token_loader {fn('import')} build_token_map\n\n"
-        f"T = {fn('build_token_map')}({st_color('tenant')}{fn('=')}{st_color(repr(tenant))})\n\n"
-        f"{cm('# Inject CSS variables for consistent theming')}\n"
-        f"st.{fn('markdown')}(f\"\"\"\n"
-        f"  &lt;style&gt;\n"
-        f"    .my-card {{\n"
-        f"      background: {{T[{st_color(repr('color.bg.primary'))}]}};\n"
-        f"      border-radius: {{T[{st_color(repr('radius.md'))}]}};\n"
-        f"      padding: {{T[{st_color(repr('spacing.md'))}]}};\n"
-        f"      box-shadow: {{T[{st_color(repr('shadow.elevation.md'))}]}};\n"
-        f"    }}\n"
-        f"  &lt;/style&gt;\n"
-        f"\"\"\", {st_color('unsafe_allow_html')}{fn('=')}{st_color('True')})\n\n"
-        f"{cm('# Render a themed component')}\n"
-        f"st.{fn('markdown')}(\n"
-        f"  f'&lt;div class=\"my-card\"&gt;Themed content&lt;/div&gt;',\n"
-        f"  {st_color('unsafe_allow_html')}{fn('=')}{st_color('True')}\n"
-        f")\n"
+    # ── Code block 3: Streamlit CSS injection ────────────────────────────────
+    st_code = (
+        fn("import") + " streamlit " + fn("as") + " st\n" +
+        fn("from") + " btech_tokens " + fn("import") + " BTechColor, BTechSpacing, BTechRadius\n\n" +
+        cm("# Inject CSS using live dot-access token values") + "\n" +
+        "css = f\"\"\"\n" +
+        "  &lt;style&gt;\n" +
+        "    .card {{\n" +
+        "      background:    {{BTechColor.background.surface.raised}};\n" +
+        "      border-radius: {{BTechRadius.md}}px;\n" +
+        "      padding:       {{BTechSpacing.lg}}px;\n" +
+        "    }}\n" +
+        "  &lt;/style&gt;\n" +
+        "\"\"\"\n\n" +
+        "st." + fn("markdown") + "(css, " + sc("unsafe_allow_html") + fn("=") + sc("True") + ")\n" +
+        "st." + fn("markdown") + "(\n" +
+        "  " + sc("'&lt;div class=\"card\"&gt;Themed!&lt;/div&gt;'") + ",\n" +
+        "  " + sc("unsafe_allow_html") + fn("=") + sc("True") + "\n" +
+        ")\n"
     )
+
+    clr_info    = t('color.background.info.subtle','#e0f2fe')
+    txt_info    = t('color.text.info.base','#0369a1')
+    clr_success = t('color.background.success.subtle','#dcfce7')
+    txt_success = t('color.text.success.base','#15803d')
+    clr_warn    = t('color.background.warning.subtle','#fff7ed')
+    txt_warn    = t('color.text.warning.base','#ea580c')
 
     return f"""
     <div class="ex-wrap">
       {preview_card}
-      <div class="ex-grid">
+      <div class="ex-grid" style="grid-template-columns:1fr 1fr 1fr">
         <div class="ex-card">
           <div class="ex-head">
-            <span class="lang-badge" style="background:{t('color.ext.info-subtler','#e0f2fe')};
-                  color:{t('color.text.info','#0369a1')}">Python</span>
-            <span class="ex-desc">token_loader — direct JSON access, no package install</span>
+            <span class="lang-badge" style="background:{clr_success};color:{txt_success}">btech_tokens</span>
+            <span class="ex-desc">Generated package — dot-access + token()</span>
           </div>
-          <pre class="ex-code"><code>{py_code}</code></pre>
+          <pre class="ex-code"><code>{bt_code}</code></pre>
         </div>
         <div class="ex-card">
           <div class="ex-head">
-            <span class="lang-badge" style="background:{t('color.ext.success-subtler','#dcfce7')};
-                  color:{t('color.text.success','#15803d')}">Streamlit</span>
-            <span class="ex-desc">Inject token values as CSS in your components</span>
+            <span class="lang-badge" style="background:{clr_info};color:{txt_info}">token_loader</span>
+            <span class="ex-desc">Direct JSON — dark mode &amp; tenant support</span>
           </div>
-          <pre class="ex-code"><code>{streamlit_code}</code></pre>
+          <pre class="ex-code"><code>{loader_code}</code></pre>
+        </div>
+        <div class="ex-card">
+          <div class="ex-head">
+            <span class="lang-badge" style="background:{clr_warn};color:{txt_warn}">Streamlit</span>
+            <span class="ex-desc">CSS injection with dot-access token values</span>
+          </div>
+          <pre class="ex-code"><code>{st_code}</code></pre>
         </div>
       </div>
     </div>"""
@@ -543,10 +570,10 @@ def examples_html() -> str:
 
 def _status_badges() -> str:
     pairs = [
-        ("Success", t("color.ext.success-subtler","#dcfce7"), t("color.text.success","#15803d")),
-        ("Warning", t("color.ext.warning-subtler","#fef9c3"), t("color.text.warning","#a16207")),
-        ("Error",   t("color.ext.error-subtler",  "#fee2e2"), t("color.text.error",  "#b91c1c")),
-        ("Info",    t("color.ext.info-subtler",   "#e0f2fe"), t("color.text.info",   "#0369a1")),
+        ("Success", t("color.background.success.subtle","#dcfce7"), t("color.text.success.base","#15803d")),
+        ("Warning", t("color.background.warning.subtle","#fef9c3"), t("color.text.warning.base","#a16207")),
+        ("Error",   t("color.background.danger.subtle", "#fee2e2"), t("color.text.danger.base", "#b91c1c")),
+        ("Info",    t("color.background.info.subtle",   "#e0f2fe"), t("color.text.info.base",   "#0369a1")),
     ]
     return "".join(
         f'<span style="display:inline-block;padding:3px 10px;border-radius:9999px;'
@@ -556,15 +583,77 @@ def _status_badges() -> str:
 
 
 # ── Render ────────────────────────────────────────────────────────────────────
-tenants  = available_tenants()
-TABS     = ["all", "color", "typography", "spacing", "stroke", "radius", "shadow", "examples"]
-TAB_LABELS = {"all":"All","color":"Color","typography":"Typography",
-               "spacing":"Spacing","stroke":"Stroke","radius":"Radius",
-               "shadow":"Shadow","examples":"Usage"}
+tenants = available_tenants()
 
-active_tab = st.session_state.tab
+TABS = ["all", "color", "typography", "spacing", "stroke", "radius", "shadow", "examples"]
+TAB_LABELS = {
+    "all": "🔍 All", "color": "🎨 Color", "typography": "Aa Typography",
+    "spacing": "↔ Spacing", "stroke": "〰 Stroke", "radius": "◜ Radius",
+    "shadow": "🔳 Shadow", "examples": "⚡ Usage",
+}
 
-# Filter tokens
+st.markdown('<div class="ds-wrap">', unsafe_allow_html=True)
+
+# ── Header row: logo + package badge ─────────────────────────────────────────
+_pkg_badge = (
+    f'<span style="font-size:11px;padding:2px 10px;border-radius:20px;'
+    f'background:{t("color.background.success.subtle","#dcfce7")};'
+    f'color:{t("color.text.success.base","#15803d")};font-weight:600">'
+    f'btech_tokens v{_btech.__version__} ✓</span>'
+    if _BT_AVAILABLE else
+    f'<span style="font-size:11px;padding:2px 10px;border-radius:20px;'
+    f'background:{t("color.background.warning.subtle","#fff7ed")};'
+    f'color:{t("color.text.warning.base","#ea580c")}">token_loader only</span>'
+)
+st.markdown(f"""
+<div style="display:flex;align-items:center;justify-content:space-between;
+            padding:12px 16px;background:{BG_PRIMARY};border:1px solid {BORDER};
+            border-radius:{RADIUS_MD}">
+  <div style="font-size:16px;font-weight:700;color:{TEXT_PRI}">
+    🎨 BTech Design System
+  </div>
+  {_pkg_badge}
+</div>
+""", unsafe_allow_html=True)
+
+# ── st.pills tab navigation ───────────────────────────────────────────────────
+active_tab = st.pills(
+    "Tabs",
+    options=TABS,
+    format_func=lambda x: TAB_LABELS[x],
+    default="all",
+    key="pills_tab",
+    label_visibility="collapsed",
+)
+active_tab = active_tab or "all"
+
+# ── Filter / search row ───────────────────────────────────────────────────────
+filter_cols = st.columns([3, 2, 1])
+with filter_cols[0]:
+    search_val = st.text_input(
+        "Search", value=st.session_state.search,
+        placeholder="🔍 Search token name or value…",
+        label_visibility="collapsed",
+    )
+with filter_cols[1]:
+    tenant_choice = st.selectbox(
+        "Tenant", tenants,
+        index=tenants.index(tenant) if tenant in tenants else 0,
+        label_visibility="collapsed",
+    )
+with filter_cols[2]:
+    dark_toggle = st.toggle("🌙 Dark", value=dark)
+
+# Persist search/tenant/dark changes
+if (search_val    != st.session_state.search or
+    tenant_choice != st.session_state.tenant or
+    dark_toggle   != st.session_state.dark):
+    st.session_state.search = search_val
+    st.session_state.tenant = tenant_choice
+    st.session_state.dark   = dark_toggle
+    st.rerun()
+
+# ── Filter tokens for table views ────────────────────────────────────────────
 search = st.session_state.search.lower().strip()
 filtered = []
 for row in TOKENS:
@@ -574,58 +663,237 @@ for row in TOKENS:
     if tab_ok and q_ok:
         filtered.append(row)
 
-# ── Tab buttons HTML ──
-tab_btns = "".join(
-    f'<span class="tab-btn{"  active" if active_tab == tid else ""}">{TAB_LABELS[tid]}</span>'
-    for tid in TABS
-)
-
-st.markdown(f'<div class="ds-wrap">', unsafe_allow_html=True)
-
-# Topbar (static display only — interaction via st widgets below)
-st.markdown(f"""
-<div class="topbar">
-  <div class="tabs">{tab_btns}</div>
-</div>
-""", unsafe_allow_html=True)
-
-# ── Controls row (Streamlit native — for interactivity) ───────────────────────
-ctrl_cols = st.columns([6, 2, 1.2, 1.2])
-with ctrl_cols[0]:
-    tab_choice = st.selectbox(
-        "Tab", TABS, index=TABS.index(active_tab),
-        format_func=lambda x: TAB_LABELS[x], label_visibility="collapsed"
-    )
-with ctrl_cols[1]:
-    search_val = st.text_input("Search", value=st.session_state.search,
-                               placeholder="🔍 Search token…", label_visibility="collapsed")
-with ctrl_cols[2]:
-    tenant_choice = st.selectbox("Tenant", tenants,
-                                 index=tenants.index(tenant) if tenant in tenants else 0,
-                                 label_visibility="collapsed")
-with ctrl_cols[3]:
-    dark_toggle = st.toggle("🌙 Dark", value=dark)
-
-# Apply changes and rerun if needed
-if (tab_choice    != st.session_state.tab    or
-    search_val    != st.session_state.search or
-    tenant_choice != st.session_state.tenant or
-    dark_toggle   != st.session_state.dark):
-    st.session_state.tab    = tab_choice
-    st.session_state.search = search_val
-    st.session_state.tenant = tenant_choice
-    st.session_state.dark   = dark_toggle
-    st.rerun()
-
 # ── Main content ──────────────────────────────────────────────────────────────
 if active_tab == "examples":
-    st.markdown(examples_html(), unsafe_allow_html=True)
+    _sec = lambda title: st.markdown(
+        f'<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;'
+        f'text-transform:uppercase;color:{TEXT_TER};margin:16px 0 6px">{title}</div>',
+        unsafe_allow_html=True,
+    )
+    _code = lambda src: st.code(src.strip(), language="python")
+
+    # ── 1. btech_button ──────────────────────────────────────────────────────
+    _sec("btech_button  ·  declare_component → returns True on click")
+    col_live, col_code = st.columns([1, 1], gap="large")
+
+    with col_live:
+        btech_card(
+            "Live demo",
+            '<span style="font-size:12px;color:#6b7280">Click the buttons below</span>',
+            padding=12,
+        )
+        b1 = btech_button("Save",   variant="primary",   key="ex_btn_primary")
+        b2 = btech_button("Cancel", variant="secondary", key="ex_btn_secondary")
+        b3 = btech_button("Delete", variant="danger",    key="ex_btn_danger")
+        b4 = btech_button("Ghost",  variant="ghost",     key="ex_btn_ghost")
+        b5 = btech_button("Disabled (no click)", variant="primary", disabled=True, key="ex_btn_dis")
+
+        if b1: st.toast("✅ Saved!", icon="✅")
+        if b2: st.toast("Cancelled")
+        if b3: st.toast("⚠️ Deleted!", icon="⚠️")
+
+    with col_code:
+        _code("""
+from components.btech_ui import btech_button
+
+# declare_component — returns True on the click rerun
+if btech_button("Save", variant="primary", key="save"):
+    st.success("Saved!")
+
+if btech_button("Cancel", variant="secondary", key="cancel"):
+    st.info("Cancelled")
+
+if btech_button("Delete", variant="danger", key="del"):
+    st.error("Deleted!")
+
+# Disabled state
+btech_button("Locked", variant="primary",
+             disabled=True, key="locked")
+""")
+        st.caption("Token source: `BTechColor.background.primary.default`, `BTechRadius.md`")
+
+    st.divider()
+
+    # ── 2. btech_badge ───────────────────────────────────────────────────────
+    _sec("btech_badge  ·  st.html — inline display, no iframe")
+    col_live, col_code = st.columns([1, 1], gap="large")
+
+    with col_live:
+        btech_card("Order status", "", padding=12)
+        st.write("")
+        row1, row2 = st.columns(3), st.columns(3)
+        with row1[0]: btech_badge("Active",   "success")
+        with row1[1]: btech_badge("Pending",  "warning")
+        with row1[2]: btech_badge("Failed",   "danger")
+        with row2[0]: btech_badge("Draft",    "info")
+        with row2[1]: btech_badge("Archived", "neutral")
+
+    with col_code:
+        _code("""
+from components.btech_ui import btech_badge
+
+btech_badge("Active",   variant="success")
+btech_badge("Pending",  variant="warning")
+btech_badge("Failed",   variant="danger")
+btech_badge("Draft",    variant="info")
+btech_badge("Archived", variant="neutral")
+""")
+        st.caption("Token source: `BTechColor.background.*.subtle`, `BTechColor.text.*.base`")
+
+    st.divider()
+
+    # ── 3. btech_alert ───────────────────────────────────────────────────────
+    _sec("btech_alert  ·  st.html — semantic state alerts")
+    col_live, col_code = st.columns([1, 1], gap="large")
+
+    with col_live:
+        btech_alert("Payment #TXN-00142 processed successfully.",
+                    "success", title="Transaction complete")
+        btech_alert("Your session expires in 5 minutes. Save your work.",
+                    "warning", title="Session expiring")
+        btech_alert("3 new notifications waiting for your review.",
+                    "info")
+        btech_alert("Failed to connect. Check your network and retry.",
+                    "danger", title="Connection error")
+
+    with col_code:
+        _code("""
+from components.btech_ui import btech_alert
+
+btech_alert(
+    "Payment processed successfully.",
+    variant="success",
+    title="Transaction complete",
+)
+btech_alert("Session expires in 5 min.", "warning")
+btech_alert("3 new notifications.",      "info")
+btech_alert("Connection failed.",        "danger")
+""")
+        st.caption("Token source: `BTechColor.background.*.subtle`, `BTechColor.background.*.default`")
+
+    st.divider()
+
+    # ── 4. btech_card ────────────────────────────────────────────────────────
+    _sec("btech_card  ·  st.html — surface container with header")
+    col_live, col_code = st.columns([1, 1], gap="large")
+
+    with col_live:
+        btech_card(
+            "User Profile",
+            """
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div><b>Name</b><br>Rama Sugiyanto</div>
+              <div><b>Role</b><br>Platform Engineer</div>
+              <div><b>Team</b><br>BTech DS</div>
+              <div><b>Status</b><br>Active ✅</div>
+            </div>
+            """,
+        )
+
+    with col_code:
+        _code("""
+from components.btech_ui import btech_card
+
+btech_card(
+    "User Profile",
+    \"\"\"
+    <div>
+      <b>Name</b><br>Rama Sugiyanto<br>
+      <b>Role</b><br>Platform Engineer
+    </div>
+    \"\"\",
+)
+""")
+        st.caption("Token source: `BTechColor.background.surface.raised`, `BTechRadius.md`, `BTechSpacing.lg`")
+
+    st.divider()
+
+    # ── 5. btech_input ───────────────────────────────────────────────────────
+    _sec("btech_input  ·  declare_component → returns current value")
+    col_live, col_code = st.columns([1, 1], gap="large")
+
+    with col_live:
+        val_default = btech_input("Email", "you@company.com",  "default", key="ex_input_ok")
+        val_error   = btech_input("Password", "wrong-format", "error",   key="ex_input_err")
+        val_success = btech_input("Username", "rama.s",       "success", key="ex_input_ok2")
+        if val_default:
+            st.caption(f"Value: `{val_default}`")
+
+    with col_code:
+        _code("""
+from components.btech_ui import btech_input
+
+email = btech_input(
+    "Email", "you@company.com",
+    variant="default", key="email",
+)
+
+# validate, then show state
+if not is_valid(email):
+    btech_input("Email", email, variant="error", key="email_err")
+else:
+    btech_input("Email", email, variant="success", key="email_ok")
+""")
+        st.caption("Token source: `BTechColor.stroke.neutral.default` → focus → `BTechColor.stroke.primary.default`")
+
+    st.divider()
+
+    # ── 6. Composed page example ─────────────────────────────────────────────
+    _sec("Composed — combine components to build a real page section")
+    btech_card(
+        "New Transfer",
+        """
+        <form style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px">From account</div>
+              <div style="font-family:monospace;font-size:13px">BCA •••• 4821</div>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px">Amount</div>
+              <div style="font-family:monospace;font-size:16px;font-weight:700">Rp 5.000.000</div>
+            </div>
+          </div>
+        </form>
+        """,
+    )
+    btech_alert("Funds will arrive within 1 business day.", "info")
+    c1, c2, _ = st.columns([1, 1, 2])
+    with c1:
+        if btech_button("Confirm transfer", variant="primary", key="ex_confirm"):
+            st.toast("✅ Transfer submitted!", icon="✅")
+    with c2:
+        if btech_button("Cancel", variant="secondary", key="ex_cancel_2"):
+            st.toast("Cancelled")
+
+    # ── 7. import block for copy-paste ───────────────────────────────────────
+    _sec("Quick-start — one import, all components")
+    _code("""
+# Install once (from repo root):
+#   pip install -e packages/tokens/platforms/python/
+
+from components.btech_ui import (
+    btech_button,   # interactive  — declare_component, returns bool
+    btech_badge,    # display only — st.html, no iframe overhead
+    btech_alert,    # display only — st.html
+    btech_card,     # display only — st.html
+    btech_input,    # interactive  — declare_component, returns str
+)
+
+# Every component reads live values from btech_tokens:
+from btech_tokens import BTechColor, BTechSpacing, BTechRadius
+# BTechColor.background.primary.default → button fill
+# BTechColor.text.on.primary            → button text
+# BTechRadius.md                        → border-radius
+# BTechSpacing.lg                       → card padding
+""")
+
 else:
     if not filtered:
         st.markdown(
             f'<div style="padding:40px;text-align:center;color:{TEXT_TER};'
-            f'font-size:14px">No tokens found</div>',
-            unsafe_allow_html=True
+            f'font-size:14px">No tokens found for <b>"{st.session_state.search}"</b></div>',
+            unsafe_allow_html=True,
         )
     else:
         table_html = f"""

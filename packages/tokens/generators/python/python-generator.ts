@@ -1,399 +1,408 @@
-// Python token generator.
-//
-// Writes a complete `btech_tokens` Python package layout into outDir:
-//   _data.py        — pure dicts (COLOR_LIGHT/DARK, SPACING, RADIUS, STROKE, FONT_*)
-//   color.py        — frozen dataclasses + LIGHT_COLOR / DARK_COLOR + BTechColor
-//   spacing.py      — BTechSpacing frozen-dataclass instance
-//   radius.py       — BTechRadius frozen-dataclass instance
-//   stroke.py       — BTechStroke frozen-dataclass instance
-//   typography.py   — BTechFontFamily / BTechFontSize / BTechFontWeight /
-//                     BTechLineHeight / BTechFont
-//   shadow.py       — BTechShadow namespace + ShadowLayer TypedDict
-//   helpers.py      — to_css(mode, selector)
-//   __init__.py     — public API surface, set_mode, LIGHT/DARK namespace constants
-//   _state.py       — single mutable mode flag
-//   py.typed        — PEP 561 marker
-//
-// Used for both the base package and each tenant package — the only difference
-// between calls is the pre-resolved color maps passed in.
-
-import { mkdirSync, writeFileSync } from 'fs';
-import { ROOT, toPascalCase } from '../utils.js';
-import type { ResolvedTokenMap } from '../token-loader.js';
-import {
-  buildColorTree,
-  buildDarkResolvedBaseMap,
-} from '../flutter/flutter-theme-generator.js';
-import { generatePythonColor } from './python-color.js';
-import { generatePythonShadow } from './python-shadow.js';
-import { generatePythonHelpers } from './python-helpers.js';
-import { generatePythonSwatches } from './python-swatches.js';
-import {
-  pySafeName,
-  pyStr,
-  pxToPyFloat,
-  PY_HEADER,
-} from './python-utils.js';
-
-/** Convert a record with hyphenated keys to one with snake_case keys. */
-export function snakeKeyed<T>(obj: Record<string, T>): Record<string, T> {
-  const out: Record<string, T> = {};
-  for (const [k, v] of Object.entries(obj)) {
-    out[pySafeName(k)] = v;
-  }
-  return out;
-}
-
-/** Build a nested {group: {fieldSnake: hex}} dark map from the flat dark map. */
-function buildDarkColorMap(
-  darkMap: Record<string, string>,
-  lightColors: Record<string, Record<string, string>>,
-): Record<string, Record<string, string>> {
-  const tree = buildColorTree();
-  const out: Record<string, Record<string, string>> = {};
-  for (const [group, fields] of Object.entries(tree)) {
-    out[group] = {};
-    for (const field of fields) {
-      const dotPath = `color.${group}.${field}`;
-      const value = darkMap[dotPath] ?? lightColors[group]?.[pySafeName(field)] ?? '#000000';
-      out[group][pySafeName(field)] = value;
-    }
-  }
-  return out;
-}
-
-/** Write a Python dict literal of {snakeKey: stringValue} entries. */
-function emitStrDict(L: string[], name: string, entries: Record<string, string>): void {
-  L.push(`${name}: dict[str, str] = {`);
-  for (const [k, v] of Object.entries(entries)) {
-    L.push(`    ${pyStr(k)}: ${pyStr(v)},`);
-  }
-  L.push('}');
-  L.push('');
-}
-
-/** Write a Python dict literal of {snakeKey: floatValue} entries (px-stripped). */
-function emitFloatDict(L: string[], name: string, entries: Record<string, string>): void {
-  L.push(`${name}: dict[str, float] = {`);
-  for (const [k, v] of Object.entries(entries)) {
-    L.push(`    ${pyStr(k)}: ${pxToPyFloat(v)},`);
-  }
-  L.push('}');
-  L.push('');
-}
-
-/** Write a Python dict literal of {snakeKey: intValue} entries. */
-function emitIntDict(L: string[], name: string, entries: Record<string, string>): void {
-  L.push(`${name}: dict[str, int] = {`);
-  for (const [k, v] of Object.entries(entries)) {
-    L.push(`    ${pyStr(k)}: ${parseInt(String(v), 10)},`);
-  }
-  L.push('}');
-  L.push('');
-}
-
-/** Write a nested {group: {field: hex}} color dict literal. */
-function emitColorDict(
-  L: string[],
-  name: string,
-  colors: Record<string, Record<string, string>>,
-): void {
-  L.push(`${name}: dict[str, dict[str, str]] = {`);
-  for (const [group, fields] of Object.entries(colors)) {
-    L.push(`    ${pyStr(group)}: {`);
-    for (const [field, hex] of Object.entries(fields)) {
-      L.push(`        ${pyStr(field)}: ${pyStr(hex)},`);
-    }
-    L.push('    },');
-  }
-  L.push('}');
-  L.push('');
-}
-
-/** _data.py — pure dicts only. */
-function generateData(
-  outDir: string,
-  data: ResolvedTokenMap,
-  lightColors: Record<string, Record<string, string>>,
-  darkColors:  Record<string, Record<string, string>>,
-): void {
-  const L: string[] = [PY_HEADER];
-  L.push('"""Pure data dicts. No logic. Imported by color.py / spacing.py / etc."""');
-  L.push('from __future__ import annotations');
-  L.push('');
-
-  emitColorDict(L, 'COLOR_LIGHT', lightColors);
-  emitColorDict(L, 'COLOR_DARK',  darkColors);
-
-  // Brand primitive swatches — primary/secondary 50..900 ramps. Tenant
-  // overrides re-target these to different primitive ramps (e.g. bspace →
-  // rose for primary, teal for secondary). Mirrors web's btechColorBrand*
-  // and Flutter's MaterialColor btechColorBrandPrimary/Secondary.
-  // Shape: { 'primary': {'50': '#...', ..., '900': '#...'}, 'secondary': {...} }
-  emitColorDict(L, 'BRAND_SWATCHES', data.brandSwatches);
-
-  emitFloatDict(L, 'SPACING', snakeKeyed(data.spacing));
-  emitFloatDict(L, 'RADIUS',  snakeKeyed(data.radius));
-  emitFloatDict(L, 'STROKE',  snakeKeyed(data.stroke));
-
-  emitStrDict(L,   'FONT_FAMILIES', snakeKeyed(data.typography.fontFamilies));
-  emitFloatDict(L, 'FONT_SIZES',    snakeKeyed(data.typography.fontSizes));
-  emitIntDict(L,   'FONT_WEIGHTS',  snakeKeyed(data.typography.fontWeights));
-  emitFloatDict(L, 'LINE_HEIGHTS',  snakeKeyed(data.typography.lineHeights));
-
-  writeFileSync(`${outDir}/_data.py`, L.join('\n'));
-}
-
-/** spacing.py / radius.py / stroke.py — same shape (frozen dataclass of floats).
+/**
+ * python-generator.ts
+ * Generates the btech_tokens Python package under platforms/python/.
  *
- *  Generates a private dataclass `_PublicNameClass` and exposes a public
- *  instance with the same name to keep the consumer-facing API identical.
+ * Output structure:
+ *   platforms/python/btech_tokens/
+ *     _tokens.py     — flat resolved dict (all tokens)
+ *     color.py       — BTechColor with nested dot-access
+ *     spacing.py     — BTechSpacing (int px values)
+ *     radius.py      — BTechRadius  (int px values)
+ *     stroke.py      — BTechStroke  (int px values)
+ *     shadow.py      — BTechShadow  (CSS shadow strings)
+ *     typography.py  — BTechTypography (font families, sizes, weights)
+ *     __init__.py    — public API: token(), BTechColor, BTechSpacing, …
  */
-function generateScalarCategory(
-  outDir: string,
-  fileName: string,
-  publicName: string,
-  dataKey: string,
-  entries: Record<string, string>,
-): void {
-  const fields = Object.keys(snakeKeyed(entries));
-  const L: string[] = [PY_HEADER];
-  L.push('from __future__ import annotations');
-  L.push('from dataclasses import dataclass');
-  L.push('from . import _data');
-  L.push('');
-  L.push('@dataclass(frozen=True, slots=True)');
-  L.push(`class _${publicName}Class:`);
-  if (fields.length === 0) {
-    L.push('    pass');
-  } else {
-    for (const f of fields) {
-      L.push(`    ${f}: float`);
+import { mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { ROOT } from '../utils.js';
+import type { ResolvedTokenMap } from '../token-loader.js';
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+const PYTHON_OUT = `${ROOT}/platforms/python/btech_tokens`;
+const HEADER     = `# AUTO-GENERATED by @btech/design-system — do not edit manually.
+# Run \`pnpm generate\` to regenerate from packages/tokens/sources/.
+`;
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+/** Convert a token key like "2xs" or "2xl" to a valid Python identifier. */
+function pyName(key: string): string {
+  // Keys starting with a digit get an "s" prefix: "2xs" → "s2xs"
+  if (/^\d/.test(key)) return `s${key.replace(/-/g, '_')}`;
+  return key.replace(/-/g, '_');
+}
+
+/** Parse "12px" → 12; "9999px" → 9999; "1.5px" → 1 */
+function parsePx(val: string): number {
+  return Math.round(parseFloat(val.replace('px', '')));
+}
+
+/** Indent every line of a string by n spaces. */
+function indent(s: string, n: number): string {
+  const pad = ' '.repeat(n);
+  return s.split('\n').map(l => (l.trim() === '' ? '' : pad + l)).join('\n');
+}
+
+/**
+ * Convert a DTCG shadow value (object or array) to a CSS box-shadow string.
+ * Handles the raw JSON from shadow.primitive.json.
+ */
+function shadowToCss(val: unknown): string {
+  function one(s: Record<string, unknown>): string {
+    const inset  = s.inset ? 'inset ' : '';
+    return `${inset}${s.offsetX} ${s.offsetY} ${s.blur} ${s.spread} ${s.color}`;
+  }
+  if (Array.isArray(val)) return val.map(s => one(s as Record<string, unknown>)).join(', ');
+  if (val && typeof val === 'object') return one(val as Record<string, unknown>);
+  return String(val);
+}
+
+// ── File generators ────────────────────────────────────────────────────────────
+
+function genTokensFlat(data: ResolvedTokenMap, shadows: Record<string, string>): string {
+  const lines: string[] = [HEADER, 'from __future__ import annotations\n', 'TOKENS: dict[str, str] = {'];
+
+  // Semantic colors
+  for (const [group, cats] of Object.entries(data.semanticColors)) {
+    for (const [cat, variants] of Object.entries(cats)) {
+      for (const [name, val] of Object.entries(variants)) {
+        lines.push(`    "color.${group}.${cat}.${name}": ${JSON.stringify(val)},`);
+      }
     }
   }
-  L.push('');
-  L.push(`${publicName}: _${publicName}Class = _${publicName}Class(**_data.${dataKey})`);
-  L.push('');
-  writeFileSync(`${outDir}/${fileName}`, L.join('\n'));
+
+  // Spacing
+  for (const [k, v] of Object.entries(data.spacing)) {
+    lines.push(`    "spacing.${k}": ${JSON.stringify(v)},`);
+  }
+
+  // Radius (semantic preferred, fall back to core)
+  const radius = { ...data.radius.core, ...data.radius.semantic };
+  for (const [k, v] of Object.entries(radius)) {
+    lines.push(`    "radius.${k}": ${JSON.stringify(v)},`);
+  }
+
+  // Shadows
+  for (const [k, v] of Object.entries(shadows)) {
+    lines.push(`    ${JSON.stringify(k)}: ${JSON.stringify(v)},`);
+  }
+
+  // Typography
+  for (const [group, props] of Object.entries(data.typography.semantic)) {
+    for (const [prop, val] of Object.entries(props)) {
+      lines.push(`    "typography.${group}.${prop}": ${JSON.stringify(val)},`);
+    }
+  }
+
+  lines.push('}\n');
+  return lines.join('\n');
 }
 
-/** typography.py — BTechFontFamily / Size / Weight / LineHeight + BTechFont root. */
-function generateTypography(outDir: string, data: ResolvedTokenMap): void {
-  const families    = snakeKeyed(data.typography.fontFamilies);
-  const sizes       = snakeKeyed(data.typography.fontSizes);
-  const weights     = snakeKeyed(data.typography.fontWeights);
-  const lineHeights = snakeKeyed(data.typography.lineHeights);
 
-  const L: string[] = [PY_HEADER];
-  L.push('from __future__ import annotations');
-  L.push('from dataclasses import dataclass');
-  L.push('from . import _data');
-  L.push('');
+function genColor(data: ResolvedTokenMap): string {
+  const lines: string[] = [HEADER, 'from __future__ import annotations\n'];
 
-  // ── Per-attribute dataclasses ────────────────────────────────────────────
-  L.push('@dataclass(frozen=True, slots=True)');
-  L.push('class _BTechFontFamilyClass:');
-  if (Object.keys(families).length === 0) L.push('    pass');
-  for (const k of Object.keys(families)) L.push(`    ${k}: str`);
-  L.push('');
+  // Build color group classes (text, bg, icon, border, brand, ext)
+  const groups = data.semanticColors;
 
-  L.push('@dataclass(frozen=True, slots=True)');
-  L.push('class _BTechFontSizeClass:');
-  if (Object.keys(sizes).length === 0) L.push('    pass');
-  for (const k of Object.keys(sizes)) L.push(`    ${k}: float`);
-  L.push('');
+  // One inner class per semantic group
+  for (const [group, cats] of Object.entries(groups)) {
+    const className = `_BTechColor${group.charAt(0).toUpperCase()}${group.slice(1)}`;
+    lines.push(`\nclass ${className}:`);
 
-  L.push('@dataclass(frozen=True, slots=True)');
-  L.push('class _BTechFontWeightClass:');
-  if (Object.keys(weights).length === 0) L.push('    pass');
-  for (const k of Object.keys(weights)) L.push(`    ${k}: int`);
-  L.push('');
+    for (const [cat, variants] of Object.entries(cats)) {
+      // Each category is a sub-object with variants (primary, secondary, …)
+      // OR flat values (e.g. brand.primary-default)
+      const subClass = `_BTechColor${group.charAt(0).toUpperCase()}${group.slice(1)}${cat.charAt(0).toUpperCase()}${cat.slice(1).replace(/-/g, '')}`;
+      const hasVariants = Object.keys(variants).length > 1 ||
+        !Object.keys(variants).includes('primary');
 
-  L.push('@dataclass(frozen=True, slots=True)');
-  L.push('class _BTechLineHeightClass:');
-  if (Object.keys(lineHeights).length === 0) L.push('    pass');
-  for (const k of Object.keys(lineHeights)) L.push(`    ${k}: float`);
-  L.push('');
+      if (hasVariants && Object.keys(variants).length > 0) {
+        lines.push(`\n    class ${subClass}:`);
+        for (const [name, val] of Object.entries(variants)) {
+          lines.push(`        ${pyName(name)}: str = ${JSON.stringify(val)}`);
+        }
+        lines.push(`    ${pyName(cat)}: ${subClass} = ${subClass}()`);
+      } else {
+        for (const [, val] of Object.entries(variants)) {
+          lines.push(`    ${pyName(cat)}: str = ${JSON.stringify(val)}`);
+        }
+      }
+    }
+  }
 
-  // ── Public instances ─────────────────────────────────────────────────────
-  L.push('BTechFontFamily: _BTechFontFamilyClass = _BTechFontFamilyClass(**_data.FONT_FAMILIES)');
-  L.push('BTechFontSize: _BTechFontSizeClass = _BTechFontSizeClass(**_data.FONT_SIZES)');
-  L.push('BTechFontWeight: _BTechFontWeightClass = _BTechFontWeightClass(**_data.FONT_WEIGHTS)');
-  L.push('BTechLineHeight: _BTechLineHeightClass = _BTechLineHeightClass(**_data.LINE_HEIGHTS)');
-  L.push('');
+  // Core color shades (BTechColorShades)
+  lines.push('\n\nclass _BTechColorShades:');
+  for (const [group, shades] of Object.entries(data.coreColors)) {
+    lines.push(`    class _${group.charAt(0).toUpperCase()}${group.slice(1)}:`);
+    for (const [shade, val] of Object.entries(shades)) {
+      const safeName = /^\d/.test(shade) ? `s${shade}` : shade;
+      lines.push(`        s${shade}: str = ${JSON.stringify(val)}`);
+    }
+    lines.push(`    ${group} = _${group.charAt(0).toUpperCase()}${group.slice(1)}()`);
+  }
 
-  // ── Root namespace ───────────────────────────────────────────────────────
-  L.push('@dataclass(frozen=True, slots=True)');
-  L.push('class _BTechFontClass:');
-  L.push('    family: _BTechFontFamilyClass');
-  L.push('    size: _BTechFontSizeClass');
-  L.push('    weight: _BTechFontWeightClass');
-  L.push('    line_height: _BTechLineHeightClass');
-  L.push('');
-  L.push('BTechFont: _BTechFontClass = _BTechFontClass(');
-  L.push('    family=BTechFontFamily,');
-  L.push('    size=BTechFontSize,');
-  L.push('    weight=BTechFontWeight,');
-  L.push('    line_height=BTechLineHeight,');
-  L.push(')');
-  L.push('');
+  // Root BTechColor class
+  lines.push('\n\nclass BTechColor:');
+  lines.push('    """Static dot-access to all resolved semantic color tokens."""');
+  for (const group of Object.keys(groups)) {
+    const className = `_BTechColor${group.charAt(0).toUpperCase()}${group.slice(1)}`;
+    lines.push(`    ${group}: ${className} = ${className}()`);
+  }
+  lines.push('    shades: _BTechColorShades = _BTechColorShades()');
 
-  writeFileSync(`${outDir}/typography.py`, L.join('\n'));
+  return lines.join('\n') + '\n';
 }
 
-/** _state.py — single-line mode flag. */
-function generateState(outDir: string): void {
+
+function genSimple(
+  label: string,
+  className: string,
+  entries: Record<string, string>,
+): string {
+  const lines: string[] = [HEADER, 'from __future__ import annotations\n', `\nclass ${className}:`,
+    `    """Static dot-access to resolved ${label} tokens (int px values)."""`];
+  for (const [k, v] of Object.entries(entries)) {
+    lines.push(`    ${pyName(k)}: int = ${parsePx(v)}`);
+  }
+  return lines.join('\n') + '\n';
+}
+
+
+function genShadow(shadows: Record<string, string>): string {
+  // Group by first segment: button, table, elevation
+  const groups: Record<string, Record<string, string>> = {};
+  for (const [key, val] of Object.entries(shadows)) {
+    // key like "shadow.elevation.md" → strip "shadow."
+    const parts = key.replace(/^shadow\./, '').split('.');
+    const [group, name] = parts.length === 2 ? parts : [parts[0], parts.slice(1).join('_')];
+    if (!groups[group]) groups[group] = {};
+    groups[group][name] = val;
+  }
+
+  const lines: string[] = [HEADER, 'from __future__ import annotations\n'];
+
+  for (const [group, variants] of Object.entries(groups)) {
+    const cls = `_BTechShadow${group.charAt(0).toUpperCase()}${group.slice(1)}`;
+    lines.push(`\nclass ${cls}:`);
+    lines.push(`    """CSS box-shadow strings for ${group} tokens."""`);
+    for (const [name, val] of Object.entries(variants)) {
+      lines.push(`    ${pyName(name)}: str = ${JSON.stringify(val)}`);
+    }
+  }
+
+  lines.push('\n\nclass BTechShadow:');
+  lines.push('    """Static dot-access to all resolved shadow tokens."""');
+  for (const group of Object.keys(groups)) {
+    const cls = `_BTechShadow${group.charAt(0).toUpperCase()}${group.slice(1)}`;
+    lines.push(`    ${group}: ${cls} = ${cls}()`);
+  }
+  return lines.join('\n') + '\n';
+}
+
+
+function genTypography(data: ResolvedTokenMap): string {
+  const lines: string[] = [HEADER, 'from __future__ import annotations\n',
+    '\nclass _BTechFontFamily:',
+    '    """Resolved font-family strings."""'];
+
+  for (const [k, v] of Object.entries(data.typography.fontFamilies)) {
+    lines.push(`    ${pyName(k)}: str = ${JSON.stringify(v)}`);
+  }
+
+  lines.push('\n\nclass _BTechTypeScaleEntry:');
+  lines.push('    def __init__(self, font_size: float, font_weight: int, line_height: float):');
+  lines.push('        self.font_size = font_size');
+  lines.push('        self.font_weight = font_weight');
+  lines.push('        self.line_height = line_height');
+  lines.push('    def __repr__(self) -> str:');
+  lines.push('        return f"TypeScale(fs={self.font_size}, fw={self.font_weight}, lh={self.line_height})"');
+
+  for (const group of ['heading', 'subheading', 'body'] as const) {
+    const entries = data.typography.typeScale[group];
+    if (!entries || Object.keys(entries).length === 0) continue;
+    const cls = `_BTechTypeScale${group.charAt(0).toUpperCase()}${group.slice(1)}`;
+    lines.push(`\n\nclass ${cls}:`);
+    lines.push(`    """${group} type-scale entries."""`);
+    for (const [name, entry] of Object.entries(entries)) {
+      lines.push(
+        `    ${pyName(name)}: _BTechTypeScaleEntry = _BTechTypeScaleEntry(` +
+        `font_size=${entry.fontSize}, font_weight=${entry.fontWeight}, line_height=${entry.lineHeightPx})`
+      );
+    }
+  }
+
+  lines.push('\n\nclass BTechTypography:');
+  lines.push('    """Static dot-access to all resolved typography tokens."""');
+  lines.push('    family: _BTechFontFamily = _BTechFontFamily()');
+  for (const group of ['heading', 'subheading', 'body'] as const) {
+    const entries = data.typography.typeScale[group];
+    if (!entries || Object.keys(entries).length === 0) continue;
+    const cls = `_BTechTypeScale${group.charAt(0).toUpperCase()}${group.slice(1)}`;
+    lines.push(`    ${group}: ${cls} = ${cls}()`);
+  }
+
+  return lines.join('\n') + '\n';
+}
+
+
+function genInit(): string {
+  // Note: no backticks inside this string to avoid premature template-literal closure.
   const body = [
-    'from typing import Literal',
+    HEADER,
+    '"""',
+    'btech_tokens -- BTech Design System token package for Python / Streamlit.',
     '',
-    '# Mutated by btech_tokens.set_mode(). Read by color.py accessor properties.',
-    "_mode: Literal['light', 'dark'] = 'light'",
+    'Usage',
+    '-----',
+    'from btech_tokens import token, BTechColor, BTechSpacing, BTechRadius, BTechStroke, BTechShadow, BTechTypography',
     '',
-  ].join('\n');
-  writeFileSync(`${outDir}/_state.py`, PY_HEADER + body);
-}
-
-/** __init__.py — public API surface. */
-function generateInit(outDir: string, brandNames: string[]): void {
-  const swatchExports = brandNames.map(b => `BTechColorBrand${toPascalCase(b)}`);
-  const body = [
-    '"""BTech design tokens for Python UI consumers (Streamlit, Gradio, NiceGUI, ...).',
+    '# Dot-access (resolved values)',
+    "bg     = BTechColor.bg.primary              # '#ffffff'",
+    "brand  = BTechColor.brand.primarydefault    # '#4f46e5'",
+    "sp_md  = BTechSpacing.md                   # 12  (int px)",
+    "rad_md = BTechRadius.md                    # 12  (int px)",
+    "stroke = BTechStroke.xs                    # 1   (int px)",
+    "shadow = BTechShadow.elevation.md          # 'CSS box-shadow string'",
+    "font   = BTechTypography.family.sans       # 'Inter, system-ui, sans-serif'",
     '',
-    'Public surface:',
-    '  * ``BTechColor``, ``BTechSpacing``, ``BTechRadius``, ``BTechStroke``,',
-    '    ``BTechFont``, ``BTechShadow`` — token values.',
-    '  * ``BTechColorBrandPrimary`` / ``BTechColorBrandSecondary`` —',
-    '    primitive brand color ramps (50..900), tenant-overridable.',
-    "  * ``set_mode('light' | 'dark')`` — toggle ``BTechColor``’s mode-aware accessors.",
-    '    Module-level state; safe for single-process UI apps and notebooks.',
-    '  * ``LIGHT``, ``DARK`` — namespace constants for deterministic side-by-side',
-    '    use (tests, settings preview, multi-user-deployed Streamlit dashboards).',
-    '  * ``to_css(mode, selector)`` — CSS custom property block for raw injection.',
+    '# Path-based lookup',
+    "bg = token('color.bg.primary')             # '#ffffff'",
+    "sp = token('spacing.md')                   # '12px'",
     '"""',
     'from __future__ import annotations',
-    'from dataclasses import dataclass',
-    'from typing import Literal',
-    '',
-    'from . import _state',
-    'from .color import (',
-    '    BTechColor,',
-    '    LIGHT_COLOR,',
-    '    DARK_COLOR,',
-    '    _ColorRootStatic,',
-    ')',
-    'from .spacing import BTechSpacing',
-    'from .radius import BTechRadius',
-    'from .stroke import BTechStroke',
-    'from .typography import (',
-    '    BTechFont,',
-    '    BTechFontFamily,',
-    '    BTechFontSize,',
-    '    BTechFontWeight,',
-    '    BTechLineHeight,',
-    ')',
-    'from .shadow import BTechShadow',
-    'from .swatches import (',
-    ...swatchExports.map(n => `    ${n},`),
-    ')',
-    'from .helpers import to_css',
-    '',
+    'from ._tokens      import TOKENS',
+    'from .color        import BTechColor',
+    'from .spacing      import BTechSpacing',
+    'from .radius       import BTechRadius',
+    'from .stroke       import BTechStroke',
+    'from .shadow       import BTechShadow',
+    'from .typography   import BTechTypography',
     '',
     '__all__ = [',
+    "    'token',",
     "    'BTechColor',",
     "    'BTechSpacing',",
     "    'BTechRadius',",
     "    'BTechStroke',",
-    "    'BTechFont',",
-    "    'BTechFontFamily',",
-    "    'BTechFontSize',",
-    "    'BTechFontWeight',",
-    "    'BTechLineHeight',",
     "    'BTechShadow',",
-    ...swatchExports.map(n => `    '${n}',`),
-    "    'LIGHT',",
-    "    'DARK',",
-    "    'set_mode',",
-    "    'to_css',",
+    "    'BTechTypography',",
+    "    'TOKENS',",
     ']',
     '',
+    "__version__ = '0.0.1'",
     '',
-    "def set_mode(mode: Literal['light', 'dark']) -> None:",
-    '    """Set the active mode for ``BTechColor`` accessors.',
     '',
-    '    Module-level state. Fine for single-process UI apps (notebooks, local',
-    '    Streamlit, desktop tools). For multi-user-deployed dashboards where each',
-    '    user may want a different mode, use the ``LIGHT`` / ``DARK`` namespace',
-    "    constants instead — they don’t read shared state.",
+    'def token(path: str, fallback: str = "") -> str:',
     '    """',
-    "    if mode not in ('light', 'dark'):",
-    '        raise ValueError(f"mode must be \'light\' or \'dark\', got {mode!r}")',
-    '    _state._mode = mode',
+    '    Return the resolved value for a token path.',
     '',
+    '    Parameters',
+    '    ----------',
+    '    path : str',
+    "        Dot-separated token path, e.g. 'color.bg.primary',",
+    "        'spacing.md', 'shadow.elevation.md'.",
+    '    fallback : str',
+    '        Value to return when the path is not found (default: empty string).',
     '',
-    '@dataclass(frozen=True, slots=True)',
-    'class _Namespace:',
-    '    color: _ColorRootStatic',
+    '    Returns',
+    '    -------',
+    '    str',
+    "        The resolved value, e.g. '#ffffff', '12px'.",
+    '    """',
+    '    return TOKENS.get(path, fallback)',
     '',
-    '',
-    'LIGHT: _Namespace = _Namespace(color=LIGHT_COLOR)',
-    'DARK: _Namespace = _Namespace(color=DARK_COLOR)',
-    '',
-  ].join('\n');
-  writeFileSync(`${outDir}/__init__.py`, PY_HEADER + body);
+  ];
+  return body.join('\n');
 }
 
-/** Build the default light colors nested map from a `data: ResolvedTokenMap`.
- *  Used by the base generator; tenants override values before calling.
- */
-export function buildLightColors(
-  data: ResolvedTokenMap,
-): Record<string, Record<string, string>> {
-  const lightColors: Record<string, Record<string, string>> = {};
-  for (const [group, fields] of Object.entries(data.semanticColors)) {
-    lightColors[group] = snakeKeyed(fields);
+
+// ── Shadow loader (reads directly from source JSON) ───────────────────────────
+
+function loadShadows(): Record<string, string> {
+  const shadowFile = `${ROOT}/sources/core/shadow.primitive.json`;
+  const primFile   = `${ROOT}/sources/core/color.primitive.json`;
+
+  let shadowJson: Record<string, unknown>;
+  let colorPrim: Record<string, Record<string, Record<string, { $value: string }>>>;
+
+  try {
+    shadowJson = JSON.parse(readFileSync(shadowFile, 'utf-8'));
+    colorPrim  = JSON.parse(readFileSync(primFile,   'utf-8')).color ?? {};
+  } catch {
+    return {};
   }
-  return lightColors;
+
+  // Build color primitive map for resolving shadow colors
+  const colorMap: Record<string, string> = {};
+  for (const [group, shades] of Object.entries(colorPrim)) {
+    for (const [shade, token] of Object.entries(shades)) {
+      if (!shade.startsWith('$')) colorMap[`color.${group}.${shade}`] = token.$value;
+    }
+  }
+
+  function resolveColor(val: string): string {
+    const m = val.match(/^\{(.+)\}$/);
+    return m ? (colorMap[m[1]] ?? val) : val;
+  }
+
+  const result: Record<string, string> = {};
+
+  function walk(obj: Record<string, unknown>, prefix: string): void {
+    for (const [k, v] of Object.entries(obj)) {
+      if (k.startsWith('$')) continue;
+      const path = prefix ? `${prefix}.${k}` : k;
+      if (v && typeof v === 'object' && '$value' in (v as object)) {
+        const rawVal = (v as Record<string, unknown>).$value;
+        // Resolve any color references inside shadow objects
+        if (Array.isArray(rawVal)) {
+          const resolved = rawVal.map(s => {
+            const entry = s as Record<string, unknown>;
+            return { ...entry, color: resolveColor(String(entry.color ?? '')) };
+          });
+          result[path] = shadowToCss(resolved);
+        } else if (rawVal && typeof rawVal === 'object') {
+          const entry = rawVal as Record<string, unknown>;
+          result[path] = shadowToCss({ ...entry, color: resolveColor(String(entry.color ?? '')) });
+        }
+      } else if (v && typeof v === 'object') {
+        walk(v as Record<string, unknown>, path);
+      }
+    }
+  }
+
+  walk(shadowJson as Record<string, unknown>, '');
+  return result;
 }
 
-/** Build the default dark colors nested map from sources. Used by base. */
-export function buildDarkColors(
-  lightColors: Record<string, Record<string, string>>,
-): Record<string, Record<string, string>> {
-  return buildDarkColorMap(buildDarkResolvedBaseMap(), lightColors);
-}
 
-/** Main entry — generates all package files into one Python package directory.
- *
- *  Accepts pre-built `lightColors` and `darkColors` so tenants can pass
- *  override-merged maps without re-deriving from sources.
- */
-export function generatePythonPackageContents(
-  outDir: string,
-  data: ResolvedTokenMap,
-  lightColors: Record<string, Record<string, string>>,
-  darkColors:  Record<string, Record<string, string>>,
-): void {
-  mkdirSync(outDir, { recursive: true });
+// ── Main export ────────────────────────────────────────────────────────────────
 
-  generateData(outDir, data, lightColors, darkColors);
-  generatePythonColor(outDir, { light: lightColors, dark: darkColors });
-  generatePythonSwatches(outDir, data.brandSwatches);
-  generateScalarCategory(outDir, 'spacing.py', 'BTechSpacing', 'SPACING', data.spacing);
-  generateScalarCategory(outDir, 'radius.py',  'BTechRadius',  'RADIUS',  data.radius);
-  generateScalarCategory(outDir, 'stroke.py',  'BTechStroke',  'STROKE',  data.stroke);
-  generateTypography(outDir, data);
-  generatePythonShadow(outDir, data.shadow);
-  generatePythonHelpers(outDir);
-  generateState(outDir);
-  generateInit(outDir, Object.keys(data.brandSwatches).sort());
-
-  writeFileSync(`${outDir}/py.typed`, '');
-}
-
-/** Convenience for the BASE package run from sd.config.ts. */
 export function generatePythonFiles(data: ResolvedTokenMap): void {
-  const outDir = `${ROOT}/platforms/python/token/btech_tokens`;
-  const lightColors = buildLightColors(data);
-  const darkColors  = buildDarkColors(lightColors);
-  generatePythonPackageContents(outDir, data, lightColors, darkColors);
+  mkdirSync(PYTHON_OUT, { recursive: true });
+
+  const shadows = loadShadows();
+  const radius  = { ...data.radius.core, ...data.radius.semantic };
+
+  writeFileSync(`${PYTHON_OUT}/_tokens.py`,    genTokensFlat(data, shadows), 'utf-8');
+  writeFileSync(`${PYTHON_OUT}/color.py`,      genColor(data),               'utf-8');
+  writeFileSync(`${PYTHON_OUT}/spacing.py`,    genSimple('spacing', 'BTechSpacing', data.spacing), 'utf-8');
+  writeFileSync(`${PYTHON_OUT}/radius.py`,     genSimple('radius',  'BTechRadius',  radius),       'utf-8');
+  writeFileSync(`${PYTHON_OUT}/typography.py`, genTypography(data),          'utf-8');
+  writeFileSync(`${PYTHON_OUT}/shadow.py`,     genShadow(shadows),           'utf-8');
+  writeFileSync(`${PYTHON_OUT}/__init__.py`,   genInit(),                    'utf-8');
+
+  // Stroke — load directly from source
+  try {
+    const strokeJson = JSON.parse(readFileSync(`${ROOT}/sources/core/stroke.primitive.json`, 'utf-8'));
+    const strokeEntries: Record<string, string> = {};
+    for (const [k, v] of Object.entries(strokeJson.stroke as Record<string, { $value: string }>)) {
+      if (!k.startsWith('$')) strokeEntries[k] = v.$value;
+    }
+    writeFileSync(`${PYTHON_OUT}/stroke.py`, genSimple('stroke', 'BTechStroke', strokeEntries), 'utf-8');
+  } catch {
+    writeFileSync(`${PYTHON_OUT}/stroke.py`, `${HEADER}\nclass BTechStroke:\n    pass\n`, 'utf-8');
+  }
+
+  console.log(`  Python   — btech_tokens package generated at platforms/python/btech_tokens/`);
 }

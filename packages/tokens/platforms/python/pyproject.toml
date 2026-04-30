@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name            = "btech-tokens"
+version         = "0.0.1"
+description     = "BTech Design System — resolved design tokens for Python / Streamlit"
+requires-python = ">=3.10"
+license         = { text = "MIT" }
+
+[project.optional-dependencies]
+# Core token access — no extra deps needed.
+# Streamlit adapter:  pip install btech-tokens[streamlit]
+# Full demo:          pip install btech-tokens[demo]
+streamlit = ["streamlit>=1.35"]
+demo      = ["streamlit>=1.35", "pandas>=2.0", "plotly>=5.0"]
+dev       = ["pytest>=7", "streamlit>=1.35", "pandas>=2.0", "plotly>=5.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["btech_tokens*"]
+
+[tool.setuptools.package-data]
+btech_tokens = ["py.typed"]

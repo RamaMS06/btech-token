@@ -19,10 +19,8 @@ import {
   prependGoogleFontsCssImport,
 } from './generators/font-registry-generator.js';
 import { generateUtilitiesCss } from './generators/web/web-utilities-generator.js';
-import { appendTypographyCompositesCss } from './generators/web/web-typography-composites.js';
-import { generateFlutterTenantPackages } from './generators/flutter/flutter-tenant-format.js';
+import { generateFlutterTenantFiles } from './generators/flutter/flutter-tenant-format.js';
 import { generatePythonFiles } from './generators/python/python-generator.js';
-import { generatePythonTenantPackages } from './generators/python/python-tenant-format.js';
 
 // =============================================================================
 // Register custom Style Dictionary transforms
@@ -189,13 +187,15 @@ function buildResolvedBaseMap(): Record<string, string> {
       generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
       console.log('  Flutter — multi-file token output generated');
 
-      // Generate per-tenant Dart files:
-      //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
-      //   src/tenant.dart (BTechTenantTokens class + registry)
-      const resolvedBaseMap = buildResolvedBaseMap();
-      generateFlutterTenantPackages(resolvedBaseMap);
-      console.log('  Flutter — tenant packages generated');
-    }
+    // Generate per-tenant Dart files:
+    //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
+    //   src/tenant.dart (BTechTenantTokens class + registry)
+    const resolvedBaseMap = buildResolvedBaseMap();
+    generateFlutterTenantFiles(resolvedBaseMap);
+    console.log('  Flutter — tenant files generated');
+
+    // Generate Python package (btech_tokens) under platforms/python/btech_tokens/
+    generatePythonFiles(data);
 
     // Generate multi-file TypeScript output (framework-agnostic, in platforms/web/src/)
     generateTsFiles(data, WEB_SRC);
@@ -246,9 +246,9 @@ function buildResolvedBaseMap(): Record<string, string> {
     generatePythonTenantPackages();
 
     console.log('\n pnpm generate complete\n');
-    console.log('  Flutter → packages/tokens/platforms/flutter/token/lib/src/');
-    console.log('  Web     → packages/tokens/platforms/web/token/src/ + dist/');
-    console.log('  Python  → packages/tokens/platforms/python/token/btech_tokens/');
+    console.log('  Flutter → packages/tokens/platforms/flutter/lib/src/');
+    console.log('  Web     → packages/tokens/platforms/web/src/ + dist/');
+    console.log('  Python  → packages/tokens/platforms/python/btech_tokens/');
     console.log('');
   }
 

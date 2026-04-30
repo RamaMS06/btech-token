@@ -31,7 +31,6 @@ import { BottomActionBar } from './components/BottomActionBar.js';
 import { ConfirmDialog } from './components/ConfirmDialog.js';
 import { VersionLabel } from './components/VersionField.js';
 import { BranchSwitcher } from './components/BranchSwitcher.js';
-import { ExportFigmaModal } from './components/ExportFigmaModal.js';
 import { ImportStylesModal } from './components/ImportStylesModal.js';
 import { ImportDiffModal } from './components/ImportDiffModal.js';
 import { useTokenStore } from './store/tokens.js';
@@ -77,11 +76,10 @@ export function App() {
   // top level so the modal renders above everything else and the action
   // can't be lost mid-render of the bottom bar.
   const [showConfirmDiscard, setShowConfirmDiscard] = useState(false);
-  // Figma Variables import/export — modal-id pointer + post-import diff
-  // payload. Diff payload is set once ImportStylesModal returns the freshly
-  // built incoming sets; ImportDiffModal owns the resolution UI.
-  const [showImportExport, setShowImportExport] =
-    useState<'export' | 'import' | null>(null);
+  // Figma Variables import — modal flag + post-import diff payload.
+  // Diff payload is set once ImportStylesModal returns the freshly built
+  // incoming sets; ImportDiffModal owns the resolution UI.
+  const [showImport, setShowImport] = useState(false);
   const [pendingDiff, setPendingDiff] = useState<{
     incoming: Record<string, TokenSet>;
     warnings: string[];
@@ -214,7 +212,7 @@ export function App() {
         onShowPush={() => setShowSync('push')}
         onShowSettings={() => setShowSettings(true)}
         onShowDiscard={() => setShowConfirmDiscard(true)}
-        onShowImportExport={(mode) => setShowImportExport(mode)}
+        onShowImport={() => setShowImport(true)}
       />
 
       {/* ── Modals ── */}
@@ -255,22 +253,17 @@ export function App() {
         />
       )}
 
-      {/* ── Figma sync modals ───────────────────────────────────────────
-          Mounted siblings rather than a single switch so transient state
-          (e.g. busy flags inside ExportFigmaModal) doesn't unmount when
-          the popover toggles. ImportDiffModal mounts ON TOP of nothing —
+      {/* ── Figma Variables import modal ──────────────────────────────
           ImportStylesModal closes itself before handing the payload off,
-          so the diff runs against a single visible modal layer. */}
-      {showImportExport === 'export' && (
-        <ExportFigmaModal onClose={() => setShowImportExport(null)} />
-      )}
-      {showImportExport === 'import' && (
+          so ImportDiffModal mounts against a clean single-modal layer. */}
+      {showImport && (
         <ImportStylesModal
-          onClose={() => setShowImportExport(null)}
+          onClose={() => setShowImport(false)}
           onImportComplete={(incoming, warnings) => {
-            setShowImportExport(null);
+            setShowImport(false);
             setPendingDiff({ incoming, warnings });
           }}
+          existingTokens={tokenStore.sets}
         />
       )}
       {pendingDiff && (

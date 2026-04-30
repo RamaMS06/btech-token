@@ -13,14 +13,25 @@
  *     parent click unchecks them all)
  *   - Parent visual state has three values: empty, indeterminate (some
  *     descendants checked), or fully checked (all descendants checked)
- *   - Optional "Toggle all" button that flips every leaf in the tree
+ *   - "Toggle all" button that flips every leaf in the tree
+ *   - Expand button (⤢/⤡) that toggles the scroll area between compact
+ *     (240 px) and expanded (fills the modal) — so designers can see a
+ *     long list without squinting.
  *
- * Indeterminate state is computed during render (not stored) so the
- * caller never needs to track it — the source of truth is purely the
- * checked-leaf-ids set.
+ * Visual style:
+ *   Tree-line connectors (vertical guide + horizontal stubs) via CSS on the
+ *   child `<ul>` and `<li>` elements — mirrors the token tree view. Depth
+ *   indentation is produced entirely by `margin-left` on child lists, so the
+ *   border-left aligns naturally with the parent checkbox centre at every
+ *   nesting level.
+ *
+ * Status badges:
+ *   Leaf nodes may carry `status: 'new' | 'changed'` which renders a small
+ *   pill badge. Same-value tokens are pre-filtered by the caller (they are
+ *   never passed as nodes at all).
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 
 export interface TreeNode {
   /** Stable id — used as React key and as entry in the value set. */
@@ -30,6 +41,12 @@ export interface TreeNode {
   count?: number;
   /** Leaves omit this; non-leaf nodes always provide at least one child. */
   children?: TreeNode[];
+  /**
+   * Diff status for leaf nodes. When set, a small pill badge is rendered
+   * beside the label. Parents do not carry a status — their count badge
+   * already signals it.
+   */
+  status?: 'new' | 'changed';
 }
 
 interface CheckboxTreeProps {
@@ -62,13 +79,9 @@ function allLeafIds(nodes: TreeNode[]): string[] {
 
 /**
  * Three-state classification for a node:
- *   - 'empty'         — no descendant leaves are checked
- *   - 'partial'       — some descendants checked
- *   - 'full'          — every descendant is checked
- *
- * Returns 'empty' on a leaf-with-no-descendants only when it isn't in
- * value; the leaf renderer doesn't actually look at this — it reads the
- * Set directly. This function is only used for non-leaf rows.
+ *   - 'empty'   — no descendant leaves are checked
+ *   - 'partial' — some descendants checked
+ *   - 'full'    — every descendant is checked
  */
 type NodeState = 'empty' | 'partial' | 'full';
 function nodeState(node: TreeNode, value: Set<string>): NodeState {
@@ -91,6 +104,7 @@ export function CheckboxTree({
 }: CheckboxTreeProps) {
   const allIds = allLeafIds(nodes);
   const allChecked = allIds.length > 0 && allIds.every((id) => value.has(id));
+  const [expanded, setExpanded] = useState(false);
 
   function toggleLeaves(ids: string[], force?: boolean) {
     const next = new Set(value);
@@ -108,32 +122,55 @@ export function CheckboxTree({
     toggleLeaves(allIds, !allChecked);
   }
 
+  const showHeader = showToggleAll && allIds.length > 0;
+
   return (
     <div className="checkbox-tree">
-      {showToggleAll && allIds.length > 0 && (
-        <button
-          type="button"
-          className="checkbox-tree__toggle-all"
-          onClick={handleToggleAll}
-        >
-          {allChecked ? 'Clear all' : 'Toggle all'}
-        </button>
+      {/* ── Header: Toggle all (left) + Expand icon (right) ── */}
+      {showHeader && (
+        <div className="checkbox-tree__header">
+          <button
+            type="button"
+            className="checkbox-tree__toggle-all"
+            onClick={handleToggleAll}
+          >
+            {allChecked ? 'Clear all' : 'Toggle all'}
+          </button>
+          <button
+            type="button"
+            className="checkbox-tree__expand-btn"
+            onClick={() => setExpanded((v) => !v)}
+            title={expanded ? 'Collapse list' : 'Expand list'}
+            aria-label={expanded ? 'Collapse list' : 'Expand list'}
+          >
+            {/* Simple expand/collapse glyphs — ↕ for compact, ↔ for expanded */}
+            {expanded ? '⊟' : '⊞'}
+          </button>
+        </div>
       )}
-      {nodes.length === 0 ? (
-        <div className="checkbox-tree__empty">No items.</div>
-      ) : (
-        <ul className="checkbox-tree__list">
-          {nodes.map((n) => (
-            <TreeRow
-              key={n.id}
-              node={n}
-              depth={0}
-              value={value}
-              onToggleLeaves={toggleLeaves}
-            />
-          ))}
-        </ul>
-      )}
+
+      {/* ── Scrollable tree area ── */}
+      <div
+        className={
+          'checkbox-tree__scroll-area' +
+          (expanded ? ' checkbox-tree__scroll-area--expanded' : '')
+        }
+      >
+        {nodes.length === 0 ? (
+          <div className="checkbox-tree__empty">No items.</div>
+        ) : (
+          <ul className="checkbox-tree__list checkbox-tree__list--root">
+            {nodes.map((n) => (
+              <TreeRow
+                key={n.id}
+                node={n}
+                value={value}
+                onToggleLeaves={toggleLeaves}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
@@ -142,12 +179,11 @@ export function CheckboxTree({
 
 interface TreeRowProps {
   node: TreeNode;
-  depth: number;
   value: Set<string>;
   onToggleLeaves: (ids: string[], force?: boolean) => void;
 }
 
-function TreeRow({ node, depth, value, onToggleLeaves }: TreeRowProps) {
+function TreeRow({ node, value, onToggleLeaves }: TreeRowProps) {
   const isLeaf = !node.children || node.children.length === 0;
   const state: NodeState | 'leaf' = isLeaf
     ? value.has(node.id)
@@ -155,7 +191,7 @@ function TreeRow({ node, depth, value, onToggleLeaves }: TreeRowProps) {
       : 'empty'
     : nodeState(node, value);
 
-  // Map state → BEM modifier for the box visual.
+  // Map state → BEM modifier for the checkbox box visual.
   const boxMod =
     state === 'full'
       ? 'checkbox-tree__checkbox--checked'
@@ -163,32 +199,21 @@ function TreeRow({ node, depth, value, onToggleLeaves }: TreeRowProps) {
         ? 'checkbox-tree__checkbox--indeterminate'
         : '';
 
-  // Indent classes — capped at 2 levels because the import tree never
-  // goes deeper than `root → collection → mode`.
-  const rowMod =
-    depth === 0
-      ? ''
-      : depth === 1
-        ? 'checkbox-tree__row--child'
-        : 'checkbox-tree__row--grandchild';
-
   function handleClick() {
     if (isLeaf) {
       onToggleLeaves([node.id]);
     } else {
       const leaves = collectLeaves(node, []);
-      // Cascade: if any descendant is unchecked, force-check the lot;
-      // otherwise force-uncheck. Mirrors typical OS file-tree behaviour.
       const allChecked = leaves.every((id) => value.has(id));
       onToggleLeaves(leaves, !allChecked);
     }
   }
 
   return (
-    <li>
+    <li className="checkbox-tree__item">
       <button
         type="button"
-        className={`checkbox-tree__row ${rowMod}`}
+        className="checkbox-tree__row"
         onClick={handleClick}
         aria-checked={state === 'full' ? true : state === 'partial' ? 'mixed' : false}
         role="checkbox"
@@ -198,17 +223,25 @@ function TreeRow({ node, depth, value, onToggleLeaves }: TreeRowProps) {
           aria-hidden
         />
         <span className="checkbox-tree__label">{node.label}</span>
+        {/* Status badge — only on leaves, sits adjacent to label */}
+        {isLeaf && node.status && (
+          <span
+            className={`checkbox-tree__status-badge checkbox-tree__status-badge--${node.status}`}
+            aria-label={node.status === 'new' ? 'New token' : 'Value changed'}
+          >
+            {node.status === 'new' ? 'new' : 'changed'}
+          </span>
+        )}
         {node.count !== undefined && (
           <span className="checkbox-tree__count">({node.count})</span>
         )}
       </button>
       {!isLeaf && (
-        <ul className="checkbox-tree__list">
+        <ul className="checkbox-tree__list checkbox-tree__list--children">
           {node.children!.map((c) => (
             <TreeRow
               key={c.id}
               node={c}
-              depth={depth + 1}
               value={value}
               onToggleLeaves={onToggleLeaves}
             />
