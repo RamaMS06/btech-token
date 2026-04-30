@@ -6,7 +6,7 @@ from __future__ import annotations
 
 class _BTechFontFamily:
     """Resolved font-family strings."""
-    sans: str = "Inter, system-ui, -apple-system, sans-serif"
+    sans: str = "Geist, system-ui, -apple-system, sans-serif"
     mono: str = "'JetBrains Mono', 'Fira Code', monospace"
 
 
@@ -21,29 +21,33 @@ class _BTechTypeScaleEntry:
 
 class _BTechTypeScaleHeading:
     """heading type-scale entries."""
-    h1: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=35, font_weight=700, line_height=40)
-    h2: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=29, font_weight=600, line_height=32)
-    h3: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=24, font_weight=700, line_height=28)
-    h4: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=20, font_weight=500, line_height=24)
+    display: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=40, font_weight=700, line_height=48)
+    h1: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=32, font_weight=700, line_height=40)
+    h2: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=28, font_weight=700, line_height=36)
+    h3: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=24, font_weight=600, line_height=32)
+    h4: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=20, font_weight=600, line_height=28)
 
 
 class _BTechTypeScaleSubheading:
     """subheading type-scale entries."""
-    h5: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=16, font_weight=700, line_height=20)
-    h6: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=14, font_weight=600, line_height=16)
-    h7: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=12, font_weight=600, line_height=16)
+    h5: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=18, font_weight=600, line_height=24)
+    h6: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=16, font_weight=600, line_height=20)
+    h7: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=14, font_weight=600, line_height=16)
+    h8: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=12, font_weight=600, line_height=16)
 
 
 class _BTechTypeScaleBody:
     """body type-scale entries."""
-    base: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=12, font_weight=500, line_height=16)
-    bold: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=12, font_weight=700, line_height=16)
-    small: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=11, font_weight=500, line_height=16)
-    medium: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=14, font_weight=500, line_height=18)
-    xstraSmall: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=8, font_weight=500, line_height=12)
-    italic: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=12, font_weight=500, line_height=16)
-    underline: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=12, font_weight=600, line_height=16)
-    paragraph: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=12, font_weight=500, line_height=24)
+    large: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=16, font_weight=400, line_height=20)
+    regular: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=14, font_weight=400, line_height=16)
+    small: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=12, font_weight=400, line_height=16)
+    xtrasmall: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=10, font_weight=400, line_height=16)
+    micro: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=8, font_weight=400, line_height=12)
+    largeB: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=16, font_weight=700, line_height=20)
+    regularB: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=14, font_weight=700, line_height=16)
+    smallB: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=12, font_weight=700, line_height=16)
+    xtrasmallB: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=10, font_weight=700, line_height=16)
+    microB: _BTechTypeScaleEntry = _BTechTypeScaleEntry(font_size=8, font_weight=700, line_height=12)
 
 
 class BTechTypography:

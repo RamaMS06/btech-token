@@ -6,309 +6,736 @@ from __future__ import annotations
 
 class _BTechColorText:
 
-    class _BTechColorTextNeutral:
-        default: str = "#111827"
-        subtle: str = "#6b7280"
-        disabled: str = "#d1d5db"
-        inverse: str = "#f9fafb"
-    neutral: _BTechColorTextNeutral = _BTechColorTextNeutral()
+    class _BTechColorTextPrimary:
+        s0: str = "#"
+        s1: str = "2"
+        s2: str = "9"
+        s3: str = "2"
+        s4: str = "f"
+        s5: str = "3"
+        s6: str = "7"
+    primary: _BTechColorTextPrimary = _BTechColorTextPrimary()
 
-    class _BTechColorTextDanger:
-        base: str = "#dc2626"
-        bolder: str = "#991b1b"
-    danger: _BTechColorTextDanger = _BTechColorTextDanger()
+    class _BTechColorTextSecondary:
+        s0: str = "#"
+        s1: str = "6"
+        s2: str = "4"
+        s3: str = "7"
+        s4: str = "4"
+        s5: str = "8"
+        s6: str = "b"
+    secondary: _BTechColorTextSecondary = _BTechColorTextSecondary()
+
+    class _BTechColorTextTertiary:
+        s0: str = "#"
+        s1: str = "9"
+        s2: str = "8"
+        s3: str = "a"
+        s4: str = "2"
+        s5: str = "b"
+        s6: str = "0"
+    tertiary: _BTechColorTextTertiary = _BTechColorTextTertiary()
+
+    class _BTechColorTextInverse:
+        s0: str = "#"
+        s1: str = "f"
+        s2: str = "f"
+        s3: str = "f"
+        s4: str = "f"
+        s5: str = "f"
+        s6: str = "f"
+    inverse: _BTechColorTextInverse = _BTechColorTextInverse()
+
+    class _BTechColorTextDisabled:
+        s0: str = "#"
+        s1: str = "c"
+        s2: str = "1"
+        s3: str = "c"
+        s4: str = "6"
+        s5: str = "c"
+        s6: str = "d"
+    disabled: _BTechColorTextDisabled = _BTechColorTextDisabled()
+
+    class _BTechColorTextLink:
+        s0: str = "#"
+        s1: str = "0"
+        s2: str = "d"
+        s3: str = "7"
+        s4: str = "6"
+        s5: str = "6"
+        s6: str = "c"
+    link: _BTechColorTextLink = _BTechColorTextLink()
 
     class _BTechColorTextSuccess:
-        base: str = "#16a34a"
-        bolder: str = "#166534"
+        s0: str = "#"
+        s1: str = "0"
+        s2: str = "a"
+        s3: str = "6"
+        s4: str = "3"
+        s5: str = "2"
+        s6: str = "f"
     success: _BTechColorTextSuccess = _BTechColorTextSuccess()
 
+    class _BTechColorTextError:
+        s0: str = "#"
+        s1: str = "9"
+        s2: str = "9"
+        s3: str = "1"
+        s4: str = "5"
+        s5: str = "1"
+        s6: str = "5"
+    error: _BTechColorTextError = _BTechColorTextError()
+
     class _BTechColorTextWarning:
-        base: str = "#ea580c"
-        bolder: str = "#9a3412"
+        s0: str = "#"
+        s1: str = "8"
+        s2: str = "f"
+        s3: str = "7"
+        s4: str = "6"
+        s5: str = "0"
+        s6: str = "b"
     warning: _BTechColorTextWarning = _BTechColorTextWarning()
 
     class _BTechColorTextInfo:
-        base: str = "#2563eb"
-        bolder: str = "#1e40af"
+        s0: str = "#"
+        s1: str = "0"
+        s2: str = "f"
+        s3: str = "5"
+        s4: str = "e"
+        s5: str = "8"
+        s6: str = "1"
     info: _BTechColorTextInfo = _BTechColorTextInfo()
-
-    class _BTechColorTextSecondary:
-        base: str = "#9333ea"
-        bolder: str = "#6b21a8"
-    secondary: _BTechColorTextSecondary = _BTechColorTextSecondary()
-
-    class _BTechColorTextOn:
-        primary: str = "#ffffff"
-        secondary: str = "#166534"
-        danger: str = "#ffffff"
-        info: str = "#ffffff"
-    on: _BTechColorTextOn = _BTechColorTextOn()
 
 class _BTechColorIcon:
 
-    class _BTechColorIconNeutral:
-        default: str = "#374151"
-        subtle: str = "#9ca3af"
-        disabled: str = "#d1d5db"
-        inverse: str = "#ffffff"
-    neutral: _BTechColorIconNeutral = _BTechColorIconNeutral()
+    class _BTechColorIconPrimary:
+        s0: str = "#"
+        s1: str = "2"
+        s2: str = "9"
+        s3: str = "2"
+        s4: str = "f"
+        s5: str = "3"
+        s6: str = "7"
+    primary: _BTechColorIconPrimary = _BTechColorIconPrimary()
 
-    class _BTechColorIconDanger:
-        base: str = "#dc2626"
-        bolder: str = "#991b1b"
-    danger: _BTechColorIconDanger = _BTechColorIconDanger()
+    class _BTechColorIconSecondary:
+        s0: str = "#"
+        s1: str = "6"
+        s2: str = "4"
+        s3: str = "7"
+        s4: str = "4"
+        s5: str = "8"
+        s6: str = "b"
+    secondary: _BTechColorIconSecondary = _BTechColorIconSecondary()
+
+    class _BTechColorIconTertiary:
+        s0: str = "#"
+        s1: str = "9"
+        s2: str = "8"
+        s3: str = "a"
+        s4: str = "2"
+        s5: str = "b"
+        s6: str = "0"
+    tertiary: _BTechColorIconTertiary = _BTechColorIconTertiary()
+
+    class _BTechColorIconInverse:
+        s0: str = "#"
+        s1: str = "f"
+        s2: str = "f"
+        s3: str = "f"
+        s4: str = "f"
+        s5: str = "f"
+        s6: str = "f"
+    inverse: _BTechColorIconInverse = _BTechColorIconInverse()
+
+    class _BTechColorIconDisabled:
+        s0: str = "#"
+        s1: str = "c"
+        s2: str = "1"
+        s3: str = "c"
+        s4: str = "6"
+        s5: str = "c"
+        s6: str = "d"
+    disabled: _BTechColorIconDisabled = _BTechColorIconDisabled()
+
+    class _BTechColorIconLink:
+        s0: str = "#"
+        s1: str = "0"
+        s2: str = "d"
+        s3: str = "7"
+        s4: str = "6"
+        s5: str = "6"
+        s6: str = "c"
+    link: _BTechColorIconLink = _BTechColorIconLink()
 
     class _BTechColorIconSuccess:
-        base: str = "#16a34a"
-        bolder: str = "#166534"
+        s0: str = "#"
+        s1: str = "0"
+        s2: str = "a"
+        s3: str = "6"
+        s4: str = "3"
+        s5: str = "2"
+        s6: str = "f"
     success: _BTechColorIconSuccess = _BTechColorIconSuccess()
 
+    class _BTechColorIconError:
+        s0: str = "#"
+        s1: str = "9"
+        s2: str = "9"
+        s3: str = "1"
+        s4: str = "5"
+        s5: str = "1"
+        s6: str = "5"
+    error: _BTechColorIconError = _BTechColorIconError()
+
     class _BTechColorIconWarning:
-        base: str = "#f97316"
-        bolder: str = "#c2410c"
+        s0: str = "#"
+        s1: str = "8"
+        s2: str = "f"
+        s3: str = "7"
+        s4: str = "6"
+        s5: str = "0"
+        s6: str = "b"
     warning: _BTechColorIconWarning = _BTechColorIconWarning()
 
     class _BTechColorIconInfo:
-        base: str = "#2563eb"
-        bolder: str = "#1e40af"
+        s0: str = "#"
+        s1: str = "0"
+        s2: str = "f"
+        s3: str = "5"
+        s4: str = "e"
+        s5: str = "8"
+        s6: str = "1"
     info: _BTechColorIconInfo = _BTechColorIconInfo()
 
-    class _BTechColorIconSecondary:
-        base: str = "#9333ea"
-        bolder: str = "#6b21a8"
-    secondary: _BTechColorIconSecondary = _BTechColorIconSecondary()
+class _BTechColorBorder:
 
-    class _BTechColorIconOn:
-        primary: str = "#ffffff"
-        secondary: str = "#166534"
-        danger: str = "#ffffff"
-    on: _BTechColorIconOn = _BTechColorIconOn()
+    class _BTechColorBorderPrimary:
+        s0: str = "#"
+        s1: str = "d"
+        s2: str = "b"
+        s3: str = "d"
+        s4: str = "d"
+        s5: str = "e"
+        s6: str = "1"
+    primary: _BTechColorBorderPrimary = _BTechColorBorderPrimary()
 
-class _BTechColorBackground:
+    class _BTechColorBorderSecondary:
+        s0: str = "#"
+        s1: str = "9"
+        s2: str = "8"
+        s3: str = "a"
+        s4: str = "2"
+        s5: str = "b"
+        s6: str = "0"
+    secondary: _BTechColorBorderSecondary = _BTechColorBorderSecondary()
 
-    class _BTechColorBackgroundSurface:
-        default: str = "#f9fafb"
-        subtle: str = "#f3f4f6"
-        raised: str = "#ffffff"
-    surface: _BTechColorBackgroundSurface = _BTechColorBackgroundSurface()
+    class _BTechColorBorderTertiary:
+        s0: str = "#"
+        s1: str = "c"
+        s2: str = "1"
+        s3: str = "c"
+        s4: str = "6"
+        s5: str = "c"
+        s6: str = "d"
+    tertiary: _BTechColorBorderTertiary = _BTechColorBorderTertiary()
 
-    class _BTechColorBackgroundPrimary:
-        default: str = "#15803d"
-        hover: str = "#166534"
-        pressed: str = "#14532d"
-        disable: str = "#e5e7eb"
-        subtle: str = "#f0fdf4"
-        bolder: str = "#166534"
-    primary: _BTechColorBackgroundPrimary = _BTechColorBackgroundPrimary()
+    class _BTechColorBorderInverse:
+        s0: str = "#"
+        s1: str = "2"
+        s2: str = "9"
+        s3: str = "2"
+        s4: str = "f"
+        s5: str = "3"
+        s6: str = "7"
+    inverse: _BTechColorBorderInverse = _BTechColorBorderInverse()
 
-    class _BTechColorBackgroundSecondary:
-        default: str = "#f0fdf4"
-        hover: str = "#dcfce7"
-        pressed: str = "#bbf7d0"
-        disable: str = "#f3f4f6"
-        subtle: str = "#f9fafb"
-        bolder: str = "#bbf7d0"
-    secondary: _BTechColorBackgroundSecondary = _BTechColorBackgroundSecondary()
+    class _BTechColorBorderDisabled:
+        s0: str = "#"
+        s1: str = "c"
+        s2: str = "1"
+        s3: str = "c"
+        s4: str = "6"
+        s5: str = "c"
+        s6: str = "d"
+    disabled: _BTechColorBorderDisabled = _BTechColorBorderDisabled()
 
-    class _BTechColorBackgroundDanger:
-        default: str = "#dc2626"
-        hover: str = "#b91c1c"
-        pressed: str = "#991b1b"
-        disable: str = "#e5e7eb"
-        subtle: str = "#fef2f2"
-        bolder: str = "#991b1b"
-    danger: _BTechColorBackgroundDanger = _BTechColorBackgroundDanger()
+class _BTechColorBg:
 
-    class _BTechColorBackgroundSuccess:
-        default: str = "#22c55e"
-        hover: str = "#16a34a"
-        pressed: str = "#15803d"
-        disable: str = "#e5e7eb"
-        subtle: str = "#f0fdf4"
-        bolder: str = "#15803d"
-    success: _BTechColorBackgroundSuccess = _BTechColorBackgroundSuccess()
+    class _BTechColorBgPrimary:
+        s0: str = "#"
+        s1: str = "f"
+        s2: str = "f"
+        s3: str = "f"
+        s4: str = "f"
+        s5: str = "f"
+        s6: str = "f"
+    primary: _BTechColorBgPrimary = _BTechColorBgPrimary()
 
-    class _BTechColorBackgroundWarning:
-        default: str = "#fb923c"
-        hover: str = "#f97316"
-        pressed: str = "#ea580c"
-        disable: str = "#e5e7eb"
-        subtle: str = "#fff7ed"
-        bolder: str = "#ea580c"
-    warning: _BTechColorBackgroundWarning = _BTechColorBackgroundWarning()
+    class _BTechColorBgSecondary:
+        s0: str = "#"
+        s1: str = "e"
+        s2: str = "c"
+        s3: str = "e"
+        s4: str = "d"
+        s5: str = "e"
+        s6: str = "e"
+    secondary: _BTechColorBgSecondary = _BTechColorBgSecondary()
 
-    class _BTechColorBackgroundInfo:
-        default: str = "#2563eb"
-        hover: str = "#1d4ed8"
-        pressed: str = "#1e40af"
-        disable: str = "#e5e7eb"
-        subtle: str = "#eff6ff"
-        bolder: str = "#1e40af"
-    info: _BTechColorBackgroundInfo = _BTechColorBackgroundInfo()
+    class _BTechColorBgTertiary:
+        s0: str = "#"
+        s1: str = "6"
+        s2: str = "4"
+        s3: str = "7"
+        s4: str = "4"
+        s5: str = "8"
+        s6: str = "b"
+    tertiary: _BTechColorBgTertiary = _BTechColorBgTertiary()
 
-    class _BTechColorBackgroundNeutral:
-        default: str = "#f3f4f6"
-        subtle: str = "#f9fafb"
-        bolder: str = "#e5e7eb"
-    neutral: _BTechColorBackgroundNeutral = _BTechColorBackgroundNeutral()
+    class _BTechColorBgInverse:
+        s0: str = "#"
+        s1: str = "2"
+        s2: str = "9"
+        s3: str = "2"
+        s4: str = "f"
+        s5: str = "3"
+        s6: str = "7"
+    inverse: _BTechColorBgInverse = _BTechColorBgInverse()
 
-class _BTechColorStroke:
+    class _BTechColorBgSubtle:
+        s0: str = "#"
+        s1: str = "f"
+        s2: str = "4"
+        s3: str = "f"
+        s4: str = "5"
+        s5: str = "f"
+        s6: str = "6"
+    subtle: _BTechColorBgSubtle = _BTechColorBgSubtle()
 
-    class _BTechColorStrokeNeutral:
-        default: str = "#e5e7eb"
-        strong: str = "#9ca3af"
-        subtle: str = "#f3f4f6"
-    neutral: _BTechColorStrokeNeutral = _BTechColorStrokeNeutral()
+    class _BTechColorBgSubtler:
+        s0: str = "#"
+        s1: str = "d"
+        s2: str = "b"
+        s3: str = "d"
+        s4: str = "d"
+        s5: str = "e"
+        s6: str = "1"
+    subtler: _BTechColorBgSubtler = _BTechColorBgSubtler()
 
-    class _BTechColorStrokePrimary:
-        default: str = "#15803d"
-        bolder: str = "#14532d"
-    primary: _BTechColorStrokePrimary = _BTechColorStrokePrimary()
+    class _BTechColorBgSubtlest:
+        s0: str = "#"
+        s1: str = "c"
+        s2: str = "1"
+        s3: str = "c"
+        s4: str = "6"
+        s5: str = "c"
+        s6: str = "d"
+    subtlest: _BTechColorBgSubtlest = _BTechColorBgSubtlest()
 
-    class _BTechColorStrokeDanger:
-        default: str = "#dc2626"
-        bolder: str = "#991b1b"
-    danger: _BTechColorStrokeDanger = _BTechColorStrokeDanger()
+    class _BTechColorBgOverlay:
+        s0: str = "#"
+        s1: str = "1"
+        s2: str = "8"
+        s3: str = "1"
+        s4: str = "c"
+        s5: str = "2"
+        s6: str = "0"
+        s7: str = "c"
+        s8: str = "c"
+    overlay: _BTechColorBgOverlay = _BTechColorBgOverlay()
 
-    class _BTechColorStrokeSuccess:
-        default: str = "#22c55e"
-        bolder: str = "#15803d"
-    success: _BTechColorStrokeSuccess = _BTechColorStrokeSuccess()
+class _BTechColorBrand:
 
-    class _BTechColorStrokeWarning:
-        default: str = "#fb923c"
-        bolder: str = "#ea580c"
-    warning: _BTechColorStrokeWarning = _BTechColorStrokeWarning()
+    class _BTechColorBrandPrimarysubtle:
+        s0: str = "#"
+        s1: str = "e"
+        s2: str = "7"
+        s3: str = "e"
+        s4: str = "f"
+        s5: str = "f"
+        s6: str = "9"
+    primary_subtle: _BTechColorBrandPrimarysubtle = _BTechColorBrandPrimarysubtle()
 
-    class _BTechColorStrokeInfo:
-        default: str = "#3b82f6"
-        bolder: str = "#1d4ed8"
-    info: _BTechColorStrokeInfo = _BTechColorStrokeInfo()
+    class _BTechColorBrandPrimary:
+        s0: str = "#"
+        s1: str = "1"
+        s2: str = "4"
+        s3: str = "5"
+        s4: str = "b"
+        s5: str = "c"
+        s6: str = "3"
+    primary: _BTechColorBrandPrimary = _BTechColorBrandPrimary()
 
-    class _BTechColorStrokeSecondary:
-        default: str = "#a855f7"
-        bolder: str = "#7e22ce"
-    secondary: _BTechColorStrokeSecondary = _BTechColorStrokeSecondary()
+    class _BTechColorBrandPrimarybold:
+        s0: str = "#"
+        s1: str = "1"
+        s2: str = "0"
+        s3: str = "4"
+        s4: str = "9"
+        s5: str = "9"
+        s6: str = "c"
+    primary_bold: _BTechColorBrandPrimarybold = _BTechColorBrandPrimarybold()
+
+    class _BTechColorBrandSecondarysubtle:
+        s0: str = "#"
+        s1: str = "f"
+        s2: str = "9"
+        s3: str = "f"
+        s4: str = "6"
+        s5: str = "f"
+        s6: str = "1"
+    secondary_subtle: _BTechColorBrandSecondarysubtle = _BTechColorBrandSecondarysubtle()
+
+    class _BTechColorBrandSecondary:
+        s0: str = "#"
+        s1: str = "f"
+        s2: str = "5"
+        s3: str = "9"
+        s4: str = "e"
+        s5: str = "0"
+        s6: str = "b"
+    secondary: _BTechColorBrandSecondary = _BTechColorBrandSecondary()
+
+    class _BTechColorBrandSecondarybold:
+        s0: str = "#"
+        s1: str = "b"
+        s2: str = "d"
+        s3: str = "7"
+        s4: str = "c"
+        s5: str = "0"
+        s6: str = "c"
+    secondary_bold: _BTechColorBrandSecondarybold = _BTechColorBrandSecondarybold()
+
+class _BTechColorExt:
+
+    class _BTechColorExtSuccesssubtler:
+        s0: str = "#"
+        s1: str = "e"
+        s2: str = "2"
+        s3: str = "f"
+        s4: str = "3"
+        s5: str = "e"
+        s6: str = "9"
+    success_subtler: _BTechColorExtSuccesssubtler = _BTechColorExtSuccesssubtler()
+
+    class _BTechColorExtSuccesssubtle:
+        s0: str = "#"
+        s1: str = "c"
+        s2: str = "5"
+        s3: str = "e"
+        s4: str = "a"
+        s5: str = "d"
+        s6: str = "5"
+    success_subtle: _BTechColorExtSuccesssubtle = _BTechColorExtSuccesssubtle()
+
+    class _BTechColorExtSuccess:
+        s0: str = "#"
+        s1: str = "0"
+        s2: str = "8"
+        s3: str = "a"
+        s4: str = "9"
+        s5: str = "4"
+        s6: str = "c"
+    success: _BTechColorExtSuccess = _BTechColorExtSuccess()
+
+    class _BTechColorExtSuccessbold:
+        s0: str = "#"
+        s1: str = "0"
+        s2: str = "a"
+        s3: str = "8"
+        s4: str = "5"
+        s5: str = "3"
+        s6: str = "e"
+    success_bold: _BTechColorExtSuccessbold = _BTechColorExtSuccessbold()
+
+    class _BTechColorExtInfosubtler:
+        s0: str = "#"
+        s1: str = "e"
+        s2: str = "7"
+        s3: str = "f"
+        s4: str = "0"
+        s5: str = "f"
+        s6: str = "4"
+    info_subtler: _BTechColorExtInfosubtler = _BTechColorExtInfosubtler()
+
+    class _BTechColorExtInfosubtle:
+        s0: str = "#"
+        s1: str = "d"
+        s2: str = "0"
+        s3: str = "e"
+        s4: str = "4"
+        s5: str = "e"
+        s6: str = "d"
+    info_subtle: _BTechColorExtInfosubtle = _BTechColorExtInfosubtle()
+
+    class _BTechColorExtInfo:
+        s0: str = "#"
+        s1: str = "0"
+        s2: str = "e"
+        s3: str = "a"
+        s4: str = "5"
+        s5: str = "e"
+        s6: str = "9"
+    info: _BTechColorExtInfo = _BTechColorExtInfo()
+
+    class _BTechColorExtInfobold:
+        s0: str = "#"
+        s1: str = "0"
+        s2: str = "f"
+        s3: str = "8"
+        s4: str = "1"
+        s5: str = "b"
+        s6: str = "4"
+    info_bold: _BTechColorExtInfobold = _BTechColorExtInfobold()
+
+    class _BTechColorExtWarningsubtler:
+        s0: str = "#"
+        s1: str = "f"
+        s2: str = "c"
+        s3: str = "f"
+        s4: str = "3"
+        s5: str = "d"
+        s6: str = "0"
+    warning_subtler: _BTechColorExtWarningsubtler = _BTechColorExtWarningsubtler()
+
+    class _BTechColorExtWarningsubtle:
+        s0: str = "#"
+        s1: str = "f"
+        s2: str = "8"
+        s3: str = "e"
+        s4: str = "8"
+        s5: str = "a"
+        s6: str = "1"
+    warning_subtle: _BTechColorExtWarningsubtle = _BTechColorExtWarningsubtle()
+
+    class _BTechColorExtWarning:
+        s0: str = "#"
+        s1: str = "e"
+        s2: str = "e"
+        s3: str = "c"
+        s4: str = "5"
+        s5: str = "1"
+        s6: str = "3"
+    warning: _BTechColorExtWarning = _BTechColorExtWarning()
+
+    class _BTechColorExtWarningbold:
+        s0: str = "#"
+        s1: str = "b"
+        s2: str = "e"
+        s3: str = "9"
+        s4: str = "e"
+        s5: str = "0"
+        s6: str = "f"
+    warning_bold: _BTechColorExtWarningbold = _BTechColorExtWarningbold()
+
+    class _BTechColorExtErrorsubtler:
+        s0: str = "#"
+        s1: str = "f"
+        s2: str = "6"
+        s3: str = "e"
+        s4: str = "a"
+        s5: str = "e"
+        s6: str = "a"
+    error_subtler: _BTechColorExtErrorsubtler = _BTechColorExtErrorsubtler()
+
+    class _BTechColorExtErrorsubtle:
+        s0: str = "#"
+        s1: str = "f"
+        s2: str = "0"
+        s3: str = "d"
+        s4: str = "9"
+        s5: str = "d"
+        s6: str = "9"
+    error_subtle: _BTechColorExtErrorsubtle = _BTechColorExtErrorsubtle()
+
+    class _BTechColorExtError:
+        s0: str = "#"
+        s1: str = "e"
+        s2: str = "f"
+        s3: str = "4"
+        s4: str = "4"
+        s5: str = "4"
+        s6: str = "4"
+    error: _BTechColorExtError = _BTechColorExtError()
+
+    class _BTechColorExtErrorbold:
+        s0: str = "#"
+        s1: str = "d"
+        s2: str = "8"
+        s3: str = "1"
+        s4: str = "8"
+        s5: str = "1"
+        s6: str = "8"
+    error_bold: _BTechColorExtErrorbold = _BTechColorExtErrorbold()
 
 
 class _BTechColorShades:
-    class _Blue:
-        s50: str = "#eff6ff"
-        s100: str = "#dbeafe"
-        s200: str = "#bfdbfe"
-        s300: str = "#93c5fd"
-        s400: str = "#60a5fa"
-        s500: str = "#3b82f6"
-        s600: str = "#2563eb"
-        s700: str = "#1d4ed8"
-        s800: str = "#1e40af"
-        s900: str = "#1e3a8a"
-    blue = _Blue()
     class _Green:
-        s50: str = "#f0fdf4"
-        s100: str = "#dcfce7"
-        s200: str = "#bbf7d0"
-        s300: str = "#86efac"
-        s400: str = "#4ade80"
-        s500: str = "#22c55e"
-        s600: str = "#16a34a"
-        s700: str = "#15803d"
-        s800: str = "#166534"
-        s900: str = "#14532d"
+        s50: str = "#f0f8f4"
+        s100: str = "#e2f3e9"
+        s200: str = "#c5ead5"
+        s300: str = "#94e2b5"
+        s400: str = "#41e084"
+        s500: str = "#08a94c"
+        s600: str = "#0a853e"
+        s700: str = "#0a632f"
+        s800: str = "#094623"
+        s900: str = "#072d17"
     green = _Green()
+    class _Lightblue:
+        s50: str = "#f2f6f8"
+        s100: str = "#e9f1f4"
+        s200: str = "#d6e6ed"
+        s300: str = "#b6d7e4"
+        s400: str = "#80c3de"
+        s500: str = "#30aee1"
+        s600: str = "#1f8cb8"
+        s700: str = "#1a6583"
+        s800: str = "#134357"
+        s900: str = "#0b2530"
+    lightblue = _Lightblue()
     class _Orange:
-        s50: str = "#fff7ed"
-        s100: str = "#ffedd5"
-        s200: str = "#fed7aa"
-        s300: str = "#fdba74"
-        s400: str = "#fb923c"
-        s500: str = "#f97316"
-        s600: str = "#ea580c"
-        s700: str = "#c2410c"
-        s800: str = "#9a3412"
-        s900: str = "#7c2d12"
+        s50: str = "#f9f6f1"
+        s100: str = "#f6efe8"
+        s200: str = "#f0e3d3"
+        s300: str = "#ebd2b1"
+        s400: str = "#ebb876"
+        s500: str = "#f8981d"
+        s600: str = "#ce790c"
+        s700: str = "#93580c"
+        s800: str = "#603b0a"
+        s900: str = "#352107"
     orange = _Orange()
-    class _Red:
-        s50: str = "#fef2f2"
-        s100: str = "#fee2e2"
-        s200: str = "#fecaca"
-        s300: str = "#fca5a5"
-        s400: str = "#f87171"
-        s500: str = "#ef4444"
-        s600: str = "#dc2626"
-        s700: str = "#b91c1c"
-        s800: str = "#991b1b"
-        s900: str = "#7f1d1d"
-    red = _Red()
-    class _Yellow:
-        s50: str = "#fefce8"
-        s100: str = "#fef9c3"
-        s200: str = "#fef08a"
-        s300: str = "#fde047"
-        s400: str = "#facc15"
-        s500: str = "#eab308"
-        s600: str = "#ca8a04"
-        s700: str = "#a16207"
-        s800: str = "#854d0e"
-        s900: str = "#713f12"
-    yellow = _Yellow()
-    class _Pink:
-        s50: str = "#fdf2f8"
-        s100: str = "#fce7f3"
-        s200: str = "#fbcfe8"
-        s300: str = "#f9a8d4"
-        s400: str = "#f472b6"
-        s500: str = "#ec4899"
-        s600: str = "#db2777"
-        s700: str = "#be185d"
-        s800: str = "#9d174d"
-        s900: str = "#831843"
-    pink = _Pink()
+    class _Blue:
+        s50: str = "#e7eff9"
+        s100: str = "#d0def3"
+        s200: str = "#a1bde7"
+        s300: str = "#729ddb"
+        s400: str = "#437ccf"
+        s500: str = "#145bc3"
+        s600: str = "#10499c"
+        s700: str = "#0c3775"
+        s800: str = "#08244e"
+        s900: str = "#041227"
+    blue = _Blue()
     class _Purple:
-        s50: str = "#faf5ff"
-        s100: str = "#f3e8ff"
-        s200: str = "#e9d5ff"
-        s300: str = "#d8b4fe"
-        s400: str = "#c084fc"
-        s500: str = "#a855f7"
-        s600: str = "#9333ea"
-        s700: str = "#7e22ce"
-        s800: str = "#6b21a8"
-        s900: str = "#581c87"
+        s50: str = "#f3eef9"
+        s100: str = "#e8def3"
+        s200: str = "#d0bde7"
+        s300: str = "#b99bda"
+        s400: str = "#a17ace"
+        s500: str = "#8a59c2"
+        s600: str = "#6e479b"
+        s700: str = "#533574"
+        s800: str = "#37244e"
+        s900: str = "#1c1227"
     purple = _Purple()
     class _Teal:
-        s50: str = "#f0fdfa"
-        s100: str = "#ccfbf1"
-        s200: str = "#99f6e4"
-        s300: str = "#5eead4"
-        s400: str = "#2dd4bf"
-        s500: str = "#14b8a6"
-        s600: str = "#0d9488"
-        s700: str = "#0f766e"
-        s800: str = "#115e59"
-        s900: str = "#134e4a"
+        s50: str = "#f0f8f7"
+        s100: str = "#e2f2f0"
+        s200: str = "#c4e8e5"
+        s300: str = "#93ddd7"
+        s400: str = "#3ed8ca"
+        s500: str = "#0d9488"
+        s600: str = "#0d766c"
+        s700: str = "#0c5852"
+        s800: str = "#0a403b"
+        s900: str = "#082a27"
     teal = _Teal()
+    class _Indigo:
+        s50: str = "#f3f3f9"
+        s100: str = "#ececf6"
+        s200: str = "#dedef2"
+        s300: str = "#c7c7ed"
+        s400: str = "#9fa0eb"
+        s500: str = "#6366f1"
+        s600: str = "#2328e6"
+        s700: str = "#181ba7"
+        s800: str = "#12146b"
+        s900: str = "#0a0b36"
+    indigo = _Indigo()
+    class _Rose:
+        s50: str = "#f8f2f3"
+        s100: str = "#f4e8ea"
+        s200: str = "#ecd3d8"
+        s300: str = "#e3b0bb"
+        s400: str = "#de758c"
+        s500: str = "#e11d48"
+        s600: str = "#ae1b3b"
+        s700: str = "#7d162d"
+        s800: str = "#531120"
+        s900: str = "#2f0b13"
+    rose = _Rose()
+    class _Yellow:
+        s50: str = "#fdf9e7"
+        s100: str = "#fcf3d0"
+        s200: str = "#f8e8a1"
+        s300: str = "#f5dc71"
+        s400: str = "#f1d142"
+        s500: str = "#eec513"
+        s600: str = "#be9e0f"
+        s700: str = "#8f760b"
+        s800: str = "#5f4f08"
+        s900: str = "#302704"
+    yellow = _Yellow()
     class _Neutral:
         s0: str = "#ffffff"
-        s50: str = "#f9fafb"
-        s100: str = "#f3f4f6"
-        s200: str = "#e5e7eb"
-        s300: str = "#d1d5db"
-        s400: str = "#9ca3af"
-        s500: str = "#6b7280"
-        s600: str = "#4b5563"
-        s700: str = "#374151"
-        s800: str = "#1f2937"
-        s900: str = "#111827"
+        s50: str = "#f4f5f6"
+        s100: str = "#ecedee"
+        s200: str = "#dbdde1"
+        s300: str = "#c1c6cd"
+        s400: str = "#98a2b0"
+        s500: str = "#64748b"
+        s600: str = "#505c6d"
+        s700: str = "#3c4450"
+        s800: str = "#292f37"
+        s900: str = "#181c20"
         s1000: str = "#000000"
     neutral = _Neutral()
+    class _Red:
+        s50: str = "#f9f2f2"
+        s100: str = "#f6eaea"
+        s200: str = "#f0d9d9"
+        s300: str = "#ebbdbd"
+        s400: str = "#e88d8d"
+        s500: str = "#ef4444"
+        s600: str = "#d81818"
+        s700: str = "#991515"
+        s800: str = "#631010"
+        s900: str = "#340a0a"
+    red = _Red()
+    class _Amber:
+        s50: str = "#f9f6f1"
+        s100: str = "#f5f0e7"
+        s200: str = "#efe3d0"
+        s300: str = "#e9d2ab"
+        s400: str = "#e8ba6c"
+        s500: str = "#f59e0b"
+        s600: str = "#bd7c0c"
+        s700: str = "#885a0d"
+        s800: str = "#5a3d0b"
+        s900: str = "#332307"
+    amber = _Amber()
+    class _Sky:
+        s50: str = "#f1f6f9"
+        s100: str = "#e7f0f4"
+        s200: str = "#d0e4ed"
+        s300: str = "#aad4e7"
+        s400: str = "#69bee4"
+        s500: str = "#0ea5e9"
+        s600: str = "#0f81b4"
+        s700: str = "#0f5e81"
+        s800: str = "#0c3f57"
+        s900: str = "#082431"
+    sky = _Sky()
 
 
 class BTechColor:
     """Static dot-access to all resolved semantic color tokens."""
     text: _BTechColorText = _BTechColorText()
     icon: _BTechColorIcon = _BTechColorIcon()
-    background: _BTechColorBackground = _BTechColorBackground()
-    stroke: _BTechColorStroke = _BTechColorStroke()
+    border: _BTechColorBorder = _BTechColorBorder()
+    bg: _BTechColorBg = _BTechColorBg()
+    brand: _BTechColorBrand = _BTechColorBrand()
+    ext: _BTechColorExt = _BTechColorExt()
     shades: _BTechColorShades = _BTechColorShades()
