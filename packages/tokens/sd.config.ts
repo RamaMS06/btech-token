@@ -19,8 +19,10 @@ import {
   prependGoogleFontsCssImport,
 } from './generators/font-registry-generator.js';
 import { generateUtilitiesCss } from './generators/web/web-utilities-generator.js';
+import { appendTypographyCompositesCss } from './generators/web/web-typography-composites.js';
 import { generateFlutterTenantPackages } from './generators/flutter/flutter-tenant-format.js';
 import { generatePythonFiles } from './generators/python/python-generator.js';
+import { generatePythonTenantPackages } from './generators/python/python-tenant-format.js';
 
 // =============================================================================
 // Register custom Style Dictionary transforms
