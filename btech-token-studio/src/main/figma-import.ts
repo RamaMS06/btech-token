@@ -38,23 +38,30 @@ type Send = (msg: MainToUIMessage) => void;
 // ── Scan ────────────────────────────────────────────────────────────────────
 
 /**
- * Build the snapshot the selection tree renders from. We deliberately
- * include the *count* of variables per collection (same for every mode by
- * Figma's data model) so the leaf labels can show `Light (24)` without
- * forcing the UI to fetch the full variable list ahead of time.
+ * Build the snapshot the selection tree renders from.
+ *
+ * The scan includes:
+ *   - Collection metadata (id, name, modes, singleMode flag)
+ *   - ALL variables in each collection with pre-computed DTCG paths and
+ *     raw values per mode — so the UI can diff against the existing token
+ *     store without a second main-thread round-trip.
+ *   - Paint / text / effect styles (id + name only — no value data needed).
+ *
+ * `singleMode: true` tells the UI to flatten the mode level — instead of
+ * "Primitives → Mode 1 (132)" it renders "Primitives (N new/changed)" as a
+ * single selectable parent with per-variable leaves below it.
  */
 export async function runFigmaImportScan(send: Send): Promise<void> {
   const collections =
     await figma.variables.getLocalVariableCollectionsAsync();
   const variables = await figma.variables.getLocalVariablesAsync();
 
-  // Index variables by collection id so the count lookup is O(1).
-  const varsByCollection = new Map<string, number>();
+  // Group variables by collection id for fast lookup.
+  const varsByCollection = new Map<string, Variable[]>();
   for (const v of variables) {
-    varsByCollection.set(
-      v.variableCollectionId,
-      (varsByCollection.get(v.variableCollectionId) ?? 0) + 1,
-    );
+    const list = varsByCollection.get(v.variableCollectionId) ?? [];
+    list.push(v);
+    varsByCollection.set(v.variableCollectionId, list);
   }
 
   const [paintStyles, textStyles, effectStyles] = await Promise.all([
@@ -64,15 +71,31 @@ export async function runFigmaImportScan(send: Send): Promise<void> {
   ]);
 
   const tree: FigmaImportTree = {
-    collections: collections.map((c) => ({
-      id: c.id,
-      name: c.name,
-      modes: c.modes.map((m) => ({
-        modeId: m.modeId,
-        name: m.name,
-        variableCount: varsByCollection.get(c.id) ?? 0,
-      })),
-    })),
+    collections: collections.map((c) => {
+      const collVars = varsByCollection.get(c.id) ?? [];
+      const prefix = namespacePrefixForCollection(c.name);
+      const varCount = collVars.length;
+
+      return {
+        id: c.id,
+        name: c.name,
+        singleMode: c.modes.length === 1,
+        modes: c.modes.map((m) => ({
+          modeId: m.modeId,
+          name: m.name,
+          variableCount: varCount,
+        })),
+        variables: collVars.map((v) => ({
+          id: v.id,
+          name: v.name,
+          path: prefix + variableNameToPath(v.name),
+          resolvedType: v.resolvedType,
+          // valuesByMode is keyed by modeId — cast to unknown so shared
+          // module stays free of Figma-specific VariableValue imports.
+          valuesByMode: v.valuesByMode as Record<string, unknown>,
+        })),
+      };
+    }),
     paintStyles: paintStyles.map((s) => ({ id: s.id, name: s.name })),
     textStyles: textStyles.map((s) => ({ id: s.id, name: s.name })),
     effectStyles: effectStyles.map((s) => ({ id: s.id, name: s.name })),
@@ -120,8 +143,14 @@ export async function runFigmaImportApply(
       );
 
       // Walk each variable in this collection once per selected mode.
+      // When the UI supplies a variableFilter (per-variable diff selection),
+      // restrict to only the chosen variable ids — designers can cherry-pick
+      // just the new/changed tokens without re-importing everything.
       const collectionVars = allVariables.filter(
-        (v) => v.variableCollectionId === coll.id,
+        (v) =>
+          v.variableCollectionId === coll.id &&
+          (!selection.variableFilter ||
+            selection.variableFilter.includes(v.id)),
       );
 
       // Prefix that gets prepended to both the leaf path and any alias the

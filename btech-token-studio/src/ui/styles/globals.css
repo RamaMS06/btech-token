@@ -554,6 +554,37 @@ a {
   background: var(--figma-color-bg-hover);
 }
 
+/* Header action group — wraps refresh + rescan badge + close button */
+.modal__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Subtle "Refreshing…" badge shown during a background re-scan */
+.modal__rescan-badge {
+  font-size: 10px;
+  color: var(--figma-color-text-secondary);
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--figma-color-bg-secondary);
+  border: 1px solid var(--figma-color-border);
+}
+
+/* Manual refresh icon button — same weight as close but distinct shape */
+.modal__refresh-btn {
+  font-size: 14px;
+  line-height: 1;
+  color: var(--figma-color-text-secondary);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.modal__refresh-btn:hover {
+  background: var(--figma-color-bg-hover);
+  color: var(--figma-color-text);
+}
+
 .modal__body {
   flex: 1;
   overflow-y: auto;
@@ -1992,7 +2023,22 @@ a {
   overflow: hidden;
 }
 
+/* ── Toggle-all header row ─────────────────────────────────────────────────── */
+/*
+ * The header row is a flex container. The "Toggle all / Clear all" button
+ * fills available width (flex: 1) and the expand icon sits flush right.
+ * This keeps the header row as a single baseline even when the expand
+ * button is hidden (showToggleAll = false).
+ */
+.checkbox-tree__header {
+  display: flex;
+  align-items: center;
+  background: var(--figma-color-bg-secondary);
+  border-bottom: 1px solid var(--figma-color-border);
+}
+
 .checkbox-tree__toggle-all {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2002,15 +2048,48 @@ a {
   color: var(--figma-color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  background: var(--figma-color-bg-secondary);
+  background: transparent;
   border: none;
-  border-bottom: 1px solid var(--figma-color-border);
   cursor: pointer;
   text-align: left;
 }
 
 .checkbox-tree__toggle-all:hover {
   background: var(--figma-color-bg-hover);
+}
+
+/* Fullscreen expand / collapse button — sits in the far-right corner of the header */
+.checkbox-tree__expand-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--figma-color-text-secondary);
+  cursor: pointer;
+  border-left: 1px solid var(--figma-color-border);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.checkbox-tree__expand-btn:hover {
+  background: var(--figma-color-bg-hover);
+  color: var(--figma-color-text);
+}
+
+/* ── Scroll area — compact vs expanded ────────────────────────────────────── */
+.checkbox-tree__scroll-area {
+  overflow-y: auto;
+  max-height: 240px;
+}
+
+/* When the tree is in expanded mode, fill much more of the modal height */
+.checkbox-tree__scroll-area--expanded {
+  max-height: calc(60vh - 80px);
 }
 
 .checkbox-tree__row {
@@ -2022,18 +2101,76 @@ a {
   color: var(--figma-color-text);
   cursor: pointer;
   user-select: none;
+  width: 100%;
+  text-align: left;
+  border-radius: 0;
+  border: none;
+  background: transparent;
 }
 
 .checkbox-tree__row:hover {
   background: var(--figma-color-bg-hover);
 }
 
-.checkbox-tree__row--child {
-  padding-left: 26px;
+/* ── Tree-line connector on child list containers ─────────────────────────── */
+/*
+ * Indentation comes entirely from `margin-left` on the child <ul>, not from
+ * depth-based padding on the row buttons. This keeps rows visually
+ * consistent at all depths and lets the `border-left` align naturally with
+ * the parent row's checkbox center.
+ *
+ * Alignment math:
+ *   Row padding-left: 10px   Checkbox width: 13px   → center at ~16px
+ *   Child list margin-left: 16px  → border-left sits at 16px ≈ checkbox center ✓
+ *   Each nested level adds another 16px of indentation automatically.
+ */
+.checkbox-tree__item {
+  display: block;
 }
 
-.checkbox-tree__row--grandchild {
-  padding-left: 42px;
+.checkbox-tree__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.checkbox-tree__list--root {
+  /* Root list — no connector, no extra indent. */
+}
+
+.checkbox-tree__list--children {
+  position: relative;
+  /*
+   * margin-left positions the vertical guide line directly below the
+   * parent's checkbox centre (10 px row-padding + ~6 px half-checkbox = 16 px).
+   * No additional padding-left — the child rows already have their own
+   * 10 px padding so the gap between line and checkbox is kept tight.
+   */
+  margin-left: 16px;
+  padding-left: 0;
+  border-left: 1px solid var(--figma-color-border);
+}
+
+/*
+ * Horizontal stubs — each child item gets a short ─ connector that branches
+ * off the vertical guide line toward its own checkbox. `top` is set to half
+ * the row height (≈ 13px: 4px row padding-top + half of 18px line-height)
+ * so the stub meets the checkbox at its vertical centre.
+ */
+.checkbox-tree__list--children > .checkbox-tree__item {
+  position: relative;
+}
+
+.checkbox-tree__list--children > .checkbox-tree__item::before {
+  content: '';
+  display: block;
+  position: absolute;
+  left: -1px;    /* touch the border-left of the parent list */
+  top: 13px;     /* align with checkbox vertical centre */
+  width: 7px;    /* short horizontal stub */
+  height: 0;
+  border-top: 1px solid var(--figma-color-border);
+  pointer-events: none;
 }
 
 .checkbox-tree__checkbox {
@@ -2079,6 +2216,40 @@ a {
   margin-left: auto;
   font-size: 10px;
   color: var(--figma-color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* ── Diff status badges ─────────────────────────────────────────────────── */
+/*
+ * Small inline pills on leaf nodes to signal diff status:
+ *   "new"     — token path not found in the stored sets (green)
+ *   "changed" — path exists but value differs (amber)
+ * Parent nodes don't carry a badge — their count already communicates this.
+ */
+.checkbox-tree__status-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 14px;
+  padding: 0 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+
+.checkbox-tree__status-badge--new {
+  background: rgba(20, 130, 70, 0.14);
+  color: rgb(20, 130, 70);
+  border: 1px solid rgba(20, 130, 70, 0.3);
+}
+
+.checkbox-tree__status-badge--changed {
+  background: rgba(180, 130, 30, 0.14);
+  color: rgb(150, 105, 0);
+  border: 1px solid rgba(180, 130, 30, 0.3);
 }
 
 .checkbox-tree__empty {
@@ -2086,6 +2257,31 @@ a {
   color: var(--figma-color-text-secondary);
   padding: 12px;
   text-align: center;
+}
+
+/* ── "All variables up-to-date" empty state ─────────────────────────────── */
+/*
+ * Shown when the diff classifies every scanned variable as 'same' (identical
+ * value already in the token store). Distinct from the generic empty state
+ * — it's a success state, not a "nothing here" state.
+ */
+.import-styles__all-same {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  background: rgba(20, 130, 70, 0.07);
+  border: 1px solid rgba(20, 130, 70, 0.25);
+  font-size: 11px;
+  color: var(--figma-color-text-secondary);
+  line-height: 1.45;
+}
+
+.import-styles__all-same-icon {
+  font-size: 14px;
+  color: rgb(20, 130, 70);
+  flex-shrink: 0;
 }
 
 /* ── Import options block ─────────────────────────────────────────────────── */
