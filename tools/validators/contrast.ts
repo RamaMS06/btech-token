@@ -73,22 +73,22 @@ function resolveMap(raw: Record<string, string>): Record<string, string> {
   return out;
 }
 
-const semanticColor = loadJson('packages/tokens/sources/semantic/color.json') as TokenNode;
+const semanticColor = loadJson('packages/tokens/sources/semantic-color/light.json') as TokenNode;
 
-// Build a resolved hex map from core + semantic so semantic aliases like
+// Build a resolved hex map from primitives + brand + semantic-color so semantic aliases like
 // `{color.neutral.800}` resolve to actual hex values.
 const rawTokenMap: Record<string, string> = {};
 for (const path of [
-  'packages/tokens/sources/core/color.primitive.json',
-  'packages/tokens/sources/core/color.brand.json',
-  'packages/tokens/sources/semantic/color.json',
+  'packages/tokens/sources/primitives/color.json',
+  'packages/tokens/sources/brand/color.json',
+  'packages/tokens/sources/semantic-color/light.json',
 ]) {
   Object.assign(rawTokenMap, flatten(loadJson(path)));
 }
 const resolvedTokenMap = resolveMap(rawTokenMap);
 
 // Pairs to check: [fg token path, bg token path, context]
-// Paths must match the actual DTCG structure in sources/semantic/color.json
+// Paths must match the actual DTCG structure in sources/semantic-color/light.json
 const pairs: Array<[string[], string[], string]> = [
   [['color', 'text', 'primary'],   ['color', 'bg', 'primary'],  'body text on surface'],
   [['color', 'text', 'secondary'], ['color', 'bg', 'primary'],  'subtle text on surface'],
