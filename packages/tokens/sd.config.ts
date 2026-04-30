@@ -19,7 +19,7 @@ import {
   prependGoogleFontsCssImport,
 } from './generators/font-registry-generator.js';
 import { generateUtilitiesCss } from './generators/web/web-utilities-generator.js';
-import { generateFlutterTenantFiles } from './generators/flutter/flutter-tenant-format.js';
+import { generateFlutterTenantPackages } from './generators/flutter/flutter-tenant-format.js';
 import { generatePythonFiles } from './generators/python/python-generator.js';
 
 // =============================================================================
@@ -206,7 +206,7 @@ function buildResolvedBaseMap(): Record<string, string> {
       //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
       //   src/tenant.dart (BTechTenantTokens class + registry)
       const resolvedBaseMap = buildResolvedBaseMap();
-      generateFlutterTenantFiles(resolvedBaseMap);
+      generateFlutterTenantPackages(resolvedBaseMap);
       console.log('  Flutter — tenant files generated');
     }
 
