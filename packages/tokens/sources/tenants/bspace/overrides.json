@@ -43,7 +43,7 @@
         },
         "500": {
           "$type": "color",
-          "$value": "{color.indigo.500}"
+          "$value": "{color.rose.500}"
         },
         "600": {
           "$type": "color",
