@@ -172,7 +172,6 @@ const MaterialColor btechColorNeutral = MaterialColor(
       700: Color(0xFF3C4450),
       800: Color(0xFF292F37),
       900: Color(0xFF181C20),
-      1000: Color(0xFF000000),
   },
 );
 
@@ -229,35 +228,35 @@ const MaterialColor btechColorSky = MaterialColor(
 
 /// Brand primary color swatch (tenant-overridable) — btechColorBrandPrimary[500]
 const MaterialColor btechColorBrandPrimary = MaterialColor(
-  0xFF145BC3,
+  0xFF08A94C,
   <int, Color>{
-      50: Color(0xFFE7EFF9),
-      100: Color(0xFFD0DEF3),
-      200: Color(0xFFA1BDE7),
-      300: Color(0xFF729DDB),
-      400: Color(0xFF437CCF),
-      500: Color(0xFF145BC3),
-      600: Color(0xFF10499C),
-      700: Color(0xFF0C3775),
-      800: Color(0xFF08244E),
-      900: Color(0xFF041227),
+      50: Color(0xFFF0F8F4),
+      100: Color(0xFFE2F3E9),
+      200: Color(0xFFC5EAD5),
+      300: Color(0xFF94E2B5),
+      400: Color(0xFF41E084),
+      500: Color(0xFF08A94C),
+      600: Color(0xFF0A853E),
+      700: Color(0xFF0A632F),
+      800: Color(0xFF094623),
+      900: Color(0xFF072D17),
   },
 );
 
 /// Brand secondary color swatch (tenant-overridable) — btechColorBrandSecondary[500]
 const MaterialColor btechColorBrandSecondary = MaterialColor(
-  0xFFF59E0B,
+  0xFF0D9488,
   <int, Color>{
-      50: Color(0xFFF9F6F1),
-      100: Color(0xFFF5F0E7),
-      200: Color(0xFFEFE3D0),
-      300: Color(0xFFE9D2AB),
-      400: Color(0xFFE8BA6C),
-      500: Color(0xFFF59E0B),
-      600: Color(0xFFBD7C0C),
-      700: Color(0xFF885A0D),
-      800: Color(0xFF5A3D0B),
-      900: Color(0xFF332307),
+      50: Color(0xFFF0F8F7),
+      100: Color(0xFFE2F2F0),
+      200: Color(0xFFC4E8E5),
+      300: Color(0xFF93DDD7),
+      400: Color(0xFF3ED8CA),
+      500: Color(0xFF0D9488),
+      600: Color(0xFF0D766C),
+      700: Color(0xFF0C5852),
+      800: Color(0xFF0A403B),
+      900: Color(0xFF082A27),
   },
 );
 

@@ -5,7 +5,7 @@
       "primary":   { "$value": "{color.neutral.800}", "$type": "color" },
       "secondary": { "$value": "{color.neutral.500}", "$type": "color" },
       "tertiary":  { "$value": "{color.neutral.400}", "$type": "color" },
-      "inverse":   { "$value": "{color.neutral.0}",   "$type": "color" },
+      "inverse":   { "$value": "{color.white}",   "$type": "color" },
       "disabled":  { "$value": "{color.neutral.300}", "$type": "color" },
       "link":      { "$value": "{color.teal.600}",    "$type": "color" },
       "success":   { "$value": "{color.green.700}",   "$type": "color" },
@@ -17,7 +17,7 @@
       "primary":   { "$value": "{color.neutral.800}", "$type": "color" },
       "secondary": { "$value": "{color.neutral.500}", "$type": "color" },
       "tertiary":  { "$value": "{color.neutral.400}", "$type": "color" },
-      "inverse":   { "$value": "{color.neutral.0}",   "$type": "color" },
+      "inverse":   { "$value": "{color.white}",   "$type": "color" },
       "disabled":  { "$value": "{color.neutral.300}", "$type": "color" },
       "link":      { "$value": "{color.teal.600}",    "$type": "color" },
       "success":   { "$value": "{color.green.700}",   "$type": "color" },
@@ -33,7 +33,7 @@
       "disabled":  { "$value": "{color.neutral.300}", "$type": "color" }
     },
     "bg": {
-      "primary":   { "$value": "{color.neutral.0}",   "$type": "color" },
+      "primary":   { "$value": "{color.white}",   "$type": "color" },
       "secondary": { "$value": "{color.neutral.100}", "$type": "color" },
       "tertiary":  { "$value": "{color.neutral.500}", "$type": "color" },
       "inverse":   { "$value": "{color.neutral.800}", "$type": "color" },
@@ -43,12 +43,12 @@
       "overlay":   { "$value": "#181c20cc",           "$type": "color", "$description": "Neutral.900 with 80% alpha; kept as a raw value because DTCG cannot express alpha-modified aliases." }
     },
     "brand": {
-      "primary-subtle":   { "$value": "{color.brand.primary.50}",   "$type": "color" },
-      "primary-default":  { "$value": "{color.brand.primary.500}",  "$type": "color" },
-      "primary-bold":     { "$value": "{color.brand.primary.600}",  "$type": "color" },
-      "secondary-subtle": { "$value": "{color.brand.secondary.50}", "$type": "color" },
-      "secondary-default":{ "$value": "{color.brand.secondary.500}","$type": "color" },
-      "secondary-bold":   { "$value": "{color.brand.secondary.600}","$type": "color" }
+      "primary-subtle":   { "$value": "{brand.primary.50}",   "$type": "color" },
+      "primary":          { "$value": "{brand.primary.500}",  "$type": "color" },
+      "primary-bold":     { "$value": "{brand.primary.600}",  "$type": "color" },
+      "secondary-subtle": { "$value": "{brand.secondary.50}", "$type": "color" },
+      "secondary":        { "$value": "{brand.secondary.500}","$type": "color" },
+      "secondary-bold":   { "$value": "{brand.secondary.600}","$type": "color" }
     },
     "ext": {
       "success-subtler": { "$value": "{color.green.100}",  "$type": "color" },

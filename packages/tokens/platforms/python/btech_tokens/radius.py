@@ -6,13 +6,3 @@ from __future__ import annotations
 
 class BTechRadius:
     """Static dot-access to resolved radius tokens (int px values)."""
-    none: int = 0
-    sm: int = 2
-    md: int = 8
-    lg: int = 14
-    xl: int = 20
-    full: int = 9999
-    interactive: int = 8
-    card: int = 14
-    badge: int = 9999
-    tooltip: int = 2

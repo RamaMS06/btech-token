@@ -13,7 +13,7 @@ const TENANTS_DIR = resolve(ROOT, 'packages/tokens/sources/tenants');
 // Paths prefixes tenants ARE allowed to override
 const ALLOWED_PREFIXES: string[] = [
   // Brand identity — primary purpose of per-tenant overrides
-  'color.brand',
+  'brand',
   // Surface backgrounds (not text/icon/border — those are DS-controlled)
   'color.bg',
   // Border radius — tenants may use sharper or rounder shapes

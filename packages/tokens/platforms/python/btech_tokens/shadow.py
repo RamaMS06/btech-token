@@ -4,6 +4,26 @@
 from __future__ import annotations
 
 
+class _BTechShadowButton:
+    """CSS box-shadow strings for button tokens."""
+    pressed: str = "inset 0px 4px 4px 0px rgba(0,0,0,0.25)"
+
+class _BTechShadowTable:
+    """CSS box-shadow strings for table tokens."""
+    left: str = "4px 0px 4px 0px rgba(0,0,0,0.15)"
+    right: str = "-4px 0px 4px 0px rgba(0,0,0,0.15)"
+
+class _BTechShadowElevation:
+    """CSS box-shadow strings for elevation tokens."""
+    xs: str = "0px 1px 2px 0px rgba(0,0,0,0.05)"
+    sm: str = "0px 1px 2px -1px rgba(0,0,0,0.06), 0px 1px 3px 0px rgba(0,0,0,0.10)"
+    md: str = "0px 2px 4px -2px rgba(0,0,0,0.06), 0px 4px 6px -1px rgba(0,0,0,0.10)"
+    lg: str = "0px 4px 6px -4px rgba(0,0,0,0.05), 0px 10px 15px -3px rgba(0,0,0,0.10)"
+    xl: str = "0px 8px 10px -6px rgba(0,0,0,0.04), 0px 20px 25px -5px rgba(0,0,0,0.10)"
+
 
 class BTechShadow:
     """Static dot-access to all resolved shadow tokens."""
+    button: _BTechShadowButton = _BTechShadowButton()
+    table: _BTechShadowTable = _BTechShadowTable()
+    elevation: _BTechShadowElevation = _BTechShadowElevation()

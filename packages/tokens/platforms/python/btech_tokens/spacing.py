@@ -6,11 +6,11 @@ from __future__ import annotations
 
 class BTechSpacing:
     """Static dot-access to resolved spacing tokens (int px values)."""
+    s2xs: int = 2
     xs: int = 4
     sm: int = 8
-    md: int = 16
-    lg: int = 24
-    xl: int = 32
-    xl2: int = 40
-    xl3: int = 48
-    xl4: int = 64
+    md: int = 12
+    lg: int = 16
+    xl: int = 24
+    s2xl: int = 32
+    s3xl: int = 48

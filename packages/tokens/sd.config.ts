@@ -19,8 +19,10 @@ import {
   prependGoogleFontsCssImport,
 } from './generators/font-registry-generator.js';
 import { generateUtilitiesCss } from './generators/web/web-utilities-generator.js';
-import { generateFlutterTenantFiles } from './generators/flutter/flutter-tenant-format.js';
+import { appendTypographyCompositesCss } from './generators/web/web-typography-composites.js';
+import { generateFlutterTenantPackages } from './generators/flutter/flutter-tenant-format.js';
 import { generatePythonFiles } from './generators/python/python-generator.js';
+import { generatePythonTenantPackages } from './generators/python/python-tenant-format.js';
 
 // =============================================================================
 // Register custom Style Dictionary transforms
@@ -84,8 +86,14 @@ mkdirSync(WEB_SRC,     { recursive: true });
 // Flutter outputs are generated via custom generators, not SD platforms.
 // =============================================================================
 const BASE_SOURCE = [
-  `${ROOT}/sources/core/**/*.json`,
-  `${ROOT}/sources/semantic/**/*.json`,
+  `${ROOT}/sources/primitives/**/*.json`,
+  `${ROOT}/sources/brand/**/*.json`,
+  `${ROOT}/sources/semantic-color/**/*.json`,
+  `${ROOT}/sources/spacing-and-radius/**/*.json`,
+  `${ROOT}/sources/typography/font.json`,
+  `${ROOT}/sources/typography/scale.json`,
+  `${ROOT}/sources/shadow/**/*.json`,
+  `${ROOT}/sources/stroke/**/*.json`,
   `${ROOT}/sources/components/**/*.json`,
 ];
 
@@ -111,23 +119,30 @@ const sd = new StyleDictionary({
 // sources. Used by both modes; does NOT write any files.
 // =============================================================================
 function buildResolvedBaseMap(): Record<string, string> {
-  const coreTokenFiles = [
-    ...readdirSync(`${ROOT}/sources/core`).map((f: string) => `${ROOT}/sources/core/${f}`),
-    ...readdirSync(`${ROOT}/sources/semantic`).map((f: string) => `${ROOT}/sources/semantic/${f}`),
+  const SOURCE_DIRS = [
+    `${ROOT}/sources/primitives`,
+    `${ROOT}/sources/brand`,
+    `${ROOT}/sources/semantic-color`,
+    `${ROOT}/sources/spacing-and-radius`,
+    `${ROOT}/sources/shadow`,
+    `${ROOT}/sources/stroke`,
   ];
   const rawBaseMap: Record<string, string> = {};
-  for (const file of coreTokenFiles) {
-    if (!file.endsWith('.json')) continue;
-    Object.assign(rawBaseMap, flattenDTCG(JSON.parse(readFileSync(file, 'utf-8'))));
+  for (const dir of SOURCE_DIRS) {
+    for (const f of readdirSync(dir).filter((f: string) => f.endsWith('.json'))) {
+      Object.assign(rawBaseMap, flattenDTCG(JSON.parse(readFileSync(`${dir}/${f}`, 'utf-8'))));
+    }
+  }
+  // Also include typography token files (but not font-registry.json)
+  for (const f of ['font.json', 'scale.json']) {
+    Object.assign(rawBaseMap, flattenDTCG(JSON.parse(readFileSync(`${ROOT}/sources/typography/${f}`, 'utf-8'))));
   }
   const resolvedBaseMap: Record<string, string> = {};
   for (const [k, v] of Object.entries(rawBaseMap)) resolvedBaseMap[k] = resolveRef(v, rawBaseMap);
   for (const [k, v] of Object.entries(resolvedBaseMap)) resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
 
-  // Strip the `-default` disambiguator suffix from keys after resolution.
-  // Source files use `-default` (e.g. `color.brand.primary-default`) only to
-  // avoid SD path collisions with primitive groups of the same name (e.g.
-  // `color.brand.primary.{50..900}`). Consumers should look up the clean path.
+  // Strip the `-default` disambiguator suffix from keys after resolution, if any remain.
+  // (Previously used for color.brand.primary-default to avoid SD path collision — now resolved.)
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(resolvedBaseMap)) {
     const cleanKey = k.replace(/-default(\.|$)/, '$1');
@@ -187,15 +202,17 @@ function buildResolvedBaseMap(): Record<string, string> {
       generateFlutterFontRegistry(`${FLUTTER_OUT}typography`, fontRegistry);
       console.log('  Flutter — multi-file token output generated');
 
-    // Generate per-tenant Dart files:
-    //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
-    //   src/tenant.dart (BTechTenantTokens class + registry)
-    const resolvedBaseMap = buildResolvedBaseMap();
-    generateFlutterTenantFiles(resolvedBaseMap);
-    console.log('  Flutter — tenant files generated');
+      // Generate per-tenant Dart files:
+      //   src/tenants/default.dart, src/tenants/tenant_a.dart, ...
+      //   src/tenant.dart (BTechTenantTokens class + registry)
+      const resolvedBaseMap = buildResolvedBaseMap();
+      generateFlutterTenantPackages(resolvedBaseMap);
+      console.log('  Flutter — tenant files generated');
+    }
 
     // Generate Python package (btech_tokens) under platforms/python/btech_tokens/
     generatePythonFiles(data);
+    console.log('  Python  — base package generated');
 
     // Generate multi-file TypeScript output (framework-agnostic, in platforms/web/src/)
     generateTsFiles(data, WEB_SRC);
@@ -240,9 +257,7 @@ function buildResolvedBaseMap(): Record<string, string> {
     // Post-build: generate per-tenant web packages (platforms/web/tenants/{id}/)
     generateWebTenantPackages();
 
-    // Python — base package + per-tenant packages
-    generatePythonFiles(data);
-    console.log('  Python  — base package generated');
+    // Python — per-tenant packages
     generatePythonTenantPackages();
 
     console.log('\n pnpm generate complete\n');
