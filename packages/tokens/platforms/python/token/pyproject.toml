@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "btech-tokens"
-version = "1.0.3"
+version = "1.0.4"
 description = "BTech design tokens for Python UI consumers (Streamlit, Gradio, NiceGUI, ...)"
 readme = "README.md"
 requires-python = ">=3.10"

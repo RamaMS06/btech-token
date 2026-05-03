@@ -348,61 +348,61 @@ class _BTechColorBrand:
 
     class _BTechColorBrandPrimarysubtle:
         s0: str = "#"
-        s1: str = "f"
-        s2: str = "0"
-        s3: str = "f"
-        s4: str = "8"
+        s1: str = "e"
+        s2: str = "7"
+        s3: str = "e"
+        s4: str = "f"
         s5: str = "f"
-        s6: str = "4"
+        s6: str = "9"
     primary_subtle: _BTechColorBrandPrimarysubtle = _BTechColorBrandPrimarysubtle()
 
     class _BTechColorBrandPrimary:
         s0: str = "#"
-        s1: str = "0"
-        s2: str = "8"
-        s3: str = "a"
-        s4: str = "9"
-        s5: str = "4"
-        s6: str = "c"
+        s1: str = "1"
+        s2: str = "4"
+        s3: str = "5"
+        s4: str = "b"
+        s5: str = "c"
+        s6: str = "3"
     primary: _BTechColorBrandPrimary = _BTechColorBrandPrimary()
 
     class _BTechColorBrandPrimarybold:
         s0: str = "#"
-        s1: str = "0"
-        s2: str = "a"
-        s3: str = "8"
-        s4: str = "5"
-        s5: str = "3"
-        s6: str = "e"
+        s1: str = "1"
+        s2: str = "0"
+        s3: str = "4"
+        s4: str = "9"
+        s5: str = "9"
+        s6: str = "c"
     primary_bold: _BTechColorBrandPrimarybold = _BTechColorBrandPrimarybold()
 
     class _BTechColorBrandSecondarysubtle:
         s0: str = "#"
         s1: str = "f"
-        s2: str = "0"
+        s2: str = "9"
         s3: str = "f"
-        s4: str = "8"
+        s4: str = "6"
         s5: str = "f"
-        s6: str = "7"
+        s6: str = "1"
     secondary_subtle: _BTechColorBrandSecondarysubtle = _BTechColorBrandSecondarysubtle()
 
     class _BTechColorBrandSecondary:
         s0: str = "#"
-        s1: str = "0"
-        s2: str = "d"
+        s1: str = "f"
+        s2: str = "5"
         s3: str = "9"
-        s4: str = "4"
-        s5: str = "8"
-        s6: str = "8"
+        s4: str = "e"
+        s5: str = "0"
+        s6: str = "b"
     secondary: _BTechColorBrandSecondary = _BTechColorBrandSecondary()
 
     class _BTechColorBrandSecondarybold:
         s0: str = "#"
-        s1: str = "0"
+        s1: str = "b"
         s2: str = "d"
         s3: str = "7"
-        s4: str = "6"
-        s5: str = "6"
+        s4: str = "c"
+        s5: str = "0"
         s6: str = "c"
     secondary_bold: _BTechColorBrandSecondarybold = _BTechColorBrandSecondarybold()
 

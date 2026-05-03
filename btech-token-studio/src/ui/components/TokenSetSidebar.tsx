@@ -34,56 +34,92 @@ import { countLeafChanges } from '../../shared/transform.js';
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Pick a display name for a set. The repo id (e.g. `core/color.primitive`)
- * gets rewritten to a Title-Cased label without dots/slashes for the sidebar
- * — designers think in human labels ("Color Primitive"), not in file paths.
+ * Pick a display name for a set. The repo id (e.g. `brand/color`) gets
+ * rewritten to a descriptive Title-Cased label that reflects the full source
+ * path — so designers can immediately tell "Brand Color" from "Color".
  *
- * Examples:
- *   "core/color.primitive"            → "Color Primitive"
- *   "semantic/color"                  → "Color"
- *   "components/button"               → "Button"
- *   "tenants/bspace/overrides"        → "Bspace Overrides"
- *   "core/typography.primitive"       → "Typography Primitive"
+ * Mapping rules (based on actual source directory structure):
+ *   "brand/color"                              → "Brand Color"
+ *   "primitives/color"                         → "Color"          (strip silent prefix)
+ *   "semantic-color/dark"                      → "Semantic Color Dark"
+ *   "semantic-color/light"                     → "Semantic Color Light"
+ *   "shadow/shadow"                            → "Shadow"         (de-dup identical words)
+ *   "spacing-and-radius/spacing-and-radius"    → "Spacing & Radius"
+ *   "stroke/stroke"                            → "Stroke"
+ *   "typography/font"                          → "Font"
+ *   "typography/font-registry"                 → "Font Registry"
+ *   "typography/scale"                         → "Scale"
+ *   "tenants/bspace/overrides"                 → "Bspace Overrides"
  *
  * The full repo path is still available via the row's `title` attribute on
- * hover, so the original file location is never hidden — just deprioritised
- * visually.
+ * hover, so the original file location is never hidden.
  */
+
+/**
+ * Namespace prefixes whose folder name adds no useful info to the label.
+ * For these, the folder name is dropped and only the file name is shown.
+ * e.g. `primitives/color` → "Color" not "Primitives Color"
+ *      `typography/font`  → "Font"  not "Typography Font"
+ */
+const SILENT_PREFIXES = new Set(['primitives', 'typography', 'stroke', 'shadow']);
+
 function displayName(set: TokenSet): string {
-  // Drop the namespace prefix (core/, semantic/, components/, tenants/<id>).
-  // For tenant sets we keep the tenant id in the label so designers can tell
-  // which tenant the override belongs to when several are loaded.
-  let working = set.id;
-  if (working.startsWith('tenants/')) {
-    // "tenants/bspace/overrides" → "bspace/overrides"
-    working = working.slice('tenants/'.length);
-  } else {
-    const firstSlash = working.indexOf('/');
-    if (firstSlash !== -1) working = working.slice(firstSlash + 1);
+  if (set.id.startsWith('tenants/')) {
+    // "tenants/bspace/overrides" → "Bspace Overrides"
+    const withoutTenantsPrefix = set.id.slice('tenants/'.length);
+    return toTitleCase(withoutTenantsPrefix.replace(/[./_-]+/g, ' ').trim());
   }
 
-  // Replace structural separators with single spaces, then collapse repeats.
-  const cleaned = working
-    .replace(/[./_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const slashIdx = set.id.indexOf('/');
+  const folder   = slashIdx !== -1 ? set.id.slice(0, slashIdx) : set.id;
+  const filename = slashIdx !== -1 ? set.id.slice(slashIdx + 1) : set.id;
 
-  // Title-Case every whitespace-separated word. We touch only the first letter
-  // so any internal capitalisation (acronyms like "UI") survives if a future
-  // file is named that way.
-  return cleaned
+  // Build label words from folder + filename, separated by space.
+  // Then deduplicate consecutive identical words (e.g. "shadow shadow" → "shadow").
+  const raw = SILENT_PREFIXES.has(folder)
+    ? filename
+    : `${folder} ${filename}`;
+
+  // Tokenise on any separator sequence, then deduplicate adjacent identical tokens.
+  const words = raw.split(/[./_-]+/).filter(Boolean);
+  const deduped: string[] = [];
+  for (const w of words) {
+    if (deduped[deduped.length - 1] !== w) deduped.push(w);
+  }
+
+  // Join words, then apply "&" shorthand for "and" between two spacing/radius words.
+  let label = deduped.join(' ');
+  label = label.replace(/\bspacing and radius\b/i, 'Spacing & Radius');
+
+  return toTitleCase(label);
+}
+
+function toTitleCase(str: string): string {
+  return str
+    .replace(/\s+/g, ' ')
+    .trim()
     .split(' ')
     .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
     .join(' ');
 }
 
-/** Sort: core first, then semantic, components, finally tenants. */
+/**
+ * Sort order: primitives → brand → semantic-color → spacing-and-radius
+ *             → typography → shadow → stroke → components → tenants → rest.
+ * Mirrors the conceptual layers: foundation → brand → semantic → layout → type → elevation.
+ */
 function namespaceWeight(id: string): number {
-  if (id.startsWith('core/')) return 0;
-  if (id.startsWith('semantic/')) return 1;
-  if (id.startsWith('components/')) return 2;
-  if (id.startsWith('tenants/')) return 3;
-  return 4;
+  if (id.startsWith('primitives/'))        return 0;
+  if (id.startsWith('brand/'))             return 1;
+  if (id.startsWith('semantic-color/'))    return 2;
+  if (id.startsWith('spacing-and-radius/')) return 3;
+  if (id.startsWith('typography/'))        return 4;
+  if (id.startsWith('shadow/'))            return 5;
+  if (id.startsWith('stroke/'))            return 6;
+  if (id.startsWith('components/'))        return 7;
+  if (id.startsWith('tenants/'))           return 8;
+  // Legacy / unknown namespaces fall to the bottom
+  return 9;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
