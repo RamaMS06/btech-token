@@ -10,7 +10,7 @@ from btech_tokens import token, BTechColor, BTechSpacing, BTechRadius, BTechStro
 
 # Dot-access (resolved values)
 bg     = BTechColor.bg.primary              # '#ffffff'
-brand  = BTechColor.brand.primarydefault    # '#4f46e5'
+brand  = BTechColor.brand.primary           # '#08a94c'
 sp_md  = BTechSpacing.md                   # 12  (int px)
 rad_md = BTechRadius.md                    # 12  (int px)
 stroke = BTechStroke.xs                    # 1   (int px)

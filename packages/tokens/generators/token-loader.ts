@@ -76,12 +76,20 @@ export function loadTokenData(): ResolvedTokenMap {
   for (const [k, v] of Object.entries(rawBaseMap)) resolvedBaseMap[k] = resolveRef(v, rawBaseMap);
   for (const [k, v] of Object.entries(resolvedBaseMap)) resolvedBaseMap[k] = resolveRef(v, resolvedBaseMap);
 
-  // Core color palette
+  // Core color palette — ramp groups only (e.g. green.50..900). Flat color tokens
+  // (e.g. `color.white`, `color.black`) live in DTCG as siblings of the ramps but
+  // have no shade structure, so they would yield empty entries in coreColors and
+  // crash downstream generators that look up shades['500']. Detect & skip them
+  // here. Flat tokens stay accessible via the resolved baseMap for reference
+  // resolution (`{color.white}` → `#ffffff`).
   const corePrimitive = JSON.parse(readFileSync(`${ROOT}/sources/primitives/color.json`, 'utf-8'));
   const coreColors: Record<string, Record<string, string>> = {};
-  for (const [group, shades] of Object.entries(corePrimitive.color as Record<string, Record<string, unknown>>)) {
+  for (const [group, node] of Object.entries(corePrimitive.color as Record<string, Record<string, unknown>>)) {
+    if (group.startsWith('$')) continue;
+    // Flat token (has $value at group level) — skip; not a ramp.
+    if (node && typeof node === 'object' && '$value' in node) continue;
     coreColors[group] = {};
-    for (const [shade, token] of Object.entries(shades)) {
+    for (const [shade, token] of Object.entries(node)) {
       if (shade.startsWith('$')) continue;
       coreColors[group][shade] = (token as any).$value;
     }

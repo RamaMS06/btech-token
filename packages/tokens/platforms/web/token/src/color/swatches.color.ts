@@ -129,7 +129,6 @@ export const btechColorYellow = {
 
 /** Neutral primitive swatch — BTechColor.neutral[500] */
 export const btechColorNeutral = {
-  0: '#ffffff',
   50: '#f4f5f6',
   100: '#ecedee',
   200: '#dbdde1',
@@ -140,7 +139,6 @@ export const btechColorNeutral = {
   700: '#3c4450',
   800: '#292f37',
   900: '#181c20',
-  1000: '#000000',
 } as const;
 
 /** Red primitive swatch — BTechColor.red[500] */
@@ -187,29 +185,29 @@ export const btechColorSky = {
 
 /** Brand primary swatch (tenant-overridable) — BTechColor.brandPrimary[500] */
 export const btechColorBrandPrimary = {
-  50: '#e7eff9',
-  100: '#d0def3',
-  200: '#a1bde7',
-  300: '#729ddb',
-  400: '#437ccf',
-  500: '#145bc3',
-  600: '#10499c',
-  700: '#0c3775',
-  800: '#08244e',
-  900: '#041227',
+  50: '#f0f8f4',
+  100: '#e2f3e9',
+  200: '#c5ead5',
+  300: '#94e2b5',
+  400: '#41e084',
+  500: '#08a94c',
+  600: '#0a853e',
+  700: '#0a632f',
+  800: '#094623',
+  900: '#072d17',
 } as const;
 
 /** Brand secondary swatch (tenant-overridable) — BTechColor.brandSecondary[500] */
 export const btechColorBrandSecondary = {
-  50: '#f9f6f1',
-  100: '#f5f0e7',
-  200: '#efe3d0',
-  300: '#e9d2ab',
-  400: '#e8ba6c',
-  500: '#f59e0b',
-  600: '#bd7c0c',
-  700: '#885a0d',
-  800: '#5a3d0b',
-  900: '#332307',
+  50: '#f0f8f7',
+  100: '#e2f2f0',
+  200: '#c4e8e5',
+  300: '#93ddd7',
+  400: '#3ed8ca',
+  500: '#0d9488',
+  600: '#0d766c',
+  700: '#0c5852',
+  800: '#0a403b',
+  900: '#082a27',
 } as const;
 
