@@ -34,61 +34,48 @@ import { countLeafChanges } from '../../shared/transform.js';
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Pick a display name for a set. The repo id (e.g. `brand/color`) gets
- * rewritten to a descriptive Title-Cased label that reflects the full source
- * path — so designers can immediately tell "Brand Color" from "Color".
+ * Pick a display name for a set from its repo id.
  *
- * Mapping rules (based on actual source directory structure):
- *   "brand/color"                              → "Brand Color"
- *   "primitives/color"                         → "Color"          (strip silent prefix)
- *   "semantic-color/dark"                      → "Semantic Color Dark"
- *   "semantic-color/light"                     → "Semantic Color Light"
- *   "shadow/shadow"                            → "Shadow"         (de-dup identical words)
- *   "spacing-and-radius/spacing-and-radius"    → "Spacing & Radius"
- *   "stroke/stroke"                            → "Stroke"
- *   "typography/font"                          → "Font"
- *   "typography/font-registry"                 → "Font Registry"
- *   "typography/scale"                         → "Scale"
- *   "tenants/bspace/overrides"                 → "Bspace Overrides"
+ * Rules (derived from the actual sources/ directory structure):
  *
- * The full repo path is still available via the row's `title` attribute on
- * hover, so the original file location is never hidden.
+ *   folder == filename (e.g. shadow/shadow)
+ *     → use folder once, tokenise → "Shadow"
+ *     → spacing-and-radius/spacing-and-radius → "Spacing & Radius"  (& special-case)
+ *
+ *   folder != filename
+ *     → combine folder + filename, tokenise hyphens → Title-Case words
+ *     → brand/color              → "Brand Color"
+ *     → primitives/color         → "Primitives Color"
+ *     → semantic-color/dark      → "Semantic Color Dark"
+ *     → semantic-color/light     → "Semantic Color Light"
+ *     → typography/font          → "Typography Font"
+ *     → typography/scale         → "Typography Scale"
+ *
+ *   tenants/<id>/…
+ *     → strip "tenants/" prefix  → "Bspace Overrides"
+ *
+ * The full repo path is always accessible in the row's `title` tooltip.
  */
-
-/**
- * Namespace prefixes whose folder name adds no useful info to the label.
- * For these, the folder name is dropped and only the file name is shown.
- * e.g. `primitives/color` → "Color" not "Primitives Color"
- *      `typography/font`  → "Font"  not "Typography Font"
- */
-const SILENT_PREFIXES = new Set(['primitives', 'typography', 'stroke', 'shadow']);
-
 function displayName(set: TokenSet): string {
   if (set.id.startsWith('tenants/')) {
     // "tenants/bspace/overrides" → "Bspace Overrides"
-    const withoutTenantsPrefix = set.id.slice('tenants/'.length);
-    return toTitleCase(withoutTenantsPrefix.replace(/[./_-]+/g, ' ').trim());
+    const withoutPrefix = set.id.slice('tenants/'.length);
+    return toTitleCase(withoutPrefix.replace(/[/_-]+/g, ' '));
   }
 
   const slashIdx = set.id.indexOf('/');
   const folder   = slashIdx !== -1 ? set.id.slice(0, slashIdx) : set.id;
   const filename = slashIdx !== -1 ? set.id.slice(slashIdx + 1) : set.id;
 
-  // Build label words from folder + filename, separated by space.
-  // Then deduplicate consecutive identical words (e.g. "shadow shadow" → "shadow").
-  const raw = SILENT_PREFIXES.has(folder)
-    ? filename
-    : `${folder} ${filename}`;
+  // When folder and filename are identical, use the folder string only —
+  // avoids "Shadow Shadow", "Stroke Stroke", "Spacing And Radius Spacing …".
+  const raw = folder === filename ? folder : `${folder} ${filename}`;
 
-  // Tokenise on any separator sequence, then deduplicate adjacent identical tokens.
-  const words = raw.split(/[./_-]+/).filter(Boolean);
-  const deduped: string[] = [];
-  for (const w of words) {
-    if (deduped[deduped.length - 1] !== w) deduped.push(w);
-  }
+  // Tokenise on hyphens, slashes, underscores → individual words.
+  const words = raw.split(/[/_-]+/).filter(Boolean);
+  let label    = words.join(' ');
 
-  // Join words, then apply "&" shorthand for "and" between two spacing/radius words.
-  let label = deduped.join(' ');
+  // "spacing and radius" → "Spacing & Radius"  (more compact, standard DS notation)
   label = label.replace(/\bspacing and radius\b/i, 'Spacing & Radius');
 
   return toTitleCase(label);
@@ -99,7 +86,7 @@ function toTitleCase(str: string): string {
     .replace(/\s+/g, ' ')
     .trim()
     .split(' ')
-    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
     .join(' ');
 }
 
