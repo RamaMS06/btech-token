@@ -2,3 +2,4 @@ packages:
   - 'packages/tokens/platforms/web/*'
   - 'apps/*'
   - 'btech-token-studio'
+  - 'tools/mcp-design-system'

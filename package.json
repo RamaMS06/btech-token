@@ -20,7 +20,10 @@
     "bump:minor": "pnpm exec tsx scripts/bump-version.ts minor",
     "bump:major": "pnpm exec tsx scripts/bump-version.ts major",
     "bump:rc": "pnpm exec tsx scripts/bump-version.ts rc",
-    "setup:auth": "pnpm exec tsx scripts/setup-auth.ts"
+    "setup:auth": "pnpm exec tsx scripts/setup-auth.ts",
+    "mcp:build": "pnpm --filter @btech/mcp-design-system build",
+    "mcp:dev": "pnpm --filter @btech/mcp-design-system dev",
+    "mcp:start": "pnpm --filter @btech/mcp-design-system start"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
