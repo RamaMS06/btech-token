@@ -1,0 +1,43 @@
+{
+  "name": "@btech/ui-vue",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BTech UI component library for Vue 3 — sliced from Figma, tenant-aware via @btech/tokens",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "peerDependencies": {
+    "vue": ">=3.4"
+  },
+  "dependencies": {
+    "@btech/tokens": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.4.11",
+    "vue": "^3.4.0",
+    "vue-tsc": "^2.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/"
+  }
+}

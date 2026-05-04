@@ -1,5 +1,7 @@
 packages:
   - 'packages/tokens/platforms/web/*'
+  - 'packages/ui-react'
+  - 'packages/ui-vue'
   - 'apps/*'
   - 'btech-token-studio'
   - 'tools/mcp-design-system'
