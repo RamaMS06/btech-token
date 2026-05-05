@@ -1,0 +1,14 @@
+schemaVersion: 1
+name: BTBadge
+category: atoms
+figmaNodeId: '72:1516'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=72-1516
+description: >
+  Status label pill. Displays variant-colored pill with optional left/right icon slots.
+props:
+  - { name: label, type: string, default: 'Badge' }
+  - { name: variant, type: "'success'|'waiting'|'neutral'|'draft'|'reject'|'custom'", default: 'success' }
+  - { name: reverseColors, type: boolean, default: false }
+slots:
+  - { name: leftIcon, description: Optional 16×16 icon left of label }
+  - { name: rightIcon, description: Optional 16×16 icon right of label }

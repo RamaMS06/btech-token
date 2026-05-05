@@ -11,5 +11,7 @@
  * layers (atoms → molecules → organisms → patterns). See
  * docs/architecture/component-conventions/vue.md for rules.
  */
+export * from './components/atoms/Badge/index';
+export * from './components/atoms/Button/index';
 export * from './components/molecules/Avatar/index';
 export * from './components/organisms/AvatarGroup/index';

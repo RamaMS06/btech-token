@@ -405,8 +405,59 @@ See `docs/architecture/generation-flow.md`.
    - Web: `BT{Name}.{tsx|vue|ts|css}` PascalCase, folders PascalCase
 8. **Class prefix**: `BT` for UI components, `BTech` for theme tokens
    (which live in `btech_tokens` package).
+9. **Web CSS MUST live in a dedicated file** — never inline in a Vue
+   `<style>` block or embedded inside a `.tsx` file.
+   - React: `BT{Name}.css` imported at the top of `BT{Name}.tsx`
+   - Vue: `BT{Name}.css` imported inside `<script setup>` with
+     `import './BT{Name}.css'` — the `<style>` block in the `.vue`
+     file MUST be absent or empty.
+   - Both React and Vue components in the same folder share the exact
+     same `BT{Name}.css` file — one CSS file per component, not one
+     per framework.
+   - Folder anatomy (web):
+     ```
+     BT{Name}/
+     ├── index.ts          ← barrel
+     ├── BT{Name}.tsx      ← React component (imports BT{Name}.css)
+     ├── BT{Name}.vue      ← Vue SFC (imports BT{Name}.css, no <style>)
+     ├── BT{Name}.types.ts ← shared prop/enum types
+     ├── BT{Name}.css      ← single shared stylesheet
+     └── component.meta.yaml
+     ```
 
-### 6. Cross-framework API parity
+### 6. Web CSS token usage rule (MANDATORY)
+
+**Always write `var(--token-name)` — NEVER add a hex fallback as the
+second argument.**
+
+```css
+/* ✅ correct */
+background: var(--bg-subtle);
+color: var(--text-primary);
+border-color: var(--border-primary);
+
+/* ❌ wrong — hex fallback forbidden */
+background: var(--bg-subtle, #f4f5f6);
+color: var(--text-primary, #292f37);
+```
+
+Why: `@btech/tokens-bspace/styles.css` (or equivalent tenant stylesheet)
+is always imported by the app entry point. Every `--*` variable is
+guaranteed to be defined at runtime. A hex fallback:
+
+1. **Creates drift** — token value updates but the fallback hex stays
+   stale, silently rendering the wrong colour.
+2. **Defeats the token system** — the whole point of CSS vars is one
+   place of truth; a hardcoded hex next to it is a second source.
+3. **Hides missing imports** — if the stylesheet ever fails to load,
+   a fallback masks the error instead of showing a blank that signals
+   the problem.
+
+The only place raw hex is allowed is `rgba(0, 0, 0, 0.25)` style
+shadow overlays that are not tokenised (opacity-based, not a named
+colour token).
+
+### 7. Cross-framework API parity
 
 When a component exists in 3 frameworks, **prop names + variant values
 + render priority MUST match exactly**. The Vue→React converter
@@ -416,7 +467,7 @@ discriminated props.
 Example: `BTAvatar` takes `item: BTAvatarItem` in all 3 frameworks
 (not `src` in React vs `imageUrl` in Flutter).
 
-### 7. Component-conventions per framework
+### 8. Component-conventions per framework
 
 Detailed pattern guides:
 - `docs/architecture/component-conventions/flutter.md`

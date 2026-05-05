@@ -1,0 +1,24 @@
+name: ui_showcase_flutter
+description: BTech UI component showcase — Flutter
+publish_to: 'none'
+version: 0.0.1+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  btech_tokens_bspace:
+    path: ../../../packages/tokens/platforms/flutter/bspace
+  btech_ui:
+    path: ../../../packages/ui/flutter
+
+flutter:
+  uses-material-design: true
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0

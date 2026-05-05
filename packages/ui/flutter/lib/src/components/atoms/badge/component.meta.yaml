@@ -1,0 +1,21 @@
+schemaVersion: 1
+name: BTBadge
+category: atoms
+figmaNodeId: '72:1516'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=72-1516
+description: >
+  Status label pill. Communicates the state or category of an entity
+  (approved, pending, draft, etc.) via a colored pill with optional
+  left/right icon.
+props:
+  - { name: label, type: String, required: true, description: Text inside badge }
+  - { name: variant, type: BTBadgeVariant, required: false, default: success }
+  - { name: reverseColors, type: bool, required: false, default: false, description: Solid bg + white text }
+  - { name: leftIcon, type: 'Widget?', required: false }
+  - { name: rightIcon, type: 'Widget?', required: false }
+enums:
+  - name: BTBadgeVariant
+    values: [success, waiting, neutral, draft, reject, custom]
+variants:
+  - { name: 'BTBadge()', description: Normal pill with label and optional icons }
+  - { name: 'BTBadge(reverseColors: true)', description: Solid background, white text }

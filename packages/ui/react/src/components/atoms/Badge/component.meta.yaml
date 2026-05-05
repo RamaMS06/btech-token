@@ -1,0 +1,16 @@
+schemaVersion: 1
+name: BTBadge
+category: atoms
+figmaNodeId: '72:1516'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=72-1516
+description: >
+  Status label pill. Communicates entity state/category via a colored pill
+  with optional left/right icon. Generated from BTBadge.vue via vue-to-react
+  converter pattern.
+props:
+  - { name: label, type: string, default: 'Badge' }
+  - { name: variant, type: "'success'|'waiting'|'neutral'|'draft'|'reject'|'custom'", default: 'success' }
+  - { name: reverseColors, type: boolean, default: false }
+  - { name: leftIcon, type: 'React.ReactNode', required: false }
+  - { name: rightIcon, type: 'React.ReactNode', required: false }
+  - { name: className, type: string, required: false }

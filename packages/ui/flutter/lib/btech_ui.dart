@@ -17,3 +17,4 @@
 library btech_ui;
 
 export 'src/components/components.dart';
+export 'src/utils/utils.dart';
