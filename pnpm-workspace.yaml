@@ -1,7 +1,7 @@
 packages:
   - 'packages/tokens/platforms/web/*'
-  - 'packages/ui-react'
-  - 'packages/ui-vue'
+  - 'packages/ui/*'
   - 'apps/*'
   - 'btech-token-studio'
   - 'tools/mcp-design-system'
+  - 'tools/vue-to-react'

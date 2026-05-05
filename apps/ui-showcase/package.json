@@ -1,0 +1,22 @@
+{
+  "name": "@btech/ui-showcase",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "pnpm -w run generate:web",
+    "dev": "vite --port 5178"
+  },
+  "dependencies": {
+    "@btech/tokens-bspace": "workspace:*",
+    "@btech/ui-react": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0"
+  }
+}

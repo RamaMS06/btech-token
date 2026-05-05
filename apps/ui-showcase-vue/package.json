@@ -1,0 +1,19 @@
+{
+  "name": "@btech/ui-showcase-vue",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "pnpm -w run generate:web",
+    "dev": "vite --port 5179"
+  },
+  "dependencies": {
+    "@btech/tokens-bspace": "workspace:*",
+    "@btech/ui-vue": "workspace:*",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.1.2",
+    "vite": "^5.4.0"
+  }
+}

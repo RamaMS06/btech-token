@@ -1,0 +1,36 @@
+schemaVersion: 1
+name: BTAvatar
+category: molecules
+figmaNodeId: '497:979'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=497-979
+description: >
+  Circular badge displaying a user's profile image or auto-derived
+  initials. Supports skeleton loading state. Used standalone or inside
+  BTAvatarGroup (organism) for stacked group displays.
+uiConcerns:
+  - identity
+  - display
+relatedComponents:
+  - BTAvatarGroup
+props:
+  - { name: item, type: BTAvatarItem, required: true }
+  - { name: size, type: BTAvatarSize, required: false, default: BTAvatarSize.md }
+  - { name: isLoading, type: bool, required: false, default: 'false' }
+enums:
+  - { name: BTAvatarSize, values: [xs, sm, md, lg, xl, xxl] }
+  - { name: BTAvatarColor, values: [green, blue, orange, purple, teal, pink] }
+types:
+  - name: BTAvatarItem
+    fields:
+      - { name: name, type: String, required: true }
+      - { name: imageUrl, type: 'String?', required: false }
+      - { name: color, type: BTAvatarColor, required: false, default: BTAvatarColor.green }
+variantPrecedence:
+  - { priority: 1, condition: 'isLoading=true', renders: 'shimmer skeleton' }
+  - { priority: 2, condition: 'item.imageUrl present and loads', renders: 'Image.network' }
+  - { priority: 3, condition: 'default', renders: 'initials on colored bg' }
+usage: |
+  const BTAvatar(item: BTAvatarItem(name: 'Faisal Lestari'), size: BTAvatarSize.md)
+  const BTAvatar(item: BTAvatarItem(name: 'JD', imageUrl: 'https://...'), size: BTAvatarSize.lg)
+  const BTAvatar(item: BTAvatarItem(name: 'AB', color: BTAvatarColor.purple))
+  const BTAvatar(item: BTAvatarItem(name: '?'), isLoading: true)

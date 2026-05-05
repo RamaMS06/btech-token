@@ -23,7 +23,11 @@
     "setup:auth": "pnpm exec tsx scripts/setup-auth.ts",
     "mcp:build": "pnpm --filter @btech/mcp-design-system build",
     "mcp:dev": "pnpm --filter @btech/mcp-design-system dev",
-    "mcp:start": "pnpm --filter @btech/mcp-design-system start"
+    "mcp:start": "pnpm --filter @btech/mcp-design-system start",
+    "showcase": "pnpm --filter @btech/ui-showcase dev",
+    "showcase:vue": "pnpm --filter @btech/ui-showcase-vue dev",
+    "showcase:flutter": "cd apps/ui-showcase-flutter && flutter run -d web-server",
+    "convert-vue-to-react": "node tools/vue-to-react/dist/cli.js"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

@@ -1,0 +1,146 @@
+/**
+ * BTAvatar v2 styles. Plain CSS (not modules). Mirrors @btech/ui-vue
+ * exactly — when one updates, both update. Component-specific brand
+ * palette is HARDCODED per the figma-visual-rule + component-specific-
+ * colors policy.
+ */
+
+.btech-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-rd, 9999px);
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  font-family: 'Geist', system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+  letter-spacing: var(--letterSpacing-normal, 0);
+  text-align: center;
+  user-select: none;
+}
+
+/* ── Sizes (Figma 497:979 ramp) ─────────────────────────────────────── */
+.btech-avatar--xs  { width: 24px; height: 24px; font-size: var(--fontSize-2xs, 10px); line-height: var(--lineHeight-xs, 16px); }
+.btech-avatar--sm  { width: 32px; height: 32px; font-size: var(--fontSize-sm, 14px); line-height: var(--lineHeight-xs, 16px); }
+.btech-avatar--md  { width: 40px; height: 40px; font-size: var(--fontSize-md, 16px); line-height: var(--lineHeight-sm, 20px); }
+.btech-avatar--lg  { width: 48px; height: 48px; font-size: var(--fontSize-xl, 20px); line-height: var(--lineHeight-md, 24px); }
+.btech-avatar--xl  { width: 64px; height: 64px; font-size: var(--fontSize-3xl, 28px); line-height: var(--lineHeight-xl, 32px); }
+.btech-avatar--2xl { width: 96px; height: 96px; font-size: var(--fontSize-5xl, 40px); line-height: var(--lineHeight-4xl, 48px); }
+
+/* ── Component-specific palette — HARDCODED per figma-visual-rule ───── */
+.btech-avatar--initials              { color: var(--text-inverse, #ffffff); }
+.btech-avatar--color-green   { background: #89ae68; }
+.btech-avatar--color-blue    { background: #93c6ef; }
+.btech-avatar--color-orange  { background: #fc7b1f; }
+.btech-avatar--color-purple  { background: #8873bd; }
+.btech-avatar--color-teal    { background: #2fa0a1; }
+.btech-avatar--color-pink    { background: #f37a98; }
+
+/* ── Image variant ──────────────────────────────────────────────────── */
+.btech-avatar--image .btech-avatar__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+/* ── Empty + Error variants (Figma 497:979) — bg/subtler + icon ─────── */
+.btech-avatar--empty,
+.btech-avatar--error {
+  background: var(--bg-subtler, #dbdde1);
+}
+.btech-avatar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary, #64748b);
+}
+/* Scale SVG icon ~56% of avatar diameter */
+.btech-avatar--xs  .btech-avatar__icon svg { width: 14px; height: 14px; }
+.btech-avatar--sm  .btech-avatar__icon svg { width: 18px; height: 18px; }
+.btech-avatar--md  .btech-avatar__icon svg { width: 22px; height: 22px; }
+.btech-avatar--lg  .btech-avatar__icon svg { width: 26px; height: 26px; }
+.btech-avatar--xl  .btech-avatar__icon svg { width: 36px; height: 36px; }
+.btech-avatar--2xl .btech-avatar__icon svg { width: 54px; height: 54px; }
+
+/* ── Loading skeleton ───────────────────────────────────────────────── */
+.btech-avatar--loading {
+  background: var(--bg-subtler, #dbdde1);
+}
+.btech-avatar__skeleton {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background-size: 200% 100%;
+  animation: btech-avatar-shimmer 1.4s infinite;
+}
+@keyframes btech-avatar-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+.btech-avatar__initials {
+  display: inline-block;
+  line-height: 1;
+}
+
+/* ── BTAvatarGroup — stacked horizontal layout w/ overflow counter ──── */
+.btech-avatar-group {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.btech-avatar-group__item,
+.btech-avatar-group__overflow {
+  flex-shrink: 0;
+}
+
+.btech-avatar-group__item + .btech-avatar-group__item,
+.btech-avatar-group__item + .btech-avatar-group__overflow,
+.btech-avatar-group__overflow {
+  margin-left: -12px;
+}
+.btech-avatar-group--xs  .btech-avatar-group__item + .btech-avatar-group__item,
+.btech-avatar-group--xs  .btech-avatar-group__item + .btech-avatar-group__overflow,
+.btech-avatar-group--xs  .btech-avatar-group__overflow { margin-left: -8px; }
+
+.btech-avatar-group--sm  .btech-avatar-group__item + .btech-avatar-group__item,
+.btech-avatar-group--sm  .btech-avatar-group__item + .btech-avatar-group__overflow,
+.btech-avatar-group--sm  .btech-avatar-group__overflow { margin-left: -10px; }
+
+.btech-avatar-group--md  .btech-avatar-group__item + .btech-avatar-group__item,
+.btech-avatar-group--md  .btech-avatar-group__item + .btech-avatar-group__overflow,
+.btech-avatar-group--md  .btech-avatar-group__overflow { margin-left: -12px; }
+
+.btech-avatar-group--lg  .btech-avatar-group__item + .btech-avatar-group__item,
+.btech-avatar-group--lg  .btech-avatar-group__item + .btech-avatar-group__overflow,
+.btech-avatar-group--lg  .btech-avatar-group__overflow { margin-left: -16px; }
+
+.btech-avatar-group--xl  .btech-avatar-group__item + .btech-avatar-group__item,
+.btech-avatar-group--xl  .btech-avatar-group__item + .btech-avatar-group__overflow,
+.btech-avatar-group--xl  .btech-avatar-group__overflow { margin-left: -20px; }
+
+.btech-avatar-group--2xl .btech-avatar-group__item + .btech-avatar-group__item,
+.btech-avatar-group--2xl .btech-avatar-group__item + .btech-avatar-group__overflow,
+.btech-avatar-group--2xl .btech-avatar-group__overflow { margin-left: -32px; }
+
+.btech-avatar-group__overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-subtler, #dbdde1);
+  color: var(--text-secondary, #64748b);
+  border-radius: var(--radius-rd, 9999px);
+  font-family: 'Geist', system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+  user-select: none;
+}
+
+.btech-avatar__count {
+  display: inline-block;
+  line-height: 1;
+}

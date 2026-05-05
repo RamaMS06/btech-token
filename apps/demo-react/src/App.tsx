@@ -1,7 +1,6 @@
 // Single import — pulls full @btech/tokens API + auto-loads bspace tenant CSS via side-effect.
 import { setMode, token, BTechSpacing, BTechStroke, BTechRadius } from '@btech/tokens-bspace';
 import { useState, useEffect, CSSProperties } from 'react';
-import { AvatarShowcase } from './AvatarShowcase';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Tab = 'all' | 'color' | 'typography' | 'spacing' | 'stroke' | 'radius' | 'shadow' | 'examples';
@@ -623,7 +622,6 @@ export default function App() {
           {dark ? '☀️' : '🌙'}
         </button>
 
-        <AvatarShowcase />
 
       </div>
     </div>
