@@ -2,12 +2,13 @@
 
 Molecules adalah komponen yang terbentuk dari kombinasi satu atau lebih atoms. Mereka memiliki satu fungsi yang jelas dan kohesif, namun lebih kompleks dari atom tunggal. Molecules berdiri sendiri dan dapat digunakan langsung di dalam organisms atau halaman.
 
-Dalam BTech Design System, molecules mencakup komponen seperti avatar yang menggabungkan gambar, inisial, dan indikator status dalam satu unit yang bermakna.
+Dalam BTech Design System, molecules mencakup komponen seperti alert dan avatar yang menggabungkan beberapa atom menjadi satu unit fungsional yang bermakna.
 
 ## Daftar Molecules
 
 | Component | Description | Figma |
 |---|---|---|
+| [BTAlert](./alert.md) | Banner feedback kontekstual — info, sukses, error, peringatan, netral; mendukung toast programatik | [681-11285] |
 | [BTAvatar](./avatar.md) | Representasi visual pengguna dengan gambar, inisial, atau placeholder loading | [497-979] |
 
 ## Prinsip penggunaan
