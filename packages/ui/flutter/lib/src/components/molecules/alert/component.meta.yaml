@@ -1,0 +1,35 @@
+schemaVersion: 1
+name: BTAlert
+category: molecules
+figmaNodeId: '681:11285'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/?node-id=681-11285
+description: >
+  Contextual feedback banner with icon, label, optional description,
+  optional action button/link, and optional dismiss button.
+props:
+  - name: variant
+    type: BTAlertVariant
+    default: BTAlertVariant.info
+    required: false
+  - name: label
+    type: String
+    required: true
+  - name: description
+    type: String?
+    required: false
+  - name: actionLabel
+    type: String?
+    required: false
+  - name: dismissible
+    type: bool
+    default: 'false'
+    required: false
+  - name: onAction
+    type: VoidCallback?
+    required: false
+  - name: onDismiss
+    type: VoidCallback?
+    required: false
+enums:
+  - name: BTAlertVariant
+    values: [info, success, error, warning, neutral, neutralDark]

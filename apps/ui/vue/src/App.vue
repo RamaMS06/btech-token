@@ -2,6 +2,7 @@
 import '@btech/tokens/styles.css';
 import '@btech/ui-vue/styles.css';
 import { ref, watchEffect, computed } from 'vue';
+import BTAlertShowcase from './showcases/BTAlertShowcase.vue';
 import BTAvatarShowcase from './showcases/BTAvatarShowcase.vue';
 import BTBadgeShowcase from './showcases/BTBadgeShowcase.vue';
 import BTButtonShowcase from './showcases/BTButtonShowcase.vue';
@@ -26,7 +27,8 @@ const PAGES: ShowcasePage[] = [
   { id: 'checkbox',    group: 'Atoms',     label: 'Checkbox'    },
   { id: 'hint',        group: 'Atoms',     label: 'Hint'        },
   { id: 'radio',       group: 'Atoms',     label: 'Radio Button' },
-  { id: 'avatar',      group: 'Molecules', label: 'Avatar'      },
+  { id: 'alert',        group: 'Molecules', label: 'Alert'       },
+  { id: 'avatar',       group: 'Molecules', label: 'Avatar'      },
 ];
 
 // Group pages preserving insertion order
@@ -89,6 +91,7 @@ watchEffect(() => {
         <BTCheckboxShowcase v-else-if="selectedId === 'checkbox'" />
         <BTHintShowcase v-else-if="selectedId === 'hint'" />
         <BTRadioButtonShowcase v-else-if="selectedId === 'radio'" />
+        <BTAlertShowcase v-else-if="selectedId === 'alert'" />
         <BTAvatarShowcase v-else-if="selectedId === 'avatar'" />
       </main>
     </div>

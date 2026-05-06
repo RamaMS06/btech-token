@@ -1,0 +1,218 @@
+/* BTAlert styles — Figma 681:11285.
+   All colors via @btech/tokens CSS vars — no hex fallbacks.
+
+   Layout:
+     [icon 16×16]  [body: label + description? + link?]  [action?]  [dismiss?]
+
+   Padding:
+     No description  →  px 12px  py 8px
+     With description →  8px all sides
+*/
+
+/* ── Root ── */
+.bt-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bt-alert--with-description {
+  padding: 8px;
+}
+
+/* ── Variant backgrounds & borders ── */
+.bt-alert--info {
+  background: var(--color-ext-info-subtler);
+  border: 1px solid var(--color-ext-info-bold);
+}
+.bt-alert--success {
+  background: var(--color-ext-success-subtler);
+  border: 1px solid var(--color-ext-success-bold);
+}
+.bt-alert--error {
+  background: var(--color-ext-error-subtler);
+  border: 1px solid var(--color-ext-error-bold);
+}
+.bt-alert--warning {
+  background: var(--color-ext-warning-subtler);
+  border: 1px solid var(--color-ext-warning-bold);
+}
+.bt-alert--neutral {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+}
+.bt-alert--neutral-dark {
+  background: var(--bg-inverse);
+  border: none;
+}
+
+/* ── Icon ── */
+.bt-alert__icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bt-alert--info         .bt-alert__icon { color: var(--text-info); }
+.bt-alert--success      .bt-alert__icon { color: var(--text-success); }
+.bt-alert--error        .bt-alert__icon { color: var(--text-error); }
+.bt-alert--warning      .bt-alert__icon { color: var(--text-warning); }
+.bt-alert--neutral      .bt-alert__icon { color: var(--text-primary); }
+.bt-alert--neutral-dark .bt-alert__icon { color: var(--text-inverse); }
+
+/* ── Body ── */
+.bt-alert__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.bt-alert--with-description .bt-alert__body {
+  gap: 4px;
+}
+
+/* ── Label ── */
+.bt-alert__label {
+  font-family: var(--typography-font-family-sans);
+  font-size: 14px;
+  line-height: 16px;
+  letter-spacing: 0;
+  font-weight: 500;
+  margin: 0;
+}
+
+.bt-alert--with-description .bt-alert__label {
+  font-weight: 700;
+}
+
+.bt-alert--info         .bt-alert__label { color: var(--text-info); }
+.bt-alert--success      .bt-alert__label { color: var(--text-success); }
+.bt-alert--error        .bt-alert__label { color: var(--text-error); }
+.bt-alert--warning      .bt-alert__label { color: var(--text-warning); }
+.bt-alert--neutral      .bt-alert__label { color: var(--text-primary); }
+.bt-alert--neutral-dark .bt-alert__label { color: var(--text-inverse); }
+
+/* ── Description ── */
+.bt-alert__description {
+  font-family: var(--typography-font-family-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.bt-alert--neutral-dark .bt-alert__description {
+  color: var(--text-inverse);
+}
+
+/* ── Inline link (inside body, visible only when description present) ── */
+.bt-alert__link {
+  font-family: var(--typography-font-family-sans);
+  font-size: 14px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--color-brand-primary);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.bt-alert--neutral-dark .bt-alert__link {
+  color: var(--text-inverse);
+}
+
+/* ── Action — text link (no description) ── */
+.bt-alert__action-link {
+  flex-shrink: 0;
+  font-family: var(--typography-font-family-sans);
+  font-size: 14px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: center;
+}
+
+.bt-alert--info         .bt-alert__action-link { color: var(--text-info); }
+.bt-alert--success      .bt-alert__action-link { color: var(--text-success); }
+.bt-alert--error        .bt-alert__action-link { color: var(--text-error); }
+.bt-alert--warning      .bt-alert__action-link { color: var(--text-warning); }
+.bt-alert--neutral      .bt-alert__action-link { color: var(--text-primary); }
+.bt-alert--neutral-dark .bt-alert__action-link { color: var(--text-inverse); }
+
+/* ── Action — button (with description) ── */
+.bt-alert__action-btn {
+  flex-shrink: 0;
+  font-family: var(--typography-font-family-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+  padding: 8px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  align-self: flex-start;
+  transition: background 0.12s;
+}
+
+.bt-alert__action-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* neutral-dark: filled secondary bg, no border */
+.bt-alert--neutral-dark .bt-alert__action-btn {
+  background: var(--bg-secondary);
+  border-color: transparent;
+  color: var(--text-primary);
+}
+
+.bt-alert--neutral-dark .bt-alert__action-btn:hover {
+  background: var(--bg-subtler);
+}
+
+/* ── Dismiss button ── */
+.bt-alert__dismiss {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.bt-alert--info         .bt-alert__dismiss { color: var(--text-info); }
+.bt-alert--success      .bt-alert__dismiss { color: var(--text-success); }
+.bt-alert--error        .bt-alert__dismiss { color: var(--text-error); }
+.bt-alert--warning      .bt-alert__dismiss { color: var(--text-warning); }
+.bt-alert--neutral      .bt-alert__dismiss { color: var(--text-primary); }
+.bt-alert--neutral-dark .bt-alert__dismiss { color: var(--text-inverse); }

@@ -1,5 +1,6 @@
 import 'package:btech_tokens/btech_tokens.dart';
 import 'package:flutter/material.dart';
+import 'showcases/alert_showcase.dart';
 import 'showcases/avatar_showcase.dart';
 import 'showcases/badge_showcase.dart';
 import 'showcases/button_link_showcase.dart';
@@ -56,6 +57,11 @@ const _pages = <_ShowcasePage>[
     group: 'Atoms',
     label: 'Radio Button',
     child: BTRadioButtonShowcase(),
+  ),
+  _ShowcasePage(
+    group: 'Molecules',
+    label: 'Alert',
+    child: BTAlertShowcase(),
   ),
   _ShowcasePage(
     group: 'Molecules',
