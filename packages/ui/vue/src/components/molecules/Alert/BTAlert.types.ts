@@ -18,6 +18,8 @@ export interface BTAlertProps {
   label: string;
   /** Optional supporting text below the label. */
   description?: string;
+  /** Inline text link shown inside body, below description. Only renders when `description` is present. */
+  linkLabel?: string;
   /** Label for the optional action button / text link. */
   actionLabel?: string;
   /** Show a dismiss (×) button on the right. */

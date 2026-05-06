@@ -3,15 +3,16 @@
  * BTAlert — contextual feedback banner.
  *
  * Without description: `[icon] [label] [action-link?] [dismiss?]`
- * With description:    `[icon] [label + description] [action-btn?] [dismiss?]`
+ * With description:    `[icon] [label + description + link?] [action-btn?] [dismiss?]`
  *
  * @example
  * ```vue
  * <BTAlert variant="success" label="Saved!" />
  * <BTAlert variant="error" label="Something went wrong"
  *   description="Please try again later."
+ *   linkLabel="Learn more"
  *   actionLabel="Retry" dismissible
- *   @action="retry" @dismiss="hideAlert" />
+ *   @action="retry" @link="openDocs" @dismiss="hideAlert" />
  * ```
  */
 import './BTAlert.css';
@@ -26,6 +27,8 @@ const props = withDefaults(defineProps<BTAlertProps>(), {
 const emit = defineEmits<{
   /** Emitted when the action button / link is clicked. */
   (e: 'action'): void;
+  /** Emitted when the inline link is clicked. */
+  (e: 'link'): void;
   /** Emitted when the dismiss × button is clicked. */
   (e: 'dismiss'): void;
 }>();
@@ -63,10 +66,18 @@ const iconPath = computed(() => ICONS[props.variant]);
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" v-html="iconPath" />
     </span>
 
-    <!-- Body: label + optional description -->
+    <!-- Body: label + optional description + optional inline link -->
     <div class="bt-alert__body">
       <p class="bt-alert__label">{{ label }}</p>
       <p v-if="description" class="bt-alert__description">{{ description }}</p>
+      <button
+        v-if="linkLabel && hasDescription"
+        class="bt-alert__link"
+        type="button"
+        @click="emit('link')"
+      >
+        {{ linkLabel }}
+      </button>
     </div>
 
     <!-- Action:

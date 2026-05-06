@@ -3,6 +3,7 @@
 import 'package:btech_tokens/btech_tokens.dart';
 import 'package:btech_ui/src/components/molecules/alert/alert.types.dart';
 import 'package:btech_ui/src/components/molecules/alert/internal/alert.icons.dart';
+import 'package:btech_ui/src/components/molecules/alert/internal/alert.toast.dart';
 import 'package:flutter/material.dart';
 
 /// BTAlert — contextual feedback banner.
@@ -11,31 +12,42 @@ import 'package:flutter/material.dart';
 /// https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/?node-id=681-11285
 ///
 /// Without description: `[icon] [label] [action-link?] [dismiss?]`
-/// With description:    `[icon] [label + description] [action-btn?] [dismiss?]`
+/// With description:    `[icon] [label + description + link?] [action-btn?] [dismiss?]`
 ///
 /// ```dart
 /// // Simple
 /// BTAlert(variant: BTAlertVariant.success, label: 'Saved!')
 ///
-/// // With description + action + dismiss
+/// // With description + link + action + dismiss
 /// BTAlert(
 ///   variant: BTAlertVariant.error,
 ///   label: 'Something went wrong',
 ///   description: 'Please try again later.',
+///   linkLabel: 'Learn more',
 ///   actionLabel: 'Retry',
 ///   dismissible: true,
 ///   onAction: _retry,
+///   onLink: _openDocs,
 ///   onDismiss: _hideAlert,
 /// )
+///
+/// // Programmatic (toast-style)
+/// BTAlert.show(
+///   context,
+///   variant: BTAlertVariant.success,
+///   label: 'Profile saved',
+/// );
 /// ```
 class BTAlert extends StatelessWidget {
   const BTAlert({
     required this.label,
     this.variant = BTAlertVariant.info,
     this.description,
+    this.linkLabel,
     this.actionLabel,
     this.dismissible = false,
     this.onAction,
+    this.onLink,
     this.onDismiss,
     super.key,
   });
@@ -49,6 +61,9 @@ class BTAlert extends StatelessWidget {
   /// Optional supporting text shown below [label].
   final String? description;
 
+  /// Optional inline link shown below [description] (only when [description] is present).
+  final String? linkLabel;
+
   /// Label for the optional action. Renders as a text link when no
   /// [description] is present, or a bordered button when [description] exists.
   final String? actionLabel;
@@ -59,8 +74,56 @@ class BTAlert extends StatelessWidget {
   /// Called when [actionLabel] button / link is tapped.
   final VoidCallback? onAction;
 
+  /// Called when [linkLabel] is tapped.
+  final VoidCallback? onLink;
+
   /// Called when the dismiss button is tapped.
   final VoidCallback? onDismiss;
+
+  // ── Programmatic API ────────────────────────────────────────────────────────
+
+  /// Show a toast-style alert overlaid at the bottom-right of the screen.
+  ///
+  /// Returns an [OverlayEntry] that can be manually removed if needed.
+  ///
+  /// ```dart
+  /// BTAlert.show(
+  ///   context,
+  ///   variant: BTAlertVariant.success,
+  ///   label: 'Saved successfully',
+  ///   duration: Duration(seconds: 4),
+  /// );
+  /// ```
+  static OverlayEntry show(
+    BuildContext context, {
+    required String label,
+    BTAlertVariant variant = BTAlertVariant.info,
+    String? description,
+    String? linkLabel,
+    String? actionLabel,
+    bool dismissible = true,
+    Duration duration = const Duration(seconds: 5),
+    VoidCallback? onAction,
+    VoidCallback? onLink,
+  }) {
+    late final OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => BTAlertToast(
+        variant: variant,
+        label: label,
+        description: description,
+        linkLabel: linkLabel,
+        actionLabel: actionLabel,
+        dismissible: dismissible,
+        duration: duration,
+        onAction: onAction,
+        onLink: onLink,
+        onClose: () => entry.remove(),
+      ),
+    );
+    Overlay.of(context).insert(entry);
+    return entry;
+  }
 
   // ── Token helpers ───────────────────────────────────────────────────────────
 
@@ -95,6 +158,9 @@ class BTAlert extends StatelessWidget {
 
   Color _descriptionColor(BTechColorTheme c) =>
       variant == BTAlertVariant.neutralDark ? c.text.inverse : c.text.primary;
+
+  Color _linkColor(BTechColorTheme c) =>
+      variant == BTAlertVariant.neutralDark ? c.text.inverse : c.brand.primary;
 
   Color _actionLinkColor(BTechColorTheme c) => _iconColor(c);
 
@@ -160,6 +226,22 @@ class BTAlert extends StatelessWidget {
                       color: _descriptionColor(c),
                     ),
                   ),
+                  if (linkLabel != null) ...[
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap: onLink,
+                      child: Text(
+                        linkLabel!,
+                        style: TextStyle(
+                          fontFamily: BTechTypography.fontFamily,
+                          fontSize: 14,
+                          height: 16 / 14,
+                          fontWeight: FontWeight.w500,
+                          color: _linkColor(c),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ],
             ),

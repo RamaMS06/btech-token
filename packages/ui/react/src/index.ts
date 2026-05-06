@@ -30,4 +30,5 @@ import './components/atoms/Checkbox/BTCheckbox.css';
 import './components/atoms/Hint/BTHint.css';
 import './components/atoms/RadioButton/BTRadioButton.css';
 import './components/molecules/Alert/BTAlert.css';
+import './components/molecules/Alert/BTAlertContainer.css';
 import './components/molecules/Avatar/BTAvatar.css';

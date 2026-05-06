@@ -2,15 +2,16 @@
  * BTAlert — contextual feedback banner.
  *
  * Without description: `[icon] [label] [action-link?] [dismiss?]`
- * With description:    `[icon] [label + description] [action-btn?] [dismiss?]`
+ * With description:    `[icon] [label + description + link?] [action-btn?] [dismiss?]`
  *
  * @example
  * ```tsx
  * <BTAlert variant="success" label="Saved!" />
  * <BTAlert variant="error" label="Something went wrong"
  *   description="Please try again later."
+ *   linkLabel="Learn more"
  *   actionLabel="Retry" dismissible
- *   onAction={retry} onDismiss={hideAlert} />
+ *   onAction={retry} onLink={openDocs} onDismiss={hideAlert} />
  * ```
  */
 import './BTAlert.css';
@@ -35,6 +36,8 @@ const CLOSE_PATH =
 export interface BTAlertReactProps extends BTAlertProps {
   /** Called when the action button / link is clicked. */
   onAction?: () => void;
+  /** Called when the inline link is clicked. */
+  onLink?: () => void;
   /** Called when the dismiss × button is clicked. */
   onDismiss?: () => void;
 }
@@ -43,9 +46,11 @@ export function BTAlert({
   variant = 'info',
   label,
   description,
+  linkLabel,
   actionLabel,
   dismissible = false,
   onAction,
+  onLink,
   onDismiss,
 }: BTAlertReactProps) {
   const hasDescription = Boolean(description);
@@ -71,6 +76,11 @@ export function BTAlert({
       <div className="bt-alert__body">
         <p className="bt-alert__label">{label}</p>
         {description && <p className="bt-alert__description">{description}</p>}
+        {linkLabel && hasDescription && (
+          <button className="bt-alert__link" type="button" onClick={onLink}>
+            {linkLabel}
+          </button>
+        )}
       </div>
 
       {/* Action — text link when no description */}
