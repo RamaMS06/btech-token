@@ -84,7 +84,7 @@ export function BTTabsShowcase() {
       {/* Scrollable segmented (many tabs, constrained width) */}
       <div className="showcase-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 12, marginTop: 24 }}>
         <span className="showcase-row__label">scrollable segmented</span>
-        <div style={{ width: 320, overflow: 'hidden' }}>
+        <div style={{ width: 320 }}>
           <BTTabs
             variant="segmented"
             tabs={MANY_TABS}
@@ -99,7 +99,7 @@ export function BTTabsShowcase() {
       {/* Scrollable line */}
       <div className="showcase-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 12, marginTop: 24 }}>
         <span className="showcase-row__label">scrollable line</span>
-        <div style={{ width: 320, overflow: 'hidden' }}>
+        <div style={{ width: 320 }}>
           <BTTabs
             variant="line"
             tabs={MANY_TABS}

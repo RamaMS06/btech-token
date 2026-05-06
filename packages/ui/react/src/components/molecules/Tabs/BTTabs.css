@@ -24,16 +24,33 @@
   position: relative;  /* anchor for absolute indicator */
 }
 
-/* Scrollable: fills parent, hides scrollbar, allows horizontal overflow */
+/* Scrollable: fills parent, allows horizontal overflow */
 .bt-tabs--scrollable {
   display: flex;
   width: 100%;
   overflow-x: auto;
-  scrollbar-width: none;         /* Firefox */
   -webkit-overflow-scrolling: touch;
+  /* Thin scrollbar — visible so desktop users know it's scrollable */
+  scrollbar-width: thin;                    /* Firefox */
+  scrollbar-color: transparent transparent; /* hidden at rest, shown on hover */
 }
+/* Chrome/Safari: 3px scrollbar, hidden at rest */
 .bt-tabs--scrollable::-webkit-scrollbar {
-  display: none;                 /* Chrome/Safari */
+  height: 3px;
+}
+.bt-tabs--scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+.bt-tabs--scrollable::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+}
+/* Reveal scrollbar on hover */
+.bt-tabs--scrollable:hover {
+  scrollbar-color: rgb(0 0 0 / 0.2) transparent;
+}
+.bt-tabs--scrollable:hover::-webkit-scrollbar-thumb {
+  background: rgb(0 0 0 / 0.2);
 }
 
 /* Segmented: gray tray, 4px padding, radius.md, height 40px */

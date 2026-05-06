@@ -78,7 +78,7 @@ const DISABLED_TABS = [
     <!-- Scrollable segmented (many tabs, constrained width) -->
     <div class="showcase-row" style="flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 24px;">
       <span class="showcase-row__label">scrollable segmented</span>
-      <div style="width: 320px; overflow: hidden;">
+      <div style="width: 320px;">
         <BTTabs
           variant="segmented"
           :tabs="MANY_TABS"
@@ -92,7 +92,7 @@ const DISABLED_TABS = [
     <!-- Scrollable line (many tabs, constrained width) -->
     <div class="showcase-row" style="flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 24px;">
       <span class="showcase-row__label">scrollable line</span>
-      <div style="width: 320px; overflow: hidden;">
+      <div style="width: 320px;">
         <BTTabs
           variant="line"
           :tabs="MANY_TABS"
