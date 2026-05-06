@@ -202,11 +202,15 @@ class _UsageTab extends StatefulWidget {
   State<_UsageTab> createState() => _UsageTabState();
 }
 
-class _UsageTabState extends State<_UsageTab> {
-  OverlayEntry? _entry;
+class _UsageTabState extends State<_UsageTab>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animCtrl;
+  OverlayEntry? _backdropEntry;
+  OverlayEntry? _stepEntry;
   final _keys = List.generate(9, (_) => GlobalKey());
   BTTooltipStepVariant _variant = BTTooltipStepVariant.button;
   int _activeIdx = -1;
+  bool _navigating = false;
   static const int _total = 9;
 
   // ── Config for each of the 9 demo buttons ────────────────────────────────
@@ -223,97 +227,185 @@ class _UsageTabState extends State<_UsageTab> {
     BTTooltipPosition.top,    BTTooltipPosition.top,    BTTooltipPosition.top,
   ];
 
-  static const _arrowPos = [
-    BTTooltipArrowPosition.left,  BTTooltipArrowPosition.mid, BTTooltipArrowPosition.right,
-    BTTooltipArrowPosition.mid,   BTTooltipArrowPosition.mid, BTTooltipArrowPosition.mid,
-    BTTooltipArrowPosition.left,  BTTooltipArrowPosition.mid, BTTooltipArrowPosition.right,
-  ];
-
   static const _alignments = [
     Alignment.topLeft,    Alignment.topCenter,    Alignment.topRight,
     Alignment.centerLeft, Alignment.center,        Alignment.centerRight,
     Alignment.bottomLeft, Alignment.bottomCenter,  Alignment.bottomRight,
   ];
 
-  // ── Overlay management ────────────────────────────────────────────────────
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+  }
 
   @override
   void dispose() {
-    _removeEntry();
+    _animCtrl.dispose();
+    _removeEntries();
     super.dispose();
   }
 
-  void _removeEntry() {
-    _entry?.remove();
-    _entry = null;
+  // ── Overlay management ────────────────────────────────────────────────────
+
+  void _removeEntries() {
+    _stepEntry?.remove();
+    _backdropEntry?.remove();
+    _stepEntry = null;
+    _backdropEntry = null;
   }
 
-  void _showAt(int idx) {
-    _removeEntry();
+  /// Insert backdrop + step overlay entries for [idx], wired to [_animCtrl].
+  void _insertEntries(int idx) {
+    if (!mounted) return;
 
     final box = _keys[idx].currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
 
-    final offset = box.localToGlobal(Offset.zero);
-    final size = box.size;
+    final triggerOffset = box.localToGlobal(Offset.zero);
+    final triggerSize = box.size;
     final screenSize = MediaQuery.of(context).size;
     final tooltipPos = _ttPos[idx];
 
     const balloonW = 320.0;
-    const balloonH = 150.0;
+    const balloonH = 160.0;
     const gap = 4.0;
     const arrowSz = 8.0;
 
-    double top, left;
+    final tcx = triggerOffset.dx + triggerSize.width / 2;
+    final tcy = triggerOffset.dy + triggerSize.height / 2;
+
+    double top;
+    double left;
     switch (tooltipPos) {
       case BTTooltipPosition.top:
-        top = offset.dy - balloonH - arrowSz - gap;
-        left = offset.dx + size.width / 2 - balloonW / 2;
+        top  = triggerOffset.dy - balloonH - arrowSz - gap;
+        left = tcx - balloonW / 2;
       case BTTooltipPosition.bottom:
-        top = offset.dy + size.height + arrowSz + gap;
-        left = offset.dx + size.width / 2 - balloonW / 2;
+        top  = triggerOffset.dy + triggerSize.height + arrowSz + gap;
+        left = tcx - balloonW / 2;
       case BTTooltipPosition.left:
-        top = offset.dy + size.height / 2 - balloonH / 2;
-        left = offset.dx - balloonW - arrowSz - gap;
+        top  = tcy - balloonH / 2;
+        left = triggerOffset.dx - balloonW - arrowSz - gap;
       case BTTooltipPosition.right:
-        top = offset.dy + size.height / 2 - balloonH / 2;
-        left = offset.dx + size.width + arrowSz + gap;
+        top  = tcy - balloonH / 2;
+        left = triggerOffset.dx + triggerSize.width + arrowSz + gap;
     }
 
-    left = left.clamp(8.0, screenSize.width - balloonW - 8.0);
-    top  = top.clamp(8.0, screenSize.height - balloonH - 8.0);
+    left = left.clamp(8.0, screenSize.width  - balloonW - 8.0);
+    top  = top.clamp(8.0,  screenSize.height - balloonH - 8.0);
 
-    _entry = OverlayEntry(
-      builder: (_) => Positioned(
-        top: top,
-        left: left,
-        child: Material(
-          color: Colors.transparent,
-          child: BTTooltipStep(
-            label: _labels[idx],
-            description: 'Ini adalah langkah ${idx + 1} dari $_total.',
-            stepLabel: 'Step ${idx + 1} of $_total',
-            stepVariant: _variant,
-            hasClose: true,
-            prevLabel: 'Kembali',
-            nextLabel: 'Selanjutnya',
-            position: tooltipPos,
-            arrowPosition: _arrowPos[idx],
-            onPrev: idx > 0 ? () => _showAt(idx - 1) : _close,
-            onNext: idx < _total - 1 ? () => _showAt(idx + 1) : _close,
-            onClose: _close,
+    // Compute arrow position from trigger centre after clamping
+    final arrowPos = _bestArrowPos(tooltipPos, tcx, left, tcy, top);
+
+    final curvedAnim = CurvedAnimation(
+      parent: _animCtrl,
+      curve: Curves.easeInOut,
+    );
+
+    // ── Backdrop entry ────────────────────────────────────────────────────
+    _backdropEntry = OverlayEntry(
+      builder: (_) => Positioned.fill(
+        child: GestureDetector(
+          onTap: _close,
+          child: FadeTransition(
+            opacity: _animCtrl,
+            child: ColoredBox(color: Colors.black.withValues(alpha: 0.45)),
           ),
         ),
       ),
     );
 
-    Overlay.of(context, rootOverlay: true).insert(_entry!);
+    // ── Step entry ────────────────────────────────────────────────────────
+    _stepEntry = OverlayEntry(
+      builder: (_) => Positioned(
+        top: top,
+        left: left,
+        child: FadeTransition(
+          opacity: curvedAnim,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.92, end: 1.0).animate(curvedAnim),
+            child: Material(
+              color: Colors.transparent,
+              child: BTTooltipStep(
+                label: _labels[idx],
+                description: 'Ini adalah langkah ${idx + 1} dari $_total.',
+                stepLabel: 'Step ${idx + 1} of $_total',
+                stepVariant: _variant,
+                hasClose: true,
+                prevLabel: 'Kembali',
+                nextLabel: 'Selanjutnya',
+                position: tooltipPos,
+                arrowPosition: arrowPos,
+                onPrev: idx > 0 ? () => _navigate(idx - 1) : _close,
+                onNext: idx < _total - 1 ? () => _navigate(idx + 1) : _close,
+                onClose: _close,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final overlay = Overlay.of(context, rootOverlay: true);
+    overlay.insert(_backdropEntry!);
+    overlay.insert(_stepEntry!);
+  }
+
+  /// Choose best-fit [BTTooltipArrowPosition] from trigger-centre geometry.
+  BTTooltipArrowPosition _bestArrowPos(
+    BTTooltipPosition ttPos,
+    double tcx,
+    double balloonLeft,
+    double tcy,
+    double balloonTop,
+  ) {
+    if (ttPos == BTTooltipPosition.left || ttPos == BTTooltipPosition.right) {
+      return BTTooltipArrowPosition.mid;
+    }
+    final fraction = (tcx - balloonLeft) / 320.0;
+    if (fraction < 0.33) return BTTooltipArrowPosition.left;
+    if (fraction < 0.67) return BTTooltipArrowPosition.mid;
+    return BTTooltipArrowPosition.right;
+  }
+
+  void _showAt(int idx) {
+    if (_navigating) return;
+    _removeEntries();
+    _animCtrl.reset();
+    _insertEntries(idx);
+    _animCtrl.forward();
     setState(() { _activeIdx = idx; });
   }
 
+  /// Animate out → swap → animate in.
+  void _navigate(int idx) {
+    if (_navigating) return;
+    _navigating = true;
+    _animCtrl.reverse().then((_) {
+      if (!mounted) return;
+      _removeEntries();
+      _animCtrl.reset();
+      _insertEntries(idx);
+      _animCtrl.forward().then((_) {
+        if (mounted) setState(() { _navigating = false; });
+      });
+      setState(() { _activeIdx = idx; });
+    });
+  }
+
   void _close() {
-    _removeEntry();
-    if (mounted) setState(() { _activeIdx = -1; });
+    if (_navigating) return;
+    _animCtrl.reverse().then((_) {
+      if (!mounted) return;
+      _removeEntries();
+      setState(() { _activeIdx = -1; });
+    });
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────

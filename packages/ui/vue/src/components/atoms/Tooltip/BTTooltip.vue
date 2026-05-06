@@ -55,24 +55,17 @@ const isVisible = ref(false);
 let showTimer: ReturnType<typeof setTimeout> | null = null;
 let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
-// ── Arrow geometry helpers ─────────────────────────────────────────────────
+// ── Positioning ────────────────────────────────────────────────────────────
 
 const GAP = 4; // px between trigger edge and balloon
 
-/** Map arrow-position to horizontal offset (0..1) of the arrow's centre. */
-function arrowFraction(ap: BTTooltipArrowPosition): number {
-  const map: Record<BTTooltipArrowPosition, number> = {
-    left: 17 / 320,
-    'left-mid': 0.25,
-    mid: 0.5,
-    'right-mid': 0.75,
-    right: (320 - 17) / 320,
-  };
-  return map[ap] ?? 0.5;
-}
-
-// ── Positioning ────────────────────────────────────────────────────────────
-
+/**
+ * Positions the balloon so that its arrow points at the trigger's centre,
+ * then clamps the balloon to the viewport.  After clamping, --bt-arrow-offset
+ * is updated to the actual px distance from the balloon edge to the trigger
+ * centre, so the arrow always points accurately even when the balloon is
+ * clamped near a viewport edge.
+ */
 function updatePosition(): void {
   const trigger = triggerRef.value;
   const balloon = balloonRef.value;
@@ -83,7 +76,10 @@ function updatePosition(): void {
   const bh = balloon.offsetHeight;
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const af = arrowFraction(props.arrowPosition);
+
+  // Trigger centre coords (for arrow alignment)
+  const tcx = tr.left + tr.width / 2;
+  const tcy = tr.top + tr.height / 2;
 
   let top = 0;
   let left = 0;
@@ -91,20 +87,20 @@ function updatePosition(): void {
   switch (props.position) {
     case 'bottom':
       top = tr.bottom + GAP;
-      left = tr.left + tr.width / 2 - bw * af;
+      left = tcx - bw / 2; // centre balloon on trigger
       break;
     case 'left':
-      top = tr.top + tr.height / 2 - bh * af;
+      top = tcy - bh / 2;
       left = tr.left - bw - GAP;
       break;
     case 'right':
-      top = tr.top + tr.height / 2 - bh * af;
+      top = tcy - bh / 2;
       left = tr.right + GAP;
       break;
     case 'top':
     default:
       top = tr.top - bh - GAP;
-      left = tr.left + tr.width / 2 - bw * af;
+      left = tcx - bw / 2; // centre balloon on trigger
       break;
   }
 
@@ -114,6 +110,13 @@ function updatePosition(): void {
 
   balloon.style.top = `${top}px`;
   balloon.style.left = `${left}px`;
+
+  // Dynamic arrow offset: px from balloon edge to trigger centre
+  const arrowOffset =
+    (props.position === 'left' || props.position === 'right')
+      ? tcy - top  // vertical arrow: from top edge to trigger centre Y
+      : tcx - left; // horizontal arrow: from left edge to trigger centre X
+  balloon.style.setProperty('--bt-arrow-offset', `${arrowOffset}px`);
 }
 
 // ── Visibility ─────────────────────────────────────────────────────────────
@@ -183,12 +186,10 @@ const balloonClasses = computed(() => [
   isVisible.value ? 'bt-tooltip__balloon--visible' : '',
 ]);
 
-const arrowRowClass = computed(() =>
-  `bt-tooltip__arrow-row bt-tooltip__arrow-row--${props.arrowPosition}`,
-);
-const arrowColClass = computed(() =>
-  `bt-tooltip__arrow-col bt-tooltip__arrow-col--${props.arrowPosition}`,
-);
+// Arrow wrappers no longer need position-modifier classes — offset is
+// set dynamically via --bt-arrow-offset in updatePosition().
+const arrowRowClass = 'bt-tooltip__arrow-row';
+const arrowColClass = 'bt-tooltip__arrow-col';
 </script>
 
 <template>

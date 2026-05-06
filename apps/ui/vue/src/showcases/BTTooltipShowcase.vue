@@ -15,26 +15,26 @@ const stepVariants: BTTooltipStepVariant[] = ['button', 'link', 'centered'];
 interface DemoPoint {
   label: string;
   ttPos: BTTooltipPosition;
-  arrowPos: BTTooltipArrowPosition;
 }
 
 const demoPoints: DemoPoint[] = [
-  { label: 'Top Left',     ttPos: 'bottom', arrowPos: 'left'  },
-  { label: 'Top Center',   ttPos: 'bottom', arrowPos: 'mid'   },
-  { label: 'Top Right',    ttPos: 'bottom', arrowPos: 'right' },
-  { label: 'Center Left',  ttPos: 'right',  arrowPos: 'mid'   },
-  { label: 'Center',       ttPos: 'bottom', arrowPos: 'mid'   },
-  { label: 'Center Right', ttPos: 'left',   arrowPos: 'mid'   },
-  { label: 'Bottom Left',  ttPos: 'top',    arrowPos: 'left'  },
-  { label: 'Bottom Center',ttPos: 'top',    arrowPos: 'mid'   },
-  { label: 'Bottom Right', ttPos: 'top',    arrowPos: 'right' },
+  { label: 'Top Left',     ttPos: 'bottom' },
+  { label: 'Top Center',   ttPos: 'bottom' },
+  { label: 'Top Right',    ttPos: 'bottom' },
+  { label: 'Center Left',  ttPos: 'right'  },
+  { label: 'Center',       ttPos: 'bottom' },
+  { label: 'Center Right', ttPos: 'left'   },
+  { label: 'Bottom Left',  ttPos: 'top'    },
+  { label: 'Bottom Center',ttPos: 'top'    },
+  { label: 'Bottom Right', ttPos: 'top'    },
 ];
 
 const demoVariant = ref<BTTooltipStepVariant>('button');
 const activeIdx = ref(-1);
 const stepPos = ref({ top: 0, left: 0 });
 const activeTTPos = ref<BTTooltipPosition>('bottom');
-const activeArrowPos = ref<BTTooltipArrowPosition>('mid');
+// Precise arrow offset computed from trigger centre after viewport clamping
+const stepArrowOffset = ref('50%');
 
 // Refs for each button element (populated via :ref callback in template)
 const btnRefs = ref<HTMLElement[]>([]);
@@ -49,29 +49,33 @@ function showStep(idx: number) {
   const rect = btn.getBoundingClientRect();
   const pt = demoPoints[idx];
   activeTTPos.value = pt.ttPos;
-  activeArrowPos.value = pt.arrowPos;
 
   const BALLOON_W = 320;
-  const BALLOON_H = 150;
+  const BALLOON_H = 160;
   const ARROW = 8;
   const GAP = 4;
 
-  let top = 0, left = 0;
+  let top = 0;
+  let left = 0;
+
+  const tcx = rect.left + rect.width / 2;
+  const tcy = rect.top + rect.height / 2;
+
   switch (pt.ttPos) {
     case 'top':
       top  = rect.top  - BALLOON_H - ARROW - GAP;
-      left = rect.left + rect.width / 2 - BALLOON_W / 2;
+      left = tcx - BALLOON_W / 2;
       break;
     case 'bottom':
       top  = rect.bottom + ARROW + GAP;
-      left = rect.left + rect.width / 2 - BALLOON_W / 2;
+      left = tcx - BALLOON_W / 2;
       break;
     case 'left':
-      top  = rect.top  + rect.height / 2 - BALLOON_H / 2;
+      top  = tcy - BALLOON_H / 2;
       left = rect.left - BALLOON_W - ARROW - GAP;
       break;
     case 'right':
-      top  = rect.top  + rect.height / 2 - BALLOON_H / 2;
+      top  = tcy - BALLOON_H / 2;
       left = rect.right + ARROW + GAP;
       break;
   }
@@ -79,6 +83,13 @@ function showStep(idx: number) {
   // Clamp to viewport
   left = Math.max(8, Math.min(left, window.innerWidth  - BALLOON_W - 8));
   top  = Math.max(8, Math.min(top,  window.innerHeight - BALLOON_H - 8));
+
+  // Dynamic arrow offset: px from balloon edge to trigger centre
+  const offset =
+    (pt.ttPos === 'left' || pt.ttPos === 'right')
+      ? tcy - top   // vertical arrow → from balloon top to trigger centre Y
+      : tcx - left; // horizontal arrow → from balloon left to trigger centre X
+  stepArrowOffset.value = `${offset}px`;
 
   stepPos.value = { top, left };
   activeIdx.value = idx;
@@ -233,28 +244,41 @@ onUnmounted(closeStep);
         </button>
       </div>
 
-      <!-- Overlay via Teleport -->
+      <!-- Overlay via Teleport — backdrop + step with enter/leave animation -->
       <Teleport to="body">
-        <div
-          v-if="activeIdx >= 0"
-          class="step-overlay"
-          :style="{ top: stepPos.top + 'px', left: stepPos.left + 'px' }"
-        >
-          <BTTooltipStep
-            :label="demoPoints[activeIdx].label"
-            :description="`Ini adalah langkah ${activeIdx + 1} dari ${demoPoints.length}.`"
-            :step-label="`Step ${activeIdx + 1} of ${demoPoints.length}`"
-            :step-variant="demoVariant"
-            has-close
-            prev-label="Kembali"
-            next-label="Selanjutnya"
-            :position="activeTTPos"
-            :arrow-position="activeArrowPos"
-            @prev="goPrev"
-            @next="goNext"
-            @close="closeStep"
+        <!-- Dark modal-style backdrop -->
+        <Transition name="backdrop">
+          <div
+            v-if="activeIdx >= 0"
+            class="step-backdrop"
+            @click="closeStep"
           />
-        </div>
+        </Transition>
+
+        <!-- Step balloon with ease-in-out transition per step change -->
+        <Transition name="coachmark" mode="out-in">
+          <div
+            v-if="activeIdx >= 0"
+            :key="activeIdx"
+            class="step-overlay"
+            :style="{ top: stepPos.top + 'px', left: stepPos.left + 'px' }"
+          >
+            <BTTooltipStep
+              :label="demoPoints[activeIdx].label"
+              :description="`Ini adalah langkah ${activeIdx + 1} dari ${demoPoints.length}.`"
+              :step-label="`Step ${activeIdx + 1} of ${demoPoints.length}`"
+              :step-variant="demoVariant"
+              has-close
+              prev-label="Kembali"
+              next-label="Selanjutnya"
+              :position="activeTTPos"
+              :arrow-offset="stepArrowOffset"
+              @prev="goPrev"
+              @next="goNext"
+              @close="closeStep"
+            />
+          </div>
+        </Transition>
       </Teleport>
 
     </template>
@@ -291,7 +315,6 @@ onUnmounted(closeStep);
 .demo-grid {
   position: relative;
   display: grid;
-  /* 3×3: corners + edges + center — use named areas */
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto 1fr auto;
   gap: 0;
@@ -315,7 +338,7 @@ onUnmounted(closeStep);
 }
 
 .demo-grid-btn {
-  padding: 10px 14px;
+  padding: 8px 12px;
   border: none;
   border-radius: 6px;
   margin: 12px;
@@ -327,21 +350,42 @@ onUnmounted(closeStep);
   white-space: nowrap;
   transition: background 0.1s;
   align-self: start;
+  /* prevent center button from stretching too wide */
+  justify-self: center;
 }
 
-/* Align middle-row buttons to center vertically */
 .demo-grid-btn:nth-child(n+5):nth-child(-n+7) { align-self: center; }
-
-/* Bottom row aligned to end */
 .demo-grid-btn:nth-child(n+8) { align-self: end; }
+/* center button (5th) — keep compact */
+.demo-grid-btn:nth-child(6) { justify-self: center; }
 
 .demo-grid-btn--active { background: #1e293b; }
 .demo-grid-btn:hover:not(.demo-grid-btn--active) { background: #3b8a4b; }
 
-/* ── Overlay ── */
+/* ── Backdrop ── */
+.step-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1999;
+}
+
+/* ── Step overlay ── */
 .step-overlay {
   position: fixed;
   z-index: 2000;
   pointer-events: all;
 }
+
+/* ── Backdrop transition ── */
+.backdrop-enter-active { transition: opacity 0.2s ease; }
+.backdrop-leave-active { transition: opacity 0.15s ease; }
+.backdrop-enter-from,
+.backdrop-leave-to    { opacity: 0; }
+
+/* ── Coachmark step transition (ease in/out per step) ── */
+.coachmark-enter-active { transition: opacity 0.18s ease, transform 0.18s ease; }
+.coachmark-leave-active { transition: opacity 0.12s ease, transform 0.12s ease; }
+.coachmark-enter-from   { opacity: 0; transform: scale(0.92); }
+.coachmark-leave-to     { opacity: 0; transform: scale(0.92); }
 </style>

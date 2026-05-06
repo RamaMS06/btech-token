@@ -53,17 +53,6 @@ export interface BTTooltipReactProps {
 
 const GAP = 4;
 
-function arrowFraction(ap: BTTooltipArrowPosition): number {
-  const map: Record<BTTooltipArrowPosition, number> = {
-    left: 17 / 320,
-    'left-mid': 0.25,
-    mid: 0.5,
-    'right-mid': 0.75,
-    right: (320 - 17) / 320,
-  };
-  return map[ap] ?? 0.5;
-}
-
 function getArrowPath(position: BTTooltipPosition): string {
   switch (position) {
     case 'bottom': return 'M0 8 L7 1 Q8 0 9 1 L16 8 Z';
@@ -108,7 +97,10 @@ export function BTTooltip({
     const bh = balloon.offsetHeight;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const af = arrowFraction(arrowPosition);
+
+    // Trigger centre coords (for arrow alignment)
+    const tcx = tr.left + tr.width / 2;
+    const tcy = tr.top + tr.height / 2;
 
     let top = 0;
     let left = 0;
@@ -116,20 +108,20 @@ export function BTTooltip({
     switch (position) {
       case 'bottom':
         top = tr.bottom + GAP;
-        left = tr.left + tr.width / 2 - bw * af;
+        left = tcx - bw / 2;
         break;
       case 'left':
-        top = tr.top + tr.height / 2 - bh * af;
+        top = tcy - bh / 2;
         left = tr.left - bw - GAP;
         break;
       case 'right':
-        top = tr.top + tr.height / 2 - bh * af;
+        top = tcy - bh / 2;
         left = tr.right + GAP;
         break;
       case 'top':
       default:
         top = tr.top - bh - GAP;
-        left = tr.left + tr.width / 2 - bw * af;
+        left = tcx - bw / 2;
         break;
     }
 
@@ -138,7 +130,14 @@ export function BTTooltip({
 
     balloon.style.top = `${top}px`;
     balloon.style.left = `${left}px`;
-  }, [position, arrowPosition]);
+
+    // Dynamic arrow offset: px from balloon edge to trigger centre
+    const arrowOffset =
+      (position === 'left' || position === 'right')
+        ? tcy - top
+        : tcx - left;
+    balloon.style.setProperty('--bt-arrow-offset', `${arrowOffset}px`);
+  }, [position]);
 
   const show = useCallback(() => {
     if (disabled) return;
@@ -178,8 +177,9 @@ export function BTTooltip({
     isVisible ? 'bt-tooltip__balloon--visible' : '',
   ].join(' ');
 
-  const arrowRowClass = `bt-tooltip__arrow-row bt-tooltip__arrow-row--${arrowPosition}`;
-  const arrowColClass = `bt-tooltip__arrow-col bt-tooltip__arrow-col--${arrowPosition}`;
+  // Arrow wrappers use no modifier classes — offset set via --bt-arrow-offset in updatePosition
+  const arrowRowClass = 'bt-tooltip__arrow-row';
+  const arrowColClass = 'bt-tooltip__arrow-col';
 
   const arrowSvg = (
     <svg

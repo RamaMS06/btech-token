@@ -56,44 +56,45 @@
 /*
   Arrow is a 16×8 (horizontal) or 8×16 (vertical) SVG caret with a
   slightly rounded tip (path "M0 8 L7 1 Q8 0 9 1 L16 8 Z").
-  It sits between the trigger and the balloon body.
+  Position is set dynamically via --bt-arrow-offset (px from balloon edge
+  to trigger centre), so the arrow always points at the trigger's centre
+  even after viewport clamping.
 */
 
 .bt-tooltip__arrow {
   display: block;
   flex-shrink: 0;
-  /* SVG dimensions set inline: 16×8 for top/bottom, 8×16 for left/right */
 }
 
-/* Arrow wrapper — horizontal row for left/right, column for top/bottom */
+/* Arrow wrapper — horizontal (top / bottom arrows).
+   JS sets --bt-arrow-offset = triggerCenterX − clampedBalloonLeft. */
 .bt-tooltip__arrow-row {
-  display: flex;
+  position: relative;
   width: 100%;
-  padding: 0 16px; /* match body horizontal padding for edge-aligned arrows */
-  box-sizing: border-box;
+  height: 8px;
+  flex-shrink: 0;
 }
 
-/* arrow position along horizontal axis (top / bottom arrows) */
-.bt-tooltip__arrow-row--left      { justify-content: flex-start; }
-.bt-tooltip__arrow-row--left-mid  { justify-content: flex-start; padding-left: calc(25% - 8px); }
-.bt-tooltip__arrow-row--mid       { justify-content: center; }
-.bt-tooltip__arrow-row--right-mid { justify-content: flex-end; padding-right: calc(25% - 8px); }
-.bt-tooltip__arrow-row--right     { justify-content: flex-end; }
+.bt-tooltip__arrow-row .bt-tooltip__arrow {
+  position: absolute;
+  /* centre of arrow SVG lands on trigger centre */
+  left: calc(var(--bt-arrow-offset, 50%) - 8px);
+}
 
-/* Arrow wrapper — vertical column for left/right arrows */
+/* Arrow wrapper — vertical (left / right arrows).
+   JS sets --bt-arrow-offset = triggerCenterY − clampedBalloonTop. */
 .bt-tooltip__arrow-col {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 8px 0;
-  box-sizing: border-box;
+  position: relative;
+  width: 8px;
+  flex-shrink: 0;
+  align-self: stretch;
 }
 
-.bt-tooltip__arrow-col--left      { justify-content: flex-start; }
-.bt-tooltip__arrow-col--left-mid  { justify-content: flex-start; padding-top: calc(25% - 8px); }
-.bt-tooltip__arrow-col--mid       { justify-content: center; }
-.bt-tooltip__arrow-col--right-mid { justify-content: flex-end; padding-bottom: calc(25% - 8px); }
-.bt-tooltip__arrow-col--right     { justify-content: flex-end; }
+.bt-tooltip__arrow-col .bt-tooltip__arrow {
+  position: absolute;
+  /* centre of arrow SVG lands on trigger centre */
+  top: calc(var(--bt-arrow-offset, 50%) - 8px);
+}
 
 /* ── Balloon layout: arrow + body ── */
 

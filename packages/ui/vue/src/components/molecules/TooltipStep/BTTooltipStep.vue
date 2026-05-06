@@ -45,6 +45,12 @@ const props = withDefaults(
     nextLabel?: string;
     position?: BTTooltipStepPosition;
     arrowPosition?: BTTooltipStepArrowPosition;
+    /**
+     * Optional dynamic arrow offset (e.g. "120px") — overrides the
+     * arrowPosition enum when provided.  Used by coachmark overlays that
+     * compute the exact trigger-centre distance after viewport clamping.
+     */
+    arrowOffset?: string;
   }>(),
   {
     stepVariant: 'button',
@@ -116,10 +122,16 @@ const footerClass = computed(() => [
 
 <template>
   <div :class="outerClass" role="dialog" aria-modal="false">
-    <!-- Arrow (horizontal: row wrapper; vertical: col wrapper) -->
+    <!-- Arrow (horizontal: row wrapper; vertical: col wrapper).
+         arrowOffset prop sets --bt-arrow-offset inline (beats the class-based
+         enum default), enabling pixel-accurate arrow pointing in overlays. -->
     <template v-if="!isHorizontalPosition">
-      <div :class="arrowRowClass">
+      <div
+        :class="arrowRowClass"
+        :style="arrowOffset ? { '--bt-arrow-offset': arrowOffset } : undefined"
+      >
         <svg
+          class="bt-tooltip-step__arrow"
           :width="arrowWidth"
           :height="arrowHeight"
           :viewBox="arrowViewBox"
@@ -131,8 +143,12 @@ const footerClass = computed(() => [
       </div>
     </template>
     <template v-else>
-      <div :class="arrowColClass">
+      <div
+        :class="arrowColClass"
+        :style="arrowOffset ? { '--bt-arrow-offset': arrowOffset } : undefined"
+      >
         <svg
+          class="bt-tooltip-step__arrow"
           :width="arrowWidth"
           :height="arrowHeight"
           :viewBox="arrowViewBox"

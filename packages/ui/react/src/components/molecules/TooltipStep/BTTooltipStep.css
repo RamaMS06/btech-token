@@ -17,33 +17,54 @@
 .bt-tooltip-step--left   { flex-direction: row-reverse; align-items: flex-start; width: auto; }
 .bt-tooltip-step--right  { flex-direction: row;         align-items: flex-start; width: auto; }
 
-/* ── Arrow row / col (same layout helpers as BTTooltip) ── */
+/* ── Arrow row / col ──────────────────────────────────────────────────────────
+   Arrow position is driven by the CSS custom property --bt-arrow-offset:
+     • horizontal (top/bottom): px from the balloon's left edge to arrow centre
+     • vertical   (left/right): px from the balloon's top  edge to arrow centre
 
+   Default values come from the arrowPosition modifier class (enum-to-px map).
+   The parent showcase can override by setting an arrowOffset prop, which the
+   component applies as an inline style (inline > class specificity).         */
+
+/* Enum-based fallback values ─────────────────────────────────────────────── */
+.bt-tooltip-step__arrow-row--left      { --bt-arrow-offset: 24px; }
+.bt-tooltip-step__arrow-row--left-mid  { --bt-arrow-offset: 25%; }
+.bt-tooltip-step__arrow-row--mid       { --bt-arrow-offset: 50%; }
+.bt-tooltip-step__arrow-row--right-mid { --bt-arrow-offset: 75%; }
+.bt-tooltip-step__arrow-row--right     { --bt-arrow-offset: calc(100% - 24px); }
+
+.bt-tooltip-step__arrow-col--left      { --bt-arrow-offset: 24px; }
+.bt-tooltip-step__arrow-col--left-mid  { --bt-arrow-offset: 25%; }
+.bt-tooltip-step__arrow-col--mid       { --bt-arrow-offset: 50%; }
+.bt-tooltip-step__arrow-col--right-mid { --bt-arrow-offset: 75%; }
+.bt-tooltip-step__arrow-col--right     { --bt-arrow-offset: calc(100% - 24px); }
+
+/* Horizontal arrow wrapper (top / bottom) */
 .bt-tooltip-step__arrow-row {
-  display: flex;
+  position: relative;
   width: 320px;
   max-width: calc(100vw - 32px);
-  padding: 0 16px;
-  box-sizing: border-box;
+  height: 8px;
+  flex-shrink: 0;
 }
-.bt-tooltip-step__arrow-row--left      { justify-content: flex-start; }
-.bt-tooltip-step__arrow-row--left-mid  { justify-content: flex-start; padding-left: calc(25% - 8px); }
-.bt-tooltip-step__arrow-row--mid       { justify-content: center; }
-.bt-tooltip-step__arrow-row--right-mid { justify-content: flex-end; padding-right: calc(25% - 8px); }
-.bt-tooltip-step__arrow-row--right     { justify-content: flex-end; }
 
+.bt-tooltip-step__arrow-row .bt-tooltip-step__arrow {
+  position: absolute;
+  left: calc(var(--bt-arrow-offset, 50%) - 8px);
+}
+
+/* Vertical arrow wrapper (left / right) */
 .bt-tooltip-step__arrow-col {
-  display: flex;
-  flex-direction: column;
-  padding: 8px 0;
-  box-sizing: border-box;
+  position: relative;
+  width: 8px;
+  flex-shrink: 0;
   align-self: stretch;
 }
-.bt-tooltip-step__arrow-col--left      { justify-content: flex-start; }
-.bt-tooltip-step__arrow-col--left-mid  { justify-content: flex-start; padding-top: calc(25% - 8px); }
-.bt-tooltip-step__arrow-col--mid       { justify-content: center; }
-.bt-tooltip-step__arrow-col--right-mid { justify-content: flex-end; padding-bottom: calc(25% - 8px); }
-.bt-tooltip-step__arrow-col--right     { justify-content: flex-end; }
+
+.bt-tooltip-step__arrow-col .bt-tooltip-step__arrow {
+  position: absolute;
+  top: calc(var(--bt-arrow-offset, 50%) - 8px);
+}
 
 /* ── Body card ── */
 
@@ -157,7 +178,7 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 6px 16px;
+  padding: 6px 12px;
   border-radius: var(--radius-sm);
   font-family: var(--typography-font-family-sans);
   font-size: 12px;

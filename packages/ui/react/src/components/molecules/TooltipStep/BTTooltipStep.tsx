@@ -20,7 +20,7 @@
  * />
  * ```
  */
-import { type ReactNode } from 'react';
+import { type ReactNode, type CSSProperties } from 'react';
 import type {
   BTTooltipStepVariant,
   BTTooltipStepPosition,
@@ -38,6 +38,12 @@ export interface BTTooltipStepReactProps {
   nextLabel?: string;
   position?: BTTooltipStepPosition;
   arrowPosition?: BTTooltipStepArrowPosition;
+  /**
+   * Optional dynamic arrow offset (e.g. "120px") — overrides the
+   * arrowPosition enum when provided.  Used by coachmark overlays that
+   * compute the exact trigger-centre distance after viewport clamping.
+   */
+  arrowOffset?: string;
   /** Rich content rendered between description and footer. */
   children?: ReactNode;
   onPrev?: () => void;
@@ -65,6 +71,7 @@ export function BTTooltipStep({
   nextLabel = 'Next',
   position = 'top',
   arrowPosition = 'mid',
+  arrowOffset,
   children,
   onPrev,
   onNext,
@@ -79,7 +86,7 @@ export function BTTooltipStep({
   const hasFooter = !!(stepLabel || stepVariant);
 
   const arrowSvg = (
-    <svg width={arrowW} height={arrowH} viewBox={arrowViewBox} fill="none" aria-hidden="true">
+    <svg className="bt-tooltip-step__arrow" width={arrowW} height={arrowH} viewBox={arrowViewBox} fill="none" aria-hidden="true">
       <path d={arrowPath} fill="var(--bg-inverse)" />
     </svg>
   );
@@ -93,11 +100,21 @@ export function BTTooltipStep({
       role="dialog"
       aria-modal={false}
     >
-      {/* Arrow */}
+      {/* Arrow — arrowOffset prop overrides enum-based --bt-arrow-offset */}
       {!isHorizontal ? (
-        <div className={arrowRowClass}>{arrowSvg}</div>
+        <div
+          className={arrowRowClass}
+          style={arrowOffset ? { '--bt-arrow-offset': arrowOffset } as CSSProperties : undefined}
+        >
+          {arrowSvg}
+        </div>
       ) : (
-        <div className={arrowColClass}>{arrowSvg}</div>
+        <div
+          className={arrowColClass}
+          style={arrowOffset ? { '--bt-arrow-offset': arrowOffset } as CSSProperties : undefined}
+        >
+          {arrowSvg}
+        </div>
       )}
 
       {/* Body card */}
