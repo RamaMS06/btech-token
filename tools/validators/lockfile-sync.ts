@@ -119,10 +119,23 @@ const importers = parseLockfileImporters(readFileSync(LOCKFILE, 'utf-8'));
 // peerDependencies into `dependencies` of the importer. Comparing by
 // section produces false positives. Instead we flatten every specifier
 // per importer into a single `name → spec` map and compare those.
+//
+// Priority rule (package.json side only):
+//   dependencies > devDependencies > peerDependencies
+//
+// When a package appears in BOTH devDependencies AND peerDependencies
+// (e.g. react: ^18.3.1 in devDeps, react: >=18 in peerDeps), the
+// lockfile records the devDependency specifier. Using last-write-wins
+// would see >=18 and report a false drift. First-write-wins matches
+// pnpm's actual lockfile behaviour.
+//
+// For the lockfile side, pnpm never duplicates a package across sections,
+// so first-write-wins vs last-write-wins makes no difference there.
 const SECTIONS = ['dependencies', 'devDependencies', 'peerDependencies'] as const;
 type Drift = { importer: string; name: string; lockfile: string; pkgJson: string };
 const drifts: Drift[] = [];
 
+/** Flatten a lockfile importer (last-write-wins — no dups in lockfile). */
 const flatten = (obj: Importer | Record<string, unknown>): SpecMap => {
   const out: SpecMap = {};
   for (const section of SECTIONS) {
@@ -130,6 +143,25 @@ const flatten = (obj: Importer | Record<string, unknown>): SpecMap => {
     if (!specs) continue;
     for (const [name, val] of Object.entries(specs)) {
       if (typeof val === 'string') out[name] = val;
+    }
+  }
+  return out;
+};
+
+/**
+ * Flatten a package.json (first-write-wins).
+ *
+ * devDependencies takes precedence over peerDependencies when both list
+ * the same package. This mirrors pnpm's lockfile recording behaviour:
+ * the lockfile stores the devDependency specifier, not the peer specifier.
+ */
+const flattenPkg = (pkg: Record<string, unknown>): SpecMap => {
+  const out: SpecMap = {};
+  for (const section of SECTIONS) {
+    const specs = (pkg as Record<string, SpecMap | undefined>)[section];
+    if (!specs) continue;
+    for (const [name, val] of Object.entries(specs)) {
+      if (typeof val === 'string' && !(name in out)) out[name] = val;
     }
   }
   return out;
@@ -143,7 +175,7 @@ for (const imp of importers) {
   }
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
   const lockFlat = flatten(imp);
-  const pkgFlat = flatten(pkg);
+  const pkgFlat = flattenPkg(pkg);
 
   const names = new Set([...Object.keys(lockFlat), ...Object.keys(pkgFlat)]);
   for (const name of names) {
