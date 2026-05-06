@@ -187,7 +187,7 @@ async function build(): Promise<void> {
       }
 
       const item: RegistryItem = {
-        $schema: 'https://ramaMS06.github.io/btech-token/schema/registry-item.json',
+        $schema: 'https://buma-id.github.io/btech-registry/schema/registry-item.json',
         name: slug,
         type: 'registry:ui',
         title: meta.name,
@@ -230,7 +230,7 @@ async function build(): Promise<void> {
       indexPath,
       JSON.stringify(
         {
-          $schema: 'https://ramaMS06.github.io/btech-token/schema/registry.json',
+          $schema: 'https://buma-id.github.io/btech-registry/schema/registry.json',
           framework: fw.id,
           version: '0.1.0',
           items: indexItems,

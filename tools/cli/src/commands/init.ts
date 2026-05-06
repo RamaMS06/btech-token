@@ -6,7 +6,7 @@ import { detectFramework } from '../detectors/framework.js';
 import { configSchema, CONFIG_FILE } from '../schemas/config.js';
 import type { BtechConfig, Framework } from '../schemas/config.js';
 
-const REGISTRY_URL = 'https://ramaMS06.github.io/btech-token';
+const REGISTRY_URL = 'https://buma-id.github.io/btech-registry';
 
 export async function runInit(cwd: string): Promise<void> {
   console.log(pc.bold('\n  btech init\n'));
@@ -74,7 +74,7 @@ export async function runInit(cwd: string): Promise<void> {
 
   writeFileSync(
     configPath,
-    JSON.stringify({ $schema: 'https://ramaMS06.github.io/btech-token/schema/config.json', ...config }, null, 2),
+    JSON.stringify({ $schema: 'https://buma-id.github.io/btech-registry/schema/config.json', ...config }, null, 2),
     'utf-8',
   );
 

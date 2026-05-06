@@ -1,5 +1,5 @@
 {
-  "$schema": "https://ramaMS06.github.io/btech-token/schema/registry-item.json",
+  "$schema": "https://buma-id.github.io/btech-registry/schema/registry-item.json",
   "name": "radio-button",
   "type": "registry:ui",
   "title": "BTRadioButton",

@@ -7,7 +7,7 @@ import type { Framework } from '../schemas/config.js';
 
 export async function runList(cwd: string, frameworkOverride?: string): Promise<void> {
   let framework: Framework;
-  let registryUrl = 'https://ramaMS06.github.io/btech-token';
+  let registryUrl = 'https://buma-id.github.io/btech-registry';
 
   const configPath = join(cwd, CONFIG_FILE);
   if (existsSync(configPath)) {
