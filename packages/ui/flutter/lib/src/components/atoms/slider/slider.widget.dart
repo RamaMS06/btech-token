@@ -242,7 +242,8 @@ class _BTSliderState extends State<BTSlider> {
       activeTrackColor:   active,
       inactiveTrackColor: inactive,
       thumbColor:         active,
-      overlayColor:       active.withValues(alpha: 0.12),
+      // No press ripple — Figma has no overlay on thumb
+      overlayColor:       Colors.transparent,
       valueIndicatorColor: const Color(0xFF292F37),
       valueIndicatorTextStyle: const TextStyle(
         color: Colors.white,

@@ -87,7 +87,8 @@ const vThumbStyle = computed(() => ({
   left: '50%',
 }));
 const vTooltipStyle = computed(() => ({
-  bottom: `calc(${toRatio(val.value)} * (100% - 24px) + 12px)`,
+  // +12px removed — translateY(50%) already centers tooltip on thumb center
+  bottom: `calc(${toRatio(val.value)} * (100% - 24px))`,
 }));
 
 const tooltipStyle   = computed(() => ({ left: hLeft(toRatio(val.value)) }));

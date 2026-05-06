@@ -83,8 +83,9 @@ export function BTSlider({
     bottom: `calc(${toRatio(val, min, max)} * (100% - 24px))`,
     left: '50%',
   };
+  // +12px removed — translateY(50%) in CSS already centers tooltip on thumb center
   const vTooltipStyle    = {
-    bottom: `calc(${toRatio(val, min, max)} * (100% - 24px) + 12px)`,
+    bottom: `calc(${toRatio(val, min, max)} * (100% - 24px))`,
   };
   const tooltipStyle     = { left: hLeft(toRatio(val, min, max)) };
   const ttStartStyle     = { left: hLeft(toRatio(start, min, max)) };
