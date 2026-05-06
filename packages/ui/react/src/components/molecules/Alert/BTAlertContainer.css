@@ -22,21 +22,36 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-/* ── TransitionGroup slide animation ── */
-.bt-alert-slide-enter-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+/* ── Keyframes ── */
+
+@keyframes bt-alert-enter {
+  from {
+    opacity: 0;
+    transform: translateX(calc(100% + 48px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
-.bt-alert-slide-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+
+@keyframes bt-alert-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(calc(100% + 48px));
+  }
 }
-.bt-alert-slide-enter-from {
-  opacity: 0;
-  transform: translateX(16px);
+
+/* ── Per-item wrapper ── */
+
+.bt-alert-item {
+  animation: bt-alert-enter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-.bt-alert-slide-leave-to {
-  opacity: 0;
-  transform: translateX(16px);
-}
-.bt-alert-slide-move {
-  transition: transform 0.18s ease;
+
+.bt-alert-item--exiting {
+  animation: bt-alert-exit 0.22s ease-in forwards;
 }

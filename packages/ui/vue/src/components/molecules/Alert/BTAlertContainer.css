@@ -9,6 +9,7 @@
 }
 
 .bt-alert-container__inner {
+  position: relative; /* needed for absolute-positioned leaving items */
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -23,20 +24,38 @@
 }
 
 /* ── TransitionGroup slide animation ── */
+
+/* Enter — slides in from the right edge of the screen */
 .bt-alert-slide-enter-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.bt-alert-slide-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
+
 .bt-alert-slide-enter-from {
   opacity: 0;
-  transform: translateX(16px);
+  transform: translateX(calc(100% + 48px));
 }
+
+/* Leave — slides back to the right and fades out.
+   position: absolute removes the item from the flex flow immediately so
+   the siblings can start their move transition right away. */
+.bt-alert-slide-leave-active {
+  transition:
+    opacity 0.22s ease-in,
+    transform 0.22s ease-in;
+  position: absolute;
+  width: 360px;
+  max-width: calc(100vw - 48px);
+  right: 0;
+}
+
 .bt-alert-slide-leave-to {
   opacity: 0;
-  transform: translateX(16px);
+  transform: translateX(calc(100% + 48px));
 }
+
+/* Sibling items smoothly shift into the vacated space */
 .bt-alert-slide-move {
-  transition: transform 0.18s ease;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
