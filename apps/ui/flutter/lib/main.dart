@@ -8,6 +8,7 @@ import 'showcases/checkbox_showcase.dart';
 import 'showcases/hint_showcase.dart';
 import 'showcases/loading_skeleton_showcase.dart';
 import 'showcases/radio_button_showcase.dart';
+import 'showcases/tabs_showcase.dart';
 
 void main() => runApp(const ShowcaseApp());
 
@@ -66,6 +67,11 @@ const _pages = <_ShowcasePage>[
     group: 'Molecules',
     label: 'Loading',
     child: BTLoadingSkeletonShowcase(),
+  ),
+  _ShowcasePage(
+    group: 'Molecules',
+    label: 'Tabs',
+    child: BTTabsShowcase(),
   ),
 ];
 

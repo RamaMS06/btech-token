@@ -1,0 +1,22 @@
+schemaVersion: 1
+name: BTTabs
+category: molecules
+figmaNodeId: '1:53'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/BTech-Design-System?node-id=1-53
+description: >
+  Tab strip molecule with two variants: segmented (pill tray) and line
+  (underline). Controlled widget — caller manages activeIndex state.
+  Supports optional leading/trailing icon builders per tab index.
+props:
+  - { name: variant, type: BTTabsVariant, default: BTTabsVariant.segmented }
+  - { name: tabs, type: 'List<BTTabItem>', required: true }
+  - { name: activeIndex, type: int, default: 0 }
+  - { name: onActiveIndexChange, type: 'ValueChanged<int>?', required: false }
+  - { name: leadingIconBuilder, type: 'Widget? Function(int)?', required: false }
+  - { name: trailingIconBuilder, type: 'Widget? Function(int)?', required: false }
+enums:
+  - name: BTTabsVariant
+    values: [segmented, line]
+variants:
+  - { name: segmented, description: 'Pill-style tray. Active tab has filled primary background.' }
+  - { name: line, description: 'Flat row. Active tab has primary underline border.' }

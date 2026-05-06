@@ -9,6 +9,7 @@ import { BTButtonLinkShowcase } from './showcases/BTButtonLinkShowcase';
 import { BTCheckboxShowcase } from './showcases/BTCheckboxShowcase';
 import { BTHintShowcase } from './showcases/BTHintShowcase';
 import { BTRadioButtonShowcase } from './showcases/BTRadioButtonShowcase';
+import { BTTabsShowcase } from './showcases/BTTabsShowcase';
 
 // ── Sidebar registry ──────────────────────────────────────────────────────────
 // Add new entries here as components are sliced. Group = atomic-design layer.
@@ -28,6 +29,7 @@ const PAGES: ShowcasePage[] = [
   { id: 'hint',        group: 'Atoms',     label: 'Hint',        component: <BTHintShowcase /> },
   { id: 'radio',       group: 'Atoms',     label: 'Radio Button', component: <BTRadioButtonShowcase /> },
   { id: 'avatar',      group: 'Molecules', label: 'Avatar',      component: <BTAvatarShowcase /> },
+  { id: 'tabs',        group: 'Molecules', label: 'Tabs',        component: <BTTabsShowcase /> },
 ];
 
 // Group pages by their group label, preserving insertion order

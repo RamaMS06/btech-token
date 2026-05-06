@@ -9,6 +9,7 @@ Dalam BTech Design System, molecules mencakup komponen seperti avatar yang mengg
 | Component | Description | Figma |
 |---|---|---|
 | [BTAvatar](./avatar.md) | Representasi visual pengguna dengan gambar, inisial, atau placeholder loading | [497-979] |
+| [BTTabs](./tabs.md) | Tab strip dengan dua variant: segmented (pill tray) dan line (underline) | [1-53] |
 
 ## Prinsip penggunaan
 
