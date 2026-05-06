@@ -51,7 +51,7 @@ class _BTAlertToastState extends State<BTAlertToast>
       duration: const Duration(milliseconds: 200),
     );
     _slide = Tween<Offset>(
-      begin: const Offset(0.1, 0),
+      begin: const Offset(0, 0.3),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
     _fade = Tween<double>(begin: 0, end: 1).animate(_ctrl);
@@ -80,7 +80,7 @@ class _BTAlertToastState extends State<BTAlertToast>
     final r = context.btechRadius;
 
     return Positioned(
-      bottom: 24,
+      bottom: 96,
       right: 24,
       child: FadeTransition(
         opacity: _fade,
