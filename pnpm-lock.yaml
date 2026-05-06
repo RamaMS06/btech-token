@@ -76,9 +76,9 @@ importers:
 
   apps/ui/react:
     dependencies:
-      '@btech/tokens-bspace':
+      '@btech/tokens':
         specifier: workspace:*
-        version: link:../../../packages/tokens/platforms/web/bspace
+        version: link:../../../packages/tokens/platforms/web/token
       '@btech/ui-react':
         specifier: workspace:*
         version: link:../../../packages/ui/react
@@ -134,7 +134,7 @@ importers:
         version: 8.18.0
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.2.4(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+        version: 1.7.0(next@16.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -3869,9 +3869,9 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  geist@1.7.0(next@16.2.4(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)):
+  geist@1.7.0(next@16.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)):
     dependencies:
-      next: 16.2.4(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next: 16.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
   generator-function@2.0.1: {}
 
@@ -4142,7 +4142,7 @@ snapshots:
 
   negotiator@1.0.0: {}
 
-  next@16.2.4(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next@16.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@next/env': 16.2.4
       '@swc/helpers': 0.5.15
@@ -4151,7 +4151,7 @@ snapshots:
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.6(@babel/core@7.29.0)(react@18.3.1)
+      styled-jsx: 5.1.6(react@18.3.1)
     optionalDependencies:
       '@next/swc-darwin-arm64': 16.2.4
       '@next/swc-darwin-x64': 16.2.4
@@ -4547,12 +4547,10 @@ snapshots:
     transitivePeerDependencies:
       - tslib
 
-  styled-jsx@5.1.6(@babel/core@7.29.0)(react@18.3.1):
+  styled-jsx@5.1.6(react@18.3.1):
     dependencies:
       client-only: 0.0.1
       react: 18.3.1
-    optionalDependencies:
-      '@babel/core': 7.29.0
 
   sucrase@3.35.1:
     dependencies:

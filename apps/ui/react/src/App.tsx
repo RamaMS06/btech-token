@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import '@btech/tokens-bspace/styles.css';
+import '@btech/tokens/styles.css';
 import '@btech/ui-react/styles.css';
 import './app.css';
 import { BTAvatarShowcase } from './showcases/BTAvatarShowcase';

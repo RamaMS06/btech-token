@@ -1,33 +1,50 @@
 // BTech UI — InnerShadowContainer
-// A Stack-based widget that draws an animated inner shadow via CustomPaint.
+// A Stack-based widget that draws an inner shadow via CustomPaint.
 //
 // Flutter's built-in BoxShadow(blurStyle: BlurStyle.inner) does not animate
 // cleanly and cannot lerp with BoxDecoration.  This widget uses the same
 // clip-and-translate CustomPainter technique as buma_design_system's
 // InnerShadowContainer so the button pressed state is visually identical.
 //
+// Animation is CALLER-DRIVEN: this widget is intentionally stateless and
+// contains no AnimationController.  The caller (e.g. BTButton's
+// AnimatedBuilder) lerps backgroundColor and shadowColor each frame and
+// rebuilds this widget with the interpolated values.  The painter
+// short-circuits immediately when shadowColor.alpha == 0, so there is
+// zero overdraw at rest.
+//
+// [animationDuration] and [animationCurve] are accepted for API
+// compatibility but are intentionally ignored — they were used by the old
+// AnimatedContainer/AnimatedOpacity approach which caused double-rebuild
+// flicker.
+//
 // Usage:
 // ```dart
 // BTInnerShadowContainer(
 //   borderRadius: context.btechRadius.sm,
-//   backgroundColor: colors.brand.primary,
-//   isShadowTopLeft: _pressed,
-//   isShadowTopRight: _pressed,
-//   shadowColor: const Color(0x40000000),
+//   backgroundColor: bg,          // already lerped by caller
+//   isShadowTopLeft: showShadow,
+//   isShadowTopRight: showShadow,
+//   shadowColor: shadowColor,      // alpha encodes opacity — 0x00 = no draw
 //   blur: 4,
 //   offset: const Offset(0, 4),
+//   animationDuration: Duration.zero,
 //   child: content,
 // )
 // ```
 
 import 'package:flutter/material.dart';
 
-/// A container that supports animated inner (inset) shadows via [CustomPaint].
+/// A stateless container that renders an inner (inset) shadow via
+/// [CustomPaint].
+///
+/// All animation is caller-driven — the caller lerps [backgroundColor] and
+/// [shadowColor] each frame.  When [shadowColor] has `alpha == 0` the painter
+/// exits immediately (no overdraw).  [animationDuration] and [animationCurve]
+/// are accepted but ignored.
 ///
 /// Toggle [isShadowTopLeft] / [isShadowTopRight] / [isShadowBottomLeft] /
-/// [isShadowBottomRight] to show the shadow from the corresponding edge.
-/// The visibility transition is driven by [animationDuration] +
-/// [animationCurve] via [AnimatedOpacity].
+/// [isShadowBottomRight] to enable the shadow from the corresponding edge.
 class BTInnerShadowContainer extends StatelessWidget {
   /// Creates a [BTInnerShadowContainer].
   const BTInnerShadowContainer({
@@ -46,8 +63,8 @@ class BTInnerShadowContainer extends StatelessWidget {
     this.shadowColor = Colors.black26,
     this.child,
     this.alignment = Alignment.center,
-    this.animationDuration = const Duration(milliseconds: 120),
-    this.animationCurve = Curves.easeOutCubic,
+    this.animationDuration = const Duration(milliseconds: 200),
+    this.animationCurve = Curves.linear,
   });
 
   /// The height of the container.
@@ -104,9 +121,9 @@ class BTInnerShadowContainer extends StatelessWidget {
         isShadowTopRight ||
         isShadowBottomRight ||
         isShadowBottomLeft;
-
     return Stack(
       children: [
+        // Plain Container — animation is driven externally by the caller.
         AnimatedContainer(
           duration: animationDuration,
           curve: animationCurve,
@@ -177,12 +194,8 @@ class _BTInnerShadowPainter extends CustomPainter {
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, blur);
 
     final rect = Offset.zero & size;
-    final rrect = RRect.fromRectAndRadius(
-      rect,
-      Radius.circular(borderRadius),
-    );
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
 
-    // Outer path: large rect that always surrounds the widget.
     final outer = Path()
       ..addRect(
         Rect.fromLTRB(
@@ -193,14 +206,12 @@ class _BTInnerShadowPainter extends CustomPainter {
         ),
       );
 
-    // Inner path: the widget's rounded shape (the "hole" in the wall).
     final inner = Path()
       ..addRRect(rrect)
       ..fillType = PathFillType.evenOdd;
 
     canvas.saveLayer(rect, Paint());
 
-    // Translates the "wall" so its edge bleeds inward from the desired corner.
     void drawShadow(double dx, double dy) {
       canvas
         ..save()
@@ -212,30 +223,14 @@ class _BTInnerShadowPainter extends CustomPainter {
         ..restore();
     }
 
-    if (isShadowBottomRight) {
-      drawShadow(-offset.dx.abs(), -offset.dy.abs());
-    }
-    if (isShadowBottomLeft) {
-      drawShadow(offset.dx.abs(), -offset.dy.abs());
-    }
-    if (isShadowTopLeft) {
-      drawShadow(offset.dx.abs(), offset.dy.abs());
-    }
-    if (isShadowTopRight) {
-      drawShadow(-offset.dx.abs(), offset.dy.abs());
-    }
+    if (isShadowBottomRight) drawShadow(-offset.dx.abs(), -offset.dy.abs());
+    if (isShadowBottomLeft) drawShadow(offset.dx.abs(), -offset.dy.abs());
+    if (isShadowTopLeft) drawShadow(offset.dx.abs(), offset.dy.abs());
+    if (isShadowTopRight) drawShadow(-offset.dx.abs(), offset.dy.abs());
 
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(_BTInnerShadowPainter old) =>
-      old.shadowColor != shadowColor ||
-      old.blur != blur ||
-      old.offset != offset ||
-      old.borderRadius != borderRadius ||
-      old.isShadowTopLeft != isShadowTopLeft ||
-      old.isShadowTopRight != isShadowTopRight ||
-      old.isShadowBottomRight != isShadowBottomRight ||
-      old.isShadowBottomLeft != isShadowBottomLeft;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

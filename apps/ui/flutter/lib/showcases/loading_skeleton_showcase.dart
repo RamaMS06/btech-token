@@ -3,7 +3,7 @@
 // Demonstrates the two constructors:
 //   BTLoadingSkeleton(enabled, child)       — full subtree shimmer
 //   BTLoadingSkeleton.leaf(enabled, child)  — single-node shimmer leaf
-import 'package:btech_tokens_bspace/btech_tokens_bspace.dart';
+import 'package:btech_tokens/btech_tokens.dart';
 import 'package:btech_ui/btech_ui.dart';
 import 'package:flutter/material.dart';
 

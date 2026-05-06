@@ -8,7 +8,7 @@
     "dev": "vite --port 5178"
   },
   "dependencies": {
-    "@btech/tokens-bspace": "workspace:*",
+    "@btech/tokens": "workspace:*",
     "@btech/ui-react": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

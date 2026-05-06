@@ -8,7 +8,7 @@
  * supports skeleton loading.
  */
 import { BTAvatar, BTAvatarGroup, type BTAvatarItem } from '@btech/ui-react';
-import { token } from '@btech/tokens-bspace';
+import { token } from '@btech/tokens';
 import type { CSSProperties } from 'react';
 
 const sectionStyle: CSSProperties = {

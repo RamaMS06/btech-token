@@ -4,7 +4,7 @@
 // Demonstrates the data-class API: pass a BTAvatarItem (with name,
 // optional imageUrl, optional color) and the widget auto-derives
 // initials, falls back image-error → initials, supports skeleton loading.
-import 'package:btech_tokens_bspace/btech_tokens_bspace.dart';
+import 'package:btech_tokens/btech_tokens.dart';
 import 'package:btech_ui/btech_ui.dart';
 import 'package:flutter/material.dart';
 

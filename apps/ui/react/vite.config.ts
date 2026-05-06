@@ -8,7 +8,7 @@ export default defineConfig({
     // Resolve workspace UI packages directly from source so HMR works
     // without needing `pnpm build` after each edit.
     alias: {
-      '@btech/ui-react': resolve(__dirname, '../../packages/ui/react/src'),
+      '@btech/ui-react': resolve(__dirname, '../../../packages/ui/react/src'),
     },
   },
   optimizeDeps: {

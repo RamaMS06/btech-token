@@ -72,7 +72,7 @@ import 'package:flutter/material.dart';
         border: colors.bg.subtlest,
       ),
     (BTButtonVariant.outline, BTButtonState.hoverOrPressed) => (
-        bg: colors.bg.subtle,
+        bg: colors.bg.subtler,
         fg: colors.text.primary,
         border: colors.border.primary,
       ),
@@ -89,7 +89,7 @@ import 'package:flutter/material.dart';
         border: null,
       ),
     (BTButtonVariant.ghost, BTButtonState.hoverOrPressed) => (
-        bg: colors.bg.subtle,
+        bg: colors.bg.subtler,
         fg: colors.text.primary,
         border: null,
       ),

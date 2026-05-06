@@ -2,7 +2,7 @@
 /**
  * BTButton — interactive action atom.
  * Figma source: node 114:2645.
- * All visual values come from Figma. Token CSS vars from @btech/tokens-bspace.
+ * All visual values come from Figma. Token CSS vars from @btech/tokens
  *
  * @example Primary (default)
  * <BTButton label="Save" />
