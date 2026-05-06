@@ -21,6 +21,7 @@ export * from './components/atoms/RadioButton/index.js';
 export * from './components/atoms/Separator/index.js';
 export * from './components/atoms/Slider/index.js';
 export * from './components/molecules/Avatar/index.js';
+export * from './components/molecules/Tabs/index.js';
 export * from './components/organisms/AvatarGroup/index.js';
 
 // Side-effect imports — bundler aggregates into styles.css
@@ -33,3 +34,4 @@ import './components/atoms/RadioButton/BTRadioButton.css';
 import './components/atoms/Separator/BTSeparator.css';
 import './components/atoms/Slider/BTSlider.css';
 import './components/molecules/Avatar/BTAvatar.css';
+import './components/molecules/Tabs/BTTabs.css';

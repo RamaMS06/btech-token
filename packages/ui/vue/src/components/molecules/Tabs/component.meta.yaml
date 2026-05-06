@@ -1,0 +1,30 @@
+schemaVersion: 1
+name: BTTabs
+category: molecules
+figmaNodeId: '1:53'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/BTech-Design-System?node-id=1-53
+description: >
+  Tab strip molecule with two variants: 'segmented' (pill tray with primary
+  fill on active) and 'line' (flat row with primary underline on active).
+  Controlled via v-model:activeIndex. Supports optional leading/trailing
+  icon slots per tab index.
+props:
+  - { name: variant, type: "'segmented' | 'line'", default: "'segmented'", description: 'Visual style of the tab strip.' }
+  - { name: tabs, type: 'BTTabItem[]', required: true, description: 'Ordered list of tab descriptors.' }
+  - { name: activeIndex, type: number, default: 0, description: 'Zero-based index of the currently active tab. Controlled via v-model:activeIndex.' }
+  - { name: className, type: string, required: false, description: 'Additional CSS class names on the root element.' }
+enums:
+  - name: BTTabsVariant
+    values: [segmented, line]
+slots:
+  - name: 'leading-icon-{i}'
+    description: 'Optional leading icon for tab at index i.'
+  - name: 'trailing-icon-{i}'
+    description: 'Optional trailing icon for tab at index i.'
+emits:
+  - name: 'update:activeIndex'
+    type: number
+    description: 'Emitted when user selects a tab. Payload is the new active index.'
+variants:
+  - { name: segmented, description: 'Pill-style tray. Active tab has filled primary background.' }
+  - { name: line, description: 'Flat row. Active tab has primary underline border.' }

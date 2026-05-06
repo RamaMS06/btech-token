@@ -1,0 +1,24 @@
+schemaVersion: 1
+name: BTTabs
+category: molecules
+figmaNodeId: '1:53'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/BTech-Design-System?node-id=1-53
+description: >
+  Tab strip molecule with two variants: 'segmented' (pill tray with primary
+  fill on active) and 'line' (flat row with primary underline on active).
+  Controlled via activeIndex + onActiveIndexChange. Supports optional
+  leading/trailing icon render props per tab index.
+props:
+  - { name: variant, type: "'segmented' | 'line'", default: "'segmented'", description: 'Visual style of the tab strip.' }
+  - { name: tabs, type: 'BTTabItem[]', required: true, description: 'Ordered list of tab descriptors.' }
+  - { name: activeIndex, type: number, default: 0, description: 'Zero-based index of the currently active tab.' }
+  - { name: onActiveIndexChange, type: '(index: number) => void', required: false, description: 'Called when user selects a tab.' }
+  - { name: leadingIcon, type: '(index: number) => React.ReactNode', required: false, description: 'Render prop for leading icon per tab index.' }
+  - { name: trailingIcon, type: '(index: number) => React.ReactNode', required: false, description: 'Render prop for trailing icon per tab index.' }
+  - { name: className, type: string, required: false, description: 'Additional CSS class on root element.' }
+enums:
+  - name: BTTabsVariant
+    values: [segmented, line]
+variants:
+  - { name: segmented, description: 'Pill-style tray. Active tab has filled primary background.' }
+  - { name: line, description: 'Flat row. Active tab has primary underline border.' }

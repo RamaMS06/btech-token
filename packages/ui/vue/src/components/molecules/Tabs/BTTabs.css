@@ -1,0 +1,174 @@
+/* BTTabs — tab molecule (Figma 1:53 / Base/TabItem 434:5262)
+ *
+ * Variants:  segmented · line
+ * Animation: sliding indicator (not opacity/border toggling)
+ * Scrollable: overflow-x auto + center-on-active
+ *
+ * Architecture:
+ *   .bt-tabs                    root — position:relative for absolute indicator
+ *   .bt-tabs--segmented         pill-style tray
+ *   .bt-tabs--line              underline-style
+ *   .bt-tabs--scrollable        horizontal scroll, fills parent width
+ *   .bt-tabs--ready             enables CSS transition (added after first paint)
+ *   .bt-tabs__indicator         sliding pill / underline — absolutely positioned
+ *   .bt-tabs__item              individual tab button — z-index:1 (above indicator)
+ *   .bt-tabs__item--active      active text color
+ *   .bt-tabs__icon              icon wrapper slot
+ */
+
+/* ── Container ───────────────────────────────────────────────────────────── */
+
+.bt-tabs {
+  display: inline-flex;
+  align-items: center;
+  position: relative;  /* anchor for absolute indicator */
+}
+
+/* Scrollable: fills parent, allows horizontal overflow */
+.bt-tabs--scrollable {
+  display: flex;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Thin scrollbar — visible so desktop users know it's scrollable */
+  scrollbar-width: thin;                    /* Firefox */
+  scrollbar-color: transparent transparent; /* hidden at rest, shown on hover */
+}
+/* Chrome/Safari: 3px scrollbar, hidden at rest */
+.bt-tabs--scrollable::-webkit-scrollbar {
+  height: 3px;
+}
+.bt-tabs--scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+.bt-tabs--scrollable::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+}
+/* Reveal scrollbar on hover */
+.bt-tabs--scrollable:hover {
+  scrollbar-color: rgb(0 0 0 / 0.2) transparent;
+}
+.bt-tabs--scrollable:hover::-webkit-scrollbar-thumb {
+  background: rgb(0 0 0 / 0.2);
+}
+
+/* Segmented: gray tray, 4px padding, radius.md, height 40px */
+.bt-tabs--segmented {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 0;
+  height: 40px;
+}
+
+/* Line: no tray, 4px gap between items */
+.bt-tabs--line {
+  gap: 4px;
+  background: none;
+}
+
+/* ── Sliding indicator ───────────────────────────────────────────────────── */
+
+.bt-tabs__indicator {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  /* transition enabled only after first paint (.bt-tabs--ready) */
+}
+
+.bt-tabs--ready .bt-tabs__indicator {
+  transition:
+    left  0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Segmented: filled primary pill behind the label */
+.bt-tabs--segmented .bt-tabs__indicator {
+  top:    4px;   /* = container padding-top */
+  height: 32px;
+  background: var(--color-brand-primary);
+  border-radius: var(--radius-sm);
+}
+
+/* Line: 2px primary underline at the bottom */
+.bt-tabs--line .bt-tabs__indicator {
+  bottom: 0;
+  height: 2px;
+  background: var(--color-brand-primary);
+}
+
+/* ── Tab item ────────────────────────────────────────────────────────────── */
+
+.bt-tabs__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 32px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  font-family: var(--typography-font-family-sans, 'Geist', sans-serif);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0;
+  color: var(--text-secondary);
+  transition: color 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  /* above the absolute indicator */
+  position: relative;
+  z-index: 1;
+}
+
+.bt-tabs__item:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+  z-index: 2;
+}
+
+.bt-tabs__item:disabled,
+.bt-tabs__item[aria-disabled='true'] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Segmented active / hover ────────────────────────────────────────────── */
+
+/* Active text color — background is the sliding indicator */
+.bt-tabs--segmented .bt-tabs__item--active {
+  color: var(--text-inverse);
+}
+
+.bt-tabs--segmented .bt-tabs__item:not(.bt-tabs__item--active):not(:disabled):hover {
+  background: rgb(0 0 0 / 0.05);
+  border-radius: var(--radius-sm);
+}
+
+/* ── Line active / hover ─────────────────────────────────────────────────── */
+
+.bt-tabs--line .bt-tabs__item--active {
+  color: var(--color-brand-primary);
+}
+
+.bt-tabs--line .bt-tabs__item:not(.bt-tabs__item--active):not(:disabled):hover {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* ── Icon slot ───────────────────────────────────────────────────────────── */
+
+.bt-tabs__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}

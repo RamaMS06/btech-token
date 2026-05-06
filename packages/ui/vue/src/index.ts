@@ -20,4 +20,5 @@ export * from './components/atoms/RadioButton/index';
 export * from './components/atoms/Separator/index';
 export * from './components/atoms/Slider/index';
 export * from './components/molecules/Avatar/index';
+export * from './components/molecules/Tabs/index';
 export * from './components/organisms/AvatarGroup/index';
