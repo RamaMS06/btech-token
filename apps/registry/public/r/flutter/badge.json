@@ -1,5 +1,5 @@
 {
-  "$schema": "https://btech-registry.buma.dev/schema/registry-item.json",
+  "$schema": "https://ramaMS06.github.io/btech-token/schema/registry-item.json",
   "name": "badge",
   "type": "registry:ui",
   "title": "BTBadge",

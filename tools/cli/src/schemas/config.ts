@@ -13,7 +13,7 @@ export const aliasesSchema = z.object({
 export const configSchema = z.object({
   $schema: z.string().optional(),
   framework: frameworkSchema,
-  registry: z.string().url().default('https://btech-registry.buma.dev'),
+  registry: z.string().url().default('https://ramaMS06.github.io/btech-token'),
   tokens: z.string().default('@btech/tokens'),
   aliases: aliasesSchema.optional(),
   tsx: z.boolean().default(true),

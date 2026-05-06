@@ -1,5 +1,5 @@
 {
-  "$schema": "https://btech-registry.buma.dev/schema/registry.json",
+  "$schema": "https://ramaMS06.github.io/btech-token/schema/registry.json",
   "framework": "react",
   "version": "0.1.0",
   "items": [
