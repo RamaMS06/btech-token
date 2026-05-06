@@ -1,0 +1,29 @@
+/* BTSeparator — visual divider atom (Figma 194:756)
+ *
+ * Single-token component: uses only border.primary (1px line).
+ * Orientation: horizontal (default, full-width) | vertical (full-height).
+ *
+ * Usage:
+ *   Horizontal: place inside a flex-col container — stretches to parent width.
+ *   Vertical:   place inside a flex-row container — stretches to parent height.
+ */
+
+.bt-separator {
+  flex-shrink: 0;
+  background: var(--border-primary);
+  border: none;
+}
+
+/* ── Horizontal ─────────────────────────────────────────────────────────── */
+
+.bt-separator--horizontal {
+  width: 100%;
+  height: 1px;
+}
+
+/* ── Vertical ───────────────────────────────────────────────────────────── */
+
+.bt-separator--vertical {
+  width: 1px;
+  height: 100%;
+}
