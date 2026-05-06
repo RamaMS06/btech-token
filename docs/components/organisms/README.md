@@ -9,6 +9,7 @@ Dalam BTech Design System, organisms mencakup komponen seperti avatar group yang
 | Component | Description | Figma |
 |---|---|---|
 | [BTAvatarGroup](./avatar-group.md) | Kumpulan avatar dengan overflow counter otomatis | [504-705] |
+| [BTCoachmarkTour](./coachmark-tour.md) | Multi-step onboarding overlay dengan spotlight cutout dan navigasi prev/next | [2157-1726] |
 
 ## Prinsip penggunaan
 
