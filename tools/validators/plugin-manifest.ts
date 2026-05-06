@@ -43,7 +43,12 @@ const MANIFEST_PATH = resolve(ROOT, 'btech-token-studio/manifest.json');
 const EXPECTED_MAIN = 'dist/code.js';
 const EXPECTED_UI = 'dist/ui.html';
 const EXPECTED_API = '1.0.0';
-const ID_RE = /^com\.btech\..+$/;
+
+// Figma assigns plugin IDs as large numeric strings (e.g. "1632970637918456124").
+// They are NOT reverse-domain identifiers. We validate that the id is a
+// non-empty numeric string to guard against the manifest being reset to an
+// empty value or accidentally replaced with an unrelated plugin's id.
+const ID_RE = /^\d+$/;
 
 // Hosts the plugin is allowed to talk to. Anything else is a red flag —
 // Figma plugin permissions are an exfiltration vector if the manifest is
@@ -71,7 +76,7 @@ if (manifest.ui !== EXPECTED_UI) {
   errors.push(`manifest.ui must be "${EXPECTED_UI}" (got "${String(manifest.ui)}")`);
 }
 if (typeof manifest.id !== 'string' || !ID_RE.test(manifest.id)) {
-  errors.push(`manifest.id must match /^com\\.btech\\..+$/ (got "${String(manifest.id)}")`);
+  errors.push(`manifest.id must be a numeric Figma plugin ID (got "${String(manifest.id)}")`);
 }
 if (manifest.api !== EXPECTED_API) {
   errors.push(`manifest.api must be "${EXPECTED_API}" (got "${String(manifest.api)}")`);
