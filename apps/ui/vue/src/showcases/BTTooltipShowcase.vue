@@ -36,7 +36,9 @@ const activeTTPos = ref<BTTooltipPosition>('bottom');
 // Precise arrow offset computed from trigger centre after viewport clamping
 const stepArrowOffset = ref('50%');
 // Trigger bounding rect for the spotlight overlay (4 px padding each side)
-const spotlightRect = ref<{ top: number; left: number; width: number; height: number } | null>(null);;
+const spotlightRect = ref<{ top: number; left: number; width: number; height: number } | null>(null);
+// When false, tapping the backdrop will NOT close the coachmark
+const dismissable = ref(true);
 
 // Refs for each button element (populated via :ref callback in template)
 const btnRefs = ref<HTMLElement[]>([]);
@@ -72,7 +74,9 @@ function showStep(idx: number) {
       left = tcx - BALLOON_W / 2;
       break;
     case 'bottom':
-      top  = rect.bottom + ARROW + GAP;
+      // Arrow is INSIDE the balloon (at its top), so only GAP separates
+      // the trigger from the balloon edge — not ARROW+GAP.
+      top  = rect.bottom + GAP;
       left = tcx - BALLOON_W / 2;
       break;
     case 'left':
@@ -80,8 +84,9 @@ function showStep(idx: number) {
       left = rect.left - BALLOON_W - ARROW - GAP;
       break;
     case 'right':
+      // Same as bottom: arrow is inside the balloon (at its left edge).
       top  = tcy - BALLOON_H / 2;
-      left = rect.right + ARROW + GAP;
+      left = rect.right + GAP;
       break;
   }
 
@@ -217,8 +222,8 @@ onUnmounted(closeStep);
         Pilih gaya tombol, lalu klik salah satu dari 9 posisi untuk melihat BTTooltipStep.
       </p>
 
-      <!-- Variant selector -->
-      <div style="display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;">
+      <!-- Variant selector + dismissable toggle -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;">
         <button
           v-for="v in stepVariants"
           :key="v"
@@ -228,6 +233,21 @@ onUnmounted(closeStep);
         >
           {{ v }}
         </button>
+      </div>
+
+      <!-- Dismissable toggle -->
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 24px;">
+        <span style="font-size: 13px; color: #64748b;">Dismissable:</span>
+        <button
+          class="variant-btn"
+          :class="{ 'variant-btn--active': dismissable }"
+          @click="dismissable = !dismissable"
+        >
+          {{ dismissable ? 'ON' : 'OFF' }}
+        </button>
+        <span style="font-size: 12px; color: #9ca3af;">
+          {{ dismissable ? '— klik luar untuk tutup' : '— klik luar tidak tutup' }}
+        </span>
       </div>
 
       <!-- 9-button positioned grid -->
@@ -266,7 +286,7 @@ onUnmounted(closeStep);
               zIndex: 1999,
               cursor: 'pointer',
             }"
-            @click="closeStep"
+            @click="dismissable && closeStep()"
           />
         </Transition>
 

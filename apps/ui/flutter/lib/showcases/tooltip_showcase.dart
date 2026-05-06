@@ -211,6 +211,7 @@ class _UsageTabState extends State<_UsageTab>
   BTTooltipStepVariant _variant = BTTooltipStepVariant.button;
   int _activeIdx = -1;
   bool _navigating = false;
+  bool _dismissable = true;
   static const int _total = 9;
 
   // ── Config for each of the 9 demo buttons ────────────────────────────────
@@ -287,14 +288,17 @@ class _UsageTabState extends State<_UsageTab>
         top  = triggerOffset.dy - balloonH - arrowSz - gap;
         left = tcx - balloonW / 2;
       case BTTooltipPosition.bottom:
-        top  = triggerOffset.dy + triggerSize.height + arrowSz + gap;
+        // Arrow is inside the balloon (at its top edge) — only GAP separates
+        // the trigger bottom from the balloon edge, not arrowSz + gap.
+        top  = triggerOffset.dy + triggerSize.height + gap;
         left = tcx - balloonW / 2;
       case BTTooltipPosition.left:
         top  = tcy - balloonH / 2;
         left = triggerOffset.dx - balloonW - arrowSz - gap;
       case BTTooltipPosition.right:
+        // Same as bottom: arrow is inside the balloon's left edge.
         top  = tcy - balloonH / 2;
-        left = triggerOffset.dx + triggerSize.width + arrowSz + gap;
+        left = triggerOffset.dx + triggerSize.width + gap;
     }
 
     left = left.clamp(8.0, screenSize.width  - balloonW - 8.0);
@@ -325,7 +329,7 @@ class _UsageTabState extends State<_UsageTab>
           opacity: _animCtrl,
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: _close,
+            onTap: _dismissable ? _close : null,
             child: CustomPaint(
               painter: _SpotlightPainter(
                 spotlight: spotlight,
@@ -483,6 +487,55 @@ class _UsageTabState extends State<_UsageTab>
               ),
             );
           }).toList(),
+        ),
+        const SizedBox(height: 16),
+
+        // ── Dismissable toggle ─────────────────────────────────────────
+        Row(
+          children: [
+            Text(
+              'Dismissable:',
+              style: TextStyle(
+                fontSize: 13,
+                fontFamily: BTechTypography.fontFamily,
+                color: c.text.secondary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () => setState(() => _dismissable = !_dismissable),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _dismissable ? c.text.primary : Colors.white,
+                  border: Border.all(
+                    color: _dismissable ? c.text.primary : const Color(0xFFe2e8f0),
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  _dismissable ? 'ON' : 'OFF',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: BTechTypography.fontFamily,
+                    color: _dismissable ? Colors.white : c.text.secondary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                _dismissable ? '— ketuk luar untuk tutup' : '— ketuk luar tidak tutup',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontFamily: BTechTypography.fontFamily,
+                  color: const Color(0xFF9ca3af),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 24),
 

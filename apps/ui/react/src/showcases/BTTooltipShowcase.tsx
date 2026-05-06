@@ -38,6 +38,7 @@ export function BTTooltipShowcase() {
   const [stepTTPos, setStepTTPos] = useState<BTTooltipPosition>('bottom');
   const [stepArrowOffset, setStepArrowOffset] = useState('50%');
   const [spotlightRect, setSpotlightRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [dismissable, setDismissable] = useState(true);
 
   const btnRefs = useRef<(HTMLButtonElement | null)[]>(Array(9).fill(null));
 
@@ -62,7 +63,7 @@ export function BTTooltipShowcase() {
         left = tcx - BALLOON_W / 2;
         break;
       case 'bottom':
-        top  = rect.bottom + ARROW + GAP;
+        top  = rect.bottom + GAP;          // arrow is inside balloon top — no extra ARROW offset
         left = tcx - BALLOON_W / 2;
         break;
       case 'left':
@@ -71,7 +72,7 @@ export function BTTooltipShowcase() {
         break;
       case 'right':
         top  = tcy - BALLOON_H / 2;
-        left = rect.right + ARROW + GAP;
+        left = rect.right + GAP;           // arrow is inside balloon left — no extra ARROW offset
         break;
     }
 
@@ -230,7 +231,7 @@ export function BTTooltipShowcase() {
           </p>
 
           {/* Variant selector */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
             {stepVariants.map((v) => (
               <button
                 key={v}
@@ -245,6 +246,25 @@ export function BTTooltipShowcase() {
                 {v}
               </button>
             ))}
+          </div>
+
+          {/* Dismissable toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+            <span style={{ fontSize: 13, color: '#64748b' }}>Dismissable:</span>
+            <button
+              onClick={() => setDismissable((d) => !d)}
+              style={{
+                padding: '6px 12px', borderRadius: 6, border: '1px solid #e2e8f0',
+                background: dismissable ? '#1e293b' : 'white',
+                color: dismissable ? 'white' : '#334155',
+                cursor: 'pointer', fontSize: 13, fontWeight: 500,
+              }}
+            >
+              {dismissable ? 'ON' : 'OFF'}
+            </button>
+            <span style={{ fontSize: 12, color: '#9ca3af' }}>
+              {dismissable ? '— klik luar untuk tutup' : '— klik luar tidak tutup'}
+            </span>
           </div>
 
           {/* 9-button CSS grid */}
@@ -290,9 +310,9 @@ export function BTTooltipShowcase() {
                     borderRadius: 5,
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.55)',
                     zIndex: 1999,
-                    cursor: 'pointer',
+                    cursor: dismissable ? 'pointer' : 'default',
                   }}
-                  onClick={closeStep}
+                  onClick={dismissable ? closeStep : undefined}
                 />
               )}
 
