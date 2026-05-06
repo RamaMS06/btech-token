@@ -9,6 +9,7 @@ import BTButtonShowcase from './showcases/BTButtonShowcase.vue';
 import BTButtonLinkShowcase from './showcases/BTButtonLinkShowcase.vue';
 import BTCheckboxShowcase from './showcases/BTCheckboxShowcase.vue';
 import BTHintShowcase from './showcases/BTHintShowcase.vue';
+import BTModalShowcase from './showcases/BTModalShowcase.vue';
 import BTRadioButtonShowcase from './showcases/BTRadioButtonShowcase.vue';
 import BTSeparatorShowcase from './showcases/BTSeparatorShowcase.vue';
 import BTSliderShowcase from './showcases/BTSliderShowcase.vue';
@@ -37,6 +38,7 @@ const PAGES: ShowcasePage[] = [
   { id: 'alert',        group: 'Molecules', label: 'Alert'       },
   { id: 'avatar',       group: 'Molecules', label: 'Avatar'      },
   { id: 'tabs',        group: 'Molecules', label: 'Tabs'        },
+  { id: 'modal',       group: 'Organisms', label: 'Modal'       },
 ];
 
 // Group pages preserving insertion order
@@ -105,6 +107,7 @@ watchEffect(() => {
         <BTAvatarShowcase v-else-if="selectedId === 'avatar'" />
         <BTTabsShowcase v-else-if="selectedId === 'tabs'" />
         <BTTooltipShowcase v-else-if="selectedId === 'tooltip'" />
+        <BTModalShowcase v-else-if="selectedId === 'modal'" />
       </main>
     </div>
   </div>

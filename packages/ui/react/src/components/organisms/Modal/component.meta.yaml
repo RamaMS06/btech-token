@@ -1,0 +1,67 @@
+schemaVersion: 1
+name: BTModal
+category: organisms
+figmaNodeId: '2123:1992'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/?node-id=2123-1992
+description: >
+  Centred modal dialog with header (title + optional subtext + optional close
+  button), optional content slot, and optional footer with checkbox plus
+  secondary/primary action buttons. Backdrop click dismisses when
+  `dismissable` is true. Three width presets: sm (500px), md (720px),
+  lg (1042px).
+props:
+  - name: open
+    type: boolean
+    required: true
+  - name: title
+    type: string
+    required: true
+  - name: subtext
+    type: string
+    required: false
+  - name: size
+    type: BTModalSize
+    default: sm
+    required: false
+  - name: hasClose
+    type: boolean
+    default: true
+    required: false
+  - name: hasFooter
+    type: boolean
+    default: true
+    required: false
+  - name: primaryLabel
+    type: string
+    default: Confirm
+    required: false
+  - name: hasSecondaryButton
+    type: boolean
+    default: true
+    required: false
+  - name: secondaryLabel
+    type: string
+    default: Cancel
+    required: false
+  - name: hasCheckbox
+    type: boolean
+    default: false
+    required: false
+  - name: checkboxLabel
+    type: string
+    default: "Don't show again"
+    required: false
+  - name: dismissable
+    type: boolean
+    default: true
+    required: false
+enums:
+  - name: BTModalSize
+    values: [sm, md, lg]
+variants:
+  - name: sm
+    description: Small modal — 500 px max width
+  - name: md
+    description: Medium modal — 720 px max width
+  - name: lg
+    description: Large modal — 1042 px max width

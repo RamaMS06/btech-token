@@ -42,6 +42,7 @@ Komponen kompleks yang terdiri dari molecules dan/atau atoms.
 |---|---|
 | [BTAvatarGroup](./organisms/avatar-group.md) | Kumpulan avatar dengan overflow counter |
 | [BTCoachmarkTour](./organisms/coachmark-tour.md) | Multi-step onboarding overlay dengan spotlight |
+| [BTModal](./organisms/modal.md) | Centred dialog dengan header, content slot, dan footer actions |
 
 ## Conventions
 
