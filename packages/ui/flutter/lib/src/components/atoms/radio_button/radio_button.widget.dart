@@ -95,8 +95,11 @@ class BTRadioButton<T> extends StatelessWidget {
         disabled ? colors.bg.secondary : colors.bg.primary;
 
     // ── Dot colour (shown when active) ────────────────────────────────────
-    final dotColor =
-        disabled ? colors.text.disabled : colors.brand.primary;
+    final dotColor = disabled
+        ? colors.text.disabled
+        : (error && _isActive)
+            ? colors.ext.error
+            : colors.brand.primary;
 
     // ── Text colours ──────────────────────────────────────────────────────
     final labelColor =

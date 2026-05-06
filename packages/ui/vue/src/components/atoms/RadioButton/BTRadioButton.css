@@ -95,6 +95,10 @@
   border-color: var(--color-ext-error);
 }
 
+.bt-radio--error.bt-radio--active .bt-radio__dot {
+  background: var(--color-ext-error);
+}
+
 /* ── Text block ─────────────────────────────────────────────────────────── */
 
 .bt-radio__text {
