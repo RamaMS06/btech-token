@@ -15,6 +15,9 @@ Dalam BTech Design System, atoms mencakup elemen-elemen seperti badge, button, c
 | [BTHint](./hint.md) | Indikator notifikasi — dot atau angka (badge count) | [658-1960] |
 | [BTLoadingSkeleton](./loading-skeleton.md) | Placeholder animasi shimmer saat konten sedang dimuat | — |
 | [BTRadioButton](./radio-button.md) | Input pilihan tunggal dari sekelompok opsi | [555-3529] |
+| [BTSeparator](./separator.md) | Garis pemisah horizontal atau vertikal | — |
+| [BTSlider](./slider.md) | Input rentang nilai dengan thumb yang dapat digeser | — |
+| [BTTooltip](./tooltip.md) | Balloon tooltip hover/tap yang melingkupi trigger widget | [479-2624] |
 
 ## Prinsip penggunaan
 

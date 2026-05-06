@@ -13,6 +13,7 @@ import { BTRadioButtonShowcase } from './showcases/BTRadioButtonShowcase';
 import { BTSeparatorShowcase } from './showcases/BTSeparatorShowcase';
 import { BTSliderShowcase } from './showcases/BTSliderShowcase';
 import { BTTabsShowcase } from './showcases/BTTabsShowcase';
+import { BTTooltipShowcase } from './showcases/BTTooltipShowcase';
 
 // ── Sidebar registry ──────────────────────────────────────────────────────────
 // Add new entries here as components are sliced. Group = atomic-design layer.
@@ -33,6 +34,7 @@ const PAGES: ShowcasePage[] = [
   { id: 'radio',       group: 'Atoms',     label: 'Radio Button', component: <BTRadioButtonShowcase /> },
   { id: 'separator',   group: 'Atoms',     label: 'Separator',   component: <BTSeparatorShowcase /> },
   { id: 'slider',      group: 'Atoms',     label: 'Slider',      component: <BTSliderShowcase /> },
+  { id: 'tooltip',    group: 'Atoms / Molecules', label: 'Tooltip + TooltipStep', component: <BTTooltipShowcase /> },
   { id: 'avatar',      group: 'Molecules', label: 'Avatar',      component: <BTAvatarShowcase /> },
   { id: 'tabs',        group: 'Molecules', label: 'Tabs',        component: <BTTabsShowcase /> },
   { id: 'alert',        group: 'Molecules', label: 'Alert',       component: <BTAlertShowcase /> },

@@ -1,0 +1,223 @@
+/* BTTooltipStep — coachmark / pagination-step balloon.
+   Figma: node 2157-1726 (Playground instance with full coachmark).
+   Figma pagination step variants: node 478-2463.
+   All colours via @btech/tokens CSS vars — no hex fallbacks (CLAUDE.md §6). */
+
+/* ── Outer wrapper (arrow + body stacked or side-by-side) ── */
+
+.bt-tooltip-step {
+  display: inline-flex;
+  flex-direction: column; /* default: top arrow */
+  width: 320px;
+  max-width: calc(100vw - 32px);
+}
+
+.bt-tooltip-step--top    { flex-direction: column-reverse; } /* body on top, arrow below  */
+.bt-tooltip-step--bottom { flex-direction: column; }          /* arrow on top, body below  */
+.bt-tooltip-step--left   { flex-direction: row-reverse; align-items: flex-start; width: auto; }
+.bt-tooltip-step--right  { flex-direction: row;         align-items: flex-start; width: auto; }
+
+/* ── Arrow row / col (same layout helpers as BTTooltip) ── */
+
+.bt-tooltip-step__arrow-row {
+  display: flex;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+.bt-tooltip-step__arrow-row--left      { justify-content: flex-start; }
+.bt-tooltip-step__arrow-row--left-mid  { justify-content: flex-start; padding-left: calc(25% - 8px); }
+.bt-tooltip-step__arrow-row--mid       { justify-content: center; }
+.bt-tooltip-step__arrow-row--right-mid { justify-content: flex-end; padding-right: calc(25% - 8px); }
+.bt-tooltip-step__arrow-row--right     { justify-content: flex-end; }
+
+.bt-tooltip-step__arrow-col {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+.bt-tooltip-step__arrow-col--left      { justify-content: flex-start; }
+.bt-tooltip-step__arrow-col--left-mid  { justify-content: flex-start; padding-top: calc(25% - 8px); }
+.bt-tooltip-step__arrow-col--mid       { justify-content: center; }
+.bt-tooltip-step__arrow-col--right-mid { justify-content: flex-end; padding-bottom: calc(25% - 8px); }
+.bt-tooltip-step__arrow-col--right     { justify-content: flex-end; }
+
+/* ── Body card ── */
+
+.bt-tooltip-step__body {
+  background: var(--bg-inverse);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+}
+
+.bt-tooltip-step--left  .bt-tooltip-step__body,
+.bt-tooltip-step--right .bt-tooltip-step__body {
+  width: max-content;
+  min-width: 250px;
+  max-width: 320px;
+}
+
+/* ── Header row (label + close button) ── */
+
+.bt-tooltip-step__header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.bt-tooltip-step__label {
+  flex: 1;
+  font-family: var(--typography-font-family-sans);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 20px;
+  color: var(--text-inverse);
+  margin: 0;
+}
+
+.bt-tooltip-step__close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-inverse);
+  border-radius: 4px;
+  transition: opacity 0.15s;
+}
+
+.bt-tooltip-step__close:hover { opacity: 0.7; }
+
+.bt-tooltip-step__close svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+/* ── Description ── */
+
+.bt-tooltip-step__description {
+  font-family: var(--typography-font-family-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--text-inverse);
+  margin: 0;
+}
+
+/* ── Footer row (step label + navigation buttons) ── */
+
+.bt-tooltip-step__footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Centered variant — everything centred, no step text on left */
+.bt-tooltip-step__footer--centered {
+  justify-content: center;
+  gap: 12px;
+}
+
+.bt-tooltip-step__step-label {
+  flex: 1;
+  font-family: var(--typography-font-family-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--text-inverse);
+  margin: 0;
+}
+
+/* Step label in centered variant — no flex */
+.bt-tooltip-step__footer--centered .bt-tooltip-step__step-label {
+  flex: none;
+}
+
+/* ── Button variant: secondary rounded buttons ── */
+
+.bt-tooltip-step__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 16px;
+  border-radius: var(--radius-sm);
+  font-family: var(--typography-font-family-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.bt-tooltip-step__btn:hover { opacity: 0.85; }
+
+/* ── Link variant: text link buttons ── */
+
+.bt-tooltip-step__btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--typography-font-family-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.bt-tooltip-step__btn-link:hover { opacity: 0.8; }
+
+.bt-tooltip-step__btn-link--prev { color: var(--text-secondary); }
+.bt-tooltip-step__btn-link--next { color: var(--color-brand-primary); }
+
+/* ── Centered variant: icon-only chevron buttons ── */
+
+.bt-tooltip-step__btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--color-brand-primary);
+  color: var(--text-inverse);
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.bt-tooltip-step__btn-icon:hover { opacity: 0.85; }
+
+.bt-tooltip-step__btn-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}

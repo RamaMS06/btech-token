@@ -20,9 +20,11 @@ export * from './components/atoms/Hint/index.js';
 export * from './components/atoms/RadioButton/index.js';
 export * from './components/atoms/Separator/index.js';
 export * from './components/atoms/Slider/index.js';
+export * from './components/atoms/Tooltip/index.js';
 export * from './components/molecules/Alert/index.js';
 export * from './components/molecules/Avatar/index.js';
 export * from './components/molecules/Tabs/index.js';
+export * from './components/molecules/TooltipStep/index.js';
 export * from './components/organisms/AvatarGroup/index.js';
 
 // Side-effect imports — bundler aggregates into styles.css
@@ -38,3 +40,5 @@ import './components/molecules/Alert/BTAlert.css';
 import './components/molecules/Alert/BTAlertContainer.css';
 import './components/molecules/Avatar/BTAvatar.css';
 import './components/molecules/Tabs/BTTabs.css';
+import './components/atoms/Tooltip/BTTooltip.css';
+import './components/molecules/TooltipStep/BTTooltipStep.css';

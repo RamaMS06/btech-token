@@ -1,0 +1,28 @@
+schemaVersion: 1
+name: BTTooltipStep
+category: molecules
+figmaNodeId: '478-2463'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/?node-id=478-2463
+description: >
+  Coachmark / onboarding step balloon with navigation buttons. Standalone and
+  presentational — positioning is the caller's responsibility.
+props:
+  - { name: description, type: string, required: true }
+  - { name: label, type: 'string?', required: false }
+  - { name: stepLabel, type: 'string?', required: false, description: 'Footer shown when provided.' }
+  - { name: stepVariant, type: BTTooltipStepVariant, default: button }
+  - { name: hasClose, type: boolean, default: 'false' }
+  - { name: prevLabel, type: string, default: "'Prev'" }
+  - { name: nextLabel, type: string, default: "'Next'" }
+  - { name: position, type: BTTooltipPosition, default: top }
+  - { name: arrowPosition, type: BTTooltipArrowPosition, default: mid }
+enums:
+  - { name: BTTooltipStepVariant, values: [button, link, centered] }
+  - { name: BTTooltipPosition, values: [top, bottom, left, right] }
+  - { name: BTTooltipArrowPosition, values: [left, left-mid, mid, right-mid, right] }
+emits:
+  - { name: prev, description: 'Fired on Prev button click.' }
+  - { name: next, description: 'Fired on Next button click.' }
+  - { name: close, description: 'Fired on × button click.' }
+slots:
+  - { name: default, description: 'Optional rich content between description and footer.' }

@@ -13,6 +13,7 @@ import BTRadioButtonShowcase from './showcases/BTRadioButtonShowcase.vue';
 import BTSeparatorShowcase from './showcases/BTSeparatorShowcase.vue';
 import BTSliderShowcase from './showcases/BTSliderShowcase.vue';
 import BTTabsShowcase from './showcases/BTTabsShowcase.vue';
+import BTTooltipShowcase from './showcases/BTTooltipShowcase.vue';
 
 // ── Sidebar registry ──────────────────────────────────────────────────────────
 // Add new entries here as components are sliced.
@@ -32,6 +33,7 @@ const PAGES: ShowcasePage[] = [
   { id: 'radio',       group: 'Atoms',     label: 'Radio Button' },
   { id: 'separator',   group: 'Atoms',     label: 'Separator'   },
   { id: 'slider',      group: 'Atoms',     label: 'Slider'      },
+  { id: 'tooltip',    group: 'Atoms / Molecules', label: 'Tooltip + TooltipStep' },
   { id: 'alert',        group: 'Molecules', label: 'Alert'       },
   { id: 'avatar',       group: 'Molecules', label: 'Avatar'      },
   { id: 'tabs',        group: 'Molecules', label: 'Tabs'        },
@@ -102,6 +104,7 @@ watchEffect(() => {
         <BTAlertShowcase v-else-if="selectedId === 'alert'" />
         <BTAvatarShowcase v-else-if="selectedId === 'avatar'" />
         <BTTabsShowcase v-else-if="selectedId === 'tabs'" />
+        <BTTooltipShowcase v-else-if="selectedId === 'tooltip'" />
       </main>
     </div>
   </div>

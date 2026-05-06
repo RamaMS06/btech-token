@@ -1,0 +1,149 @@
+/* BTTooltip — hover tooltip balloon.
+   Figma: node 479-2624 (Tooltip section, variants Top/Bottom/Left/Right).
+   Positioning is computed in JS; this file owns only visual appearance + animation.
+   All colours via @btech/tokens CSS vars — no hex fallbacks (CLAUDE.md §6). */
+
+/* ── Trigger wrapper ── */
+
+.bt-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+
+/* ── Floating balloon (placed in document.body via Teleport/portal) ── */
+
+.bt-tooltip__balloon {
+  position: fixed;
+  z-index: 1060;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+
+  /* hidden by default */
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0s linear 0.15s;
+}
+
+.bt-tooltip__balloon.bt-tooltip__balloon--visible {
+  pointer-events: all;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0s linear 0s;
+}
+
+/* ── Slide-in offset while hidden (tiny nudge toward origin direction) ── */
+.bt-tooltip__balloon--top    { transform: translateY(4px); }
+.bt-tooltip__balloon--bottom { transform: translateY(-4px); }
+.bt-tooltip__balloon--left   { transform: translateX(4px); }
+.bt-tooltip__balloon--right  { transform: translateX(-4px); }
+
+.bt-tooltip__balloon--visible.bt-tooltip__balloon--top,
+.bt-tooltip__balloon--visible.bt-tooltip__balloon--bottom,
+.bt-tooltip__balloon--visible.bt-tooltip__balloon--left,
+.bt-tooltip__balloon--visible.bt-tooltip__balloon--right {
+  transform: none;
+}
+
+/* ── Arrow ── */
+
+/*
+  Arrow is a 16×8 (horizontal) or 8×16 (vertical) SVG caret with a
+  slightly rounded tip (path "M0 8 L7 1 Q8 0 9 1 L16 8 Z").
+  It sits between the trigger and the balloon body.
+*/
+
+.bt-tooltip__arrow {
+  display: block;
+  flex-shrink: 0;
+  /* SVG dimensions set inline: 16×8 for top/bottom, 8×16 for left/right */
+}
+
+/* Arrow wrapper — horizontal row for left/right, column for top/bottom */
+.bt-tooltip__arrow-row {
+  display: flex;
+  width: 100%;
+  padding: 0 16px; /* match body horizontal padding for edge-aligned arrows */
+  box-sizing: border-box;
+}
+
+/* arrow position along horizontal axis (top / bottom arrows) */
+.bt-tooltip__arrow-row--left      { justify-content: flex-start; }
+.bt-tooltip__arrow-row--left-mid  { justify-content: flex-start; padding-left: calc(25% - 8px); }
+.bt-tooltip__arrow-row--mid       { justify-content: center; }
+.bt-tooltip__arrow-row--right-mid { justify-content: flex-end; padding-right: calc(25% - 8px); }
+.bt-tooltip__arrow-row--right     { justify-content: flex-end; }
+
+/* Arrow wrapper — vertical column for left/right arrows */
+.bt-tooltip__arrow-col {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px 0;
+  box-sizing: border-box;
+}
+
+.bt-tooltip__arrow-col--left      { justify-content: flex-start; }
+.bt-tooltip__arrow-col--left-mid  { justify-content: flex-start; padding-top: calc(25% - 8px); }
+.bt-tooltip__arrow-col--mid       { justify-content: center; }
+.bt-tooltip__arrow-col--right-mid { justify-content: flex-end; padding-bottom: calc(25% - 8px); }
+.bt-tooltip__arrow-col--right     { justify-content: flex-end; }
+
+/* ── Balloon layout: arrow + body ── */
+
+.bt-tooltip__balloon--top,
+.bt-tooltip__balloon--bottom {
+  display: flex;
+  flex-direction: column;
+}
+.bt-tooltip__balloon--top    { flex-direction: column-reverse; } /* body on top, arrow below */
+.bt-tooltip__balloon--bottom { flex-direction: column; }         /* arrow on top, body below */
+
+.bt-tooltip__balloon--left,
+.bt-tooltip__balloon--right {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  width: auto;
+}
+.bt-tooltip__balloon--left  { flex-direction: row-reverse; } /* body on left, arrow on right */
+.bt-tooltip__balloon--right { flex-direction: row; }          /* arrow on left, body on right */
+
+/* ── Balloon body ── */
+
+.bt-tooltip__body {
+  background: var(--bg-inverse);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+}
+
+/* For left/right balloons the body width should not be fixed */
+.bt-tooltip__balloon--left  .bt-tooltip__body,
+.bt-tooltip__balloon--right .bt-tooltip__body {
+  width: max-content;
+  min-width: 180px;
+  max-width: 320px;
+}
+
+/* ── Text ── */
+
+.bt-tooltip__text {
+  font-family: var(--typography-font-family-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+  color: var(--text-inverse);
+  margin: 0;
+}

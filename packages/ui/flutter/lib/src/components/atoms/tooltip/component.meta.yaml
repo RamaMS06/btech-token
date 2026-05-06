@@ -1,0 +1,24 @@
+schemaVersion: 1
+name: BTTooltip
+category: atoms
+figmaNodeId: '479-2624'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/?node-id=479-2624
+description: >
+  Hover / tap tooltip that wraps a trigger widget and displays a dark-background
+  floating balloon with a rounded-tip arrow caret. Supports plain text or rich
+  widget content via the content/children slot.
+props:
+  - { name: child, type: Widget, required: true, description: 'The trigger widget.' }
+  - { name: text, type: 'String?', required: false, description: 'Plain-text balloon content.' }
+  - { name: content, type: 'Widget?', required: false, description: 'Rich widget rendered inside the balloon — overrides text.' }
+  - { name: position, type: BTTooltipPosition, default: top, description: 'Which side the balloon appears on.' }
+  - { name: arrowPosition, type: BTTooltipArrowPosition, default: mid, description: 'Where the arrow sits along its edge.' }
+  - { name: disabled, type: bool, default: 'false', description: 'When true the tooltip never shows.' }
+enums:
+  - name: BTTooltipPosition
+    values: [top, bottom, left, right]
+  - name: BTTooltipArrowPosition
+    values: [left, leftMid, mid, rightMid, right]
+variants:
+  - { name: 'BTTooltip(text:)', description: 'Simple text balloon.' }
+  - { name: 'BTTooltip(content:)', description: 'Rich widget balloon.' }

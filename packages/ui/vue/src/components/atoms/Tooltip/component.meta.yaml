@@ -1,0 +1,22 @@
+schemaVersion: 1
+name: BTTooltip
+category: atoms
+figmaNodeId: '479-2624'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/?node-id=479-2624
+description: >
+  Hover / focus tooltip wrapping a trigger element. Renders a dark-background
+  balloon via Teleport/portal with a rounded-tip arrow caret. Supports plain
+  text or rich content slot.
+props:
+  - { name: text, type: 'string?', required: false, description: 'Plain-text balloon content.' }
+  - { name: position, type: BTTooltipPosition, default: top }
+  - { name: arrowPosition, type: BTTooltipArrowPosition, default: mid }
+  - { name: disabled, type: boolean, default: 'false' }
+  - { name: showDelay, type: number, default: '120', description: 'Ms before balloon appears on hover.' }
+  - { name: hideDelay, type: number, default: '80', description: 'Ms before balloon hides.' }
+enums:
+  - { name: BTTooltipPosition, values: [top, bottom, left, right] }
+  - { name: BTTooltipArrowPosition, values: [left, left-mid, mid, right-mid, right] }
+slots:
+  - { name: default, description: 'The trigger element.' }
+  - { name: content, description: 'Rich content rendered inside balloon — overrides text prop.' }

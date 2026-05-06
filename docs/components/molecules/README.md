@@ -11,6 +11,7 @@ Dalam BTech Design System, molecules mencakup komponen seperti alert dan avatar 
 | [BTAlert](./alert.md) | Banner feedback kontekstual — info, sukses, error, peringatan, netral; mendukung toast programatik | [681-11285] |
 | [BTAvatar](./avatar.md) | Representasi visual pengguna dengan gambar, inisial, atau placeholder loading | [497-979] |
 | [BTTabs](./tabs.md) | Tab strip dengan dua variant: segmented (pill tray) dan line (underline) | [1-53] |
+| [BTTooltipStep](./tooltip-step.md) | Coachmark / onboarding step balloon dengan navigasi Prev/Next dan close action | [478-2463] |
 
 ## Prinsip penggunaan
 

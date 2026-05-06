@@ -1,0 +1,34 @@
+schemaVersion: 1
+name: BTTooltipStep
+category: molecules
+figmaNodeId: '478-2463'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/?node-id=478-2463
+description: >
+  Coachmark / onboarding step balloon with navigation buttons. Standalone and
+  presentational — positioning relative to the target element is the caller's
+  responsibility (Flutter: Positioned + Stack; web: absolute/fixed container).
+props:
+  - { name: description, type: String, required: true, description: 'Main body text.' }
+  - { name: label, type: 'String?', required: false, description: 'Bold title at top of card.' }
+  - { name: stepLabel, type: 'String?', required: false, description: 'Step indicator e.g. "Step 1 of 5". Footer shown when provided.' }
+  - { name: stepVariant, type: BTTooltipStepVariant, default: button, description: 'Navigation button style.' }
+  - { name: hasClose, type: bool, default: 'false', description: 'Show × close button in top-right.' }
+  - { name: prevLabel, type: String, default: "'Prev'", description: 'Prev button label.' }
+  - { name: nextLabel, type: String, default: "'Next'", description: 'Next button label.' }
+  - { name: position, type: BTTooltipPosition, default: top, description: 'Arrow side.' }
+  - { name: arrowPosition, type: BTTooltipArrowPosition, default: mid, description: 'Arrow offset.' }
+  - { name: child, type: 'Widget?', required: false, description: 'Optional rich content between description and footer.' }
+  - { name: onPrev, type: 'VoidCallback?', required: false, description: 'Fired on Prev tap.' }
+  - { name: onNext, type: 'VoidCallback?', required: false, description: 'Fired on Next tap.' }
+  - { name: onClose, type: 'VoidCallback?', required: false, description: 'Fired on × tap.' }
+enums:
+  - name: BTTooltipStepVariant
+    values: [button, link, centered]
+  - name: BTTooltipPosition
+    values: [top, bottom, left, right]
+  - name: BTTooltipArrowPosition
+    values: [left, leftMid, mid, rightMid, right]
+variants:
+  - { name: 'stepVariant: button', description: 'Secondary rounded-rectangle Prev/Next buttons.' }
+  - { name: 'stepVariant: link', description: 'Text-link buttons — grey Prev, brand-blue Next.' }
+  - { name: 'stepVariant: centered', description: 'Icon-only chevron buttons centred with step label between.' }
