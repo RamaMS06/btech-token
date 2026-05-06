@@ -3,14 +3,16 @@
  * BTTabsShowcase — visual smoke test for BTTabs (molecule).
  * Sliced from Figma node 1:53 · Base/TabItem 434:5262.
  *
- * Demonstrates: segmented + line variants, disabled tabs,
- * optional leading/trailing icon slots.
+ * Demonstrates: segmented + line variants, scrollable + centering,
+ * disabled tabs, optional leading/trailing icon slots.
  */
 import { ref } from 'vue';
 import { BTTabs } from '@btech/ui-vue';
 
 const segActive = ref(0);
 const lineActive = ref(0);
+const scrollSegActive = ref(0);
+const scrollLineActive = ref(0);
 const iconActive = ref(0);
 const disabledActive = ref(0);
 
@@ -18,6 +20,17 @@ const BASIC_TABS = [
   { label: 'Overview' },
   { label: 'Details' },
   { label: 'History' },
+];
+
+const MANY_TABS = [
+  { label: 'Dashboard' },
+  { label: 'Analytics' },
+  { label: 'Reports' },
+  { label: 'Transactions' },
+  { label: 'Customers' },
+  { label: 'Products' },
+  { label: 'Settings' },
+  { label: 'Billing' },
 ];
 
 const ICON_TABS = [
@@ -37,8 +50,7 @@ const DISABLED_TABS = [
   <section class="showcase-section">
     <h2 class="showcase-section__title">BTTabs — Figma 1:53</h2>
     <p class="showcase-section__subtitle">
-      Tab strip molecule · two variants: segmented (pill tray) + line (underline).
-      Controlled via v-model:activeIndex.
+      Sliding indicator (not opacity toggle). scrollable auto-centers selected tab.
     </p>
 
     <!-- Segmented -->
@@ -61,6 +73,34 @@ const DISABLED_TABS = [
         v-model:activeIndex="lineActive"
       />
       <span style="font-size: 12px; color: #9ca3af">active: {{ BASIC_TABS[lineActive].label }}</span>
+    </div>
+
+    <!-- Scrollable segmented (many tabs, constrained width) -->
+    <div class="showcase-row" style="flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 24px;">
+      <span class="showcase-row__label">scrollable segmented</span>
+      <div style="width: 320px; overflow: hidden;">
+        <BTTabs
+          variant="segmented"
+          :tabs="MANY_TABS"
+          :scrollable="true"
+          v-model:activeIndex="scrollSegActive"
+        />
+      </div>
+      <span style="font-size: 12px; color: #9ca3af">active: {{ MANY_TABS[scrollSegActive].label }}</span>
+    </div>
+
+    <!-- Scrollable line (many tabs, constrained width) -->
+    <div class="showcase-row" style="flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 24px;">
+      <span class="showcase-row__label">scrollable line</span>
+      <div style="width: 320px; overflow: hidden;">
+        <BTTabs
+          variant="line"
+          :tabs="MANY_TABS"
+          :scrollable="true"
+          v-model:activeIndex="scrollLineActive"
+        />
+      </div>
+      <span style="font-size: 12px; color: #9ca3af">active: {{ MANY_TABS[scrollLineActive].label }}</span>
     </div>
 
     <!-- With icons (leading) -->

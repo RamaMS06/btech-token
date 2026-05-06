@@ -1,8 +1,8 @@
 // BTTabsShowcase — visual smoke test for BTTabs (molecule).
 // Sliced from Figma node 1:53 · Base/TabItem 434:5262.
 //
-// Demonstrates: segmented + line variants, disabled tabs,
-// optional leading/trailing icon builders.
+// Demonstrates: segmented + line variants, scrollable + centering,
+// disabled tabs, optional leading/trailing icon builders.
 import 'package:btech_tokens/btech_tokens.dart';
 import 'package:btech_ui/btech_ui.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +17,8 @@ class BTTabsShowcase extends StatefulWidget {
 class _BTTabsShowcaseState extends State<BTTabsShowcase> {
   int _segActive = 0;
   int _lineActive = 0;
+  int _scrollSegActive = 0;
+  int _scrollLineActive = 0;
   int _iconActive = 0;
   int _disabledActive = 0;
 
@@ -24,6 +26,17 @@ class _BTTabsShowcaseState extends State<BTTabsShowcase> {
     BTTabItem(label: 'Overview'),
     BTTabItem(label: 'Details'),
     BTTabItem(label: 'History'),
+  ];
+
+  static const _manyTabs = [
+    BTTabItem(label: 'Dashboard'),
+    BTTabItem(label: 'Analytics'),
+    BTTabItem(label: 'Reports'),
+    BTTabItem(label: 'Transactions'),
+    BTTabItem(label: 'Customers'),
+    BTTabItem(label: 'Products'),
+    BTTabItem(label: 'Settings'),
+    BTTabItem(label: 'Billing'),
   ];
 
   static const _iconTabs = [
@@ -43,14 +56,14 @@ class _BTTabsShowcaseState extends State<BTTabsShowcase> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionTitle(context, 'BTTabs — Figma 1:53'),
           _subtitle(
             context,
-            'Tab strip · segmented (pill tray) + line (underline). '
-            'Controlled widget.',
+            'Sliding indicator. scrollable auto-centers the active tab.',
           ),
           const SizedBox(height: 24),
 
@@ -80,6 +93,42 @@ class _BTTabsShowcaseState extends State<BTTabsShowcase> {
           _caption(context, 'active: ${_basicTabs[_lineActive].label}'),
           const SizedBox(height: 24),
 
+          // Scrollable segmented (many tabs, constrained to 320px)
+          _label(context, 'scrollable segmented'),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: 320,
+            child: BTTabs(
+              variant: BTTabsVariant.segmented,
+              tabs: _manyTabs,
+              scrollable: true,
+              activeIndex: _scrollSegActive,
+              onActiveIndexChange: (i) =>
+                  setState(() => _scrollSegActive = i),
+            ),
+          ),
+          const SizedBox(height: 4),
+          _caption(context, 'active: ${_manyTabs[_scrollSegActive].label}'),
+          const SizedBox(height: 24),
+
+          // Scrollable line
+          _label(context, 'scrollable line'),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: 320,
+            child: BTTabs(
+              variant: BTTabsVariant.line,
+              tabs: _manyTabs,
+              scrollable: true,
+              activeIndex: _scrollLineActive,
+              onActiveIndexChange: (i) =>
+                  setState(() => _scrollLineActive = i),
+            ),
+          ),
+          const SizedBox(height: 4),
+          _caption(context, 'active: ${_manyTabs[_scrollLineActive].label}'),
+          const SizedBox(height: 24),
+
           // Segmented + leading icons
           _label(context, 'segmented + leading icons'),
           const SizedBox(height: 8),
@@ -99,14 +148,16 @@ class _BTTabsShowcaseState extends State<BTTabsShowcase> {
             variant: BTTabsVariant.segmented,
             tabs: _disabledTabs,
             activeIndex: _disabledActive,
-            onActiveIndexChange: (i) => setState(() => _disabledActive = i),
+            onActiveIndexChange: (i) =>
+                setState(() => _disabledActive = i),
           ),
           const SizedBox(height: 12),
           BTTabs(
             variant: BTTabsVariant.line,
             tabs: _disabledTabs,
             activeIndex: _disabledActive,
-            onActiveIndexChange: (i) => setState(() => _disabledActive = i),
+            onActiveIndexChange: (i) =>
+                setState(() => _disabledActive = i),
           ),
           const SizedBox(height: 32),
         ],
@@ -117,41 +168,39 @@ class _BTTabsShowcaseState extends State<BTTabsShowcase> {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-Widget _sectionTitle(BuildContext context, String text) {
-  return Text(
-    text,
-    style: TextStyle(
-      fontSize: 18,
-      fontWeight: FontWeight.w600,
-      color: context.btechColor.text.primary,
-    ),
-  );
-}
-
-Widget _subtitle(BuildContext context, String text) {
-  return Padding(
-    padding: const EdgeInsets.only(top: 4),
-    child: Text(
+Widget _sectionTitle(BuildContext context, String text) => Text(
       text,
-      style: TextStyle(fontSize: 13, color: context.btechColor.text.secondary),
-    ),
-  );
-}
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: context.btechColor.text.primary,
+      ),
+    );
 
-Widget _label(BuildContext context, String text) {
-  return Text(
-    text,
-    style: TextStyle(
-      fontSize: 11,
-      fontFamily: 'monospace',
-      color: context.btechColor.text.secondary,
-    ),
-  );
-}
+Widget _subtitle(BuildContext context, String text) => Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 13,
+          color: context.btechColor.text.secondary,
+        ),
+      ),
+    );
 
-Widget _caption(BuildContext context, String text) {
-  return Text(
-    text,
-    style: TextStyle(fontSize: 12, color: context.btechColor.text.secondary),
-  );
-}
+Widget _label(BuildContext context, String text) => Text(
+      text,
+      style: TextStyle(
+        fontSize: 11,
+        fontFamily: 'monospace',
+        color: context.btechColor.text.secondary,
+      ),
+    );
+
+Widget _caption(BuildContext context, String text) => Text(
+      text,
+      style: TextStyle(
+        fontSize: 12,
+        color: context.btechColor.text.secondary,
+      ),
+    );

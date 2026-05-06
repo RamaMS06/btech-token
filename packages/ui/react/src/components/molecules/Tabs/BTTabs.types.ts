@@ -26,6 +26,13 @@ export interface BTTabsProps {
    * Controlled via `v-model:activeIndex`.
    */
   activeIndex?: number;
+  /**
+   * When `true`, the tab strip becomes horizontally scrollable and
+   * auto-scrolls to center the active tab on each selection.
+   * Useful when there are many tabs and the container is narrow.
+   * @default false
+   */
+  scrollable?: boolean;
   /** Additional CSS class names on the root element. */
   className?: string;
 }

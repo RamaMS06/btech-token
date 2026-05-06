@@ -1,13 +1,19 @@
 /* BTTabs — tab molecule (Figma 1:53 / Base/TabItem 434:5262)
  *
  * Variants:  segmented · line
+ * Animation: sliding indicator (not opacity/border toggling)
+ * Scrollable: overflow-x auto + center-on-active
  *
  * Architecture:
- *   .bt-tabs              root container
- *   .bt-tabs--segmented   pill-style container (bg tray + active pill)
- *   .bt-tabs--line        underline-style (no tray, active border-bottom)
- *   .bt-tabs__item        individual tab button
- *   .bt-tabs__item--active  active state per variant
+ *   .bt-tabs                    root — position:relative for absolute indicator
+ *   .bt-tabs--segmented         pill-style tray
+ *   .bt-tabs--line              underline-style
+ *   .bt-tabs--scrollable        horizontal scroll, fills parent width
+ *   .bt-tabs--ready             enables CSS transition (added after first paint)
+ *   .bt-tabs__indicator         sliding pill / underline — absolutely positioned
+ *   .bt-tabs__item              individual tab button — z-index:1 (above indicator)
+ *   .bt-tabs__item--active      active text color
+ *   .bt-tabs__icon              icon wrapper slot
  */
 
 /* ── Container ───────────────────────────────────────────────────────────── */
@@ -15,12 +21,25 @@
 .bt-tabs {
   display: inline-flex;
   align-items: center;
+  position: relative;  /* anchor for absolute indicator */
 }
 
-/* Segmented: gray tray with 4px padding, radius.md, height 40px */
+/* Scrollable: fills parent, hides scrollbar, allows horizontal overflow */
+.bt-tabs--scrollable {
+  display: flex;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;         /* Firefox */
+  -webkit-overflow-scrolling: touch;
+}
+.bt-tabs--scrollable::-webkit-scrollbar {
+  display: none;                 /* Chrome/Safari */
+}
+
+/* Segmented: gray tray, 4px padding, radius.md, height 40px */
 .bt-tabs--segmented {
-  background: var(--bg-secondary);  /* #ecedee */
-  border-radius: var(--radius-md);  /* 12px */
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
   padding: 4px;
   gap: 0;
   height: 40px;
@@ -32,65 +51,98 @@
   background: none;
 }
 
+/* ── Sliding indicator ───────────────────────────────────────────────────── */
+
+.bt-tabs__indicator {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  /* transition enabled only after first paint (.bt-tabs--ready) */
+}
+
+.bt-tabs--ready .bt-tabs__indicator {
+  transition:
+    left  0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Segmented: filled primary pill behind the label */
+.bt-tabs--segmented .bt-tabs__indicator {
+  top:    4px;   /* = container padding-top */
+  height: 32px;
+  background: var(--color-brand-primary);
+  border-radius: var(--radius-sm);
+}
+
+/* Line: 2px primary underline at the bottom */
+.bt-tabs--line .bt-tabs__indicator {
+  bottom: 0;
+  height: 2px;
+  background: var(--color-brand-primary);
+}
+
 /* ── Tab item ────────────────────────────────────────────────────────────── */
 
 .bt-tabs__item {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;                      /* spacing.xs — icon ↔ label */
+  gap: 4px;
   height: 32px;
-  padding: 8px 12px;             /* spacing.sm × 12px */
-  border-radius: var(--radius-sm); /* 8px */
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
   border: none;
   background: none;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
   font-family: var(--typography-font-family-sans, 'Geist', sans-serif);
-  font-size: 14px;               /* fontSize.sm */
+  font-size: 14px;
   font-weight: 500;
-  line-height: 16px;             /* lineHeight.xs */
+  line-height: 16px;
   letter-spacing: 0;
-  color: var(--text-secondary);  /* #64748b — inactive label */
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  color: var(--text-secondary);
+  transition: color 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  /* above the absolute indicator */
+  position: relative;
+  z-index: 1;
 }
 
 .bt-tabs__item:focus-visible {
   outline: 2px solid var(--color-brand-primary);
   outline-offset: 2px;
+  border-radius: var(--radius-sm);
+  z-index: 2;
 }
 
-/* ── Segmented active state ──────────────────────────────────────────────── */
+.bt-tabs__item:disabled,
+.bt-tabs__item[aria-disabled='true'] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
+/* ── Segmented active / hover ────────────────────────────────────────────── */
+
+/* Active text color — background is the sliding indicator */
 .bt-tabs--segmented .bt-tabs__item--active {
-  background: var(--color-brand-primary); /* #145bc3 */
-  color: var(--text-inverse);             /* white */
-  border-radius: var(--radius-sm);        /* 8px */
+  color: var(--text-inverse);
 }
 
-.bt-tabs--segmented .bt-tabs__item:not(.bt-tabs__item--active):hover {
+.bt-tabs--segmented .bt-tabs__item:not(.bt-tabs__item--active):not(:disabled):hover {
   background: rgb(0 0 0 / 0.05);
+  border-radius: var(--radius-sm);
 }
 
-/* ── Line active state ───────────────────────────────────────────────────── */
-
-/* Line item: square bottom-left / bottom-right for border alignment */
-.bt-tabs--line .bt-tabs__item {
-  border-radius: 0;
-  border-bottom: 2px solid transparent;
-  padding-bottom: 6px; /* 8px − 2px border so total height stays 32px */
-}
+/* ── Line active / hover ─────────────────────────────────────────────────── */
 
 .bt-tabs--line .bt-tabs__item--active {
-  color: var(--color-brand-primary);  /* #145bc3 */
-  border-bottom-color: var(--color-brand-primary);
+  color: var(--color-brand-primary);
 }
 
-.bt-tabs--line .bt-tabs__item:not(.bt-tabs__item--active):hover {
+.bt-tabs--line .bt-tabs__item:not(.bt-tabs__item--active):not(:disabled):hover {
   color: var(--text-secondary);
-  border-bottom-color: rgb(0 0 0 / 0.1);
+  opacity: 0.7;
 }
 
 /* ── Icon slot ───────────────────────────────────────────────────────────── */

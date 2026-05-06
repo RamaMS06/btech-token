@@ -11,6 +11,12 @@
 ///                 Active tab has primary underline border + primary text.
 enum BTTabsVariant { segmented, line }
 
+/// Configuration for the [BTTabs] widget.
+///
+/// All fields mirror the Vue/React [BTTabsProps] for cross-framework parity.
+// ignore: avoid_classes_with_only_static_members — intentionally a data class
+// (keeping separate from BTTabItem to match web types structure)
+
 /// Data for a single tab item.
 class BTTabItem {
   const BTTabItem({
