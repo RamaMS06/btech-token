@@ -16,6 +16,10 @@ import 'package:flutter/material.dart';
 ///
 /// On web / desktop: hover with the mouse to show / hide.
 ///
+/// The arrow always points to the trigger's center regardless of clamping —
+/// if the balloon is forced towards the screen edge the arrow shifts
+/// automatically (same pixel-accurate approach as [BTTooltipStep]).
+///
 /// ```dart
 /// // Simple text
 /// BTTooltip(
@@ -56,7 +60,9 @@ class BTTooltip extends StatefulWidget {
   /// Which side the balloon appears on relative to the trigger.
   final BTTooltipPosition position;
 
-  /// Where the arrow caret sits along its axis.
+  /// Initial arrow-caret position hint. Overridden automatically when
+  /// the balloon is clamped to the screen edge so the arrow always
+  /// points back to the trigger center.
   final BTTooltipArrowPosition arrowPosition;
 
   /// When true the tooltip never shows.
@@ -81,8 +87,10 @@ class _BTTooltipState extends State<BTTooltip>
   // ── Global singleton — ensures only one tooltip is visible at a time ─────
   static _BTTooltipState? _activeTooltip;
 
-  static const double _gap = 4;
-  static const double _balloonWidth = 280;
+  // Layout constants
+  static const double _gap = 6;         // space between trigger edge and balloon
+  static const double _balloonW = 280;  // fixed balloon width
+  static const double _balloonHEst = 100; // height estimate for top position
 
   @override
   void initState() {
@@ -146,49 +154,66 @@ class _BTTooltipState extends State<BTTooltip>
         final box = _triggerKey.currentContext?.findRenderObject() as RenderBox?;
         if (box == null) return const SizedBox.shrink();
 
-        final triggerOffset = box.localToGlobal(Offset.zero);
-        final triggerSize = box.size;
-        final screenSize = MediaQuery.of(ctx).size;
+        final tOff  = box.localToGlobal(Offset.zero);
+        final tSize = box.size;
+        final screen = MediaQuery.of(ctx).size;
 
-        // Arrow fraction along axis
-        final af = _arrowFraction(widget.arrowPosition);
-        double top = 0;
-        double left = 0;
+        final tcx = tOff.dx + tSize.width  / 2; // trigger center X
+        final tcy = tOff.dy + tSize.height / 2; // trigger center Y
+
+        // ── Ideal balloon position (arrow at `arrowPosition` relative to
+        //    balloon, balloon centred so arrow points at trigger center) ──────
+        double top;
+        double left;
 
         switch (widget.position) {
           case BTTooltipPosition.top:
-            // Estimate balloon height (content dependent); use placeholder 60
-            top = triggerOffset.dy - 60 - _gap - 8; // 8 = arrow height
-            left = triggerOffset.dx + triggerSize.width / 2 - _balloonWidth * af;
+            top  = tOff.dy - _balloonHEst - _arrowH - _gap;
+            // Use arrowPosition to shift the balloon horizontally so the
+            // declared arrow side aligns with the trigger center.
+            left = tcx - _balloonW * _hFraction(widget.arrowPosition);
           case BTTooltipPosition.bottom:
-            top = triggerOffset.dy + triggerSize.height + _gap;
-            left = triggerOffset.dx + triggerSize.width / 2 - _balloonWidth * af;
+            top  = tOff.dy + tSize.height + _gap;
+            left = tcx - _balloonW * _hFraction(widget.arrowPosition);
           case BTTooltipPosition.left:
-            top = triggerOffset.dy + triggerSize.height / 2 - 30;
-            left = triggerOffset.dx - _balloonWidth - _gap - 8;
+            top  = tcy - _balloonHEst / 2;
+            left = tOff.dx - _balloonW - _arrowH - _gap;
           case BTTooltipPosition.right:
-            top = triggerOffset.dy + triggerSize.height / 2 - 30;
-            left = triggerOffset.dx + triggerSize.width + _gap;
+            top  = tcy - _balloonHEst / 2;
+            left = tOff.dx + tSize.width + _gap;
         }
 
-        // Clamp to screen
-        left = left.clamp(8, screenSize.width - _balloonWidth - 8);
-        top = top.clamp(8, screenSize.height - 80);
+        // ── Clamp to screen edges (8 px margin) ───────────────────────────
+        final clampedLeft = left.clamp(8.0, screen.width  - _balloonW - 8.0);
+        final clampedTop  = top .clamp(8.0, screen.height - _balloonHEst - 8.0);
 
-        // TapRegion with the same groupId as the trigger — tapping on the
-        // balloon body is "inside" the group and will NOT call onTapOutside.
+        // ── Pixel-accurate arrow offset ────────────────────────────────────
+        // For top/bottom: horizontal px from balloon left edge to trigger centre.
+        // For left/right: vertical   px from balloon top  edge to trigger centre.
+        // Clamped so the arrow never escapes the balloon.
+        final hArrowPx = (widget.position == BTTooltipPosition.top ||
+                widget.position == BTTooltipPosition.bottom)
+            ? (tcx - clampedLeft).clamp(8.0, _balloonW - 8.0)
+            : null;
+        final vArrowPx = (widget.position == BTTooltipPosition.left ||
+                widget.position == BTTooltipPosition.right)
+            ? (tcy - clampedTop).clamp(8.0, _balloonHEst - 8.0)
+            : null;
+
         return Positioned(
-          top: top,
-          left: left,
+          top:  clampedTop,
+          left: clampedLeft,
           child: TapRegion(
             groupId: _tapGroupId,
             child: FadeTransition(
               opacity: _fade,
               child: _BTTooltipBalloon(
-                position: widget.position,
+                position:     widget.position,
                 arrowPosition: widget.arrowPosition,
-                text: widget.text,
-                content: widget.content,
+                hArrowPx:     hArrowPx,
+                vArrowPx:     vArrowPx,
+                text:         widget.text,
+                content:      widget.content,
               ),
             ),
           ),
@@ -197,15 +222,26 @@ class _BTTooltipState extends State<BTTooltip>
     );
   }
 
-  static double _arrowFraction(BTTooltipArrowPosition ap) {
-    return switch (ap) {
-      BTTooltipArrowPosition.left => 17 / 280,
-      BTTooltipArrowPosition.leftMid => 0.25,
-      BTTooltipArrowPosition.mid => 0.5,
-      BTTooltipArrowPosition.rightMid => 0.75,
-      BTTooltipArrowPosition.right => (280 - 17) / 280,
-    };
-  }
+  // Arrow size (height of the caret SVG — same for both axes).
+  static const double _arrowH = 8;
+
+  /// Horizontal fraction: where the arrow CENTER sits within the 280 px balloon.
+  ///
+  /// Derived from the Align+Padding layout used by [_BTTooltipBalloon]:
+  ///   • Padding.horizontal = 16 on a 280 px container.
+  ///   • Arrow SVG is 16 px wide  → centre = leftEdge + 8.
+  ///   • Align.centerLeft  → leftEdge = 16     → centre =  24   → 24/280
+  ///   • Align(-0.5, 0)    → leftEdge = 58     → centre =  82   → 82/280
+  ///   • Align.center      → leftEdge = 116    → centre = 140   → 0.5
+  ///   • Align(0.5,  0)    → leftEdge = 174    → centre = 198   → 198/280
+  ///   • Align.centerRight → leftEdge = 248    → centre = 256   → 256/280
+  static double _hFraction(BTTooltipArrowPosition ap) => switch (ap) {
+        BTTooltipArrowPosition.left     =>  24 / 280,
+        BTTooltipArrowPosition.leftMid  =>  82 / 280,
+        BTTooltipArrowPosition.mid      =>       0.5,
+        BTTooltipArrowPosition.rightMid => 198 / 280,
+        BTTooltipArrowPosition.right    => 256 / 280,
+      };
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
@@ -219,7 +255,7 @@ class _BTTooltipState extends State<BTTooltip>
       child: MouseRegion(
         // Desktop / web hover
         onEnter: (_) => _show(),
-        onExit: (_) => _hide(),
+        onExit:  (_) => _hide(),
         child: GestureDetector(
           // Mobile tap — also bind long-press because an interactive child
           // (e.g. ElevatedButton) wins the tap gesture in the arena, but
@@ -243,27 +279,39 @@ class _BTTooltipBalloon extends StatelessWidget {
   const _BTTooltipBalloon({
     required this.position,
     required this.arrowPosition,
+    this.hArrowPx,
+    this.vArrowPx,
     this.text,
     this.content,
   });
 
   final BTTooltipPosition position;
   final BTTooltipArrowPosition arrowPosition;
+
+  /// Pixel-accurate horizontal arrow offset (top/bottom positions).
+  /// When set, overrides [arrowPosition] for arrow placement.
+  final double? hArrowPx;
+
+  /// Pixel-accurate vertical arrow offset (left/right positions).
+  final double? vArrowPx;
+
   final String? text;
   final Widget? content;
 
+  static const double _w = 280;
+
   @override
   Widget build(BuildContext context) {
-    final c = context.btechColor;
-    final r = context.btechRadius;
+    final c  = context.btechColor;
+    final r  = context.btechRadius;
     final bg = c.bg.inverse;
 
     final isVertical = position == BTTooltipPosition.top ||
         position == BTTooltipPosition.bottom;
 
     final arrow = BTTooltipArrow(direction: position, color: bg);
-    final body = Container(
-      width: 280,
+    final body  = Container(
+      width: _w,
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(r.sm),
@@ -274,43 +322,30 @@ class _BTTooltipBalloon extends StatelessWidget {
             text ?? '',
             style: TextStyle(
               fontFamily: BTechTypography.fontFamily,
-              fontSize: 14,
+              fontSize:   14,
               fontWeight: FontWeight.w500,
-              height: 16 / 14,
-              color: c.text.inverse,
+              height:     16 / 14,
+              color:      c.text.inverse,
             ),
           ),
     );
 
     if (isVertical) {
-      // Arrow alignment along horizontal axis
-      final aligned = Align(
-        alignment: _horizontalAlignment(arrowPosition),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: arrow,
-        ),
-      );
-
+      final alignedArrow = _buildHArrow(arrow);
       return Material(
         type: MaterialType.transparency,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: position == BTTooltipPosition.bottom
-              ? [aligned, body]   // bottom: arrow on top → trigger is below
-              : [body, aligned],  // top: body on top → arrow at bottom
+        child: SizedBox(
+          width: _w,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: position == BTTooltipPosition.bottom
+                ? [alignedArrow, body]   // bottom: arrow on top
+                : [body, alignedArrow],  // top:    arrow at bottom
+          ),
         ),
       );
     } else {
-      // Arrow alignment along vertical axis
-      final aligned = Align(
-        alignment: _verticalAlignment(arrowPosition),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: arrow,
-        ),
-      );
-
+      final alignedArrow = _buildVArrow(arrow);
       return Material(
         type: MaterialType.transparency,
         child: IntrinsicHeight(
@@ -318,31 +353,74 @@ class _BTTooltipBalloon extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: position == BTTooltipPosition.left
-                ? [body, aligned]   // left: body on left → arrow on right
-                : [aligned, body],  // right: arrow on left → body on right
+                ? [body, alignedArrow]   // left: arrow on right side
+                : [alignedArrow, body],  // right: arrow on left side
           ),
         ),
       );
     }
   }
 
-  Alignment _horizontalAlignment(BTTooltipArrowPosition ap) {
-    return switch (ap) {
-      BTTooltipArrowPosition.left => Alignment.centerLeft,
-      BTTooltipArrowPosition.leftMid => const Alignment(-0.5, 0),
-      BTTooltipArrowPosition.mid => Alignment.center,
-      BTTooltipArrowPosition.rightMid => const Alignment(0.5, 0),
-      BTTooltipArrowPosition.right => Alignment.centerRight,
-    };
+  /// Horizontal arrow row for top / bottom balloons.
+  /// Uses pixel-accurate Stack+Positioned when [hArrowPx] is set;
+  /// falls back to Align for static enum placement.
+  Widget _buildHArrow(Widget arrow) {
+    if (hArrowPx != null) {
+      // Arrow SVG is 16 px wide — subtract 8 to get its left edge.
+      final left = (hArrowPx! - 8.0).clamp(0.0, _w - 16.0);
+      return SizedBox(
+        width: _w,
+        height: 8,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [Positioned(left: left, top: 0, child: arrow)],
+        ),
+      );
+    }
+    // Fallback: enum-based Align+Padding.
+    return Align(
+      alignment: _hAlignment(arrowPosition),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: arrow,
+      ),
+    );
   }
 
-  Alignment _verticalAlignment(BTTooltipArrowPosition ap) {
-    return switch (ap) {
-      BTTooltipArrowPosition.left => Alignment.topCenter,
-      BTTooltipArrowPosition.leftMid => const Alignment(0, -0.5),
-      BTTooltipArrowPosition.mid => Alignment.center,
-      BTTooltipArrowPosition.rightMid => const Alignment(0, 0.5),
-      BTTooltipArrowPosition.right => Alignment.bottomCenter,
-    };
+  /// Vertical arrow column for left / right balloons.
+  Widget _buildVArrow(Widget arrow) {
+    if (vArrowPx != null) {
+      final top = (vArrowPx! - 8.0).clamp(0.0, double.infinity);
+      return SizedBox(
+        width: 8,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [Positioned(top: top, left: 0, child: arrow)],
+        ),
+      );
+    }
+    return Align(
+      alignment: _vAlignment(arrowPosition),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: arrow,
+      ),
+    );
   }
+
+  Alignment _hAlignment(BTTooltipArrowPosition ap) => switch (ap) {
+        BTTooltipArrowPosition.left     => Alignment.centerLeft,
+        BTTooltipArrowPosition.leftMid  => const Alignment(-0.5, 0),
+        BTTooltipArrowPosition.mid      => Alignment.center,
+        BTTooltipArrowPosition.rightMid => const Alignment(0.5, 0),
+        BTTooltipArrowPosition.right    => Alignment.centerRight,
+      };
+
+  Alignment _vAlignment(BTTooltipArrowPosition ap) => switch (ap) {
+        BTTooltipArrowPosition.left     => Alignment.topCenter,
+        BTTooltipArrowPosition.leftMid  => const Alignment(0, -0.5),
+        BTTooltipArrowPosition.mid      => Alignment.center,
+        BTTooltipArrowPosition.rightMid => const Alignment(0, 0.5),
+        BTTooltipArrowPosition.right    => Alignment.bottomCenter,
+      };
 }
