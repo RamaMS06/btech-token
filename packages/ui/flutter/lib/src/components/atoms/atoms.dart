@@ -4,4 +4,5 @@
 // and organisms. Internal helpers are NOT re-exported here.
 export 'badge/badge.dart';
 export 'button/button.dart';
+export 'button_link/button_link.dart';
 export 'loading_skeleton/loading_skeleton.dart';

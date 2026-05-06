@@ -5,6 +5,7 @@ import { ref, watchEffect, computed } from 'vue';
 import BTAvatarShowcase from './showcases/BTAvatarShowcase.vue';
 import BTBadgeShowcase from './showcases/BTBadgeShowcase.vue';
 import BTButtonShowcase from './showcases/BTButtonShowcase.vue';
+import BTButtonLinkShowcase from './showcases/BTButtonLinkShowcase.vue';
 
 // ── Sidebar registry ──────────────────────────────────────────────────────────
 // Add new entries here as components are sliced.
@@ -17,7 +18,8 @@ interface ShowcasePage {
 
 const PAGES: ShowcasePage[] = [
   { id: 'badge',  group: 'Atoms',     label: 'Badge'  },
-  { id: 'button', group: 'Atoms',     label: 'Button' },
+  { id: 'button',      group: 'Atoms',     label: 'Button'      },
+  { id: 'button-link', group: 'Atoms',     label: 'Button Link' },
   { id: 'avatar', group: 'Molecules', label: 'Avatar' },
 ];
 
@@ -77,6 +79,7 @@ watchEffect(() => {
       <main class="showcase-main">
         <BTBadgeShowcase v-if="selectedId === 'badge'" />
         <BTButtonShowcase v-else-if="selectedId === 'button'" />
+        <BTButtonLinkShowcase v-else-if="selectedId === 'button-link'" />
         <BTAvatarShowcase v-else-if="selectedId === 'avatar'" />
       </main>
     </div>

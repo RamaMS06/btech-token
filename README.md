@@ -389,5 +389,7 @@ Local bump (`pnpm bump`) supports the same flags: `--scope=<s>`, `--auto`, `--dr
 
 - [docs/architecture.md](./docs/architecture.md) — Pipeline, token model, naming conventions
 - [docs/architecture/versioning.md](./docs/architecture/versioning.md) — Hybrid auto-scope versioning
-- [docs/contributing.md](./docs/contributing.md) — Add/modify tenants, local dev, validators
+- [docs/contributing.md](./docs/contributing.md) — Token maintainer guide (add/modify tenants, validators)
+- [docs/contributing-ui.md](./docs/contributing-ui.md) — **UI component developer guide** (slicing pipeline, reference repos, Figma MCP setup)
+- [docs/architecture/slicing-workflow.md](./docs/architecture/slicing-workflow.md) — Step-by-step Figma → 3 frameworks
 - [docs/ci-cd.md](./docs/ci-cd.md) — Pipeline details, release flow, versioning

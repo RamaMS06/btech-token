@@ -5,6 +5,7 @@ import './app.css';
 import { BTAvatarShowcase } from './showcases/BTAvatarShowcase';
 import { BTBadgeShowcase } from './showcases/BTBadgeShowcase';
 import { BTButtonShowcase } from './showcases/BTButtonShowcase';
+import { BTButtonLinkShowcase } from './showcases/BTButtonLinkShowcase';
 
 // ── Sidebar registry ──────────────────────────────────────────────────────────
 // Add new entries here as components are sliced. Group = atomic-design layer.
@@ -18,7 +19,8 @@ interface ShowcasePage {
 
 const PAGES: ShowcasePage[] = [
   { id: 'badge',  group: 'Atoms',     label: 'Badge',  component: <BTBadgeShowcase /> },
-  { id: 'button', group: 'Atoms',     label: 'Button', component: <BTButtonShowcase /> },
+  { id: 'button',      group: 'Atoms',     label: 'Button',      component: <BTButtonShowcase /> },
+  { id: 'button-link', group: 'Atoms',     label: 'Button Link', component: <BTButtonLinkShowcase /> },
   { id: 'avatar', group: 'Molecules', label: 'Avatar', component: <BTAvatarShowcase /> },
 ];
 

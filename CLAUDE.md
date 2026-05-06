@@ -457,7 +457,55 @@ The only place raw hex is allowed is `rgba(0, 0, 0, 0.25)` style
 shadow overlays that are not tokenised (opacity-based, not a named
 colour token).
 
-### 7. Cross-framework API parity
+### 7. Color token mapping rule (MANDATORY)
+
+When mapping a color from a Figma frame (or Figma MCP response) to a
+btech token, **NEVER pick the token name by linguistic intuition**.
+The names `subtle` / `subtler` / `subtlest` are 3 DIFFERENT values, AND
+the lightness ordering is NOT consistent across token families:
+
+| Family | Lightest → Darkest |
+|---|---|
+| `bg.*` (neutral) | `subtle` (neutral.50) → `subtler` (neutral.200) → `subtlest` (neutral.300) |
+| `color.ext.{success,info,warning,error}-*` | `subtler` (100) → `subtle` (200) |
+
+Two traps to keep in mind:
+
+1. **3 distinct values, not synonyms.** `bg.subtle` ≠ `bg.subtler` ≠
+   `bg.subtlest`. Each maps to a different neutral step.
+2. **Lightness ordering is NOT consistent across families.** In
+   `bg.*`, `subtle` is the LIGHTEST. In `color.ext.*-subtle/-subtler`,
+   `subtler` is the LIGHTEST.
+
+**Required workflow when mapping a Figma color:**
+
+1. Get the EXACT hex from Figma (MCP `get_variable_defs` or
+   `get_design_context`).
+2. Look up the EXACT hex in
+   `packages/tokens/sources/semantic-color/light.json` (or the relevant
+   tenant's source). Use Grep / Read — never guess.
+3. Match by hex value, not by name. If two tokens share the same hex,
+   prefer the one whose semantic role matches the component context
+   (e.g. badge background → `color.ext.*` family, not `bg.*`).
+4. Only then write the token reference (Flutter accessor, CSS var, or
+   hardcoded hex per the component-specific-colors rule §2).
+
+**Forbidden shortcuts:**
+
+- "Figma says `subtle`, so I'll use `bg.subtle`" — without verifying
+  the hex.
+- "It looks like a light green, must be `green.100`" — without
+  checking whether btech `green.100` matches the Figma hex (Tailwind
+  `green.100` ≠ btech `green.100`).
+- Assuming web CSS primitive vars (`--btech-color-green-100`) carry
+  the same value as the btech DTCG primitive — they currently DO NOT
+  (web CSS generator emits Tailwind values).
+
+This rule applies to BOTH human-written code and slicer / converter
+agent output. The Vue→React converter prompt and the slicer system
+prompt must include this rule as a cache-breakpoint instruction.
+
+### 8. Cross-framework API parity
 
 When a component exists in 3 frameworks, **prop names + variant values
 + render priority MUST match exactly**. The Vue→React converter
@@ -467,7 +515,7 @@ discriminated props.
 Example: `BTAvatar` takes `item: BTAvatarItem` in all 3 frameworks
 (not `src` in React vs `imageUrl` in Flutter).
 
-### 8. Component-conventions per framework
+### 9. Component-conventions per framework
 
 Detailed pattern guides:
 - `docs/architecture/component-conventions/flutter.md`

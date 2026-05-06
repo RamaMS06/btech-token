@@ -2,6 +2,7 @@ import 'package:btech_tokens/btech_tokens.dart';
 import 'package:flutter/material.dart';
 import 'showcases/avatar_showcase.dart';
 import 'showcases/badge_showcase.dart';
+import 'showcases/button_link_showcase.dart';
 import 'showcases/button_showcase.dart';
 import 'showcases/loading_skeleton_showcase.dart';
 
@@ -32,6 +33,11 @@ const _pages = <_ShowcasePage>[
     group: 'Atoms',
     label: 'Button',
     child: BTButtonShowcase(),
+  ),
+  _ShowcasePage(
+    group: 'Atoms',
+    label: 'Button Link',
+    child: BTButtonLinkShowcase(),
   ),
   _ShowcasePage(
     group: 'Molecules',
