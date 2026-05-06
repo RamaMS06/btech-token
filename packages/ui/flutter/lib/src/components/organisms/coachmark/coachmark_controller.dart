@@ -64,9 +64,13 @@ class BTCoachmarkController {
   int _activeIdx = -1;
   bool _navigating = false;
 
+  // Two-pass measurement for left/right centering.
+  Size? _stepMeasuredSize;
+
   static const double _balloonW = 320;
   static const double _balloonH = 160;
-  static const double _gap = 2;
+  // _spotlightPad (4) + 6px visual gap from spotlight border = 10
+  static const double _gap = 10;
   static const double _arrowSz = 8;
   static const double _spotlightPad = 4;
 
@@ -107,7 +111,7 @@ class BTCoachmarkController {
   void _insertEntries(BuildContext context, int idx) {
     if (idx < 0 || idx >= steps.length) return;
     _activeIdx = idx;
-
+    _stepMeasuredSize = null;
     final step = steps[idx];
     final box = step.targetKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return;
@@ -122,29 +126,23 @@ class BTCoachmarkController {
     final position = step.position ??
         _autoPosition(triggerOffset, triggerSize, screenSize);
 
-    double top;
+    // ── Horizontal position (left edge) — independent of balloon height ──
     double left;
     switch (position) {
       case BTTooltipPosition.top:
-        top = triggerOffset.dy - _balloonH - _arrowSz - _gap;
-        left = tcx - _balloonW / 2;
       case BTTooltipPosition.bottom:
-        top = triggerOffset.dy + triggerSize.height + _gap;
         left = tcx - _balloonW / 2;
       case BTTooltipPosition.left:
-        top = tcy - _balloonH / 2;
         left = triggerOffset.dx - _balloonW - _arrowSz - _gap;
       case BTTooltipPosition.right:
-        top = tcy - _balloonH / 2;
         left = triggerOffset.dx + triggerSize.width + _gap;
     }
-
     left = left.clamp(8.0, screenSize.width - _balloonW - 8.0);
-    top = top.clamp(8.0, screenSize.height - _balloonH - 8.0);
 
+    // arrowOffset: horizontal (tcx - left) for top/bottom; unused for left/right
     final arrowOffset =
         (position == BTTooltipPosition.left || position == BTTooltipPosition.right)
-            ? tcy - top
+            ? null
             : tcx - left;
 
     final spotlight = Rect.fromLTWH(
@@ -182,41 +180,105 @@ class BTCoachmarkController {
     final nextLabelFinal = step.nextLabel ?? nextLabel;
     final variantFinal = step.stepVariant;
 
+    // Fresh GlobalKey per step — identifies the rendered BTTooltipStep.
+    final capturedKey = GlobalKey();
+
     _stepEntry = OverlayEntry(
-      builder: (_) => Positioned(
-        top: top,
-        left: left,
-        child: FadeTransition(
-          opacity: curvedAnim,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.92, end: 1).animate(curvedAnim),
-            child: Material(
-              color: Colors.transparent,
-              child: BTTooltipStep(
-                label: step.label,
-                description: step.description,
-                stepLabel: step.stepLabel,
-                stepVariant: variantFinal,
-                hasClose: true,
-                prevLabel: prevLabelFinal,
-                nextLabel: nextLabelFinal,
-                position: position,
-                arrowOffset: arrowOffset,
-                onPrev: idx > 0 ? () => _navigate(context, idx - 1) : _close,
-                onNext: idx < steps.length - 1
-                    ? () => _navigate(context, idx + 1)
-                    : _finish,
-                onClose: _close,
-              ),
-            ),
-          ),
-        ),
-      ),
+      builder: (_) {
+        // For left/right: use measured height (pass 2) or estimate (pass 1).
+        final h = _stepMeasuredSize?.height ?? _balloonH;
+
+        switch (position) {
+          // ── top: anchor widget BOTTOM to trigger top − gap ──────────────
+          // Height-independent — balloon grows upward regardless of content.
+          case BTTooltipPosition.top:
+            return Positioned(
+              bottom: screenSize.height - triggerOffset.dy + _gap,
+              left: left,
+              child: _buildStepWidget(curvedAnim, step, position, arrowOffset,
+                  capturedKey, idx, context, prevLabelFinal, nextLabelFinal, variantFinal,),
+            );
+
+          // ── bottom: anchor widget TOP to trigger bottom + gap ────────────
+          case BTTooltipPosition.bottom:
+            return Positioned(
+              top: triggerOffset.dy + triggerSize.height + _gap,
+              left: left,
+              child: _buildStepWidget(curvedAnim, step, position, arrowOffset,
+                  capturedKey, idx, context, prevLabelFinal, nextLabelFinal, variantFinal,),
+            );
+
+          // ── left/right: center on trigger mid-Y using measured height ────
+          case BTTooltipPosition.left:
+          case BTTooltipPosition.right:
+            final centeredTop =
+                (tcy - h / 2).clamp(8.0, screenSize.height - h - 8.0);
+            return Positioned(
+              top: centeredTop,
+              left: left,
+              child: _buildStepWidget(curvedAnim, step, position, null,
+                  capturedKey, idx, context, prevLabelFinal, nextLabelFinal, variantFinal,),
+            );
+        }
+      },
     );
 
     Overlay.of(context, rootOverlay: true)
       ..insert(_backdropEntry!)
       ..insert(_stepEntry!);
+
+    // Pass 2: measure actual balloon height → re-center left/right tooltip.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final stepBox =
+          capturedKey.currentContext?.findRenderObject() as RenderBox?;
+      if (stepBox != null && _stepMeasuredSize == null) {
+        _stepMeasuredSize = stepBox.size;
+        if (position == BTTooltipPosition.left ||
+            position == BTTooltipPosition.right) {
+          _stepEntry?.markNeedsBuild();
+        }
+      }
+    });
+  }
+
+  Widget _buildStepWidget(
+    Animation<double> curvedAnim,
+    BTCoachmarkStep step,
+    BTTooltipPosition position,
+    double? arrowOffset,
+    GlobalKey stepKey,
+    int idx,
+    BuildContext context,
+    String prevLabelFinal,
+    String nextLabelFinal,
+    BTTooltipStepVariant variantFinal,
+  ) {
+    return FadeTransition(
+      opacity: curvedAnim,
+      child: ScaleTransition(
+        scale: Tween<double>(begin: 0.92, end: 1).animate(curvedAnim),
+        child: Material(
+          color: Colors.transparent,
+          child: BTTooltipStep(
+            key: stepKey,
+            label: step.label,
+            description: step.description,
+            stepLabel: step.stepLabel,
+            stepVariant: variantFinal,
+            hasClose: true,
+            prevLabel: prevLabelFinal,
+            nextLabel: nextLabelFinal,
+            position: position,
+            arrowOffset: arrowOffset,
+            onPrev: idx > 0 ? () => _navigate(context, idx - 1) : _close,
+            onNext: idx < steps.length - 1
+                ? () => _navigate(context, idx + 1)
+                : _finish,
+            onClose: _close,
+          ),
+        ),
+      ),
+    );
   }
 
   BTTooltipPosition _autoPosition(Offset offset, Size size, Size screen) {

@@ -207,7 +207,6 @@ onUnmounted(closeStep);
           :key="pt.label"
           :ref="(el) => { btnRefs[i]!.value = el as HTMLElement | null; }"
           class="demo-grid-btn"
-          :class="{ 'demo-grid-btn--active': tourStep === i }"
           @click="showStep(i)"
         >
           {{ pt.label }}
@@ -299,6 +298,5 @@ onUnmounted(closeStep);
 .demo-grid-btn:nth-child(n+8) { align-self: end; }
 .demo-grid-btn:nth-child(6) { justify-self: center; }
 
-.demo-grid-btn--active { background: #1e293b; }
-.demo-grid-btn:hover:not(.demo-grid-btn--active) { background: #3b8a4b; }
+.demo-grid-btn:hover { background: #3b8a4b; }
 </style>

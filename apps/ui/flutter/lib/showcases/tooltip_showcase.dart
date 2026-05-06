@@ -218,7 +218,6 @@ class _UsageTab extends StatefulWidget {
 class _UsageTabState extends State<_UsageTab> {
   final _keys = List.generate(9, (_) => GlobalKey());
   BTTooltipStepVariant _variant = BTTooltipStepVariant.button;
-  int _activeIdx = -1;
   bool _dismissable = true;
   BTCoachmarkController? _activeTour;
   static const int _total = 9;
@@ -272,18 +271,13 @@ class _UsageTabState extends State<_UsageTab> {
       ),
       dismissable: _dismissable,
       stepVariant: _variant,
-      onFinish: () {
-        if (!mounted) return;
-        setState(() => _activeIdx = -1);
-      },
+      onFinish: null,
     );
     _activeTour!.show(context, startAt: idx);
-    setState(() => _activeIdx = idx);
   }
 
   void _close() {
     _activeTour?.dismiss();
-    if (mounted) setState(() => _activeIdx = -1);
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -440,9 +434,7 @@ class _UsageTabState extends State<_UsageTab> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: _activeIdx == i
-                                ? c.text.primary
-                                : const Color(0xFF4a9d5b),
+                            color: const Color(0xFF4a9d5b),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

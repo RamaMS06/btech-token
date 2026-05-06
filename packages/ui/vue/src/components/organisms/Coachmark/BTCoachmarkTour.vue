@@ -26,6 +26,9 @@ import BTTooltipStep from '../../molecules/TooltipStep/BTTooltipStep.vue';
 import type { BTTooltipStepPosition, BTTooltipStepVariant } from '../../molecules/TooltipStep/BTTooltipStep.types';
 import type { BTCoachmarkStep } from './BTCoachmark.types';
 
+// ── Wrapper ref for 2-pass height measurement (left / right positions) ──────
+const stepWrapperRef = ref<HTMLElement | null>(null);
+
 const props = withDefaults(
   defineProps<{
     steps: BTCoachmarkStep[];
@@ -58,14 +61,28 @@ const emit = defineEmits<{
 // ── Layout constants (must match BTCoachmarkController in Flutter) ─────────
 
 const BALLOON_W = 320;
-const BALLOON_H = 160;
+const BALLOON_H_EST = 160; // first-pass estimate; actual measured via stepWrapperRef
 const ARROW = 8;
-const GAP = 2;
+const GAP = 10; // SPOTLIGHT_PAD(4) + visual gap(6)
 const SPOTLIGHT_PAD = 4;
 
 // ── Reactive layout state ──────────────────────────────────────────────────
 
-const stepPos = ref({ top: 0, left: 0 });
+// top/bottom are mutually exclusive — set one, leave other undefined.
+const stepCSS = ref<{ top?: number; bottom?: number; left: number }>({ left: 0 });
+
+/** Resolved inline style for the step wrapper div. */
+const stepWrapperStyle = computed(() => {
+  const s: Record<string, string | number> = {
+    position: 'fixed',
+    left: `${stepCSS.value.left}px`,
+    zIndex: 9001,
+    pointerEvents: 'all',
+  };
+  if (stepCSS.value.top    !== undefined) s['top']    = `${stepCSS.value.top}px`;
+  if (stepCSS.value.bottom !== undefined) s['bottom'] = `${stepCSS.value.bottom}px`;
+  return s;
+});
 const activeTTPos = ref<BTTooltipStepPosition>('bottom');
 const stepArrowOffset = ref('50%');
 const spotlightRect = ref<{ top: number; left: number; width: number; height: number } | null>(null);
@@ -82,7 +99,7 @@ function autoPosition(rect: DOMRect): BTTooltipStepPosition {
   return cy > window.innerHeight * 0.6 ? 'top' : 'bottom';
 }
 
-function computeLayout(idx: number): void {
+function computeLayout(idx: number, actualH?: number): void {
   const stepDef = props.steps[idx];
   if (!stepDef) return;
   const target = stepDef.targetRef.value;
@@ -98,36 +115,42 @@ function computeLayout(idx: number): void {
 
   const tcx = rect.left + rect.width / 2;
   const tcy = rect.top + rect.height / 2;
-  let top = 0;
-  let left = 0;
 
   switch (pos) {
-    case 'top':
-      top  = rect.top - BALLOON_H - ARROW - GAP;
-      left = tcx - BALLOON_W / 2;
+    case 'top': {
+      // 2-pass: arrow tip = balloon BOTTOM = rect.top - GAP (6px above spotlight).
+      // top = balloon bottom − h = rect.top − GAP − h.
+      const left = Math.max(8, Math.min(tcx - BALLOON_W / 2, window.innerWidth - BALLOON_W - 8));
+      const h = actualH ?? BALLOON_H_EST;
+      const top = Math.max(8, rect.top - GAP - h);
+      stepCSS.value = { top, bottom: undefined, left };
+      stepArrowOffset.value = `${tcx - left}px`;
       break;
-    case 'bottom':
-      // Arrow is INSIDE the balloon (top edge): only GAP separates.
-      top  = rect.bottom + GAP;
-      left = tcx - BALLOON_W / 2;
+    }
+    case 'bottom': {
+      // Arrow tip = balloon TOP = rect.bottom + GAP (6px below spotlight).
+      const left = Math.max(8, Math.min(tcx - BALLOON_W / 2, window.innerWidth - BALLOON_W - 8));
+      stepCSS.value = { top: rect.bottom + GAP, bottom: undefined, left };
+      stepArrowOffset.value = `${tcx - left}px`;
       break;
-    case 'left':
-      top  = tcy - BALLOON_H / 2;
-      left = rect.left - BALLOON_W - ARROW - GAP;
+    }
+    case 'left': {
+      const left = Math.max(8, Math.min(rect.left - BALLOON_W - ARROW - GAP, window.innerWidth - BALLOON_W - 8));
+      const h = actualH ?? BALLOON_H_EST;
+      const top = Math.max(8, Math.min(tcy - h / 2, window.innerHeight - h - 8));
+      stepCSS.value = { top, bottom: undefined, left };
+      stepArrowOffset.value = `${tcy - top}px`;
       break;
-    case 'right':
-      // Arrow is INSIDE the balloon (left edge): only GAP separates.
-      top  = tcy - BALLOON_H / 2;
-      left = rect.right + GAP;
+    }
+    case 'right': {
+      const left = Math.max(8, Math.min(rect.right + GAP, window.innerWidth - BALLOON_W - 8));
+      const h = actualH ?? BALLOON_H_EST;
+      const top = Math.max(8, Math.min(tcy - h / 2, window.innerHeight - h - 8));
+      stepCSS.value = { top, bottom: undefined, left };
+      stepArrowOffset.value = `${tcy - top}px`;
       break;
+    }
   }
-
-  left = Math.max(8, Math.min(left, window.innerWidth  - BALLOON_W - 8));
-  top  = Math.max(8, Math.min(top,  window.innerHeight - BALLOON_H - 8));
-
-  const offset = (pos === 'left' || pos === 'right') ? tcy - top : tcx - left;
-  stepArrowOffset.value = `${offset}px`;
-  stepPos.value = { top, left };
 }
 
 watch(
@@ -137,9 +160,19 @@ watch(
       spotlightRect.value = null;
       return;
     }
-    // Wait a tick so the target element is mounted/measured.
+    // Pass 1: first tick so the target element is mounted/measured.
     await nextTick();
     computeLayout(idx);
+
+    // Pass 2 (top / left / right): wait for balloon to render with the estimate,
+    // then measure its actual height and recompute position.
+    // • top    → exact top = rect.top − GAP − h (arrow-tip anchored)
+    // • left/right → correct vertical centering
+    if (activeTTPos.value !== 'bottom') {
+      await nextTick();
+      const h = stepWrapperRef.value?.offsetHeight;
+      if (h) computeLayout(idx, h);
+    }
   },
   { immediate: true },
 );
@@ -198,13 +231,8 @@ function goNext(): void {
       <div
         v-if="visible && activeStep"
         :key="props.step"
-        :style="{
-          position: 'fixed',
-          top: `${stepPos.top}px`,
-          left: `${stepPos.left}px`,
-          zIndex: 9001,
-          pointerEvents: 'all',
-        }"
+        ref="stepWrapperRef"
+        :style="stepWrapperStyle"
       >
         <BTTooltipStep
           :label="activeStep.label"

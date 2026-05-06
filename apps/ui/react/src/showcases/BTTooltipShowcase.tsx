@@ -230,7 +230,7 @@ export function BTTooltipShowcase() {
                 onClick={() => setTourStep(i)}
                 style={{
                   ...gridBtnStyle,
-                  background: tourStep === i ? '#1e293b' : '#4a9d5b',
+                  background: '#4a9d5b',
                   gridColumn: (i % 3) + 1,
                   gridRow: Math.floor(i / 3) + 1,
                   alignSelf: i < 3 ? 'start' : i < 6 ? 'center' : 'end',

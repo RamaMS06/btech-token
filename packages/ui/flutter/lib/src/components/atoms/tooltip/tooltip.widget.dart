@@ -79,6 +79,7 @@ class _BTTooltipState extends State<BTTooltip>
   // Animation
   late final AnimationController _ctrl;
   late final Animation<double> _fade;
+  late final Animation<double> _scale;
 
   // Singleton — only one tooltip visible at a time.
   static _BTTooltipState? _activeTooltip;
@@ -88,9 +89,12 @@ class _BTTooltipState extends State<BTTooltip>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 150),
+      duration: const Duration(milliseconds: 250),
     );
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
+    _scale = Tween<double>(begin: 0.85, end: 1).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutBack),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) => _measureBalloon());
   }
 
@@ -188,6 +192,7 @@ class _BTTooltipState extends State<BTTooltip>
         );
         final layout = manager.resolve(widget.position);
 
+        final origin = _scaleOrigin(layout.position);
         return FadeTransition(
           opacity: _fade,
           child: TapRegion(
@@ -197,17 +202,25 @@ class _BTTooltipState extends State<BTTooltip>
                 Positioned(
                   left: layout.arrowLeft,
                   top: layout.arrowTop,
-                  child: BTTooltipArrow(
-                    direction: layout.position,
-                    color: ctx.btechColor.bg.inverse,
+                  child: ScaleTransition(
+                    scale: _scale,
+                    alignment: origin,
+                    child: BTTooltipArrow(
+                      direction: layout.position,
+                      color: ctx.btechColor.bg.inverse,
+                    ),
                   ),
                 ),
                 Positioned(
                   left: layout.bubbleLeft,
                   top: layout.bubbleTop,
-                  child: BTTooltipBalloonBody(
-                    text: widget.text,
-                    content: widget.content,
+                  child: ScaleTransition(
+                    scale: _scale,
+                    alignment: origin,
+                    child: BTTooltipBalloonBody(
+                      text: widget.text,
+                      content: widget.content,
+                    ),
                   ),
                 ),
               ],
@@ -217,6 +230,14 @@ class _BTTooltipState extends State<BTTooltip>
       },
     );
   }
+
+  /// Scale-transform origin — tooltip grows toward the trigger.
+  static Alignment _scaleOrigin(BTTooltipPosition p) => switch (p) {
+        BTTooltipPosition.top => Alignment.bottomCenter,
+        BTTooltipPosition.bottom => Alignment.topCenter,
+        BTTooltipPosition.left => Alignment.centerRight,
+        BTTooltipPosition.right => Alignment.centerLeft,
+      };
 
   @override
   Widget build(BuildContext context) {
