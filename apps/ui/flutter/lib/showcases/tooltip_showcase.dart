@@ -274,7 +274,7 @@ class _UsageTabState extends State<_UsageTab>
 
     const balloonW = 320.0;
     const balloonH = 160.0;
-    const gap = 4.0;
+    const gap = 2.0;
     const arrowSz = 8.0;
 
     final tcx = triggerOffset.dx + triggerSize.width / 2;
@@ -304,18 +304,36 @@ class _UsageTabState extends State<_UsageTab>
     // For top/bottom this is horizontal (from left); for left/right vertical (from top).
     final arrowOffset = _computeArrowOffset(tooltipPos, tcx, left, tcy, top);
 
+    // Spotlight rect: trigger bounds + 4 px padding on each side.
+    const spotlightPad = 4.0;
+    final spotlight = Rect.fromLTWH(
+      triggerOffset.dx - spotlightPad,
+      triggerOffset.dy - spotlightPad,
+      triggerSize.width  + spotlightPad * 2,
+      triggerSize.height + spotlightPad * 2,
+    );
+
     final curvedAnim = CurvedAnimation(
       parent: _animCtrl,
       curve: Curves.easeInOut,
     );
 
-    // ── Backdrop entry (transparent, intercepts taps to close) ───────────
+    // ── Backdrop entry — dark overlay with spotlight cutout over trigger ──
     _backdropEntry = OverlayEntry(
       builder: (_) => Positioned.fill(
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _close,
-          child: const SizedBox.expand(),
+        child: FadeTransition(
+          opacity: _animCtrl,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _close,
+            child: CustomPaint(
+              painter: _SpotlightPainter(
+                spotlight: spotlight,
+                color: Colors.black.withValues(alpha: 0.55),
+              ),
+              child: const SizedBox.expand(),
+            ),
+          ),
         ),
       ),
     );
@@ -560,4 +578,29 @@ class _SectionTitle extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Spotlight CustomPainter ────────────────────────────────────────────────
+// Paints a semi-transparent dark overlay over the full canvas, with a
+// rounded-rect cutout at [spotlight] (border-radius 5 px) that reveals the
+// content beneath — matching the web box-shadow trick.
+
+class _SpotlightPainter extends CustomPainter {
+  const _SpotlightPainter({required this.spotlight, required this.color});
+
+  final Rect spotlight;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..fillType = PathFillType.evenOdd
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..addRRect(RRect.fromRectAndRadius(spotlight, const Radius.circular(5)));
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SpotlightPainter old) =>
+      old.spotlight != spotlight || old.color != color;
 }

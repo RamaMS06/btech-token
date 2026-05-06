@@ -35,6 +35,8 @@ const stepPos = ref({ top: 0, left: 0 });
 const activeTTPos = ref<BTTooltipPosition>('bottom');
 // Precise arrow offset computed from trigger centre after viewport clamping
 const stepArrowOffset = ref('50%');
+// Trigger bounding rect for the spotlight overlay (4 px padding each side)
+const spotlightRect = ref<{ top: number; left: number; width: number; height: number } | null>(null);;
 
 // Refs for each button element (populated via :ref callback in template)
 const btnRefs = ref<HTMLElement[]>([]);
@@ -47,13 +49,16 @@ function showStep(idx: number) {
   if (!btn) return;
 
   const rect = btn.getBoundingClientRect();
+  // Capture trigger bounds for the spotlight overlay (4 px padding each side)
+  spotlightRect.value = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+
   const pt = demoPoints[idx];
   activeTTPos.value = pt.ttPos;
 
   const BALLOON_W = 320;
   const BALLOON_H = 160;
   const ARROW = 8;
-  const GAP = 4;
+  const GAP = 2;
 
   let top = 0;
   let left = 0;
@@ -95,7 +100,7 @@ function showStep(idx: number) {
   activeIdx.value = idx;
 }
 
-function closeStep() { activeIdx.value = -1; }
+function closeStep() { activeIdx.value = -1; spotlightRect.value = null; }
 function goPrev() { if (activeIdx.value > 0) showStep(activeIdx.value - 1); else closeStep(); }
 function goNext() { if (activeIdx.value < demoPoints.length - 1) showStep(activeIdx.value + 1); else closeStep(); }
 
@@ -246,11 +251,21 @@ onUnmounted(closeStep);
 
       <!-- Overlay via Teleport — backdrop + step with enter/leave animation -->
       <Teleport to="body">
-        <!-- Dark modal-style backdrop -->
+        <!-- Spotlight: dark overlay with a cutout (border-radius 5px) over the trigger -->
         <Transition name="backdrop">
           <div
-            v-if="activeIdx >= 0"
-            class="step-backdrop"
+            v-if="activeIdx >= 0 && spotlightRect"
+            :style="{
+              position: 'fixed',
+              top:    `${spotlightRect.top    - 4}px`,
+              left:   `${spotlightRect.left   - 4}px`,
+              width:  `${spotlightRect.width  + 8}px`,
+              height: `${spotlightRect.height + 8}px`,
+              borderRadius: '5px',
+              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.55)',
+              zIndex: 1999,
+              cursor: 'pointer',
+            }"
             @click="closeStep"
           />
         </Transition>
@@ -362,13 +377,7 @@ onUnmounted(closeStep);
 .demo-grid-btn--active { background: #1e293b; }
 .demo-grid-btn:hover:not(.demo-grid-btn--active) { background: #3b8a4b; }
 
-/* ── Backdrop — transparent, intercepts clicks to close ── */
-.step-backdrop {
-  position: fixed;
-  inset: 0;
-  background: transparent;
-  z-index: 1999;
-}
+/* Spotlight div has all styles inline; only the fade transition is here */
 
 /* ── Step overlay ── */
 .step-overlay {

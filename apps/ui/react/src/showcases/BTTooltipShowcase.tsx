@@ -28,7 +28,7 @@ const demoPoints: DemoPoint[] = [
 const BALLOON_W = 320;
 const BALLOON_H = 160;
 const ARROW = 8;
-const GAP = 4;
+const GAP = 2;
 
 export function BTTooltipShowcase() {
   const [activeTab, setActiveTab] = useState<'ui' | 'usage'>('ui');
@@ -37,6 +37,7 @@ export function BTTooltipShowcase() {
   const [stepPos, setStepPos] = useState({ top: 0, left: 0 });
   const [stepTTPos, setStepTTPos] = useState<BTTooltipPosition>('bottom');
   const [stepArrowOffset, setStepArrowOffset] = useState('50%');
+  const [spotlightRect, setSpotlightRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
   const btnRefs = useRef<(HTMLButtonElement | null)[]>(Array(9).fill(null));
 
@@ -45,6 +46,9 @@ export function BTTooltipShowcase() {
     if (!btn) return;
 
     const rect = btn.getBoundingClientRect();
+    // Capture trigger bounds for the spotlight overlay
+    setSpotlightRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
+
     const pt = demoPoints[idx];
     const tcx = rect.left + rect.width / 2;
     const tcy = rect.top + rect.height / 2;
@@ -85,7 +89,7 @@ export function BTTooltipShowcase() {
     setActiveIdx(idx);
   }, []);
 
-  const closeStep = useCallback(() => setActiveIdx(-1), []);
+  const closeStep = useCallback(() => { setActiveIdx(-1); setSpotlightRect(null); }, []);
 
   const goPrev = useCallback(() => {
     setActiveIdx((cur) => {
@@ -273,11 +277,21 @@ export function BTTooltipShowcase() {
           {/* Portal: backdrop + animated step */}
           {createPortal(
             <>
-              {/* Backdrop */}
-              {activeIdx >= 0 && (
+              {/* Spotlight: dark overlay with a rounded-rect cutout over the trigger */}
+              {activeIdx >= 0 && spotlightRect && (
                 <div
                   key="backdrop"
-                  style={backdropStyle}
+                  style={{
+                    position: 'fixed',
+                    top:    spotlightRect.top    - 4,
+                    left:   spotlightRect.left   - 4,
+                    width:  spotlightRect.width  + 8,
+                    height: spotlightRect.height + 8,
+                    borderRadius: 5,
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.55)',
+                    zIndex: 1999,
+                    cursor: 'pointer',
+                  }}
                   onClick={closeStep}
                 />
               )}
@@ -376,9 +390,3 @@ const gridBtnStyle: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
-const backdropStyle: CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  background: 'transparent',
-  zIndex: 1999,
-};
