@@ -14,14 +14,14 @@ export 'package:btech_tokens/btech_tokens.dart' hide btechColor, btechRadius, bt
 
 /// Brand primary color swatch (bspace) — btechColorBrandPrimary[500]
 const MaterialColor btechColorBrandPrimary = MaterialColor(
-  0xFF6366F1,
+  0xFFE11D48,
   <int, Color>{
     50: Color(0xFFF3F3F9),
     100: Color(0xFFECECF6),
     200: Color(0xFFDEDEF2),
     300: Color(0xFFC7C7ED),
     400: Color(0xFF9FA0EB),
-    500: Color(0xFF6366F1),
+    500: Color(0xFFE11D48),
     600: Color(0xFF2328E6),
     700: Color(0xFF181BA7),
     800: Color(0xFF12146B),
@@ -93,7 +93,7 @@ const BTechColorTheme btechColor = BTechColorTheme(
   ),
   brand: BTechColorBrand(
     primarySubtle: Color(0xFFF3F3F9),
-    primary: Color(0xFF6366F1),
+    primary: Color(0xFFE11D48),
     primaryBold: Color(0xFF2328E6),
     secondarySubtle: Color(0xFFFDF9E7),
     secondary: Color(0xFFEEC513),
