@@ -1,0 +1,24 @@
+schemaVersion: 1
+name: BTRadioButton
+category: atoms
+figmaNodeId: '555:3529'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=555-3529
+description: >
+  Radio button atom with 5 states: default, active, disable, disable-active,
+  and error. Supports optional label and subtext. Uses native <input type="radio">
+  with transparent overlay for full accessibility. Use multiple BTRadioButton
+  with the same v-model to build a radio group.
+props:
+  - { name: modelValue, type: 'string | number | boolean', required: true, description: 'Group selected value (v-model). Active when modelValue === value.' }
+  - { name: value, type: 'string | number | boolean', required: true, description: "This radio button's unique value in the group." }
+  - { name: label, type: string, required: false, description: 'Text label beside the radio circle.' }
+  - { name: subtext, type: string, required: false, description: 'Helper or error text below the label.' }
+  - { name: disabled, type: boolean, default: false, description: 'Disables all interaction.' }
+  - { name: error, type: boolean, default: false, description: 'Error border on circle; subtext turns error colour.' }
+  - { name: name, type: string, required: false, description: 'Native name attribute for form grouping.' }
+states:
+  - default
+  - active
+  - disable
+  - disable-active
+  - error

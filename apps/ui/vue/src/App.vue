@@ -8,6 +8,7 @@ import BTButtonShowcase from './showcases/BTButtonShowcase.vue';
 import BTButtonLinkShowcase from './showcases/BTButtonLinkShowcase.vue';
 import BTCheckboxShowcase from './showcases/BTCheckboxShowcase.vue';
 import BTHintShowcase from './showcases/BTHintShowcase.vue';
+import BTRadioButtonShowcase from './showcases/BTRadioButtonShowcase.vue';
 
 // ── Sidebar registry ──────────────────────────────────────────────────────────
 // Add new entries here as components are sliced.
@@ -24,6 +25,7 @@ const PAGES: ShowcasePage[] = [
   { id: 'button-link', group: 'Atoms',     label: 'Button Link' },
   { id: 'checkbox',    group: 'Atoms',     label: 'Checkbox'    },
   { id: 'hint',        group: 'Atoms',     label: 'Hint'        },
+  { id: 'radio',       group: 'Atoms',     label: 'Radio Button' },
   { id: 'avatar',      group: 'Molecules', label: 'Avatar'      },
 ];
 
@@ -86,6 +88,7 @@ watchEffect(() => {
         <BTButtonLinkShowcase v-else-if="selectedId === 'button-link'" />
         <BTCheckboxShowcase v-else-if="selectedId === 'checkbox'" />
         <BTHintShowcase v-else-if="selectedId === 'hint'" />
+        <BTRadioButtonShowcase v-else-if="selectedId === 'radio'" />
         <BTAvatarShowcase v-else-if="selectedId === 'avatar'" />
       </main>
     </div>
