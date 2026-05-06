@@ -1,0 +1,36 @@
+/* BTBadge styles — Figma 72:1516.
+   All colours via @btech/tokens CSS vars — no hex fallbacks. */
+
+.bt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-rd);
+  font-family: var(--typography-font-family-sans);
+  font-size: var(--typography-font-size-xs);
+  font-weight: 500;
+  line-height: var(--typography-line-height-xs);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+/* ── Normal mode ── */
+.bt-badge--success { background: var(--color-ext-success-subtler); color: var(--color-ext-success-bold); }
+.bt-badge--waiting { background: var(--color-ext-warning-subtler); color: var(--color-ext-warning-bold); }
+.bt-badge--neutral { background: var(--bg-secondary);              color: var(--text-primary); }
+.bt-badge--draft   { background: var(--color-ext-info-subtler);    color: var(--color-ext-info-bold); }
+.bt-badge--reject  { background: var(--color-ext-error-subtler);   color: var(--color-ext-error-bold); }
+.bt-badge--custom  { background: var(--color-brand-secondary-subtle); color: var(--color-brand-secondary-bold); }
+
+/* ── Reverse mode — solid bg + inverse text ── */
+.bt-badge--success.bt-badge--reverse { background: var(--color-ext-success); color: var(--text-inverse); }
+.bt-badge--waiting.bt-badge--reverse { background: var(--color-ext-warning); color: var(--text-inverse); }
+.bt-badge--neutral.bt-badge--reverse { background: var(--bg-tertiary);       color: var(--text-inverse); }
+.bt-badge--draft.bt-badge--reverse   { background: var(--color-ext-info);    color: var(--text-inverse); }
+.bt-badge--reject.bt-badge--reverse  { background: var(--color-ext-error);   color: var(--text-inverse); }
+.bt-badge--custom.bt-badge--reverse  { background: var(--color-brand-secondary); color: var(--text-inverse); }
+
+.bt-badge__label {
+  flex-shrink: 0;
+}

@@ -172,7 +172,6 @@ const MaterialColor btechColorNeutral = MaterialColor(
       700: Color(0xFF3C4450),
       800: Color(0xFF292F37),
       900: Color(0xFF181C20),
-      1000: Color(0xFF000000),
   },
 );
 

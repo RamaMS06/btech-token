@@ -37,7 +37,10 @@ const WEB_DIR    = resolve(ROOT, 'packages/tokens/platforms/web');
 const DRY_RUN    = process.argv.includes('--dry-run');
 const NPM_TAG    = process.env.NPM_TAG ?? '';
 // Empty string is interpreted as "no restriction" — same semantics as unset.
-const ONLY_TENANT = (process.env.PUBLISH_ONLY_TENANT ?? '').trim();
+// Guard against Azure DevOps passing the unexpanded literal "$(PUBLISH_TENANT)"
+// when the variable has no default value defined in the pipeline.
+const _rawTenant = (process.env.PUBLISH_ONLY_TENANT ?? '').trim();
+const ONLY_TENANT = _rawTenant.startsWith('$(') ? '' : _rawTenant;
 
 if (!NPM_TAG && !DRY_RUN) {
   console.error('❌  NPM_TAG env var required (e.g. NPM_TAG=rc or NPM_TAG=latest).');

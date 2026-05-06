@@ -1,5 +1,5 @@
 {
-  "$description": "bspace tenant — green/teal brand (default). Color brand layer is intentionally NOT overridden here because the default `core/color.brand.json` already aliases the green & teal primitive ramps that match the bspace identity. Future tenants would override `color.brand.primary.{50..900}` and `color.brand.secondary.{50..900}` to point at different primitive ramps. See docs/architecture/tenant-overrides.md.",
+  "$description": "bspace tenant — indigo/yellow brand override. Overrides `brand.primary.{50..900}` to indigo and `brand.secondary.{50..900}` to yellow. The default btech brand uses green/teal (from sources/brand/color.json). See docs/architecture/tenant-overrides.md.",
   "typography": {
     "fontFamily": {
       "sans": {
@@ -18,91 +18,89 @@
       "$type": "dimension"
     }
   },
-  "color": {
-    "brand": {
-      "primary": {
-        "50": {
-          "$type": "color",
-          "$value": "{color.indigo.50}"
-        },
-        "100": {
-          "$type": "color",
-          "$value": "{color.indigo.100}"
-        },
-        "200": {
-          "$type": "color",
-          "$value": "{color.indigo.200}"
-        },
-        "300": {
-          "$type": "color",
-          "$value": "{color.indigo.300}"
-        },
-        "400": {
-          "$type": "color",
-          "$value": "{color.indigo.400}"
-        },
-        "500": {
-          "$type": "color",
-          "$value": "{color.indigo.500}"
-        },
-        "600": {
-          "$type": "color",
-          "$value": "{color.indigo.600}"
-        },
-        "700": {
-          "$type": "color",
-          "$value": "{color.indigo.700}"
-        },
-        "800": {
-          "$type": "color",
-          "$value": "{color.indigo.800}"
-        },
-        "900": {
-          "$type": "color",
-          "$value": "{color.indigo.900}"
-        }
+  "brand": {
+    "primary": {
+      "50": {
+        "$type": "color",
+        "$value": "{color.indigo.50}"
       },
-      "secondary": {
-        "50": {
-          "$type": "color",
-          "$value": "{color.yellow.50}"
-        },
-        "100": {
-          "$type": "color",
-          "$value": "{color.yellow.100}"
-        },
-        "200": {
-          "$type": "color",
-          "$value": "{color.yellow.200}"
-        },
-        "300": {
-          "$type": "color",
-          "$value": "{color.yellow.300}"
-        },
-        "400": {
-          "$type": "color",
-          "$value": "{color.yellow.400}"
-        },
-        "500": {
-          "$type": "color",
-          "$value": "{color.yellow.500}"
-        },
-        "600": {
-          "$type": "color",
-          "$value": "{color.yellow.600}"
-        },
-        "700": {
-          "$type": "color",
-          "$value": "{color.yellow.700}"
-        },
-        "800": {
-          "$type": "color",
-          "$value": "{color.yellow.800}"
-        },
-        "900": {
-          "$type": "color",
-          "$value": "{color.yellow.900}"
-        }
+      "100": {
+        "$type": "color",
+        "$value": "{color.indigo.100}"
+      },
+      "200": {
+        "$type": "color",
+        "$value": "{color.indigo.200}"
+      },
+      "300": {
+        "$type": "color",
+        "$value": "{color.indigo.300}"
+      },
+      "400": {
+        "$type": "color",
+        "$value": "{color.indigo.400}"
+      },
+      "500": {
+        "$type": "color",
+        "$value": "{color.indigo.500}"
+      },
+      "600": {
+        "$type": "color",
+        "$value": "{color.indigo.600}"
+      },
+      "700": {
+        "$type": "color",
+        "$value": "{color.indigo.700}"
+      },
+      "800": {
+        "$type": "color",
+        "$value": "{color.indigo.800}"
+      },
+      "900": {
+        "$type": "color",
+        "$value": "{color.indigo.900}"
+      }
+    },
+    "secondary": {
+      "50": {
+        "$type": "color",
+        "$value": "{color.yellow.50}"
+      },
+      "100": {
+        "$type": "color",
+        "$value": "{color.yellow.100}"
+      },
+      "200": {
+        "$type": "color",
+        "$value": "{color.yellow.200}"
+      },
+      "300": {
+        "$type": "color",
+        "$value": "{color.yellow.300}"
+      },
+      "400": {
+        "$type": "color",
+        "$value": "{color.yellow.400}"
+      },
+      "500": {
+        "$type": "color",
+        "$value": "{color.yellow.500}"
+      },
+      "600": {
+        "$type": "color",
+        "$value": "{color.yellow.600}"
+      },
+      "700": {
+        "$type": "color",
+        "$value": "{color.yellow.700}"
+      },
+      "800": {
+        "$type": "color",
+        "$value": "{color.yellow.800}"
+      },
+      "900": {
+        "$type": "color",
+        "$value": "{color.yellow.900}"
       }
     }
   }

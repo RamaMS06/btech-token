@@ -174,18 +174,6 @@ export interface Settings {
   pat: string;
   /** Currently active git branch — pulls and pushes target this. */
   activeBranch: ActiveBranch;
-  /**
-   * Per-type export filter for the "Export to Figma" modal. Maps each
-   * resolved Figma Variable type → include/exclude. Persisted so the
-   * designer's last selection survives plugin reloads. Optional on the
-   * type so older snapshots remain assignable; default is all `true`.
-   */
-  exportTypes?: {
-    color: boolean;
-    string: boolean;
-    number: boolean;
-    boolean: boolean;
-  };
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -194,7 +182,6 @@ export const DEFAULT_SETTINGS: Settings = {
   repo: 'btech-ds',
   pat: '',
   activeBranch: 'main',
-  exportTypes: { color: true, string: true, number: true, boolean: true },
 };
 
 // ── postMessage protocol ────────────────────────────────────────────────────
@@ -219,10 +206,6 @@ export type UIToMainMessage =
       selection: import('./figma-types.js').ImportSelection;
       options: import('./figma-types.js').ImportOptions;
     }
-  | {
-      type: 'figma-export';
-      payload: import('./figma-types.js').FigmaExportPayload;
-    }
   /**
    * Ask the main thread to relay an error notification to the Figma canvas
    * via figma.notify — used when the iframe needs a visible canvas alert.
@@ -244,14 +227,13 @@ export type MainToUIMessage =
       sets: Record<string, TokenSet>;
       warnings: string[];
     }
-  | {
-      type: 'figma-export-done';
-      created: number;
-      updated: number;
-      warnings: string[];
-    }
   | { type: 'figma-import-error'; message: string }
-  | { type: 'figma-export-error'; message: string }
+  /**
+   * Sent when the main thread detects a VARIABLE_* documentchange event —
+   * tells the ImportStylesModal to trigger a fresh scan so newly-added or
+   * edited variables show up immediately without reopening the modal.
+   */
+  | { type: 'figma-variables-changed' }
   | { type: 'error'; message: string };
 
 /** Union for the full postMessage protocol — used at type-narrowing callsites */

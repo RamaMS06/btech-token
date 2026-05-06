@@ -1,0 +1,68 @@
+/* BTButtonLink styles — Figma 480:3197.
+   All colours via @btech/tokens CSS vars — no hex fallbacks. */
+
+.bt-button-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--typography-font-family-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  transition: color 0.1s, font-weight 0s;
+}
+
+.bt-button-link:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ── Hover shared — bold + underline on label only ──
+   text-decoration on a flex container only underlines text runs, not
+   icon children, causing misalignment.  Scope it to the label span. */
+.bt-button-link:hover:not(:disabled) {
+  font-weight: 700;
+}
+.bt-button-link:hover:not(:disabled) .bt-button-link__label {
+  text-decoration: underline;
+}
+
+/* ── Primary ── */
+.bt-button-link--primary             { color: var(--color-brand-primary); }
+.bt-button-link--primary:hover:not(:disabled) { color: var(--color-brand-primary-bold); }
+.bt-button-link--primary:active:not(:disabled) { color: var(--text-secondary); font-weight: 500; }
+.bt-button-link--primary:disabled    { color: var(--text-disabled); cursor: not-allowed; }
+
+/* ── Secondary ── */
+.bt-button-link--secondary           { color: var(--text-secondary); }
+.bt-button-link--secondary:hover:not(:disabled) { color: var(--text-secondary); }
+.bt-button-link--secondary:active:not(:disabled) { color: var(--text-primary); font-weight: 500; }
+.bt-button-link--secondary:disabled  { color: var(--text-disabled); cursor: not-allowed; }
+
+/* ── Tertiary ── */
+.bt-button-link--tertiary            { color: var(--text-primary); }
+.bt-button-link--tertiary:hover:not(:disabled) { color: var(--text-primary); }
+.bt-button-link--tertiary:active:not(:disabled) { color: var(--text-secondary); font-weight: 500; }
+.bt-button-link--tertiary:disabled   { color: var(--text-disabled); cursor: not-allowed; }
+
+/* ── Invert ── */
+.bt-button-link--invert              { color: var(--text-inverse); }
+.bt-button-link--invert:hover:not(:disabled) { color: var(--text-inverse); }
+.bt-button-link--invert:active:not(:disabled) { color: var(--text-tertiary); font-weight: 500; }
+.bt-button-link--invert:disabled     { color: var(--text-disabled); cursor: not-allowed; }
+
+/* ── Custom ── */
+.bt-button-link--custom              { color: var(--color-brand-secondary); }
+.bt-button-link--custom:hover:not(:disabled) { color: var(--color-brand-secondary-bold); }
+.bt-button-link--custom:active:not(:disabled) { color: var(--text-secondary); font-weight: 500; }
+.bt-button-link--custom:disabled     { color: var(--text-disabled); cursor: not-allowed; }

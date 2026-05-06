@@ -34,56 +34,79 @@ import { countLeafChanges } from '../../shared/transform.js';
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Pick a display name for a set. The repo id (e.g. `core/color.primitive`)
- * gets rewritten to a Title-Cased label without dots/slashes for the sidebar
- * — designers think in human labels ("Color Primitive"), not in file paths.
+ * Pick a display name for a set from its repo id.
  *
- * Examples:
- *   "core/color.primitive"            → "Color Primitive"
- *   "semantic/color"                  → "Color"
- *   "components/button"               → "Button"
- *   "tenants/bspace/overrides"        → "Bspace Overrides"
- *   "core/typography.primitive"       → "Typography Primitive"
+ * Rules (derived from the actual sources/ directory structure):
  *
- * The full repo path is still available via the row's `title` attribute on
- * hover, so the original file location is never hidden — just deprioritised
- * visually.
+ *   folder == filename (e.g. shadow/shadow)
+ *     → use folder once, tokenise → "Shadow"
+ *     → spacing-and-radius/spacing-and-radius → "Spacing & Radius"  (& special-case)
+ *
+ *   folder != filename
+ *     → combine folder + filename, tokenise hyphens → Title-Case words
+ *     → brand/color              → "Brand Color"
+ *     → primitives/color         → "Primitives Color"
+ *     → semantic-color/dark      → "Semantic Color Dark"
+ *     → semantic-color/light     → "Semantic Color Light"
+ *     → typography/font          → "Typography Font"
+ *     → typography/scale         → "Typography Scale"
+ *
+ *   tenants/<id>/…
+ *     → strip "tenants/" prefix  → "Bspace Overrides"
+ *
+ * The full repo path is always accessible in the row's `title` tooltip.
  */
 function displayName(set: TokenSet): string {
-  // Drop the namespace prefix (core/, semantic/, components/, tenants/<id>).
-  // For tenant sets we keep the tenant id in the label so designers can tell
-  // which tenant the override belongs to when several are loaded.
-  let working = set.id;
-  if (working.startsWith('tenants/')) {
-    // "tenants/bspace/overrides" → "bspace/overrides"
-    working = working.slice('tenants/'.length);
-  } else {
-    const firstSlash = working.indexOf('/');
-    if (firstSlash !== -1) working = working.slice(firstSlash + 1);
+  if (set.id.startsWith('tenants/')) {
+    // "tenants/bspace/overrides" → "Bspace Overrides"
+    const withoutPrefix = set.id.slice('tenants/'.length);
+    return toTitleCase(withoutPrefix.replace(/[/_-]+/g, ' '));
   }
 
-  // Replace structural separators with single spaces, then collapse repeats.
-  const cleaned = working
-    .replace(/[./_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const slashIdx = set.id.indexOf('/');
+  const folder   = slashIdx !== -1 ? set.id.slice(0, slashIdx) : set.id;
+  const filename = slashIdx !== -1 ? set.id.slice(slashIdx + 1) : set.id;
 
-  // Title-Case every whitespace-separated word. We touch only the first letter
-  // so any internal capitalisation (acronyms like "UI") survives if a future
-  // file is named that way.
-  return cleaned
+  // When folder and filename are identical, use the folder string only —
+  // avoids "Shadow Shadow", "Stroke Stroke", "Spacing And Radius Spacing …".
+  const raw = folder === filename ? folder : `${folder} ${filename}`;
+
+  // Tokenise on hyphens, slashes, underscores → individual words.
+  const words = raw.split(/[/_-]+/).filter(Boolean);
+  let label    = words.join(' ');
+
+  // "spacing and radius" → "Spacing & Radius"  (more compact, standard DS notation)
+  label = label.replace(/\bspacing and radius\b/i, 'Spacing & Radius');
+
+  return toTitleCase(label);
+}
+
+function toTitleCase(str: string): string {
+  return str
+    .replace(/\s+/g, ' ')
+    .trim()
     .split(' ')
-    .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
     .join(' ');
 }
 
-/** Sort: core first, then semantic, components, finally tenants. */
+/**
+ * Sort order: primitives → brand → semantic-color → spacing-and-radius
+ *             → typography → shadow → stroke → components → tenants → rest.
+ * Mirrors the conceptual layers: foundation → brand → semantic → layout → type → elevation.
+ */
 function namespaceWeight(id: string): number {
-  if (id.startsWith('core/')) return 0;
-  if (id.startsWith('semantic/')) return 1;
-  if (id.startsWith('components/')) return 2;
-  if (id.startsWith('tenants/')) return 3;
-  return 4;
+  if (id.startsWith('primitives/'))        return 0;
+  if (id.startsWith('brand/'))             return 1;
+  if (id.startsWith('semantic-color/'))    return 2;
+  if (id.startsWith('spacing-and-radius/')) return 3;
+  if (id.startsWith('typography/'))        return 4;
+  if (id.startsWith('shadow/'))            return 5;
+  if (id.startsWith('stroke/'))            return 6;
+  if (id.startsWith('components/'))        return 7;
+  if (id.startsWith('tenants/'))           return 8;
+  // Legacy / unknown namespaces fall to the bottom
+  return 9;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────

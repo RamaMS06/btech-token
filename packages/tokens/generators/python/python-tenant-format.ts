@@ -71,14 +71,14 @@ function buildTenantMergedMaps(
  */
 function buildTenantData(base: ResolvedTokenMap, merged: MergedMaps): ResolvedTokenMap {
   // Re-resolve brand swatches against the merged (tenant) map. Tenant overrides
-  // re-target color.brand.{primary|secondary}.{50..900} → e.g. {color.rose.500},
+  // re-target brand.{primary|secondary}.{50..900} → e.g. {color.rose.500},
   // so the merged map already holds the tenant-specific resolved hexes at those
   // dot-paths. Fall back to base when a shade isn't overridden.
   const brandSwatches: Record<string, Record<string, string>> = {};
   for (const [brandName, shades] of Object.entries(base.brandSwatches)) {
     brandSwatches[brandName] = {};
     for (const shade of Object.keys(shades)) {
-      const dotPath = `color.brand.${brandName}.${shade}`;
+      const dotPath = `brand.${brandName}.${shade}`;
       brandSwatches[brandName][shade] = merged.light[dotPath] ?? shades[shade];
     }
   }

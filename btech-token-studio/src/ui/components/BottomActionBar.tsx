@@ -23,7 +23,6 @@
 import React, { useMemo } from 'react';
 import { useTokens } from '../hooks/useTokens.js';
 import { countLeafChanges } from '../../shared/transform.js';
-import { ImportExportMenu } from './ImportExportMenu.js';
 
 interface BottomActionBarProps {
   onShowPull: () => void;
@@ -36,11 +35,10 @@ interface BottomActionBarProps {
    */
   onShowDiscard: () => void;
   /**
-   * Raised when the designer picks Export-to-Figma or Import-Styles from
-   * the Import/Export menu next to the Settings cog. Owner (App) mounts
-   * the corresponding modal.
+   * Raised when the designer clicks the Import Styles button.
+   * Owner (App) mounts ImportStylesModal.
    */
-  onShowImportExport: (mode: 'export' | 'import') => void;
+  onShowImport: () => void;
 }
 
 export function BottomActionBar({
@@ -48,7 +46,7 @@ export function BottomActionBar({
   onShowPush,
   onShowSettings,
   onShowDiscard,
-  onShowImportExport,
+  onShowImport,
 }: BottomActionBarProps) {
   const { sets } = useTokens();
   // We count two things:
@@ -93,21 +91,40 @@ export function BottomActionBar({
           title="Settings"
           aria-label="Settings"
         >
-          {/* Cog — kept simple, single-stroke for crispness at 14px */}
+          {/* Gear cog — 6-tooth polygon + hub circle. Tooth tips at r≈5.5,
+              rim at r≈3.5, hub at r=2. All coordinates relative to (7,7). */}
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
-            <circle cx="7" cy="7" r="2" fill="none" stroke="currentColor" strokeWidth="1.2" />
             <path
-              d="M7 1.5v1.4M7 11.1v1.4M1.5 7h1.4M11.1 7h1.4M3.1 3.1l1 1M9.9 9.9l1 1M3.1 10.9l1-1M9.9 4.1l1-1"
+              d="M6.09 3.62L5.58 1.69L8.42 1.69L7.91 3.62L8.75 3.97L9.47 4.53L10.89 3.11L12.31 5.58L10.38 6.09L10.5 7L10.38 7.91L12.31 8.42L10.89 10.89L9.47 9.47L8.75 10.03L7.91 10.38L8.42 12.31L5.58 12.31L6.09 10.38L5.25 10.03L4.53 9.47L3.11 10.89L1.69 8.42L3.62 7.91L3.5 7L3.62 6.09L1.69 5.58L3.11 3.11L4.53 4.53L5.25 3.97Z"
+              fill="none"
               stroke="currentColor"
-              strokeWidth="1.2"
-              strokeLinecap="round"
+              strokeWidth="1.1"
+              strokeLinejoin="round"
             />
+            <circle cx="7" cy="7" r="2" fill="none" stroke="currentColor" strokeWidth="1.1" />
           </svg>
         </button>
 
-        {/* Sits adjacent to Settings — same icon-button visual weight,
-            but opens its own popover with the two Figma sync actions. */}
-        <ImportExportMenu onSelect={onShowImportExport} />
+        {/* Import Styles — adjacent to Settings, same icon-button weight.
+            Down-arrow-into-frame = "pull from Figma" metaphor. */}
+        <button
+          type="button"
+          className="bottom-action-bar__icon-btn"
+          onClick={onShowImport}
+          title="Import Styles from Figma"
+          aria-label="Import Styles from Figma"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden>
+            <path
+              d="M7 2v7M4 6.5l3 3 3-3M2 11.5h10"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
 
         <button
           type="button"

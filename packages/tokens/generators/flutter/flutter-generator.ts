@@ -72,8 +72,13 @@ export function generateFlutterFiles(data: ResolvedTokenMap): void {
         .filter(([k]) => k !== '0') // key 0 (white) is excluded from MaterialColor map
         .sort((a, b) => Number(a[0]) - Number(b[0]));
 
+      // Defensive: skip non-ramp groups (no shades, or no resolvable primary).
+      // Token-loader filters these out, but a stale source could still leak through.
+      if (entries.length === 0) return;
+
       // Pick the 500 shade as the MaterialColor primary; fall back to the middle entry
       const primaryHex = (shades['500'] ?? shades[Object.keys(shades).sort((a, b) => Number(a) - Number(b))[Math.floor(Object.keys(shades).length / 2)]]) as string;
+      if (!primaryHex) return;
 
       const mapEntries = entries.map(([shade, hex]) =>
         `      ${shade}: Color(${hexToArgb(hex)}),`

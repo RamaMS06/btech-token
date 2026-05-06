@@ -1,6 +1,6 @@
 {
   "name": "@btech/tokens-bspace",
-  "version": "1.0.0-rc.16",
+  "version": "1.0.2",
   "description": "BTech design tokens for bspace — single-import superset of @btech/tokens",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

@@ -54,6 +54,18 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", "-p", "5178", "/Users/p-rama.msugiyanto/Documents/btech/btech-ds/apps/demo-flutter/build/web"],
       "port": 5178
+    },
+    {
+      "name": "showcase-vue",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd /Users/p-rama.msugiyanto/Documents/btech/btech-ds && pnpm --filter @btech/ui-showcase-vue dev"],
+      "port": 5179
+    },
+    {
+      "name": "showcase-react",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd /Users/p-rama.msugiyanto/Documents/btech/btech-ds && pnpm --filter @btech/ui-showcase dev"],
+      "port": 5178
     }
   ]
 }

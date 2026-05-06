@@ -1,26 +1,28 @@
 /**
  * version-consistency.ts
  *
- * Asserts the coordinated-major/minor invariant that bump-version.ts is
- * supposed to maintain:
+ * Validates that every version-bearing package in the monorepo carries a
+ * valid semver string. Version mismatches between packages and the repo root
+ * are reported as warnings (not failures) to allow independent versioning —
+ * each package may advance its own version counter without requiring a
+ * coordinated bump across the whole monorepo.
  *
- *   For every version-bearing package in the monorepo (web base + tenants,
- *   flutter base + tenants, python base + tenants), the package's
- *   <major>.<minor>.<prerelease-tag> MUST match the canonical platform
- *   version recorded in the repo-root /package.json.
+ * Hard failures (exit 1):
+ *   - Root package.json is missing or has an invalid semver version.
+ *   - Any package version string is not valid semver.
+ *   - A read error prevents version extraction from a package file.
  *
- * The patch component is intentionally NOT compared — tenants advance their
- * own patch counters independently between major/minor releases.
+ * Soft warnings (informational, exit 0):
+ *   - A package version differs from the root version (major, minor, patch,
+ *     or prerelease channel). This is expected when packages are versioned
+ *     independently. The drift is logged so maintainers stay aware of it.
  *
- * Why this validator exists:
- *   `bump-version.ts` enforces this invariant on every bump. If a developer
- *   hand-edits a version, or if a future refactor introduces a code path
- *   that skips the reset rule, this validator catches the drift before
- *   anything reaches the registry. Treat a non-zero exit here as an
- *   architectural integrity failure — silently publishing an out-of-band
- *   tenant would corrupt the platform version contract.
- *
- * Exits non-zero on any major/minor/prerelease-channel mismatch.
+ * Why the change:
+ *   Independent versioning (introduced in the hybrid-semver model) means
+ *   tenants and base packages may legitimately be at different versions.
+ *   Blocking CI on a version difference would prevent any independent bump
+ *   from landing. Structural integrity (valid semver, readable files) is
+ *   still enforced strictly.
  */
 
 import { readFileSync, readdirSync, existsSync } from 'fs';
@@ -133,29 +135,37 @@ function collectTargets(): Target[] {
   return targets;
 }
 
-interface Violation {
+interface Failure {
   label:  string;
   file:   string;
   actual: string;
   reason: string;
 }
 
+interface Warning {
+  label:  string;
+  file:   string;
+  actual: string;
+  reason: string;
+}
+
+/**
+ * Returns a human-readable description of any version drift relative to root,
+ * or null if the package is on the same version. The result is a warning —
+ * it does NOT cause a non-zero exit. Independent versioning means drift is
+ * expected and intentional.
+ */
 function compare(rootSemver: ParsedSemver, target: ParsedSemver): string | null {
   if (rootSemver.major !== target.major) {
-    return `major mismatch (root ${rootSemver.major}, package ${target.major})`;
+    return `major differs (root ${rootSemver.major}, package ${target.major})`;
   }
   if (rootSemver.minor !== target.minor) {
-    return `minor mismatch (root ${rootSemver.minor}, package ${target.minor})`;
+    return `minor differs (root ${rootSemver.minor}, package ${target.minor})`;
   }
-  // Channel boundary: both must have a prerelease, or neither. We don't
-  // require the prerelease *value* to match — a tenant on `rc.4` is fine
-  // when root is on `rc.3` (tenant patched its own counter). What we DON'T
-  // tolerate is a tenant graduating to stable while root is still on rc,
-  // or vice versa, because that's a release-channel boundary.
   if (Boolean(rootSemver.prerelease) !== Boolean(target.prerelease)) {
     const rootCh = rootSemver.prerelease ? 'prerelease' : 'stable';
     const tgtCh  = target.prerelease ? 'prerelease' : 'stable';
-    return `release channel mismatch (root is ${rootCh}, package is ${tgtCh})`;
+    return `release channel differs (root is ${rootCh}, package is ${tgtCh})`;
   }
   return null;
 }
@@ -175,17 +185,19 @@ function main(): void {
     process.exit(1);
   }
 
-  console.log(`🔍 Version-consistency validation — root @ ${rootVersion}`);
+  console.log(`🔍 Version report — root @ ${rootVersion}`);
 
   const targets = collectTargets();
-  const violations: Violation[] = [];
+  const failures: Failure[] = [];
+  const warnings: Warning[] = [];
 
   for (const t of targets) {
     let actual: string;
     try {
       actual = t.read(t.file);
     } catch (e) {
-      violations.push({
+      // Hard failure: we cannot read the version at all.
+      failures.push({
         label: t.label,
         file:  t.file,
         actual: '?',
@@ -199,7 +211,8 @@ function main(): void {
     try {
       parsed = parseSemver(actual);
     } catch (e) {
-      violations.push({
+      // Hard failure: the version string is structurally broken.
+      failures.push({
         label: t.label,
         file:  t.file,
         actual,
@@ -209,34 +222,48 @@ function main(): void {
       continue;
     }
 
-    const reason = compare(rootSemver, parsed);
-    if (reason) {
-      violations.push({ label: t.label, file: t.file, actual, reason });
-      console.log(`  ❌ ${t.label.padEnd(36)} ${actual} — ${reason}`);
+    const drift = compare(rootSemver, parsed);
+    if (drift) {
+      // Soft warning: version differs from root. OK under independent versioning.
+      warnings.push({ label: t.label, file: t.file, actual, reason: drift });
+      console.log(`  ⚠️  ${t.label.padEnd(36)} ${actual} — ${drift}`);
     } else {
       console.log(`  ✅ ${t.label.padEnd(36)} ${actual}`);
     }
   }
 
-  if (violations.length === 0) {
-    console.log(`\n✅ All ${targets.length} package(s) consistent with root ${rootVersion}.`);
-    return;
+  if (warnings.length > 0) {
+    console.warn(`\n⚠️  ${warnings.length} package(s) differ from root version (informational — independent versioning is allowed):`);
+    for (const w of warnings) {
+      const rel = w.file.replace(ROOT + '/', '');
+      console.warn(`     ${rel}`);
+      console.warn(`       ${w.label} = ${w.actual}`);
+      console.warn(`       → ${w.reason}`);
+    }
+    console.warn(
+      '\n   To align all packages: `pnpm bump set <version> --scope=all`',
+    );
+    console.warn(
+      '   See docs/architecture/versioning.md for the independent-versioning model.\n',
+    );
   }
 
-  console.error(`\n❌ ${violations.length} version-consistency violation(s):`);
-  for (const v of violations) {
-    const rel = v.file.replace(ROOT + '/', '');
-    console.error(`     ${rel}`);
-    console.error(`       ${v.label} = ${v.actual}`);
-    console.error(`       → ${v.reason}`);
+  if (failures.length > 0) {
+    console.error(`\n❌ ${failures.length} hard failure(s) — packages with unreadable or invalid semver versions:`);
+    for (const f of failures) {
+      const rel = f.file.replace(ROOT + '/', '');
+      console.error(`     ${rel}`);
+      console.error(`       ${f.label} = ${f.actual}`);
+      console.error(`       → ${f.reason}`);
+    }
+    process.exit(1);
   }
-  console.error(
-    '\n   Fix with `pnpm bump set <root-version> --scope=all` or hand-edit the offending file.',
+
+  const ok = targets.length - warnings.length;
+  console.log(
+    `\n✅ All ${targets.length} package(s) have valid semver` +
+    (warnings.length > 0 ? ` (${ok} match root, ${warnings.length} differ — see warnings above).` : '.'),
   );
-  console.error(
-    '   See docs/architecture/versioning.md (reset rule) for the invariant.\n',
-  );
-  process.exit(1);
 }
 
 main();

@@ -129,7 +129,6 @@ export const btechColorYellow = {
 
 /** Neutral primitive swatch — BTechColor.neutral[500] */
 export const btechColorNeutral = {
-  0: '#ffffff',
   50: '#f4f5f6',
   100: '#ecedee',
   200: '#dbdde1',
@@ -140,7 +139,6 @@ export const btechColorNeutral = {
   700: '#3c4450',
   800: '#292f37',
   900: '#181c20',
-  1000: '#000000',
 } as const;
 
 /** Red primitive swatch — BTechColor.red[500] */

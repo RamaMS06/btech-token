@@ -58,6 +58,7 @@ Thumbs.db
 
 # ── Changesets ────────────────────────────────────────────────────────────────
 .changeset/*.js
+apps/demo-streamlit/.venv/
 # Added by code-review-graph
 .code-review-graph/
 
@@ -67,3 +68,9 @@ Thumbs.db
 # the published design system.
 tools/graph-viz/
 code-review-graph.zip
+
+# ── Figma plugin release staging ──────────────────────────────────────────────
+# Created by scripts/package-plugin.ts; published to Azure Artifacts,
+# never committed to the repo.
+btech-token-studio/release/
+__pycache__/

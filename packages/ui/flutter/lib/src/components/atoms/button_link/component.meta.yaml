@@ -1,0 +1,40 @@
+schemaVersion: 1
+name: BTButtonLink
+category: atoms
+figmaNodeId: '480:3197'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=480-3197
+description: >
+  Inline hyperlink-style action atom. Renders a text label with optional
+  leading/trailing 16px icons. Hover shows underline + bold weight. Press
+  dims to a neutral colour. Disabled greys out with text.disabled.
+
+props:
+  - { name: label,      type: 'String',            required: true }
+  - { name: onPressed,  type: 'VoidCallback?',     required: true, note: 'null = disabled' }
+  - { name: leftIcon,   type: 'Widget?',           default: null }
+  - { name: rightIcon,  type: 'Widget?',           default: null }
+  - { name: variant,    type: 'BTButtonLinkVariant', default: primary, set_by_named_ctor: true }
+
+enums:
+  - name: BTButtonLinkVariant
+    values: [primary, secondary, tertiary, invert, custom]
+
+variants:
+  - { name: 'BTButtonLink(...)',           constructor: default,  variant: primary }
+  - { name: 'BTButtonLink.secondary(...)', constructor: named,    variant: secondary }
+  - { name: 'BTButtonLink.tertiary(...)',  constructor: named,    variant: tertiary }
+  - { name: 'BTButtonLink.invert(...)',    constructor: named,    variant: invert }
+  - { name: 'BTButtonLink.custom(...)',    constructor: named,    variant: custom }
+
+colors:
+  # Verified hex-first per §7 color mapping rule.
+  # Figma hex vs btech token (semantic-color/light.json):
+  # brand.primary      #145bc3 → colors.brand.primary
+  # brand.primary-bold #10499c → colors.brand.primaryBold
+  # brand.secondary    #f59e0b → colors.brand.secondary
+  # brand.secondary-bold #bd7c0c → colors.brand.secondaryBold
+  # text.secondary     #64748b → colors.text.secondary
+  # text.primary       #292f37 → colors.text.primary
+  # text.inverse       #ffffff → colors.text.inverse
+  # text.tertiary      #98a2b0 → colors.text.tertiary
+  # text.disabled      (base)  → colors.text.disabled

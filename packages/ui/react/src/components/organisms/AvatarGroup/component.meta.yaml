@@ -1,0 +1,36 @@
+schemaVersion: 1
+name: BTAvatarGroup
+category: organisms
+figmaNodeId: '504:705'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=504-705
+description: >
+  Stacked group of BTAvatar instances with horizontal negative-margin
+  overlap. Renders a "+N" overflow counter when items exceed `max`.
+relatedComponents:
+  - BTAvatar
+props:
+  - { name: items, type: 'BTAvatarItem[]', required: true }
+  - { name: max, type: number, required: false, default: '3' }
+  - { name: customOverflowNumber, type: number, required: false }
+  - { name: size, type: BTAvatarSize, required: false, default: "'md'" }
+  - { name: isLoading, type: boolean, required: false, default: 'false' }
+  - { name: className, type: string, required: false }
+stackingOffsets:
+  xs: -8
+  sm: -10
+  md: -12
+  lg: -16
+  xl: -20
+  '2xl': -32
+usage: |
+  <BTAvatarGroup
+    items={[
+      { name: 'Person 1', imageUrl: '...' },
+      { name: 'JD' },
+      { name: 'AB', color: 'pink' },
+      { name: 'XY' },
+      { name: 'ZZ' },
+    ]}
+    max={3}
+    size="md"
+  />

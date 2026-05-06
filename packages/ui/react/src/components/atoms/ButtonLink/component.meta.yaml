@@ -1,0 +1,20 @@
+schemaVersion: 1
+name: BTButtonLink
+category: atoms
+figmaNodeId: '480:3197'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=480-3197
+description: >
+  Inline hyperlink-style action atom. Text label with optional icon props.
+  Hover → underline + bold. Active → dims to neutral. Disabled → text.disabled.
+
+props:
+  - { name: label,     type: string,                required: true }
+  - { name: variant,   type: BTButtonLinkVariant,   default: primary }
+  - { name: leftIcon,  type: 'React.ReactNode',      default: undefined }
+  - { name: rightIcon, type: 'React.ReactNode',      default: undefined }
+  - { name: disabled,  type: boolean,               default: false }
+  - { name: '...rest', type: 'ButtonHTMLAttributes', note: 'forwarded to <button>' }
+
+enums:
+  - name: BTButtonLinkVariant
+    values: [primary, secondary, tertiary, invert, custom]

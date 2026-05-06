@@ -1,0 +1,32 @@
+{
+  "name": "@btech/mcp-design-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BTech Design System MCP server — exposes tokens, framework templates, and component knowledge to AI agents (Claude Code, Cursor, etc.)",
+  "type": "module",
+  "main": "./dist/server.js",
+  "bin": {
+    "btech-mcp-design-system": "./dist/server.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/server.ts",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.2",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

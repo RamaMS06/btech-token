@@ -1,6 +1,6 @@
 {
   "name": "@btech/design-system",
-  "version": "1.0.0-rc.16",
+  "version": "1.0.4",
   "private": true,
   "packageManager": "pnpm@9.15.9",
   "description": "Multi-tenant design token source of truth — React, Vue, Flutter",
@@ -10,7 +10,6 @@
     "generate:web": "pnpm exec tsx packages/tokens/sd.config.ts --skip-flutter && pnpm --filter @btech/tokens build && pnpm install --lockfile-only --silent",
     "build": "pnpm generate && turbo run build",
     "validate": "pnpm exec tsx tools/validators/lockfile-sync.ts && pnpm exec tsx tools/validators/schema.ts && pnpm exec tsx tools/validators/contrast.ts && pnpm exec tsx tools/validators/boundary.ts && pnpm exec tsx tools/validators/workspace-deps.ts && pnpm exec tsx tools/validators/figma-shape.ts && pnpm exec tsx tools/validators/version-consistency.ts && pnpm exec tsx tools/validators/plugin-manifest.ts",
-    "validate:plugin-manifest": "pnpm exec tsx tools/validators/plugin-manifest.ts",
     "add-tenant": "pnpm exec tsx scripts/add-tenant.ts",
     "tokens:watch": "node scripts/watch-tokens.mjs",
     "bootstrap": "pnpm install && melos bootstrap",
@@ -21,7 +20,14 @@
     "bump:minor": "pnpm exec tsx scripts/bump-version.ts minor",
     "bump:major": "pnpm exec tsx scripts/bump-version.ts major",
     "bump:rc": "pnpm exec tsx scripts/bump-version.ts rc",
-    "setup:auth": "pnpm exec tsx scripts/setup-auth.ts"
+    "setup:auth": "pnpm exec tsx scripts/setup-auth.ts",
+    "mcp:build": "pnpm --filter @btech/mcp-design-system build",
+    "mcp:dev": "pnpm --filter @btech/mcp-design-system dev",
+    "mcp:start": "pnpm --filter @btech/mcp-design-system start",
+    "showcase": "pnpm --filter @btech/ui-showcase dev",
+    "showcase:vue": "pnpm --filter @btech/ui-showcase-vue dev",
+    "showcase:flutter": "cd apps/ui-showcase-flutter && flutter run -d web-server",
+    "convert-vue-to-react": "node tools/vue-to-react/dist/cli.js"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

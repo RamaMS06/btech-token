@@ -1,0 +1,24 @@
+schemaVersion: 1
+name: BTCheckbox
+category: atoms
+figmaNodeId: '504:4181'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=504-4181
+description: >
+  Checkbox atom with 7 states: uncheck, check, indeterminate, disable-uncheck,
+  disable-check, disable-indeterminate, and error. Supports optional label and
+  subtext. Fully accessible via native input with transparent overlay pattern.
+props:
+  - { name: modelValue, type: boolean, default: false, description: 'Controlled checked state (v-model)' }
+  - { name: indeterminate, type: boolean, default: false, description: 'Shows a dash — neither checked nor unchecked' }
+  - { name: disabled, type: boolean, default: false, description: 'Disables all interaction' }
+  - { name: error, type: boolean, default: false, description: 'Error border on box; subtext turns error colour' }
+  - { name: label, type: string, required: false, description: 'Text label beside the checkbox' }
+  - { name: subtext, type: string, required: false, description: 'Helper or error text below the label' }
+states:
+  - uncheck
+  - check
+  - indeterminate
+  - disable-uncheck
+  - disable-check
+  - disable-indeterminate
+  - error
