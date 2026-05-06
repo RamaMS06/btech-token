@@ -1,0 +1,85 @@
+/* BTHint — notification indicator atom (Figma 658:1960)
+ *
+ * Renders as a solid red dot (no count) or a red pill/circle
+ * containing a count value. Numbers > 99 display as "99+".
+ *
+ * Modifier classes applied to .bt-hint:
+ *   --dot      : no count, plain circle
+ *   --count    : has a number inside
+ *   --lg/md/sm : size variant
+ *   --single   : 1-digit count  (no horizontal padding on md/sm)
+ *   --multi    : 2-digit count  (4 px horizontal padding on md/sm)
+ *   --overflow : 99+ count      (wider horizontal padding on lg)
+ */
+
+.bt-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-rd);
+  flex-shrink: 0;
+}
+
+/* ── Dot ────────────────────────────────────────────────────────────────── */
+
+.bt-hint--dot {
+  background: var(--color-ext-error);
+}
+
+.bt-hint--dot.bt-hint--lg { width: 16px; height: 16px; }
+.bt-hint--dot.bt-hint--md { width: 10px; height: 10px; }
+.bt-hint--dot.bt-hint--sm { width: 8px;  height: 8px; }
+
+/* ── Count (base) ───────────────────────────────────────────────────────── */
+
+.bt-hint--count {
+  background: var(--color-ext-error);
+  color: var(--text-inverse);
+  font-family: var(--typography-font-family-sans);
+  font-weight: 500;
+  line-height: var(--typography-line-height-xs);
+  white-space: nowrap;
+}
+
+/* ── Count — Large ──────────────────────────────────────────────────────── */
+
+.bt-hint--count.bt-hint--lg {
+  font-size: var(--typography-font-size-sm);
+  height: 24px;
+  min-width: 24px;
+  padding: 4px;
+}
+
+/* 99+ needs wider horizontal padding on large */
+.bt-hint--count.bt-hint--lg.bt-hint--overflow {
+  padding: 4px 8px;
+  min-width: auto;
+}
+
+/* ── Count — Medium ─────────────────────────────────────────────────────── */
+
+.bt-hint--count.bt-hint--md {
+  font-size: var(--typography-font-size-sm);
+  height: 16px;
+  min-width: 16px;
+  padding: 0;
+}
+
+.bt-hint--count.bt-hint--md.bt-hint--multi,
+.bt-hint--count.bt-hint--md.bt-hint--overflow {
+  padding: 0 4px;
+}
+
+/* ── Count — Small ──────────────────────────────────────────────────────── */
+
+.bt-hint--count.bt-hint--sm {
+  font-size: var(--typography-font-size-2xs);
+  height: 16px;
+  min-width: 16px;
+  padding: 0;
+}
+
+.bt-hint--count.bt-hint--sm.bt-hint--multi,
+.bt-hint--count.bt-hint--sm.bt-hint--overflow {
+  padding: 0 4px;
+}

@@ -1,0 +1,20 @@
+schemaVersion: 1
+name: BTHint
+category: atoms
+figmaNodeId: '658:1960'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=658-1960
+description: >
+  Notification indicator atom. Renders as a solid red dot (no count) or a red
+  pill/circle containing a count value. Numbers > 99 are displayed as "99+".
+  Three sizes: lg (dot 16px / badge 24px), md (dot 10px / badge 16px),
+  sm (dot 8px / badge 16px with smaller font).
+props:
+  - { name: count, type: 'number | null', required: false, description: 'Count to display. Omit or null for dot mode. >99 shows "99+".' }
+  - { name: size, type: "'lg' | 'md' | 'sm'", default: 'lg', description: 'Visual size of the hint.' }
+variants:
+  - { name: dot-lg, description: '16×16 red dot' }
+  - { name: dot-md, description: '10×10 red dot' }
+  - { name: dot-sm, description: '8×8 red dot' }
+  - { name: count-single, description: '1-digit count, circular badge' }
+  - { name: count-multi, description: '2-digit count, pill badge' }
+  - { name: count-overflow, description: '"99+" pill badge' }
