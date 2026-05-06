@@ -399,6 +399,72 @@ See `docs/architecture/generation-flow.md`.
    `docs/architecture/component-conventions/`).
 6. **Every component MUST have `component.meta.yaml`** co-located
    (props, variants, `figmaUrl`, `figmaNodeId`).
+7. **Every component MUST have a markdown doc** at
+   `docs/components/{layer}/{kebab-name}.md` — created or updated
+   whenever a component is added or its API changes.
+
+   **Doc template** (copy-paste and fill in):
+   ```md
+   # BT{Name}
+
+   > One-line description.
+
+   Figma: [node {id}](https://figma.com/...) · Category: {Layer}
+
+   ---
+
+   ## Overview
+
+   2-3 sentences.
+
+   ## Props
+
+   | Prop | Type | Default | Description |
+   |---|---|---|---|
+   | ... | ... | ... | ... |
+
+   ## Variants / States
+
+   - **variant-name** — description
+
+   ## Usage
+
+   ### Vue
+
+   ```vue
+   <script setup lang="ts">
+   import { BT{Name} } from '@btech/ui-vue';
+   </script>
+   <template>
+     <BT{Name} ... />
+   </template>
+   ```
+
+   ### React
+
+   ```tsx
+   import { BT{Name} } from '@btech/ui-react';
+   export function Example() {
+     return <BT{Name} ... />;
+   }
+   ```
+
+   ### Flutter
+
+   ```dart
+   import 'package:btech_ui/btech_ui.dart';
+   BT{Name}(...)
+   ```
+
+   ---
+
+   ## Notes
+
+   Token usage, dark mode, accessibility notes.
+   ```
+
+   Layer README (`docs/components/{layer}/README.md`) must also be
+   updated to add the new component to the component list table.
 7. **File naming**:
    - Flutter: `lower_snake_case.dart` with dot separators
      (`avatar.widget.dart`)
