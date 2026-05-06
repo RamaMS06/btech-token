@@ -8,3 +8,4 @@ packages:
   - 'tools/mcp-design-system'
   - 'tools/vue-to-react'
   - 'tools/cli'
+  - 'tools/registry'

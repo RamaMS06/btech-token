@@ -3,8 +3,8 @@
  *
  * Reads component.meta.yaml + source files from packages/ui/{vue,react,flutter}/
  * and emits:
- *   apps/registry/public/r/{framework}/{component}.json   ← per-component manifest
- *   apps/registry/public/r/registry.{framework}.json      ← index
+ *   tools/registry/public/r/{framework}/{component}.json   ← per-component manifest
+ *   tools/registry/public/r/registry.{framework}.json      ← index
  *
  * Run: pnpm --filter @btech/registry build
  */

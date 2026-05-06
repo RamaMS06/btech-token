@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, dev, feat/btech-cli]
     paths:
-      - 'apps/registry/**'
+      - 'tools/registry/**'
       - 'packages/ui/**/component.meta.yaml'
       - 'packages/ui/**/src/components/**'
   workflow_dispatch:
@@ -48,5 +48,5 @@ jobs:
           personal_token: ${{ secrets.REGISTRY_DEPLOY_PAT }}
           external_repository: BUMA-ID/btech-registry
           publish_branch: gh-pages
-          publish_dir: ./apps/registry/public
+          publish_dir: ./tools/registry/public
           force_orphan: true

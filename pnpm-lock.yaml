@@ -74,33 +74,6 @@ importers:
         specifier: ^2.0.0
         version: 2.2.12(typescript@5.9.3)
 
-  apps/registry:
-    devDependencies:
-      '@types/js-yaml':
-        specifier: ^4.0.9
-        version: 4.0.9
-      '@types/node':
-        specifier: ^20.17.0
-        version: 20.19.39
-      glob:
-        specifier: ^11.0.0
-        version: 11.1.0
-      js-yaml:
-        specifier: ^4.1.0
-        version: 4.1.1
-      tsx:
-        specifier: ^4.19.0
-        version: 4.21.0
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-      vite:
-        specifier: ^6.0.0
-        version: 6.4.2(@types/node@20.19.39)(tsx@4.21.0)(yaml@2.8.3)
-      zod:
-        specifier: ^3.23.8
-        version: 3.25.76
-
   apps/ui/react:
     dependencies:
       '@btech/tokens':
@@ -161,7 +134,7 @@ importers:
         version: 8.18.0
       geist:
         specifier: ^1.7.0
-        version: 1.7.0(next@16.2.4(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+        version: 1.7.0(next@16.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -333,6 +306,33 @@ importers:
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
+
+  tools/registry:
+    devDependencies:
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
+      '@types/node':
+        specifier: ^20.17.0
+        version: 20.19.39
+      glob:
+        specifier: ^11.0.0
+        version: 11.1.0
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.1
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.2(@types/node@20.19.39)(tsx@4.21.0)(yaml@2.8.3)
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
 
   tools/vue-to-react:
     dependencies:
@@ -4599,9 +4599,9 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  geist@1.7.0(next@16.2.4(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)):
+  geist@1.7.0(next@16.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)):
     dependencies:
-      next: 16.2.4(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      next: 16.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
   generator-function@2.0.1: {}
 
@@ -4928,7 +4928,7 @@ snapshots:
 
   negotiator@1.0.0: {}
 
-  next@16.2.4(@babel/core@7.29.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  next@16.2.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@next/env': 16.2.4
       '@swc/helpers': 0.5.15
@@ -4937,7 +4937,7 @@ snapshots:
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.6(@babel/core@7.29.0)(react@18.3.1)
+      styled-jsx: 5.1.6(react@18.3.1)
     optionalDependencies:
       '@next/swc-darwin-arm64': 16.2.4
       '@next/swc-darwin-x64': 16.2.4
@@ -5403,12 +5403,10 @@ snapshots:
     transitivePeerDependencies:
       - tslib
 
-  styled-jsx@5.1.6(@babel/core@7.29.0)(react@18.3.1):
+  styled-jsx@5.1.6(react@18.3.1):
     dependencies:
       client-only: 0.0.1
       react: 18.3.1
-    optionalDependencies:
-      '@babel/core': 7.29.0
 
   sucrase@3.35.1:
     dependencies:
