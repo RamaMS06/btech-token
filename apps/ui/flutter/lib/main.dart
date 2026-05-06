@@ -8,6 +8,7 @@ import 'showcases/button_showcase.dart';
 import 'showcases/checkbox_showcase.dart';
 import 'showcases/hint_showcase.dart';
 import 'showcases/loading_skeleton_showcase.dart';
+import 'showcases/modal_showcase.dart';
 import 'showcases/radio_button_showcase.dart';
 import 'showcases/separator_showcase.dart';
 import 'showcases/slider_showcase.dart';
@@ -96,6 +97,11 @@ const _pages = <_ShowcasePage>[
     group: 'Atoms / Molecules',
     label: 'Tooltip + TooltipStep',
     child: BTTooltipShowcase(),
+  ),
+  _ShowcasePage(
+    group: 'Organisms',
+    label: 'Modal',
+    child: BTModalShowcase(),
   ),
 ];
 

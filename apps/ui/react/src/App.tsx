@@ -9,6 +9,7 @@ import { BTButtonShowcase } from './showcases/BTButtonShowcase';
 import { BTButtonLinkShowcase } from './showcases/BTButtonLinkShowcase';
 import { BTCheckboxShowcase } from './showcases/BTCheckboxShowcase';
 import { BTHintShowcase } from './showcases/BTHintShowcase';
+import { BTModalShowcase } from './showcases/BTModalShowcase';
 import { BTRadioButtonShowcase } from './showcases/BTRadioButtonShowcase';
 import { BTSeparatorShowcase } from './showcases/BTSeparatorShowcase';
 import { BTSliderShowcase } from './showcases/BTSliderShowcase';
@@ -38,6 +39,7 @@ const PAGES: ShowcasePage[] = [
   { id: 'avatar',      group: 'Molecules', label: 'Avatar',      component: <BTAvatarShowcase /> },
   { id: 'tabs',        group: 'Molecules', label: 'Tabs',        component: <BTTabsShowcase /> },
   { id: 'alert',        group: 'Molecules', label: 'Alert',       component: <BTAlertShowcase /> },
+  { id: 'modal',       group: 'Organisms', label: 'Modal',       component: <BTModalShowcase /> },
 ];
 
 // Group pages by their group label, preserving insertion order
