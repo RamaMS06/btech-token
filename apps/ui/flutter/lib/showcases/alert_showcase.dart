@@ -265,6 +265,7 @@ class _BTAlertShowcaseState extends State<BTAlertShowcase>
                       linkLabel: cfg.$3 != null ? 'Learn more' : null,
                       actionLabel: 'Action',
                       dismissible: true,
+                      duration: const Duration(seconds: 5),
                       onAction: () {
                         debugPrint('[BTAlert.show] action: ${cfg.$1}');
                       },
