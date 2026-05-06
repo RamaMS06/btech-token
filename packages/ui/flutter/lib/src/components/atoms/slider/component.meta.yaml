@@ -1,0 +1,68 @@
+schemaVersion: 1
+name: BTSlider
+category: atoms
+figmaNodeId: '434:7617'
+figmaUrl: https://www.figma.com/design/btech/?node-id=434-7617
+description: >
+  Interactive range slider atom. Supports three layout types (defaults, range,
+  vertical) and three color variants (primary, secondary, destructive).
+  Uses Flutter's native Slider/RangeSlider with SliderTheme overrides.
+props:
+  - name: type
+    type: BTSliderType
+    default: BTSliderType.defaults
+    description: Layout type (set via named constructor)
+  - name: variant
+    type: BTSliderVariant
+    default: BTSliderVariant.primary
+  - name: value
+    type: double?
+    required: false
+    description: Controlled value for defaults/vertical
+  - name: startValue
+    type: double?
+    required: false
+    description: Controlled start value for range
+  - name: endValue
+    type: double?
+    required: false
+    description: Controlled end value for range
+  - name: min
+    type: double
+    default: 0
+  - name: max
+    type: double
+    default: 100
+  - name: divisions
+    type: int?
+    required: false
+  - name: showTooltip
+    type: bool
+    default: true
+  - name: disabled
+    type: bool
+    default: false
+  - name: onValueChanged
+    type: 'ValueChanged<double>?'
+    required: false
+  - name: onStartChanged
+    type: 'ValueChanged<double>?'
+    required: false
+  - name: onEndChanged
+    type: 'ValueChanged<double>?'
+    required: false
+enums:
+  - name: BTSliderType
+    values: [defaults, range, vertical]
+  - name: BTSliderVariant
+    values: [primary, secondary, destructive]
+variants:
+  - name: 'BTSlider()'
+    constructor: default
+    description: Horizontal single-thumb slider
+  - name: 'BTSlider.range()'
+    constructor: named
+    description: Horizontal dual-thumb range slider
+  - name: 'BTSlider.vertical()'
+    constructor: named
+    description: Vertical single-thumb slider

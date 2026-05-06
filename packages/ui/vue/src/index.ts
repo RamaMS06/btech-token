@@ -17,5 +17,6 @@ export * from './components/atoms/ButtonLink/index';
 export * from './components/atoms/Checkbox/index';
 export * from './components/atoms/Hint/index';
 export * from './components/atoms/RadioButton/index';
+export * from './components/atoms/Slider/index';
 export * from './components/molecules/Avatar/index';
 export * from './components/organisms/AvatarGroup/index';

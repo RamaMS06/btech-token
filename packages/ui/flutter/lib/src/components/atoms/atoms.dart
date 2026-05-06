@@ -9,3 +9,4 @@ export 'checkbox/checkbox.dart';
 export 'hint/hint.dart';
 export 'loading_skeleton/loading_skeleton.dart';
 export 'radio_button/radio_button.dart';
+export 'slider/slider.dart';
