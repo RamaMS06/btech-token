@@ -26,6 +26,7 @@ export * from './components/molecules/Avatar/index.js';
 export * from './components/molecules/Tabs/index.js';
 export * from './components/molecules/TooltipStep/index.js';
 export * from './components/organisms/AvatarGroup/index.js';
+export * from './components/organisms/Coachmark/index.js';
 
 // Side-effect imports — bundler aggregates into styles.css
 import './components/atoms/Badge/BTBadge.css';
@@ -42,3 +43,4 @@ import './components/molecules/Avatar/BTAvatar.css';
 import './components/molecules/Tabs/BTTabs.css';
 import './components/atoms/Tooltip/BTTooltip.css';
 import './components/molecules/TooltipStep/BTTooltipStep.css';
+import './components/organisms/Coachmark/BTCoachmarkTour.css';

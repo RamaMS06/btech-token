@@ -25,3 +25,4 @@ export * from './components/molecules/Avatar/index';
 export * from './components/molecules/Tabs/index';
 export * from './components/molecules/TooltipStep/index';
 export * from './components/organisms/AvatarGroup/index';
+export * from './components/organisms/Coachmark/index';

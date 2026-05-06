@@ -1,8 +1,12 @@
 // ignore-file — showcase only, no lint enforcement
-import { useState, useRef, useCallback, useEffect, type CSSProperties } from 'react';
-import { createPortal } from 'react-dom';
-import { BTTooltip, BTTooltipStep } from '@btech/ui-react';
-import type { BTTooltipPosition, BTTooltipArrowPosition, BTTooltipStepVariant } from '@btech/ui-react';
+import { useState, useRef, useMemo, useEffect, type CSSProperties, type MutableRefObject } from 'react';
+import { BTTooltip, BTTooltipStep, BTCoachmarkTour } from '@btech/ui-react';
+import type {
+  BTTooltipPosition,
+  BTTooltipArrowPosition,
+  BTTooltipStepVariant,
+  BTCoachmarkStep,
+} from '@btech/ui-react';
 
 const positions: BTTooltipPosition[] = ['top', 'bottom', 'left', 'right'];
 const arrowPositions: BTTooltipArrowPosition[] = ['left', 'left-mid', 'mid', 'right-mid', 'right'];
@@ -25,91 +29,36 @@ const demoPoints: DemoPoint[] = [
   { label: 'Bottom Right',  ttPos: 'top'    },
 ];
 
-const BALLOON_W = 320;
-const BALLOON_H = 160;
-const ARROW = 8;
-const GAP = 2;
-
 export function BTTooltipShowcase() {
   const [activeTab, setActiveTab] = useState<'ui' | 'usage'>('ui');
   const [demoVariant, setDemoVariant] = useState<BTTooltipStepVariant>('button');
-  const [activeIdx, setActiveIdx] = useState(-1);
-  const [stepPos, setStepPos] = useState({ top: 0, left: 0 });
-  const [stepTTPos, setStepTTPos] = useState<BTTooltipPosition>('bottom');
-  const [stepArrowOffset, setStepArrowOffset] = useState('50%');
-  const [spotlightRect, setSpotlightRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [tourStep, setTourStep] = useState(-1);
   const [dismissable, setDismissable] = useState(true);
 
-  const btnRefs = useRef<(HTMLButtonElement | null)[]>(Array(9).fill(null));
+  // One persistent ref object per button (typed as HTMLElement for org component).
+  const btnRefs = useRef<MutableRefObject<HTMLElement | null>[]>(
+    demoPoints.map(() => ({ current: null })),
+  );
 
-  const showStep = useCallback((idx: number) => {
-    const btn = btnRefs.current[idx];
-    if (!btn) return;
+  const steps = useMemo<BTCoachmarkStep[]>(
+    () =>
+      demoPoints.map((pt, i) => ({
+        targetRef: btnRefs.current[i]!,
+        label: pt.label,
+        description: `Ini adalah langkah ${i + 1} dari ${demoPoints.length}.`,
+        stepLabel: `Step ${i + 1} of ${demoPoints.length}`,
+        stepVariant: demoVariant,
+        position: pt.ttPos,
+        prevLabel: 'Kembali',
+        nextLabel: 'Selanjutnya',
+      })),
+    [demoVariant],
+  );
 
-    const rect = btn.getBoundingClientRect();
-    // Capture trigger bounds for the spotlight overlay
-    setSpotlightRect({ top: rect.top, left: rect.left, width: rect.width, height: rect.height });
-
-    const pt = demoPoints[idx];
-    const tcx = rect.left + rect.width / 2;
-    const tcy = rect.top + rect.height / 2;
-
-    let top = 0;
-    let left = 0;
-
-    switch (pt.ttPos) {
-      case 'top':
-        top  = rect.top  - BALLOON_H - ARROW - GAP;
-        left = tcx - BALLOON_W / 2;
-        break;
-      case 'bottom':
-        top  = rect.bottom + GAP;          // arrow is inside balloon top — no extra ARROW offset
-        left = tcx - BALLOON_W / 2;
-        break;
-      case 'left':
-        top  = tcy - BALLOON_H / 2;
-        left = rect.left - BALLOON_W - ARROW - GAP;
-        break;
-      case 'right':
-        top  = tcy - BALLOON_H / 2;
-        left = rect.right + GAP;           // arrow is inside balloon left — no extra ARROW offset
-        break;
-    }
-
-    left = Math.max(8, Math.min(left, window.innerWidth  - BALLOON_W - 8));
-    top  = Math.max(8, Math.min(top,  window.innerHeight - BALLOON_H - 8));
-
-    const offset =
-      (pt.ttPos === 'left' || pt.ttPos === 'right')
-        ? tcy - top
-        : tcx - left;
-
-    setStepPos({ top, left });
-    setStepTTPos(pt.ttPos);
-    setStepArrowOffset(`${offset}px`);
-    setActiveIdx(idx);
-  }, []);
-
-  const closeStep = useCallback(() => { setActiveIdx(-1); setSpotlightRect(null); }, []);
-
-  const goPrev = useCallback(() => {
-    setActiveIdx((cur) => {
-      if (cur > 0) { showStep(cur - 1); }
-      else { setActiveIdx(-1); }
-      return cur;
-    });
-  }, [showStep]);
-
-  const goNext = useCallback(() => {
-    setActiveIdx((cur) => {
-      if (cur < demoPoints.length - 1) { showStep(cur + 1); }
-      else { setActiveIdx(-1); }
-      return cur;
-    });
-  }, [showStep]);
+  const closeStep = (): void => setTourStep(-1);
 
   // Clean up on unmount / tab change
-  useEffect(() => { return () => setActiveIdx(-1); }, []);
+  useEffect(() => () => setTourStep(-1), []);
 
   return (
     <section style={{ padding: 24 }}>
@@ -272,21 +221,20 @@ export function BTTooltipShowcase() {
             Klik tombol di posisi manapun:
           </p>
           <div style={gridContainerStyle}>
-            {/* Hint text */}
             <div style={gridHintStyle}>← klik tombol manapun →</div>
 
             {demoPoints.map((pt, i) => (
               <button
                 key={pt.label}
-                ref={(el) => { btnRefs.current[i] = el; }}
-                onClick={() => showStep(i)}
+                ref={(el) => { btnRefs.current[i]!.current = el; }}
+                onClick={() => setTourStep(i)}
                 style={{
                   ...gridBtnStyle,
-                  background: activeIdx === i ? '#1e293b' : '#4a9d5b',
+                  background: tourStep === i ? '#1e293b' : '#4a9d5b',
                   gridColumn: (i % 3) + 1,
                   gridRow: Math.floor(i / 3) + 1,
                   alignSelf: i < 3 ? 'start' : i < 6 ? 'center' : 'end',
-                  justifySelf: i === 4 ? 'center' : 'auto', // center button compact
+                  justifySelf: i === 4 ? 'center' : 'auto',
                 }}
               >
                 {pt.label}
@@ -294,70 +242,16 @@ export function BTTooltipShowcase() {
             ))}
           </div>
 
-          {/* Portal: backdrop + animated step */}
-          {createPortal(
-            <>
-              {/* Spotlight: dark overlay with a rounded-rect cutout over the trigger */}
-              {activeIdx >= 0 && spotlightRect && (
-                <div
-                  key="backdrop"
-                  style={{
-                    position: 'fixed',
-                    top:    spotlightRect.top    - 4,
-                    left:   spotlightRect.left   - 4,
-                    width:  spotlightRect.width  + 8,
-                    height: spotlightRect.height + 8,
-                    borderRadius: 5,
-                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.55)',
-                    zIndex: 1999,
-                    cursor: dismissable ? 'pointer' : 'default',
-                  }}
-                  onClick={dismissable ? closeStep : undefined}
-                />
-              )}
-
-              {/* Step balloon */}
-              {activeIdx >= 0 && (
-                <div
-                  key={`step-${activeIdx}`}
-                  style={{
-                    position: 'fixed',
-                    zIndex: 2000,
-                    top: stepPos.top,
-                    left: stepPos.left,
-                    pointerEvents: 'all',
-                    animation: 'coachmark-in 0.18s ease forwards',
-                  }}
-                >
-                  <BTTooltipStep
-                    label={demoPoints[activeIdx].label}
-                    description={`Ini adalah langkah ${activeIdx + 1} dari ${demoPoints.length}.`}
-                    stepLabel={`Step ${activeIdx + 1} of ${demoPoints.length}`}
-                    stepVariant={demoVariant}
-                    hasClose
-                    prevLabel="Kembali"
-                    nextLabel="Selanjutnya"
-                    position={stepTTPos}
-                    arrowOffset={stepArrowOffset}
-                    onPrev={goPrev}
-                    onNext={goNext}
-                    onClose={closeStep}
-                  />
-                </div>
-              )}
-            </>,
-            document.body,
-          )}
+          <BTCoachmarkTour
+            steps={steps}
+            step={tourStep}
+            dismissable={dismissable}
+            stepVariant={demoVariant}
+            onStepChange={setTourStep}
+            onFinish={closeStep}
+          />
         </>
       )}
-
-      {/* Inline keyframe animation — injected once */}
-      <style>{`
-        @keyframes coachmark-in {
-          from { opacity: 0; transform: scale(0.92); }
-          to   { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
     </section>
   );
 }
@@ -409,4 +303,3 @@ const gridBtnStyle: CSSProperties = {
   cursor: 'pointer',
   whiteSpace: 'nowrap',
 };
-

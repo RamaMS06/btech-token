@@ -190,8 +190,11 @@ class _BTTooltipState extends State<BTTooltip>
       onEnter: (_) => _show(),
       onExit: (_) => _hide(),
       child: GestureDetector(
-        // Mobile tap
+        // Mobile tap — also bind long-press because an interactive child
+        // (e.g. ElevatedButton) wins the tap gesture in the arena, but
+        // long-press is unclaimed so it always reaches us.
         onTap: _toggle,
+        onLongPress: _toggle,
         behavior: HitTestBehavior.opaque,
         child: KeyedSubtree(
           key: _triggerKey,

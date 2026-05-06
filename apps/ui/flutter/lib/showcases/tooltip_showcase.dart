@@ -89,6 +89,25 @@ class _BTTooltipShowcaseState extends State<BTTooltipShowcase>
 class _UITab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final c = context.btechColor;
+
+    Widget triggerBox(String label) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFe2e8f0)),
+            borderRadius: BorderRadius.circular(6),
+            color: Colors.white,
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontFamily: BTechTypography.fontFamily,
+              color: c.text.primary,
+            ),
+          ),
+        );
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -101,10 +120,7 @@ class _UITab extends StatelessWidget {
             return BTTooltip(
               position: pos,
               text: 'A message which appears when a cursor is positioned over an element.',
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Text(pos.name),
-              ),
+              child: triggerBox('Tap (${pos.name})'),
             );
           }).toList(),
         ),
@@ -120,10 +136,7 @@ class _UITab extends StatelessWidget {
               position: BTTooltipPosition.bottom,
               arrowPosition: ap,
               text: 'Arrow: ${ap.name}',
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Text(ap.name),
-              ),
+              child: triggerBox(ap.name),
             );
           }).toList(),
         ),
@@ -202,16 +215,12 @@ class _UsageTab extends StatefulWidget {
   State<_UsageTab> createState() => _UsageTabState();
 }
 
-class _UsageTabState extends State<_UsageTab>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _animCtrl;
-  OverlayEntry? _backdropEntry;
-  OverlayEntry? _stepEntry;
+class _UsageTabState extends State<_UsageTab> {
   final _keys = List.generate(9, (_) => GlobalKey());
   BTTooltipStepVariant _variant = BTTooltipStepVariant.button;
   int _activeIdx = -1;
-  bool _navigating = false;
   bool _dismissable = true;
+  BTCoachmarkController? _activeTour;
   static const int _total = 9;
 
   // ── Config for each of the 9 demo buttons ────────────────────────────────
@@ -237,195 +246,44 @@ class _UsageTabState extends State<_UsageTab>
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
-  void initState() {
-    super.initState();
-    _animCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 200),
-    );
-  }
-
-  @override
   void dispose() {
-    _animCtrl.dispose();
-    _removeEntries();
+    _activeTour?.dispose();
     super.dispose();
   }
 
-  // ── Overlay management ────────────────────────────────────────────────────
-
-  void _removeEntries() {
-    _stepEntry?.remove();
-    _backdropEntry?.remove();
-    _stepEntry = null;
-    _backdropEntry = null;
-  }
-
-  /// Insert backdrop + step overlay entries for [idx], wired to [_animCtrl].
-  void _insertEntries(int idx) {
-    if (!mounted) return;
-
-    final box = _keys[idx].currentContext?.findRenderObject() as RenderBox?;
-    if (box == null) return;
-
-    final triggerOffset = box.localToGlobal(Offset.zero);
-    final triggerSize = box.size;
-    final screenSize = MediaQuery.of(context).size;
-    final tooltipPos = _ttPos[idx];
-
-    const balloonW = 320.0;
-    const balloonH = 160.0;
-    const gap = 2.0;
-    const arrowSz = 8.0;
-
-    final tcx = triggerOffset.dx + triggerSize.width / 2;
-    final tcy = triggerOffset.dy + triggerSize.height / 2;
-
-    double top;
-    double left;
-    switch (tooltipPos) {
-      case BTTooltipPosition.top:
-        top  = triggerOffset.dy - balloonH - arrowSz - gap;
-        left = tcx - balloonW / 2;
-      case BTTooltipPosition.bottom:
-        // Arrow is inside the balloon (at its top edge) — only GAP separates
-        // the trigger bottom from the balloon edge, not arrowSz + gap.
-        top  = triggerOffset.dy + triggerSize.height + gap;
-        left = tcx - balloonW / 2;
-      case BTTooltipPosition.left:
-        top  = tcy - balloonH / 2;
-        left = triggerOffset.dx - balloonW - arrowSz - gap;
-      case BTTooltipPosition.right:
-        // Same as bottom: arrow is inside the balloon's left edge.
-        top  = tcy - balloonH / 2;
-        left = triggerOffset.dx + triggerSize.width + gap;
-    }
-
-    left = left.clamp(8.0, screenSize.width  - balloonW - 8.0);
-    top  = top.clamp(8.0,  screenSize.height - balloonH - 8.0);
-
-    // Pixel-accurate arrow offset: px from balloon near-edge to trigger centre.
-    // For top/bottom this is horizontal (from left); for left/right vertical (from top).
-    final arrowOffset = _computeArrowOffset(tooltipPos, tcx, left, tcy, top);
-
-    // Spotlight rect: trigger bounds + 4 px padding on each side.
-    const spotlightPad = 4.0;
-    final spotlight = Rect.fromLTWH(
-      triggerOffset.dx - spotlightPad,
-      triggerOffset.dy - spotlightPad,
-      triggerSize.width  + spotlightPad * 2,
-      triggerSize.height + spotlightPad * 2,
-    );
-
-    final curvedAnim = CurvedAnimation(
-      parent: _animCtrl,
-      curve: Curves.easeInOut,
-    );
-
-    // ── Backdrop entry — dark overlay with spotlight cutout over trigger ──
-    _backdropEntry = OverlayEntry(
-      builder: (_) => Positioned.fill(
-        child: FadeTransition(
-          opacity: _animCtrl,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _dismissable ? _close : null,
-            child: CustomPaint(
-              painter: _SpotlightPainter(
-                spotlight: spotlight,
-                color: Colors.black.withValues(alpha: 0.55),
-              ),
-              child: const SizedBox.expand(),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // ── Step entry ────────────────────────────────────────────────────────
-    _stepEntry = OverlayEntry(
-      builder: (_) => Positioned(
-        top: top,
-        left: left,
-        child: FadeTransition(
-          opacity: curvedAnim,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.92, end: 1.0).animate(curvedAnim),
-            child: Material(
-              color: Colors.transparent,
-              child: BTTooltipStep(
-                label: _labels[idx],
-                description: 'Ini adalah langkah ${idx + 1} dari $_total.',
-                stepLabel: 'Step ${idx + 1} of $_total',
-                stepVariant: _variant,
-                hasClose: true,
-                prevLabel: 'Kembali',
-                nextLabel: 'Selanjutnya',
-                position: tooltipPos,
-                arrowOffset: arrowOffset,
-                onPrev: idx > 0 ? () => _navigate(idx - 1) : _close,
-                onNext: idx < _total - 1 ? () => _navigate(idx + 1) : _close,
-                onClose: _close,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    final overlay = Overlay.of(context, rootOverlay: true);
-    overlay.insert(_backdropEntry!);
-    overlay.insert(_stepEntry!);
-  }
-
-  /// Compute pixel-accurate arrow offset from the balloon's near edge to the
-  /// trigger centre. For top/bottom balloons: px from balloon left to trigger
-  /// centre X. For left/right: px from balloon top to trigger centre Y.
-  double _computeArrowOffset(
-    BTTooltipPosition ttPos,
-    double tcx,
-    double balloonLeft,
-    double tcy,
-    double balloonTop,
-  ) {
-    if (ttPos == BTTooltipPosition.left || ttPos == BTTooltipPosition.right) {
-      return tcy - balloonTop; // vertical axis
-    }
-    return tcx - balloonLeft; // horizontal axis
-  }
+  // ── Tour management ───────────────────────────────────────────────────────
 
   void _showAt(int idx) {
-    if (_navigating) return;
-    _removeEntries();
-    _animCtrl.reset();
-    _insertEntries(idx);
-    _animCtrl.forward();
-    setState(() { _activeIdx = idx; });
-  }
-
-  /// Animate out → swap → animate in.
-  void _navigate(int idx) {
-    if (_navigating) return;
-    _navigating = true;
-    _animCtrl.reverse().then((_) {
-      if (!mounted) return;
-      _removeEntries();
-      _animCtrl.reset();
-      _insertEntries(idx);
-      _animCtrl.forward().then((_) {
-        if (mounted) setState(() { _navigating = false; });
-      });
-      setState(() { _activeIdx = idx; });
-    });
+    _activeTour?.dismiss();
+    _activeTour?.dispose();
+    _activeTour = BTCoachmarkController(
+      steps: List.generate(
+        _total,
+        (i) => BTCoachmarkStep(
+          targetKey: _keys[i],
+          label: _labels[i],
+          description: 'Ini adalah langkah ${i + 1} dari $_total.',
+          stepLabel: 'Step ${i + 1} of $_total',
+          stepVariant: _variant,
+          position: _ttPos[i],
+          prevLabel: 'Kembali',
+          nextLabel: 'Selanjutnya',
+        ),
+      ),
+      dismissable: _dismissable,
+      stepVariant: _variant,
+      onFinish: () {
+        if (!mounted) return;
+        setState(() => _activeIdx = -1);
+      },
+    );
+    _activeTour!.show(context, startAt: idx);
+    setState(() => _activeIdx = idx);
   }
 
   void _close() {
-    if (_navigating) return;
-    _animCtrl.reverse().then((_) {
-      if (!mounted) return;
-      _removeEntries();
-      setState(() { _activeIdx = -1; });
-    });
+    _activeTour?.dismiss();
+    if (mounted) setState(() => _activeIdx = -1);
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -633,27 +491,3 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-// ── Spotlight CustomPainter ────────────────────────────────────────────────
-// Paints a semi-transparent dark overlay over the full canvas, with a
-// rounded-rect cutout at [spotlight] (border-radius 5 px) that reveals the
-// content beneath — matching the web box-shadow trick.
-
-class _SpotlightPainter extends CustomPainter {
-  const _SpotlightPainter({required this.spotlight, required this.color});
-
-  final Rect spotlight;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..fillType = PathFillType.evenOdd
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..addRRect(RRect.fromRectAndRadius(spotlight, const Radius.circular(5)));
-    canvas.drawPath(path, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SpotlightPainter old) =>
-      old.spotlight != spotlight || old.color != color;
-}

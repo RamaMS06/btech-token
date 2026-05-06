@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { ref, onUnmounted, Teleport } from 'vue';
-import { BTTooltip } from '@btech/ui-vue';
-import { BTTooltipStep } from '@btech/ui-vue';
-import type { BTTooltipPosition, BTTooltipArrowPosition, BTTooltipStepVariant } from '@btech/ui-vue';
+import { computed, onUnmounted, ref } from 'vue';
+import { BTTooltip, BTTooltipStep, BTCoachmarkTour } from '@btech/ui-vue';
+import type {
+  BTTooltipPosition,
+  BTTooltipArrowPosition,
+  BTTooltipStepVariant,
+  BTCoachmarkStep,
+} from '@btech/ui-vue';
 
 const activeTab = ref<'ui' | 'usage'>('ui');
 
@@ -30,84 +34,27 @@ const demoPoints: DemoPoint[] = [
 ];
 
 const demoVariant = ref<BTTooltipStepVariant>('button');
-const activeIdx = ref(-1);
-const stepPos = ref({ top: 0, left: 0 });
-const activeTTPos = ref<BTTooltipPosition>('bottom');
-// Precise arrow offset computed from trigger centre after viewport clamping
-const stepArrowOffset = ref('50%');
-// Trigger bounding rect for the spotlight overlay (4 px padding each side)
-const spotlightRect = ref<{ top: number; left: number; width: number; height: number } | null>(null);
-// When false, tapping the backdrop will NOT close the coachmark
 const dismissable = ref(true);
+const tourStep = ref(-1);
 
-// Refs for each button element (populated via :ref callback in template)
-const btnRefs = ref<HTMLElement[]>([]);
-function setBtnRef(el: HTMLElement | null, i: number) {
-  if (el) btnRefs.value[i] = el;
-}
+// One ref per button — must be a ref<HTMLElement | null> each.
+const btnRefs = demoPoints.map(() => ref<HTMLElement | null>(null));
 
-function showStep(idx: number) {
-  const btn = btnRefs.value[idx];
-  if (!btn) return;
+const steps = computed<BTCoachmarkStep[]>(() =>
+  demoPoints.map((pt, i) => ({
+    targetRef: btnRefs[i]!,
+    label: pt.label,
+    description: `Ini adalah langkah ${i + 1} dari ${demoPoints.length}.`,
+    stepLabel: `Step ${i + 1} of ${demoPoints.length}`,
+    stepVariant: demoVariant.value,
+    position: pt.ttPos,
+    prevLabel: 'Kembali',
+    nextLabel: 'Selanjutnya',
+  })),
+);
 
-  const rect = btn.getBoundingClientRect();
-  // Capture trigger bounds for the spotlight overlay (4 px padding each side)
-  spotlightRect.value = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
-
-  const pt = demoPoints[idx];
-  activeTTPos.value = pt.ttPos;
-
-  const BALLOON_W = 320;
-  const BALLOON_H = 160;
-  const ARROW = 8;
-  const GAP = 2;
-
-  let top = 0;
-  let left = 0;
-
-  const tcx = rect.left + rect.width / 2;
-  const tcy = rect.top + rect.height / 2;
-
-  switch (pt.ttPos) {
-    case 'top':
-      top  = rect.top  - BALLOON_H - ARROW - GAP;
-      left = tcx - BALLOON_W / 2;
-      break;
-    case 'bottom':
-      // Arrow is INSIDE the balloon (at its top), so only GAP separates
-      // the trigger from the balloon edge — not ARROW+GAP.
-      top  = rect.bottom + GAP;
-      left = tcx - BALLOON_W / 2;
-      break;
-    case 'left':
-      top  = tcy - BALLOON_H / 2;
-      left = rect.left - BALLOON_W - ARROW - GAP;
-      break;
-    case 'right':
-      // Same as bottom: arrow is inside the balloon (at its left edge).
-      top  = tcy - BALLOON_H / 2;
-      left = rect.right + GAP;
-      break;
-  }
-
-  // Clamp to viewport
-  left = Math.max(8, Math.min(left, window.innerWidth  - BALLOON_W - 8));
-  top  = Math.max(8, Math.min(top,  window.innerHeight - BALLOON_H - 8));
-
-  // Dynamic arrow offset: px from balloon edge to trigger centre
-  const offset =
-    (pt.ttPos === 'left' || pt.ttPos === 'right')
-      ? tcy - top   // vertical arrow → from balloon top to trigger centre Y
-      : tcx - left; // horizontal arrow → from balloon left to trigger centre X
-  stepArrowOffset.value = `${offset}px`;
-
-  stepPos.value = { top, left };
-  activeIdx.value = idx;
-}
-
-function closeStep() { activeIdx.value = -1; spotlightRect.value = null; }
-function goPrev() { if (activeIdx.value > 0) showStep(activeIdx.value - 1); else closeStep(); }
-function goNext() { if (activeIdx.value < demoPoints.length - 1) showStep(activeIdx.value + 1); else closeStep(); }
+function showStep(idx: number) { tourStep.value = idx; }
+function closeStep() { tourStep.value = -1; }
 
 onUnmounted(closeStep);
 </script>
@@ -222,7 +169,7 @@ onUnmounted(closeStep);
         Pilih gaya tombol, lalu klik salah satu dari 9 posisi untuk melihat BTTooltipStep.
       </p>
 
-      <!-- Variant selector + dismissable toggle -->
+      <!-- Variant selector -->
       <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;">
         <button
           v-for="v in stepVariants"
@@ -253,68 +200,28 @@ onUnmounted(closeStep);
       <!-- 9-button positioned grid -->
       <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px;">Klik tombol di posisi manapun:</p>
       <div class="demo-grid">
-        <!-- hint text -->
         <div class="demo-grid__hint">← klik tombol manapun →</div>
 
-        <!-- 9 buttons -->
         <button
           v-for="(pt, i) in demoPoints"
           :key="pt.label"
-          :ref="(el) => setBtnRef(el as HTMLElement, i)"
+          :ref="(el) => { btnRefs[i]!.value = el as HTMLElement | null; }"
           class="demo-grid-btn"
-          :class="{ 'demo-grid-btn--active': activeIdx === i }"
+          :class="{ 'demo-grid-btn--active': tourStep === i }"
           @click="showStep(i)"
         >
           {{ pt.label }}
         </button>
       </div>
 
-      <!-- Overlay via Teleport — backdrop + step with enter/leave animation -->
-      <Teleport to="body">
-        <!-- Spotlight: dark overlay with a cutout (border-radius 5px) over the trigger -->
-        <Transition name="backdrop">
-          <div
-            v-if="activeIdx >= 0 && spotlightRect"
-            :style="{
-              position: 'fixed',
-              top:    `${spotlightRect.top    - 4}px`,
-              left:   `${spotlightRect.left   - 4}px`,
-              width:  `${spotlightRect.width  + 8}px`,
-              height: `${spotlightRect.height + 8}px`,
-              borderRadius: '5px',
-              boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.55)',
-              zIndex: 1999,
-              cursor: 'pointer',
-            }"
-            @click="dismissable && closeStep()"
-          />
-        </Transition>
-
-        <!-- Step balloon with ease-in-out transition per step change -->
-        <Transition name="coachmark" mode="out-in">
-          <div
-            v-if="activeIdx >= 0"
-            :key="activeIdx"
-            class="step-overlay"
-            :style="{ top: stepPos.top + 'px', left: stepPos.left + 'px' }"
-          >
-            <BTTooltipStep
-              :label="demoPoints[activeIdx].label"
-              :description="`Ini adalah langkah ${activeIdx + 1} dari ${demoPoints.length}.`"
-              :step-label="`Step ${activeIdx + 1} of ${demoPoints.length}`"
-              :step-variant="demoVariant"
-              has-close
-              prev-label="Kembali"
-              next-label="Selanjutnya"
-              :position="activeTTPos"
-              :arrow-offset="stepArrowOffset"
-              @prev="goPrev"
-              @next="goNext"
-              @close="closeStep"
-            />
-          </div>
-        </Transition>
-      </Teleport>
+      <!-- The tour overlay (renders to body via Teleport internally) -->
+      <BTCoachmarkTour
+        v-model:step="tourStep"
+        :steps="steps"
+        :dismissable="dismissable"
+        :step-variant="demoVariant"
+        @finish="tourStep = -1"
+      />
 
     </template>
   </section>
@@ -385,36 +292,13 @@ onUnmounted(closeStep);
   white-space: nowrap;
   transition: background 0.1s;
   align-self: start;
-  /* prevent center button from stretching too wide */
   justify-self: center;
 }
 
 .demo-grid-btn:nth-child(n+5):nth-child(-n+7) { align-self: center; }
 .demo-grid-btn:nth-child(n+8) { align-self: end; }
-/* center button (5th) — keep compact */
 .demo-grid-btn:nth-child(6) { justify-self: center; }
 
 .demo-grid-btn--active { background: #1e293b; }
 .demo-grid-btn:hover:not(.demo-grid-btn--active) { background: #3b8a4b; }
-
-/* Spotlight div has all styles inline; only the fade transition is here */
-
-/* ── Step overlay ── */
-.step-overlay {
-  position: fixed;
-  z-index: 2000;
-  pointer-events: all;
-}
-
-/* ── Backdrop transition ── */
-.backdrop-enter-active { transition: opacity 0.2s ease; }
-.backdrop-leave-active { transition: opacity 0.15s ease; }
-.backdrop-enter-from,
-.backdrop-leave-to    { opacity: 0; }
-
-/* ── Coachmark step transition (ease in/out per step) ── */
-.coachmark-enter-active { transition: opacity 0.18s ease, transform 0.18s ease; }
-.coachmark-leave-active { transition: opacity 0.12s ease, transform 0.12s ease; }
-.coachmark-enter-from   { opacity: 0; transform: scale(0.92); }
-.coachmark-leave-to     { opacity: 0; transform: scale(0.92); }
 </style>
