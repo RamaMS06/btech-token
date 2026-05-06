@@ -379,6 +379,6 @@ const gridBtnStyle: CSSProperties = {
 const backdropStyle: CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'rgba(0, 0, 0, 0.45)',
+  background: 'transparent',
   zIndex: 1999,
 };

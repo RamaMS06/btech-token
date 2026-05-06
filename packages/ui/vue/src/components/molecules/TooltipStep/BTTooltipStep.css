@@ -178,12 +178,12 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: var(--radius-sm);
   font-family: var(--typography-font-family-sans);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
-  line-height: 16px;
+  line-height: 20px;
   white-space: nowrap;
   cursor: pointer;
   background: var(--bg-secondary);

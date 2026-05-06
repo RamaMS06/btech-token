@@ -300,23 +300,22 @@ class _UsageTabState extends State<_UsageTab>
     left = left.clamp(8.0, screenSize.width  - balloonW - 8.0);
     top  = top.clamp(8.0,  screenSize.height - balloonH - 8.0);
 
-    // Compute arrow position from trigger centre after clamping
-    final arrowPos = _bestArrowPos(tooltipPos, tcx, left, tcy, top);
+    // Pixel-accurate arrow offset: px from balloon near-edge to trigger centre.
+    // For top/bottom this is horizontal (from left); for left/right vertical (from top).
+    final arrowOffset = _computeArrowOffset(tooltipPos, tcx, left, tcy, top);
 
     final curvedAnim = CurvedAnimation(
       parent: _animCtrl,
       curve: Curves.easeInOut,
     );
 
-    // ── Backdrop entry ────────────────────────────────────────────────────
+    // ── Backdrop entry (transparent, intercepts taps to close) ───────────
     _backdropEntry = OverlayEntry(
       builder: (_) => Positioned.fill(
         child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: _close,
-          child: FadeTransition(
-            opacity: _animCtrl,
-            child: ColoredBox(color: Colors.black.withValues(alpha: 0.45)),
-          ),
+          child: const SizedBox.expand(),
         ),
       ),
     );
@@ -341,7 +340,7 @@ class _UsageTabState extends State<_UsageTab>
                 prevLabel: 'Kembali',
                 nextLabel: 'Selanjutnya',
                 position: tooltipPos,
-                arrowPosition: arrowPos,
+                arrowOffset: arrowOffset,
                 onPrev: idx > 0 ? () => _navigate(idx - 1) : _close,
                 onNext: idx < _total - 1 ? () => _navigate(idx + 1) : _close,
                 onClose: _close,
@@ -357,8 +356,10 @@ class _UsageTabState extends State<_UsageTab>
     overlay.insert(_stepEntry!);
   }
 
-  /// Choose best-fit [BTTooltipArrowPosition] from trigger-centre geometry.
-  BTTooltipArrowPosition _bestArrowPos(
+  /// Compute pixel-accurate arrow offset from the balloon's near edge to the
+  /// trigger centre. For top/bottom balloons: px from balloon left to trigger
+  /// centre X. For left/right: px from balloon top to trigger centre Y.
+  double _computeArrowOffset(
     BTTooltipPosition ttPos,
     double tcx,
     double balloonLeft,
@@ -366,12 +367,9 @@ class _UsageTabState extends State<_UsageTab>
     double balloonTop,
   ) {
     if (ttPos == BTTooltipPosition.left || ttPos == BTTooltipPosition.right) {
-      return BTTooltipArrowPosition.mid;
+      return tcy - balloonTop; // vertical axis
     }
-    final fraction = (tcx - balloonLeft) / 320.0;
-    if (fraction < 0.33) return BTTooltipArrowPosition.left;
-    if (fraction < 0.67) return BTTooltipArrowPosition.mid;
-    return BTTooltipArrowPosition.right;
+    return tcx - balloonLeft; // horizontal axis
   }
 
   void _showAt(int idx) {

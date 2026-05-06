@@ -51,6 +51,7 @@ class BTTooltipStep extends StatelessWidget {
     this.nextLabel = 'Next',
     this.position = BTTooltipPosition.top,
     this.arrowPosition = BTTooltipArrowPosition.mid,
+    this.arrowOffset,
     this.child,
     this.onPrev,
     this.onNext,
@@ -82,8 +83,16 @@ class BTTooltipStep extends StatelessWidget {
   /// Which side the arrow caret renders on. @default [BTTooltipPosition.top].
   final BTTooltipPosition position;
 
-  /// Arrow offset along the axis.
+  /// Arrow offset along the axis (enum-based, 5 positions).
   final BTTooltipArrowPosition arrowPosition;
+
+  /// Optional pixel-accurate arrow offset from the balloon's near edge to the
+  /// trigger centre. When provided, overrides [arrowPosition] for top/bottom
+  /// arrows (horizontal axis). Units: logical pixels.
+  ///
+  /// • top/bottom balloons → px from balloon **left** edge to trigger centre X.
+  /// • left/right balloons → not used (falls back to [arrowPosition]).
+  final double? arrowOffset;
 
   /// Optional rich content rendered between description and footer.
   final Widget? child;
@@ -112,13 +121,17 @@ class BTTooltipStep extends StatelessWidget {
     final body = _buildBody(context, c, r, bg);
 
     if (isVertical) {
-      final alignedArrow = Align(
-        alignment: _horizontalArrowAlignment(arrowPosition),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: arrow,
-        ),
-      );
+      // Use pixel-accurate Stack positioning when arrowOffset is supplied,
+      // otherwise fall back to the enum-based Align approach.
+      final alignedArrow = arrowOffset != null
+          ? _buildHorizontalArrowStack(arrow, arrowOffset!)
+          : Align(
+              alignment: _horizontalArrowAlignment(arrowPosition),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: arrow,
+              ),
+            );
       return Material(
         type: MaterialType.transparency,
         child: SizedBox(
@@ -360,6 +373,22 @@ class BTTooltipStep extends StatelessWidget {
     }
   }
 
+  /// Position the arrow SVG (16 × 8 px) using a Stack so its centre lands
+  /// at exactly [offset] logical pixels from the balloon's left edge.
+  Widget _buildHorizontalArrowStack(Widget arrow, double offset) {
+    // Arrow SVG is 16 px wide — subtract 8 to get the left edge position.
+    // Clamp so the arrow never escapes the 320 px balloon.
+    final left = (offset - 8.0).clamp(0.0, 304.0); // 320 - 16 = 304
+    return SizedBox(
+      width: 320,
+      height: 8,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [Positioned(left: left, top: 0, child: arrow)],
+      ),
+    );
+  }
+
   Alignment _horizontalArrowAlignment(BTTooltipArrowPosition ap) {
     return switch (ap) {
       BTTooltipArrowPosition.left => Alignment.centerLeft,
@@ -405,7 +434,7 @@ class _StepButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(borderRadius),
@@ -414,9 +443,9 @@ class _StepButton extends StatelessWidget {
           label,
           style: TextStyle(
             fontFamily: fontFamily,
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
-            height: 16 / 12,
+            height: 20 / 14,
             color: textColor,
           ),
         ),

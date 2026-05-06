@@ -362,11 +362,11 @@ onUnmounted(closeStep);
 .demo-grid-btn--active { background: #1e293b; }
 .demo-grid-btn:hover:not(.demo-grid-btn--active) { background: #3b8a4b; }
 
-/* ── Backdrop ── */
+/* ── Backdrop — transparent, intercepts clicks to close ── */
 .step-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: transparent;
   z-index: 1999;
 }
 
