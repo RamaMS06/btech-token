@@ -32,6 +32,95 @@ const _kPrimaryActive   = Color(0xFF145BC3); // brand.primary blue
 const _kSecondaryActive = Color(0xFF64748B); // icon.secondary
 const _kDestrActive     = Color(0xFF991515); // icon.error red
 
+// ── Custom thumb shapes (Figma: 24 px diameter, 2.5 px white border, shadow) ─
+
+// Thumb radius — 24 px diameter (Figma 434:7227), 2.5 px white border.
+const _kThumbRadius    = 12.0;
+const _kBorderWidth    = 2.5;
+const _kShadowElevation = 3.0;
+
+/// Single-thumb custom shape: white border + active fill + drop shadow.
+class _BTThumbShape extends SliderComponentShape {
+  const _BTThumbShape();
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
+      const Size.fromRadius(_kThumbRadius);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final canvas = context.canvas;
+    final fill = Paint()..color = sliderTheme.thumbColor ?? _kPrimaryActive;
+
+    // Drop shadow + white border + active fill (2.5 px inset)
+    canvas
+      ..drawShadow(
+        Path()..addOval(
+          Rect.fromCircle(center: center, radius: _kThumbRadius),
+        ),
+        const Color(0xFF000000),
+        _kShadowElevation,
+        false,
+      )
+      ..drawCircle(center, _kThumbRadius, Paint()..color = Colors.white)
+      ..drawCircle(center, _kThumbRadius - _kBorderWidth, fill);
+  }
+}
+
+/// Range-slider custom thumb shape — same visual as [_BTThumbShape].
+class _BTRangeThumbShape extends RangeSliderThumbShape {
+  const _BTRangeThumbShape();
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
+      const Size.fromRadius(_kThumbRadius);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required SliderThemeData sliderTheme,
+    bool isDiscrete = false,
+    bool isEnabled = true,
+    bool isOnTop = false,
+    TextDirection textDirection = TextDirection.ltr,
+    Thumb thumb = Thumb.start,
+    bool isPressed = false,
+  }) {
+    final canvas = context.canvas;
+    final fill = Paint()..color = sliderTheme.thumbColor ?? _kPrimaryActive;
+
+    canvas
+      ..drawShadow(
+        Path()..addOval(
+          Rect.fromCircle(center: center, radius: _kThumbRadius),
+        ),
+        const Color(0xFF000000),
+        _kShadowElevation,
+        false,
+      )
+      ..drawCircle(center, _kThumbRadius, Paint()..color = Colors.white)
+      ..drawCircle(center, _kThumbRadius - _kBorderWidth, fill);
+  }
+}
+
+// ── Widget ───────────────────────────────────────────────────────────────
+
 class BTSlider extends StatefulWidget {
   /// Horizontal slider with a single thumb.
   const BTSlider({
@@ -40,6 +129,7 @@ class BTSlider extends StatefulWidget {
     this.max = 100,
     this.divisions,
     this.showTooltip = true,
+    this.alwaysShown = true,
     this.disabled = false,
     this.variant = BTSliderVariant.primary,
     this.onValueChanged,
@@ -58,6 +148,7 @@ class BTSlider extends StatefulWidget {
     this.max = 100,
     this.divisions,
     this.showTooltip = true,
+    this.alwaysShown = true,
     this.disabled = false,
     this.variant = BTSliderVariant.primary,
     this.onStartChanged,
@@ -74,6 +165,7 @@ class BTSlider extends StatefulWidget {
     this.max = 100,
     this.divisions,
     this.showTooltip = true,
+    this.alwaysShown = true,
     this.disabled = false,
     this.variant = BTSliderVariant.primary,
     this.onValueChanged,
@@ -95,6 +187,10 @@ class BTSlider extends StatefulWidget {
   final double max;
   final int? divisions;
   final bool showTooltip;
+
+  /// When `true` (default) the tooltip is always visible.
+  /// When `false` the tooltip only shows while the user is interacting.
+  final bool alwaysShown;
   final bool disabled;
 
   final ValueChanged<double>? onValueChanged;
@@ -134,7 +230,6 @@ class _BTSliderState extends State<BTSlider> {
   double get _currentStart => widget.startValue ?? _start;
   double get _currentEnd => widget.endValue ?? _end;
 
-  // ignore: unused_element
   Color _activeColor() => switch (widget.variant) {
     BTSliderVariant.primary     => _kPrimaryActive,
     BTSliderVariant.secondary   => _kSecondaryActive,
@@ -154,11 +249,11 @@ class _BTSliderState extends State<BTSlider> {
         fontSize: 14,
         fontWeight: FontWeight.w500,
       ),
-      showValueIndicator: ShowValueIndicator.always,
+      showValueIndicator: widget.alwaysShown
+          ? ShowValueIndicator.always
+          : ShowValueIndicator.onlyForContinuous,
       trackHeight: 4,
-      thumbShape: const RoundSliderThumbShape(
-        enabledThumbRadius: 12,
-      ),
+      thumbShape: const _BTThumbShape(),
     );
   }
 
@@ -170,8 +265,7 @@ class _BTSliderState extends State<BTSlider> {
     if (widget.type == BTSliderType.range) {
       return SliderTheme(
         data: sliderTh.copyWith(
-          rangeThumbShape:
-              const RoundRangeSliderThumbShape(enabledThumbRadius: 12),
+          rangeThumbShape: const _BTRangeThumbShape(),
           rangeValueIndicatorShape:
               const PaddleRangeSliderValueIndicatorShape(),
         ),

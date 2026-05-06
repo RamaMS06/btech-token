@@ -39,6 +39,13 @@ export interface BTSliderProps {
   step?: number;
   /** Show value tooltip above (or beside for vertical) the thumb. @default true */
   showTooltip?: boolean;
+  /**
+   * When `true` the tooltip is always visible (default).
+   * When `false` the tooltip only appears on hover / keyboard focus.
+   * Has no effect when `showTooltip` is `false`.
+   * @default true
+   */
+  alwaysShown?: boolean;
   /** Disables all interaction. @default false */
   disabled?: boolean;
   /** Additional CSS class names. */

@@ -23,6 +23,7 @@ const props = withDefaults(defineProps<BTSliderProps>(), {
   max: 100,
   step: 1,
   showTooltip: true,
+  alwaysShown: true,
   disabled: false,
 });
 
@@ -125,6 +126,7 @@ const endZ   = computed(() => (toRatio(end.value)   < 0.1 ? 4 : 3));
       type === 'vertical' ? 'bt-slider--vertical' : 'bt-slider--horizontal',
       `bt-slider--${variant}`,
       disabled && 'bt-slider--disabled',
+      showTooltip && !alwaysShown && 'bt-slider--tooltip-hover',
       className,
     ]"
   >

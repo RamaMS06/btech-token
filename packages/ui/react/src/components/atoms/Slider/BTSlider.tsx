@@ -46,6 +46,7 @@ export function BTSlider({
   max = 100,
   step = 1,
   showTooltip = true,
+  alwaysShown = true,
   disabled = false,
   onValueChange,
   onStartValueChange,
@@ -126,6 +127,7 @@ export function BTSlider({
     type === 'vertical' ? 'bt-slider--vertical' : 'bt-slider--horizontal',
     `bt-slider--${variant}`,
     disabled ? 'bt-slider--disabled' : '',
+    showTooltip && !alwaysShown ? 'bt-slider--tooltip-hover' : '',
     className ?? '',
   ]
     .filter(Boolean)

@@ -202,11 +202,14 @@
   /* left set inline: calc(ratio * (100% - 24px) + 12px) */
 }
 
-/* Vertical tooltip: to the left of the thumb */
+/* Vertical tooltip: to the left of the thumb.
+ * right: calc(100% + 6px) → 6 px gap from container left edge.
+ * Arrow: right: -3px → tip lands 3 px to the right of tooltip edge,
+ * which is exactly 2 px from the thumb's visual outline. */
 .bt-slider--vertical .bt-slider__tooltip {
   top: auto;
   left: auto;
-  right: calc(100% + 10px);
+  right: calc(100% + 6px);
   transform: translateY(50%);
   /* bottom set inline */
 }
@@ -215,12 +218,24 @@
   bottom: auto;
   top: 50%;
   left: auto;
-  right: -12px;
+  right: -3px;
   transform: translateY(-50%);
   border-top: 6px solid transparent;
   border-bottom: 6px solid transparent;
   border-left: 6px solid #292f37;
   border-right: none;
+}
+
+/* ── alwaysShown: false — tooltip visible only on hover / focus ───────────── */
+
+.bt-slider--tooltip-hover .bt-slider__tooltip {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.bt-slider--tooltip-hover:hover .bt-slider__tooltip,
+.bt-slider--tooltip-hover:has(.bt-slider__input:focus-visible) .bt-slider__tooltip {
+  opacity: 1;
 }
 
 /* ── Disabled ────────────────────────────────────────────────────────────── */

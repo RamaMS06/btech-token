@@ -1,4 +1,5 @@
 // BTSlider types — Figma source: node 434:7617.
+// Figma thumb: node 434:7227 — 24 px diameter, 2.5 px white border.
 
 /// Layout and thumb count for [BTSlider].
 enum BTSliderType {
