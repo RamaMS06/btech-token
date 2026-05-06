@@ -1,10 +1,36 @@
 #!/usr/bin/env sh
-# pre-commit — lint / safety checks only.
+# pre-commit — safety checks before every commit.
 #
 # Token regeneration is NOT done here.
 # Regeneration is handled by the generate pipeline (generate.yml) in CI,
 # which auto-commits the updated outputs to your branch when sources change.
 #
 # To regenerate locally before committing: pnpm generate
+
+# ── Lockfile sync check ──────────────────────────────────────────────────
+# When any package.json is staged, verify pnpm-lock.yaml is still in sync.
+# If not: auto-fix with `pnpm install --lockfile-only`, stage the result,
+# and continue — so the commit always includes a consistent lockfile.
+#
+# Same validator as CI (tools/validators/lockfile-sync.ts) → identical
+# error message, caught locally before the push ever happens.
+
+STAGED_PKG_JSON=$(git diff --cached --name-only | grep 'package\.json$' || true)
+
+if [ -n "$STAGED_PKG_JSON" ]; then
+  if ! pnpm exec tsx tools/validators/lockfile-sync.ts --silent 2>/dev/null; then
+    echo "⚠  pnpm-lock.yaml is out of sync with the staged package.json change(s)."
+    echo "   Auto-fixing: pnpm install --lockfile-only …"
+    if pnpm install --lockfile-only --silent 2>/dev/null; then
+      git add pnpm-lock.yaml
+      echo "   ✓ pnpm-lock.yaml updated and staged."
+    else
+      echo "❌ Auto-fix failed. Run manually:"
+      echo "     pnpm install --lockfile-only"
+      echo "   then stage pnpm-lock.yaml and retry the commit."
+      exit 1
+    fi
+  fi
+fi
 
 exit 0
