@@ -9,6 +9,8 @@ import BTButtonLinkShowcase from './showcases/BTButtonLinkShowcase.vue';
 import BTCheckboxShowcase from './showcases/BTCheckboxShowcase.vue';
 import BTHintShowcase from './showcases/BTHintShowcase.vue';
 import BTRadioButtonShowcase from './showcases/BTRadioButtonShowcase.vue';
+import BTSeparatorShowcase from './showcases/BTSeparatorShowcase.vue';
+import BTSliderShowcase from './showcases/BTSliderShowcase.vue';
 import BTTabsShowcase from './showcases/BTTabsShowcase.vue';
 
 // ── Sidebar registry ──────────────────────────────────────────────────────────
@@ -27,6 +29,8 @@ const PAGES: ShowcasePage[] = [
   { id: 'checkbox',    group: 'Atoms',     label: 'Checkbox'    },
   { id: 'hint',        group: 'Atoms',     label: 'Hint'        },
   { id: 'radio',       group: 'Atoms',     label: 'Radio Button' },
+  { id: 'separator',   group: 'Atoms',     label: 'Separator'   },
+  { id: 'slider',      group: 'Atoms',     label: 'Slider'      },
   { id: 'avatar',      group: 'Molecules', label: 'Avatar'      },
   { id: 'tabs',        group: 'Molecules', label: 'Tabs'        },
 ];
@@ -91,6 +95,8 @@ watchEffect(() => {
         <BTCheckboxShowcase v-else-if="selectedId === 'checkbox'" />
         <BTHintShowcase v-else-if="selectedId === 'hint'" />
         <BTRadioButtonShowcase v-else-if="selectedId === 'radio'" />
+        <BTSeparatorShowcase v-else-if="selectedId === 'separator'" />
+        <BTSliderShowcase v-else-if="selectedId === 'slider'" />
         <BTAvatarShowcase v-else-if="selectedId === 'avatar'" />
         <BTTabsShowcase v-else-if="selectedId === 'tabs'" />
       </main>
