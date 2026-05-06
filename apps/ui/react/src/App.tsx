@@ -7,6 +7,7 @@ import { BTBadgeShowcase } from './showcases/BTBadgeShowcase';
 import { BTButtonShowcase } from './showcases/BTButtonShowcase';
 import { BTButtonLinkShowcase } from './showcases/BTButtonLinkShowcase';
 import { BTCheckboxShowcase } from './showcases/BTCheckboxShowcase';
+import { BTHintShowcase } from './showcases/BTHintShowcase';
 import { BTRadioButtonShowcase } from './showcases/BTRadioButtonShowcase';
 
 // ── Sidebar registry ──────────────────────────────────────────────────────────
@@ -24,6 +25,7 @@ const PAGES: ShowcasePage[] = [
   { id: 'button',      group: 'Atoms',     label: 'Button',      component: <BTButtonShowcase /> },
   { id: 'button-link', group: 'Atoms',     label: 'Button Link', component: <BTButtonLinkShowcase /> },
   { id: 'checkbox',    group: 'Atoms',     label: 'Checkbox',    component: <BTCheckboxShowcase /> },
+  { id: 'hint',        group: 'Atoms',     label: 'Hint',        component: <BTHintShowcase /> },
   { id: 'radio',       group: 'Atoms',     label: 'Radio Button', component: <BTRadioButtonShowcase /> },
   { id: 'avatar',      group: 'Molecules', label: 'Avatar',      component: <BTAvatarShowcase /> },
 ];
