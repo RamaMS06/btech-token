@@ -58,9 +58,7 @@ Thumbs.db
 
 # ── Changesets ────────────────────────────────────────────────────────────────
 .changeset/*.js
-<<<<<<< HEAD
 apps/demo-streamlit/.venv/
-=======
 # Added by code-review-graph
 .code-review-graph/
 
@@ -76,4 +74,3 @@ code-review-graph.zip
 # never committed to the repo.
 btech-token-studio/release/
 __pycache__/
->>>>>>> 4488a22d137edd13e7c9611ef85ff46b303f0d9e

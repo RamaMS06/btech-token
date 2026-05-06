@@ -14,5 +14,6 @@
 export * from './components/atoms/Badge/index';
 export * from './components/atoms/Button/index';
 export * from './components/atoms/ButtonLink/index';
+export * from './components/atoms/Checkbox/index';
 export * from './components/molecules/Avatar/index';
 export * from './components/organisms/AvatarGroup/index';

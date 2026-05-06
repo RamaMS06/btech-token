@@ -12,63 +12,66 @@ class BTBadgeShowcase extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle(context, 'BTBadge — Figma 72:1516'),
-        _subtitle(
-          context,
-          '6 variants × normal + reverse. Optional left/right icons.',
-        ),
-        const SizedBox(height: 16),
-
-        // Normal mode — all variants
-        _row(context, label: 'normal', children: [
-          for (final v in BTBadgeVariant.values)
-            BTBadge(label: _variantLabel(v), variant: v),
-        ]),
-
-        // Reverse mode — all variants
-        _row(context, label: 'reverse', children: [
-          for (final v in BTBadgeVariant.values)
-            BTBadge(label: _variantLabel(v), variant: v, reverseColors: true),
-        ]),
-
-        // With left icon
-        _row(context, label: 'left icon', children: [
-          const BTBadge(
-            label: 'Success',
-            variant: BTBadgeVariant.success,
-            leftIcon: Icon(Icons.check_circle_outline),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle(context, 'BTBadge — Figma 72:1516'),
+          _subtitle(
+            context,
+            '6 variants × normal + reverse. Optional left/right icons.',
           ),
-          const BTBadge(
-            label: 'Waiting',
-            variant: BTBadgeVariant.waiting,
-            leftIcon: Icon(Icons.hourglass_empty),
-          ),
-          const BTBadge(
-            label: 'Reject',
-            variant: BTBadgeVariant.reject,
-            leftIcon: Icon(Icons.cancel_outlined),
-          ),
-        ]),
-
-        // With right icon
-        _row(context, label: 'right icon', children: [
-          const BTBadge(
-            label: 'Draft',
-            variant: BTBadgeVariant.draft,
-            rightIcon: Icon(Icons.edit_outlined),
-          ),
-          const BTBadge(
-            label: 'Custom',
-            variant: BTBadgeVariant.custom,
-            rightIcon: Icon(Icons.arrow_forward),
-          ),
-        ]),
-
-        const SizedBox(height: 24),
-      ],
+          const SizedBox(height: 16),
+      
+          // Normal mode — all variants
+          _row(context, label: 'normal', children: [
+            for (final v in BTBadgeVariant.values)
+              BTBadge(label: _variantLabel(v), variant: v),
+          ]),
+      
+          // Reverse mode — all variants
+          _row(context, label: 'reverse', children: [
+            for (final v in BTBadgeVariant.values)
+              BTBadge(label: _variantLabel(v), variant: v, reverseColors: true),
+          ]),
+      
+          // With left icon
+          _row(context, label: 'left icon', children: [
+            const BTBadge(
+              label: 'Success',
+              variant: BTBadgeVariant.success,
+              leftIcon: Icon(Icons.check_circle_outline),
+            ),
+            const BTBadge(
+              label: 'Waiting',
+              variant: BTBadgeVariant.waiting,
+              leftIcon: Icon(Icons.hourglass_empty),
+            ),
+            const BTBadge(
+              label: 'Reject',
+              variant: BTBadgeVariant.reject,
+              leftIcon: Icon(Icons.cancel_outlined),
+            ),
+          ]),
+      
+          // With right icon
+          _row(context, label: 'right icon', children: [
+            const BTBadge(
+              label: 'Draft',
+              variant: BTBadgeVariant.draft,
+              rightIcon: Icon(Icons.edit_outlined),
+            ),
+            const BTBadge(
+              label: 'Custom',
+              variant: BTBadgeVariant.custom,
+              rightIcon: Icon(Icons.arrow_forward),
+            ),
+          ]),
+      
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 

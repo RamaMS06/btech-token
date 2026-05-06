@@ -15,6 +15,7 @@
 export * from './components/atoms/Badge/index.js';
 export * from './components/atoms/Button/index.js';
 export * from './components/atoms/ButtonLink/index.js';
+export * from './components/atoms/Checkbox/index.js';
 export * from './components/molecules/Avatar/index.js';
 export * from './components/organisms/AvatarGroup/index.js';
 
@@ -22,4 +23,5 @@ export * from './components/organisms/AvatarGroup/index.js';
 import './components/atoms/Badge/BTBadge.css';
 import './components/atoms/Button/BTButton.css';
 import './components/atoms/ButtonLink/BTButtonLink.css';
+import './components/atoms/Checkbox/BTCheckbox.css';
 import './components/molecules/Avatar/BTAvatar.css';

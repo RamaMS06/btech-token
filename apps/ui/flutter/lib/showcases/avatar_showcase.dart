@@ -36,123 +36,126 @@ class BTAvatarShowcase extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionTitle(context, 'BTAvatar v2 — Figma 497:979'),
-        _subtitle(
-          context,
-          'Data-class API: BTAvatarItem (name + optional imageUrl + color). '
-          'Initials auto-derived from name. Skeleton loading + image fallback.',
-        ),
-        const SizedBox(height: 16),
-
-        // Initials × size × color (auto-derived from "Faisal Lestari" → "FL")
-        ...BTAvatarColor.values.map(
-          (color) => _row(
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle(context, 'BTAvatar v2 — Figma 497:979'),
+          _subtitle(
             context,
-            label: 'color=${color.name}',
-            children: BTAvatarSize.values
-                .map(
-                  (size) => BTAvatar(
-                    size: size,
-                    item: BTAvatarItem(name: 'Faisal Lestari', color: color),
-                  ),
-                )
-                .toList(),
+            'Data-class API: BTAvatarItem (name + optional imageUrl + color). '
+            'Initials auto-derived from name. Skeleton loading + image fallback.',
           ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Image variant
-        _row(
-          context,
-          label: 'image',
-          children: [
-            ...BTAvatarSize.values.map(
-              (size) => BTAvatar(
-                size: size,
-                item: const BTAvatarItem(
-                  name: 'Sample',
-                  imageUrl:
-                      'https://api.dicebear.com/9.x/avataaars/png?seed=BTech',
+          const SizedBox(height: 16),
+      
+          // Initials × size × color (auto-derived from "Faisal Lestari" → "FL")
+          ...BTAvatarColor.values.map(
+            (color) => _row(
+              context,
+              label: 'color=${color.name}',
+              children: BTAvatarSize.values
+                  .map(
+                    (size) => BTAvatar(
+                      size: size,
+                      item: BTAvatarItem(name: 'Faisal Lestari', color: color),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+      
+          const SizedBox(height: 24),
+      
+          // Image variant
+          _row(
+            context,
+            label: 'image',
+            children: [
+              ...BTAvatarSize.values.map(
+                (size) => BTAvatar(
+                  size: size,
+                  item: const BTAvatarItem(
+                    name: 'Sample',
+                    imageUrl:
+                        'https://api.dicebear.com/9.x/avataaars/png?seed=BTech',
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-
-        // Loading state — BTLoadingSkeleton shimmer (no item needed)
-        _row(
-          context,
-          label: 'isLoading',
-          children: [
-            ...BTAvatarSize.values.map(
-              (size) => BTAvatar(size: size, isLoading: true),
-            ),
-          ],
-        ),
-
-        // Empty state — person icon, bg/subtler (Figma 497:979)
-        _row(
-          context,
-          label: 'empty (no item)',
-          children: [
-            ...BTAvatarSize.values.map(
-              (size) => BTAvatar(size: size),
-            ),
-          ],
-        ),
-
-        // Error state — hide_image icon, bg/subtler (Figma 497:979)
-        _row(
-          context,
-          label: 'status=error',
-          children: [
-            ...BTAvatarSize.values.map(
-              (size) => BTAvatar(
-                size: size,
-                status: BTAvatarStatus.error,
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-        _sectionTitle(context, 'BTAvatarGroup — Figma 504:705'),
-        _subtitle(
-          context,
-          'Organism — stacks avatars with negative-margin overlap + "+N" overflow counter.',
-        ),
-        const SizedBox(height: 16),
-
-        // Group across all sizes
-        ...BTAvatarSize.values.map(
-          (size) => _row(
-            context,
-            label: 'size=${size.name}',
-            children: [
-              BTAvatarGroup(items: _sampleItems, size: size),
             ],
           ),
-        ),
-
-        _row(
-          context,
-          label: 'max=4 (no overflow)',
-          children: [
-            BTAvatarGroup(items: _sampleItems.sublist(0, 3), max: 4),
-          ],
-        ),
-        _row(
-          context,
-          label: 'customOverflow=99',
-          children: const [
-            BTAvatarGroup(items: _sampleItems, customOverflowNumber: 99),
-          ],
-        ),
-      ],
+      
+          // Loading state — BTLoadingSkeleton shimmer (no item needed)
+          _row(
+            context,
+            label: 'isLoading',
+            children: [
+              ...BTAvatarSize.values.map(
+                (size) => BTAvatar(size: size, isLoading: true),
+              ),
+            ],
+          ),
+      
+          // Empty state — person icon, bg/subtler (Figma 497:979)
+          _row(
+            context,
+            label: 'empty (no item)',
+            children: [
+              ...BTAvatarSize.values.map(
+                (size) => BTAvatar(size: size),
+              ),
+            ],
+          ),
+      
+          // Error state — hide_image icon, bg/subtler (Figma 497:979)
+          _row(
+            context,
+            label: 'status=error',
+            children: [
+              ...BTAvatarSize.values.map(
+                (size) => BTAvatar(
+                  size: size,
+                  status: BTAvatarStatus.error,
+                ),
+              ),
+            ],
+          ),
+      
+          const SizedBox(height: 24),
+          _sectionTitle(context, 'BTAvatarGroup — Figma 504:705'),
+          _subtitle(
+            context,
+            'Organism — stacks avatars with negative-margin overlap + "+N" overflow counter.',
+          ),
+          const SizedBox(height: 16),
+      
+          // Group across all sizes
+          ...BTAvatarSize.values.map(
+            (size) => _row(
+              context,
+              label: 'size=${size.name}',
+              children: [
+                BTAvatarGroup(items: _sampleItems, size: size),
+              ],
+            ),
+          ),
+      
+          _row(
+            context,
+            label: 'max=4 (no overflow)',
+            children: [
+              BTAvatarGroup(items: _sampleItems.sublist(0, 3), max: 4),
+            ],
+          ),
+          _row(
+            context,
+            label: 'customOverflow=99',
+            children: const [
+              BTAvatarGroup(items: _sampleItems, customOverflowNumber: 99),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

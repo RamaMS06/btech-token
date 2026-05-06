@@ -5,4 +5,5 @@
 export 'badge/badge.dart';
 export 'button/button.dart';
 export 'button_link/button_link.dart';
+export 'checkbox/checkbox.dart';
 export 'loading_skeleton/loading_skeleton.dart';

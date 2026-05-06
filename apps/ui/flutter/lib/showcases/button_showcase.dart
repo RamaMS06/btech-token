@@ -1,6 +1,5 @@
 // BTButtonShowcase — Figma 114:2645
 import 'package:btech_ui/btech_ui.dart';
-import 'package:buma_design_system/buma_design_system.dart';
 import 'package:flutter/material.dart';
 
 class BTButtonShowcase extends StatelessWidget {
@@ -82,15 +81,6 @@ class BTButtonShowcase extends StatelessWidget {
               icon: const Icon(Icons.add_rounded),
               variant: v,
               size: BTButtonSize.sm,
-              onPressed: () {},
-            ),
-        ]),
-        _Row(label: 'icon only sm', children: [
-          for (final v in UIButtonVariant.values)
-            UIButton.iconOnly(
-              icon: Icons.abc,
-              variant: v,
-              size: UIButtonSize.small,
               onPressed: () {},
             ),
         ]),

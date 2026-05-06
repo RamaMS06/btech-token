@@ -12,10 +12,6 @@ dependencies:
     sdk: flutter
   btech_tokens:
     path: ../../../packages/tokens/platforms/flutter/token
-  buma_design_system:
-    git:
-      url: https://dev.azure.com/buma/BUMA%20-%20Bspace%20Design%20System/_git/Shared.Package.Mobile.DesignSystem
-      ref: main
   btech_ui:
     path: ../../../packages/ui/flutter
 
