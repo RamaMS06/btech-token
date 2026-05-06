@@ -5,6 +5,7 @@ import 'showcases/badge_showcase.dart';
 import 'showcases/button_link_showcase.dart';
 import 'showcases/button_showcase.dart';
 import 'showcases/checkbox_showcase.dart';
+import 'showcases/radio_button_showcase.dart';
 import 'showcases/loading_skeleton_showcase.dart';
 
 void main() => runApp(const ShowcaseApp());
@@ -44,6 +45,11 @@ const _pages = <_ShowcasePage>[
     group: 'Atoms',
     label: 'Checkbox',
     child: BTCheckboxShowcase(),
+  ),
+  _ShowcasePage(
+    group: 'Atoms',
+    label: 'Radio Button',
+    child: BTRadioButtonShowcase(),
   ),
   _ShowcasePage(
     group: 'Molecules',
