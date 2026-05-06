@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import '@btech/tokens/styles.css';
 import '@btech/ui-react/styles.css';
 import './app.css';
+import { BTAlertShowcase } from './showcases/BTAlertShowcase';
 import { BTAvatarShowcase } from './showcases/BTAvatarShowcase';
 import { BTBadgeShowcase } from './showcases/BTBadgeShowcase';
 import { BTButtonShowcase } from './showcases/BTButtonShowcase';
@@ -34,6 +35,7 @@ const PAGES: ShowcasePage[] = [
   { id: 'slider',      group: 'Atoms',     label: 'Slider',      component: <BTSliderShowcase /> },
   { id: 'avatar',      group: 'Molecules', label: 'Avatar',      component: <BTAvatarShowcase /> },
   { id: 'tabs',        group: 'Molecules', label: 'Tabs',        component: <BTTabsShowcase /> },
+  { id: 'alert',        group: 'Molecules', label: 'Alert',       component: <BTAlertShowcase /> },
 ];
 
 // Group pages by their group label, preserving insertion order

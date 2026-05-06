@@ -435,6 +435,11 @@ See `docs/architecture/generation-flow.md`.
 7. **Every component MUST have a markdown doc** at
    `docs/components/{layer}/{kebab-name}.md` — created or updated
    whenever a component is added or its API changes.
+   Also update **two README files** in the same commit:
+   - `docs/components/{layer}/README.md` — add row to the component table
+   - `docs/components/README.md` — add row to the matching atomic-layer table
+   **Do not ship a component without its doc.** This is part of the
+   definition of done for every component task.
 
    **Doc template** (copy-paste and fill in):
    ```md

@@ -2,6 +2,7 @@
 import '@btech/tokens/styles.css';
 import '@btech/ui-vue/styles.css';
 import { ref, watchEffect, computed } from 'vue';
+import BTAlertShowcase from './showcases/BTAlertShowcase.vue';
 import BTAvatarShowcase from './showcases/BTAvatarShowcase.vue';
 import BTBadgeShowcase from './showcases/BTBadgeShowcase.vue';
 import BTButtonShowcase from './showcases/BTButtonShowcase.vue';
@@ -31,7 +32,8 @@ const PAGES: ShowcasePage[] = [
   { id: 'radio',       group: 'Atoms',     label: 'Radio Button' },
   { id: 'separator',   group: 'Atoms',     label: 'Separator'   },
   { id: 'slider',      group: 'Atoms',     label: 'Slider'      },
-  { id: 'avatar',      group: 'Molecules', label: 'Avatar'      },
+  { id: 'alert',        group: 'Molecules', label: 'Alert'       },
+  { id: 'avatar',       group: 'Molecules', label: 'Avatar'      },
   { id: 'tabs',        group: 'Molecules', label: 'Tabs'        },
 ];
 
@@ -97,6 +99,7 @@ watchEffect(() => {
         <BTRadioButtonShowcase v-else-if="selectedId === 'radio'" />
         <BTSeparatorShowcase v-else-if="selectedId === 'separator'" />
         <BTSliderShowcase v-else-if="selectedId === 'slider'" />
+        <BTAlertShowcase v-else-if="selectedId === 'alert'" />
         <BTAvatarShowcase v-else-if="selectedId === 'avatar'" />
         <BTTabsShowcase v-else-if="selectedId === 'tabs'" />
       </main>

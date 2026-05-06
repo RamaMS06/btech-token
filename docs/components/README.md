@@ -32,6 +32,7 @@ Kombinasi atoms yang membentuk komponen dengan satu fungsi yang jelas.
 
 | Component | Description |
 |---|---|
+| [BTAlert](./molecules/alert.md) | Banner feedback kontekstual dengan dukungan toast programatik |
 | [BTAvatar](./molecules/avatar.md) | Representasi visual pengguna |
 
 ### [Organisms](./organisms/README.md)
