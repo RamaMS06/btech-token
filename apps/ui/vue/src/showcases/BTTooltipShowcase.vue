@@ -1,36 +1,94 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onUnmounted, Teleport } from 'vue';
 import { BTTooltip } from '@btech/ui-vue';
 import { BTTooltipStep } from '@btech/ui-vue';
 import type { BTTooltipPosition, BTTooltipArrowPosition, BTTooltipStepVariant } from '@btech/ui-vue';
 
 const activeTab = ref<'ui' | 'usage'>('ui');
 
-// ── Pagination step demo state ─────────────────────────────────────────────
-const demoStep = ref(1);
-const totalSteps = 5;
-const demoVariant = ref<BTTooltipStepVariant>('button');
-const showStep = ref(true);
-
-function goPrev() {
-  if (demoStep.value > 1) demoStep.value--;
-}
-function goNext() {
-  if (demoStep.value < totalSteps) demoStep.value++;
-  else showStep.value = false;
-}
-function endTour() {
-  showStep.value = false;
-  demoStep.value = 1;
-}
-function startTour() {
-  showStep.value = true;
-  demoStep.value = 1;
-}
-
+// ── Positions / arrow demo data ────────────────────────────────────────────
 const positions: BTTooltipPosition[] = ['top', 'bottom', 'left', 'right'];
 const arrowPositions: BTTooltipArrowPosition[] = ['left', 'left-mid', 'mid', 'right-mid', 'right'];
 const stepVariants: BTTooltipStepVariant[] = ['button', 'link', 'centered'];
+
+// ── 9-button positioned coachmark demo ────────────────────────────────────
+interface DemoPoint {
+  label: string;
+  ttPos: BTTooltipPosition;
+  arrowPos: BTTooltipArrowPosition;
+}
+
+const demoPoints: DemoPoint[] = [
+  { label: 'Top Left',     ttPos: 'bottom', arrowPos: 'left'  },
+  { label: 'Top Center',   ttPos: 'bottom', arrowPos: 'mid'   },
+  { label: 'Top Right',    ttPos: 'bottom', arrowPos: 'right' },
+  { label: 'Center Left',  ttPos: 'right',  arrowPos: 'mid'   },
+  { label: 'Center',       ttPos: 'bottom', arrowPos: 'mid'   },
+  { label: 'Center Right', ttPos: 'left',   arrowPos: 'mid'   },
+  { label: 'Bottom Left',  ttPos: 'top',    arrowPos: 'left'  },
+  { label: 'Bottom Center',ttPos: 'top',    arrowPos: 'mid'   },
+  { label: 'Bottom Right', ttPos: 'top',    arrowPos: 'right' },
+];
+
+const demoVariant = ref<BTTooltipStepVariant>('button');
+const activeIdx = ref(-1);
+const stepPos = ref({ top: 0, left: 0 });
+const activeTTPos = ref<BTTooltipPosition>('bottom');
+const activeArrowPos = ref<BTTooltipArrowPosition>('mid');
+
+// Refs for each button element (populated via :ref callback in template)
+const btnRefs = ref<HTMLElement[]>([]);
+function setBtnRef(el: HTMLElement | null, i: number) {
+  if (el) btnRefs.value[i] = el;
+}
+
+function showStep(idx: number) {
+  const btn = btnRefs.value[idx];
+  if (!btn) return;
+
+  const rect = btn.getBoundingClientRect();
+  const pt = demoPoints[idx];
+  activeTTPos.value = pt.ttPos;
+  activeArrowPos.value = pt.arrowPos;
+
+  const BALLOON_W = 320;
+  const BALLOON_H = 150;
+  const ARROW = 8;
+  const GAP = 4;
+
+  let top = 0, left = 0;
+  switch (pt.ttPos) {
+    case 'top':
+      top  = rect.top  - BALLOON_H - ARROW - GAP;
+      left = rect.left + rect.width / 2 - BALLOON_W / 2;
+      break;
+    case 'bottom':
+      top  = rect.bottom + ARROW + GAP;
+      left = rect.left + rect.width / 2 - BALLOON_W / 2;
+      break;
+    case 'left':
+      top  = rect.top  + rect.height / 2 - BALLOON_H / 2;
+      left = rect.left - BALLOON_W - ARROW - GAP;
+      break;
+    case 'right':
+      top  = rect.top  + rect.height / 2 - BALLOON_H / 2;
+      left = rect.right + ARROW + GAP;
+      break;
+  }
+
+  // Clamp to viewport
+  left = Math.max(8, Math.min(left, window.innerWidth  - BALLOON_W - 8));
+  top  = Math.max(8, Math.min(top,  window.innerHeight - BALLOON_H - 8));
+
+  stepPos.value = { top, left };
+  activeIdx.value = idx;
+}
+
+function closeStep() { activeIdx.value = -1; }
+function goPrev() { if (activeIdx.value > 0) showStep(activeIdx.value - 1); else closeStep(); }
+function goNext() { if (activeIdx.value < demoPoints.length - 1) showStep(activeIdx.value + 1); else closeStep(); }
+
+onUnmounted(closeStep);
 </script>
 
 <template>
@@ -58,7 +116,7 @@ const stepVariants: BTTooltipStepVariant[] = ['button', 'link', 'centered'];
 
       <!-- Simple tooltip positions -->
       <h3 class="showcase__subtitle">BTTooltip — Positions</h3>
-      <div class="showcase__row" style="flex-wrap: wrap; gap: 48px; padding: 32px 0;">
+      <div class="showcase__row showcase__row--wrap" style="padding: 32px 0; gap: 48px;">
         <BTTooltip
           v-for="pos in positions"
           :key="pos"
@@ -71,19 +129,19 @@ const stepVariants: BTTooltipStepVariant[] = ['button', 'link', 'centered'];
 
       <!-- Arrow positions -->
       <h3 class="showcase__subtitle">BTTooltip — Arrow Positions (position=bottom)</h3>
-      <div class="showcase__row" style="flex-wrap: wrap; gap: 48px; padding: 32px 0;">
+      <div class="showcase__row showcase__row--wrap" style="padding: 32px 0; gap: 48px;">
         <BTTooltip
           v-for="ap in arrowPositions"
           :key="ap"
           position="bottom"
           :arrow-position="ap"
-          text="Arrow position: {{ ap }}"
+          :text="`Arrow: ${ap}`"
         >
           <button class="demo-trigger">{{ ap }}</button>
         </BTTooltip>
       </div>
 
-      <!-- Tooltip with rich content slot -->
+      <!-- Rich content slot -->
       <h3 class="showcase__subtitle">BTTooltip — Rich Content Slot</h3>
       <div class="showcase__row" style="padding: 32px 0;">
         <BTTooltip position="bottom" arrow-position="left">
@@ -117,14 +175,14 @@ const stepVariants: BTTooltipStepVariant[] = ['button', 'link', 'centered'];
         <div v-for="pos in positions" :key="pos">
           <p style="font-size: 12px; color: #64748b; margin: 0 0 8px; text-transform: capitalize">position={{ pos }}</p>
           <BTTooltipStep
-            description="Tooltip balloon dengan arrow di sisi {{ pos }}."
+            :description="`Tooltip balloon dengan arrow di sisi ${pos}.`"
             step-label="Step 1 of 3"
             :position="pos"
           />
         </div>
       </div>
 
-      <!-- TooltipStep no header (description only) -->
+      <!-- Description only -->
       <h3 class="showcase__subtitle">BTTooltipStep — Description Only</h3>
       <div style="padding: 16px 0;">
         <BTTooltipStep
@@ -136,59 +194,69 @@ const stepVariants: BTTooltipStepVariant[] = ['button', 'link', 'centered'];
 
     </template>
 
-    <!-- ── Usage Tab ──────────────────────────────────────────────────── -->
+    <!-- ── Usage Tab ─────────────────────────────────────────────────────── -->
     <template v-if="activeTab === 'usage'">
-      <h3 class="showcase__subtitle">Interactive Coachmark Tour</h3>
-      <p style="font-size: 14px; color: #64748b; margin-bottom: 16px;">
-        Pilih style tombol navigasi lalu klik "Start Tour" untuk melihat BTTooltipStep interaktif.
+      <h3 class="showcase__subtitle">Interactive Coachmark Demo</h3>
+      <p style="font-size: 14px; color: #64748b; margin: 0 0 16px;">
+        Pilih gaya tombol, lalu klik salah satu dari 9 posisi untuk melihat BTTooltipStep.
       </p>
 
       <!-- Variant selector -->
-      <div style="display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap;">
+      <div style="display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;">
         <button
           v-for="v in stepVariants"
           :key="v"
-          :style="{
-            padding: '6px 12px',
-            borderRadius: '6px',
-            border: '1px solid #e2e8f0',
-            background: demoVariant === v ? '#1e293b' : 'white',
-            color: demoVariant === v ? 'white' : '#334155',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontWeight: '500',
-          }"
-          @click="demoVariant = v"
+          class="variant-btn"
+          :class="{ 'variant-btn--active': demoVariant === v }"
+          @click="demoVariant = v; closeStep()"
         >
           {{ v }}
         </button>
+      </div>
+
+      <!-- 9-button positioned grid -->
+      <p style="font-size: 12px; color: #9ca3af; margin: 0 0 8px;">Klik tombol di posisi manapun:</p>
+      <div class="demo-grid">
+        <!-- hint text -->
+        <div class="demo-grid__hint">← klik tombol manapun →</div>
+
+        <!-- 9 buttons -->
         <button
-          style="padding: 6px 12px; border-radius: 6px; border: 1px solid #145bc3; background: #145bc3; color: white; cursor: pointer; font-size: 13px; font-weight: 500; margin-left: auto;"
-          @click="startTour"
+          v-for="(pt, i) in demoPoints"
+          :key="pt.label"
+          :ref="(el) => setBtnRef(el as HTMLElement, i)"
+          class="demo-grid-btn"
+          :class="{ 'demo-grid-btn--active': activeIdx === i }"
+          @click="showStep(i)"
         >
-          Start Tour
+          {{ pt.label }}
         </button>
       </div>
 
-      <!-- Demo coachmark (inline, positioned below a fake target) -->
-      <div v-if="showStep" style="max-width: 360px;">
-        <BTTooltipStep
-          label="Contoh Coachmark"
-          :description="`Ini adalah langkah ${demoStep} dari ${totalSteps}. ${demoVariant === 'link' ? 'Gunakan link untuk navigasi.' : demoVariant === 'centered' ? 'Tombol ikon di tengah untuk navigasi.' : 'Tombol secondary untuk navigasi.'}`"
-          :step-label="`Step ${demoStep} of ${totalSteps}`"
-          :step-variant="demoVariant"
-          has-close
-          prev-label="Kembali"
-          next-label="Selanjutnya"
-          position="bottom"
-          @prev="goPrev"
-          @next="goNext"
-          @close="endTour"
-        />
-      </div>
-      <div v-else style="padding: 16px; background: #f8fafc; border-radius: 8px; color: #64748b; font-size: 14px;">
-        Tour selesai. Klik "Start Tour" untuk mengulang.
-      </div>
+      <!-- Overlay via Teleport -->
+      <Teleport to="body">
+        <div
+          v-if="activeIdx >= 0"
+          class="step-overlay"
+          :style="{ top: stepPos.top + 'px', left: stepPos.left + 'px' }"
+        >
+          <BTTooltipStep
+            :label="demoPoints[activeIdx].label"
+            :description="`Ini adalah langkah ${activeIdx + 1} dari ${demoPoints.length}.`"
+            :step-label="`Step ${activeIdx + 1} of ${demoPoints.length}`"
+            :step-variant="demoVariant"
+            has-close
+            prev-label="Kembali"
+            next-label="Selanjutnya"
+            :position="activeTTPos"
+            :arrow-position="activeArrowPos"
+            @prev="goPrev"
+            @next="goNext"
+            @close="closeStep"
+          />
+        </div>
+      </Teleport>
+
     </template>
   </section>
 </template>
@@ -204,9 +272,76 @@ const stepVariants: BTTooltipStepVariant[] = ['button', 'link', 'centered'];
 }
 .showcase__tab--active { background: #1e293b; color: white; border-color: #1e293b; }
 .showcase__row { display: flex; align-items: center; }
+.showcase__row--wrap { flex-wrap: wrap; }
+
 .demo-trigger {
   padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0;
   background: white; color: #334155; cursor: pointer; font-size: 14px; font-weight: 500;
 }
 .demo-trigger:hover { background: #f1f5f9; }
+
+/* ── Variant selector ── */
+.variant-btn {
+  padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0;
+  background: white; color: #334155; cursor: pointer; font-size: 13px; font-weight: 500;
+}
+.variant-btn--active { background: #1e293b; color: white; border-color: #1e293b; }
+
+/* ── 9-button demo grid ── */
+.demo-grid {
+  position: relative;
+  display: grid;
+  /* 3×3: corners + edges + center — use named areas */
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  gap: 0;
+  min-height: 360px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.demo-grid__hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #e2e8f0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.demo-grid-btn {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 6px;
+  margin: 12px;
+  background: #4a9d5b;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s;
+  align-self: start;
+}
+
+/* Align middle-row buttons to center vertically */
+.demo-grid-btn:nth-child(n+5):nth-child(-n+7) { align-self: center; }
+
+/* Bottom row aligned to end */
+.demo-grid-btn:nth-child(n+8) { align-self: end; }
+
+.demo-grid-btn--active { background: #1e293b; }
+.demo-grid-btn:hover:not(.demo-grid-btn--active) { background: #3b8a4b; }
+
+/* ── Overlay ── */
+.step-overlay {
+  position: fixed;
+  z-index: 2000;
+  pointer-events: all;
+}
 </style>

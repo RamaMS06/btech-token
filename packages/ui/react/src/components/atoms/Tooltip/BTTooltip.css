@@ -109,7 +109,7 @@
 .bt-tooltip__balloon--right {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: stretch; /* stretch so arrow-col fills body height → center works */
   width: auto;
 }
 .bt-tooltip__balloon--left  { flex-direction: row-reverse; } /* body on left, arrow on right */

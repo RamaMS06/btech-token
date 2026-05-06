@@ -1,5 +1,6 @@
 // ignore_for_file: lines_longer_than_80_chars
 
+import 'package:btech_tokens/btech_tokens.dart';
 import 'package:btech_ui/btech_ui.dart';
 import 'package:flutter/material.dart';
 
@@ -29,24 +30,53 @@ class _BTTooltipShowcaseState extends State<BTTooltipShowcase>
 
   @override
   Widget build(BuildContext context) {
+    final c = context.btechColor;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+        // ── Title ─────────────────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
           child: Text(
             'BTTooltip + BTTooltipStep',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              fontFamily: BTechTypography.fontFamily,
+              color: c.text.primary,
+            ),
           ),
         ),
+
+        // ── Tabs ──────────────────────────────────────────────────────────
         TabBar(
           controller: _tabs,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          labelColor: c.text.primary,
+          unselectedLabelColor: c.text.secondary,
+          indicatorColor: c.text.primary,
+          labelStyle: TextStyle(
+            fontFamily: BTechTypography.fontFamily,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+          unselectedLabelStyle: TextStyle(
+            fontFamily: BTechTypography.fontFamily,
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
           tabs: const [Tab(text: 'UI'), Tab(text: 'Usage')],
         ),
-        Expanded(
+        const SizedBox(height: 16),
+
+        // ── TabBarView — must NOT use Expanded inside SingleChildScrollView ──
+        SizedBox(
+          height: 2400,
           child: TabBarView(
             controller: _tabs,
-            children: [_UITab(), _UsageTab()],
+            children: [_UITab(), const _UsageTab()],
           ),
         ),
       ],
@@ -60,7 +90,7 @@ class _UITab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       children: [
         // ── Simple tooltip ─────────────────────────────────────────────
         const _SectionTitle('BTTooltip — Positions'),
@@ -70,8 +100,7 @@ class _UITab extends StatelessWidget {
           children: BTTooltipPosition.values.map((pos) {
             return BTTooltip(
               position: pos,
-              text:
-                  'A message which appears when cursor is positioned over an element.',
+              text: 'A message which appears when a cursor is positioned over an element.',
               child: ElevatedButton(
                 onPressed: () {},
                 child: Text(pos.name),
@@ -79,10 +108,10 @@ class _UITab extends StatelessWidget {
             );
           }).toList(),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
 
         // ── Arrow positions ────────────────────────────────────────────
-        const _SectionTitle('BTTooltip — Arrow Positions (bottom)'),
+        const _SectionTitle('BTTooltip — Arrow Positions (position=bottom)'),
         Wrap(
           spacing: 16,
           runSpacing: 16,
@@ -98,7 +127,7 @@ class _UITab extends StatelessWidget {
             );
           }).toList(),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
 
         // ── TooltipStep variants ──────────────────────────────────────
         const _SectionTitle('BTTooltipStep — Step Variants'),
@@ -110,12 +139,12 @@ class _UITab extends StatelessWidget {
               children: [
                 Text(
                   variant.name,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748b)),
                 ),
                 const SizedBox(height: 8),
                 BTTooltipStep(
                   label: 'Fitur Baru',
-                  description: 'Klik tombol ini untuk melanjutkan.',
+                  description: 'Klik tombol ini untuk melanjutkan ke langkah berikutnya.',
                   stepLabel: 'Step 1 of 5',
                   stepVariant: variant,
                   hasClose: true,
@@ -125,8 +154,9 @@ class _UITab extends StatelessWidget {
             ),
           );
         }),
+        const SizedBox(height: 8),
 
-        // ── Arrow positions on step ──────────────────────────────────
+        // ── Positions ─────────────────────────────────────────────────
         const _SectionTitle('BTTooltipStep — Positions'),
         ...BTTooltipPosition.values.map((pos) {
           return Padding(
@@ -136,7 +166,7 @@ class _UITab extends StatelessWidget {
               children: [
                 Text(
                   'position: ${pos.name}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748b)),
                 ),
                 const SizedBox(height: 8),
                 BTTooltipStep(
@@ -151,7 +181,7 @@ class _UITab extends StatelessWidget {
 
         // ── Description only ─────────────────────────────────────────
         const _SectionTitle('BTTooltipStep — Description Only'),
-        BTTooltipStep(
+        const BTTooltipStep(
           description:
               'A message which appears when a cursor is positioned over an icon, image, hyperlink, or other element in a graphical user interface.',
           position: BTTooltipPosition.top,
@@ -163,58 +193,174 @@ class _UITab extends StatelessWidget {
   }
 }
 
-// ── Usage Tab ─────────────────────────────────────────────────────────────
+// ── Usage Tab — 9-button positioned coachmark demo ────────────────────────
 
 class _UsageTab extends StatefulWidget {
+  const _UsageTab();
+
   @override
   State<_UsageTab> createState() => _UsageTabState();
 }
 
 class _UsageTabState extends State<_UsageTab> {
-  int _step = 1;
-  final int _total = 5;
+  OverlayEntry? _entry;
+  final _keys = List.generate(9, (_) => GlobalKey());
   BTTooltipStepVariant _variant = BTTooltipStepVariant.button;
-  bool _showStep = false;
+  int _activeIdx = -1;
+  static const int _total = 9;
 
-  void _goPrev() => setState(() => _step = (_step - 1).clamp(1, _total));
-  void _goNext() {
-    if (_step >= _total) {
-      setState(() { _showStep = false; _step = 1; });
-    } else {
-      setState(() => _step++);
-    }
+  // ── Config for each of the 9 demo buttons ────────────────────────────────
+
+  static const _labels = [
+    'Top Left',    'Top Center',    'Top Right',
+    'Center Left', 'Center',        'Center Right',
+    'Bottom Left', 'Bottom Center', 'Bottom Right',
+  ];
+
+  static const _ttPos = [
+    BTTooltipPosition.bottom, BTTooltipPosition.bottom, BTTooltipPosition.bottom,
+    BTTooltipPosition.right,  BTTooltipPosition.bottom, BTTooltipPosition.left,
+    BTTooltipPosition.top,    BTTooltipPosition.top,    BTTooltipPosition.top,
+  ];
+
+  static const _arrowPos = [
+    BTTooltipArrowPosition.left,  BTTooltipArrowPosition.mid, BTTooltipArrowPosition.right,
+    BTTooltipArrowPosition.mid,   BTTooltipArrowPosition.mid, BTTooltipArrowPosition.mid,
+    BTTooltipArrowPosition.left,  BTTooltipArrowPosition.mid, BTTooltipArrowPosition.right,
+  ];
+
+  static const _alignments = [
+    Alignment.topLeft,    Alignment.topCenter,    Alignment.topRight,
+    Alignment.centerLeft, Alignment.center,        Alignment.centerRight,
+    Alignment.bottomLeft, Alignment.bottomCenter,  Alignment.bottomRight,
+  ];
+
+  // ── Overlay management ────────────────────────────────────────────────────
+
+  @override
+  void dispose() {
+    _removeEntry();
+    super.dispose();
   }
-  void _endTour() => setState(() { _showStep = false; _step = 1; });
-  void _startTour() => setState(() { _showStep = true; _step = 1; });
+
+  void _removeEntry() {
+    _entry?.remove();
+    _entry = null;
+  }
+
+  void _showAt(int idx) {
+    _removeEntry();
+
+    final box = _keys[idx].currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+
+    final offset = box.localToGlobal(Offset.zero);
+    final size = box.size;
+    final screenSize = MediaQuery.of(context).size;
+    final tooltipPos = _ttPos[idx];
+
+    const balloonW = 320.0;
+    const balloonH = 150.0;
+    const gap = 4.0;
+    const arrowSz = 8.0;
+
+    double top, left;
+    switch (tooltipPos) {
+      case BTTooltipPosition.top:
+        top = offset.dy - balloonH - arrowSz - gap;
+        left = offset.dx + size.width / 2 - balloonW / 2;
+      case BTTooltipPosition.bottom:
+        top = offset.dy + size.height + arrowSz + gap;
+        left = offset.dx + size.width / 2 - balloonW / 2;
+      case BTTooltipPosition.left:
+        top = offset.dy + size.height / 2 - balloonH / 2;
+        left = offset.dx - balloonW - arrowSz - gap;
+      case BTTooltipPosition.right:
+        top = offset.dy + size.height / 2 - balloonH / 2;
+        left = offset.dx + size.width + arrowSz + gap;
+    }
+
+    left = left.clamp(8.0, screenSize.width - balloonW - 8.0);
+    top  = top.clamp(8.0, screenSize.height - balloonH - 8.0);
+
+    _entry = OverlayEntry(
+      builder: (_) => Positioned(
+        top: top,
+        left: left,
+        child: Material(
+          color: Colors.transparent,
+          child: BTTooltipStep(
+            label: _labels[idx],
+            description: 'Ini adalah langkah ${idx + 1} dari $_total.',
+            stepLabel: 'Step ${idx + 1} of $_total',
+            stepVariant: _variant,
+            hasClose: true,
+            prevLabel: 'Kembali',
+            nextLabel: 'Selanjutnya',
+            position: tooltipPos,
+            arrowPosition: _arrowPos[idx],
+            onPrev: idx > 0 ? () => _showAt(idx - 1) : _close,
+            onNext: idx < _total - 1 ? () => _showAt(idx + 1) : _close,
+            onClose: _close,
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context, rootOverlay: true).insert(_entry!);
+    setState(() { _activeIdx = idx; });
+  }
+
+  void _close() {
+    _removeEntry();
+    if (mounted) setState(() { _activeIdx = -1; });
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    final c = context.btechColor;
+
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       children: [
-        const Text(
-          'Interactive Coachmark Tour',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        // ── Header ──────────────────────────────────────────────────────
+        Text(
+          'Interactive Coachmark Demo',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            fontFamily: BTechTypography.fontFamily,
+            color: c.text.primary,
+          ),
         ),
-        const SizedBox(height: 8),
-        const Text(
-          'Pilih style tombol navigasi lalu ketuk "Start Tour".',
-          style: TextStyle(fontSize: 13, color: Colors.grey),
+        const SizedBox(height: 4),
+        Text(
+          'Pilih gaya tombol, lalu ketuk salah satu dari 9 posisi di bawah untuk melihat BTTooltipStep.',
+          style: TextStyle(
+            fontSize: 13,
+            fontFamily: BTechTypography.fontFamily,
+            color: c.text.secondary,
+          ),
         ),
         const SizedBox(height: 16),
 
-        // Variant selector
+        // ── Variant selector ────────────────────────────────────────────
         Wrap(
           spacing: 8,
           children: BTTooltipStepVariant.values.map((v) {
             final selected = v == _variant;
             return GestureDetector(
-              onTap: () => setState(() => _variant = v),
+              onTap: () {
+                _close();
+                setState(() => _variant = v);
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: selected ? const Color(0xFF1e293b) : Colors.white,
-                  border: Border.all(color: const Color(0xFFe2e8f0)),
+                  color: selected ? c.text.primary : Colors.white,
+                  border: Border.all(color: selected ? c.text.primary : const Color(0xFFe2e8f0)),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -222,64 +368,88 @@ class _UsageTabState extends State<_UsageTab> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: selected ? Colors.white : const Color(0xFF334155),
+                    fontFamily: BTechTypography.fontFamily,
+                    color: selected ? Colors.white : c.text.secondary,
                   ),
                 ),
               ),
             );
           }).toList(),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 24),
 
-        // Start button
-        GestureDetector(
-          onTap: _startTour,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF145bc3),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: const Text(
-              'Start Tour',
-              style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
-            ),
+        // ── 9-button grid (Stack) ───────────────────────────────────────
+        Text(
+          'Ketuk tombol di posisi manapun:',
+          style: TextStyle(
+            fontSize: 12,
+            fontFamily: BTechTypography.fontFamily,
+            color: c.text.tertiary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 360,
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFe2e8f0)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Stack(
+            children: [
+              // Hint text in center-background
+              Center(
+                child: Text(
+                  '← tap any button →',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontFamily: BTechTypography.fontFamily,
+                    color: const Color(0xFFe2e8f0),
+                  ),
+                ),
+              ),
+
+              // 9 positioned buttons
+              for (var i = 0; i < 9; i++)
+                Align(
+                  alignment: _alignments[i],
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: KeyedSubtree(
+                      key: _keys[i],
+                      child: GestureDetector(
+                        onTap: () => _showAt(i),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _activeIdx == i
+                                ? c.text.primary
+                                : const Color(0xFF4a9d5b),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            _labels[i],
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: BTechTypography.fontFamily,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 24),
-
-        if (_showStep)
-          BTTooltipStep(
-            label: 'Contoh Coachmark',
-            description: 'Ini adalah langkah $_step dari $_total.',
-            stepLabel: 'Step $_step of $_total',
-            stepVariant: _variant,
-            hasClose: true,
-            prevLabel: 'Kembali',
-            nextLabel: 'Selanjutnya',
-            position: BTTooltipPosition.bottom,
-            onPrev: _goPrev,
-            onNext: _goNext,
-            onClose: _endTour,
-          )
-        else
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFf8fafc),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'Tour selesai. Ketuk "Start Tour" untuk mengulang.',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-          ),
       ],
     );
   }
 }
 
-// ── Helper ────────────────────────────────────────────────────────────────
+// ── Helper widgets ─────────────────────────────────────────────────────────
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.title);
@@ -291,10 +461,11 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12, top: 4),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF334155),
+          fontFamily: BTechTypography.fontFamily,
+          color: const Color(0xFF334155),
         ),
       ),
     );
