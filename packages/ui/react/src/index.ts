@@ -17,6 +17,7 @@ export * from './components/atoms/Button/index.js';
 export * from './components/atoms/ButtonLink/index.js';
 export * from './components/atoms/Checkbox/index.js';
 export * from './components/atoms/Hint/index.js';
+export * from './components/atoms/Separator/index.js';
 export * from './components/molecules/Avatar/index.js';
 export * from './components/organisms/AvatarGroup/index.js';
 
@@ -26,4 +27,5 @@ import './components/atoms/Button/BTButton.css';
 import './components/atoms/ButtonLink/BTButtonLink.css';
 import './components/atoms/Checkbox/BTCheckbox.css';
 import './components/atoms/Hint/BTHint.css';
+import './components/atoms/Separator/BTSeparator.css';
 import './components/molecules/Avatar/BTAvatar.css';
