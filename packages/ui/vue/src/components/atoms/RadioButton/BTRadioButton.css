@@ -1,0 +1,136 @@
+/* BTRadioButton — radio selection atom (Figma 555:3529)
+ *
+ * Five states: default · active · disable · disable-active · error
+ *
+ * Uses native <input type="radio"> with opacity:0 overlay for accessibility.
+ * The visual circle + dot are controlled via modifier classes on .bt-radio.
+ */
+
+/* ── Root ───────────────────────────────────────────────────────────────── */
+
+.bt-radio {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.bt-radio--disabled {
+  cursor: not-allowed;
+}
+
+/* ── Native input overlay (a11y) ────────────────────────────────────────── */
+
+.bt-radio__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  cursor: inherit;
+  z-index: 1;
+}
+
+/* ── Visual circle ──────────────────────────────────────────────────────── */
+
+.bt-radio__circle {
+  position: relative;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px; /* optical alignment with label baseline */
+  border-radius: var(--radius-rd);
+  border: 1.5px solid var(--border-primary);
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+/* ── Dot (shown when active) ────────────────────────────────────────────── */
+
+.bt-radio__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-rd);
+  background: var(--color-brand-primary);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+/* ── State: active ──────────────────────────────────────────────────────── */
+
+.bt-radio--active .bt-radio__circle {
+  border-color: var(--color-brand-primary);
+}
+
+.bt-radio--active .bt-radio__dot {
+  opacity: 1;
+}
+
+/* ── State: disabled (unchecked) ────────────────────────────────────────── */
+
+.bt-radio--disabled .bt-radio__circle {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+}
+
+/* ── State: disabled active ─────────────────────────────────────────────── */
+
+.bt-radio--disabled.bt-radio--active .bt-radio__circle {
+  border-color: var(--border-disabled);
+}
+
+.bt-radio--disabled.bt-radio--active .bt-radio__dot {
+  background: var(--text-disabled);
+}
+
+/* ── State: error ───────────────────────────────────────────────────────── */
+
+.bt-radio--error .bt-radio__circle {
+  border-color: var(--color-ext-error);
+}
+
+.bt-radio--error.bt-radio--active .bt-radio__dot {
+  background: var(--color-ext-error);
+}
+
+/* ── Text block ─────────────────────────────────────────────────────────── */
+
+.bt-radio__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bt-radio__label {
+  font-family: var(--typography-font-family-sans);
+  font-size: var(--typography-font-size-sm);
+  font-weight: 500;
+  line-height: var(--typography-line-height-xs);
+  color: var(--text-primary);
+}
+
+.bt-radio--disabled .bt-radio__label {
+  color: var(--text-disabled);
+}
+
+.bt-radio__subtext {
+  font-family: var(--typography-font-family-sans);
+  font-size: var(--typography-font-size-sm);
+  font-weight: 500;
+  line-height: var(--typography-line-height-xs);
+  color: var(--text-secondary);
+}
+
+.bt-radio--disabled .bt-radio__subtext {
+  color: var(--text-disabled);
+}
+
+.bt-radio--error .bt-radio__subtext {
+  color: var(--text-error);
+}
