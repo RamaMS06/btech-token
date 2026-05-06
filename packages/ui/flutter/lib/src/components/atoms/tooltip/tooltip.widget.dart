@@ -10,7 +10,10 @@ import 'package:flutter/material.dart';
 /// Figma: node 479-2624
 /// https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/?node-id=479-2624
 ///
-/// On mobile: tap the trigger to toggle the balloon.
+/// On mobile: tap the trigger to toggle the balloon. Only one tooltip is
+/// visible at a time — opening a new one closes the previous. Tapping
+/// anywhere outside the trigger or balloon dismisses it.
+///
 /// On web / desktop: hover with the mouse to show / hide.
 ///
 /// ```dart
@@ -68,8 +71,15 @@ class _BTTooltipState extends State<BTTooltip>
   OverlayEntry? _entry;
   final _triggerKey = GlobalKey();
 
+  // Each instance gets a unique group ID so TapRegion can detect taps
+  // outside THIS tooltip's (trigger + balloon) pair.
+  final Object _tapGroupId = Object();
+
   late final AnimationController _ctrl;
   late final Animation<double> _fade;
+
+  // ── Global singleton — ensures only one tooltip is visible at a time ─────
+  static _BTTooltipState? _activeTooltip;
 
   static const double _gap = 4;
   static const double _balloonWidth = 280;
@@ -87,6 +97,7 @@ class _BTTooltipState extends State<BTTooltip>
   @override
   void dispose() {
     _removeOverlay();
+    if (_activeTooltip == this) _activeTooltip = null;
     _ctrl.dispose();
     super.dispose();
   }
@@ -95,6 +106,15 @@ class _BTTooltipState extends State<BTTooltip>
 
   void _show() {
     if (widget.disabled || _entry != null) return;
+
+    // Dismiss any other open tooltip immediately (no animation).
+    final prev = _activeTooltip;
+    if (prev != null && prev != this) {
+      prev._ctrl.reset();
+      prev._removeOverlay();
+    }
+    _activeTooltip = this;
+
     _entry = _buildEntry();
     Overlay.of(context, rootOverlay: true).insert(_entry!);
     _ctrl.forward();
@@ -102,6 +122,7 @@ class _BTTooltipState extends State<BTTooltip>
 
   Future<void> _hide() async {
     if (_entry == null) return;
+    if (_activeTooltip == this) _activeTooltip = null;
     await _ctrl.reverse();
     _removeOverlay();
   }
@@ -154,16 +175,21 @@ class _BTTooltipState extends State<BTTooltip>
         left = left.clamp(8, screenSize.width - _balloonWidth - 8);
         top = top.clamp(8, screenSize.height - 80);
 
+        // TapRegion with the same groupId as the trigger — tapping on the
+        // balloon body is "inside" the group and will NOT call onTapOutside.
         return Positioned(
           top: top,
           left: left,
-          child: FadeTransition(
-            opacity: _fade,
-            child: _BTTooltipBalloon(
-              position: widget.position,
-              arrowPosition: widget.arrowPosition,
-              text: widget.text,
-              content: widget.content,
+          child: TapRegion(
+            groupId: _tapGroupId,
+            child: FadeTransition(
+              opacity: _fade,
+              child: _BTTooltipBalloon(
+                position: widget.position,
+                arrowPosition: widget.arrowPosition,
+                text: widget.text,
+                content: widget.content,
+              ),
             ),
           ),
         );
@@ -185,20 +211,26 @@ class _BTTooltipState extends State<BTTooltip>
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      // Desktop / web hover
-      onEnter: (_) => _show(),
-      onExit: (_) => _hide(),
-      child: GestureDetector(
-        // Mobile tap — also bind long-press because an interactive child
-        // (e.g. ElevatedButton) wins the tap gesture in the arena, but
-        // long-press is unclaimed so it always reaches us.
-        onTap: _toggle,
-        onLongPress: _toggle,
-        behavior: HitTestBehavior.opaque,
-        child: KeyedSubtree(
-          key: _triggerKey,
-          child: widget.child,
+    return TapRegion(
+      // When the user taps outside BOTH the trigger AND the open balloon,
+      // this callback fires and hides the tooltip.
+      groupId: _tapGroupId,
+      onTapOutside: (_) => _hide(),
+      child: MouseRegion(
+        // Desktop / web hover
+        onEnter: (_) => _show(),
+        onExit: (_) => _hide(),
+        child: GestureDetector(
+          // Mobile tap — also bind long-press because an interactive child
+          // (e.g. ElevatedButton) wins the tap gesture in the arena, but
+          // long-press is unclaimed so it always reaches us.
+          onTap: _toggle,
+          onLongPress: _toggle,
+          behavior: HitTestBehavior.opaque,
+          child: KeyedSubtree(
+            key: _triggerKey,
+            child: widget.child,
+          ),
         ),
       ),
     );
