@@ -119,6 +119,163 @@ class _BTRangeThumbShape extends RangeSliderThumbShape {
   }
 }
 
+// ── Custom tooltip (value indicator) — Figma 434:7544 ──────────────────
+
+// Dark pill: bg.inverse + radius.sm + 16×8 dp downward arrow.
+const _kTooltipBg       = Color(0xFF292F37); // bg.inverse
+const _kTooltipPaddingH = 12.0;              // spacing.md
+const _kTooltipPaddingV = 8.0;               // spacing.sm
+const _kTooltipRadius   = 8.0;               // radius.sm
+const _kArrowHalfWidth  = 8.0;               // half of 16 dp total
+const _kArrowHeight     = 8.0;               // arrow height
+const _kArrowGap        = 2.0;               // gap: arrow tip → thumb top
+
+/// Shared painter: dark rounded pill + 16×8 dp downward arrow.
+///
+/// Scales from the arrow-tip pivot (thumb top − [_kArrowGap]) so the
+/// tooltip pops in smoothly as [scale] goes 0 → 1.
+void _paintBTTooltip(
+  Canvas canvas,
+  Offset center, {
+  required TextPainter labelPainter,
+  required double scale,
+}) {
+  final textW   = labelPainter.width;
+  final textH   = labelPainter.height;
+  final pillW   = textW + _kTooltipPaddingH * 2;
+  final pillH   = textH + _kTooltipPaddingV * 2;
+
+  // Arrow tip: 2 dp above thumb top edge
+  final pivotDy   = center.dy - _kThumbRadius - _kArrowGap;
+  final arrowBase = pivotDy - _kArrowHeight;
+  final pillTop   = arrowBase - pillH;
+  final pillLeft  = center.dx - pillW / 2;
+
+  final paint   = Paint()..color = _kTooltipBg;
+  final pillRect = RRect.fromLTRBR(
+    pillLeft,
+    pillTop,
+    pillLeft + pillW,
+    arrowBase,
+    const Radius.circular(_kTooltipRadius),
+  );
+  final arrowPath = Path()
+    ..moveTo(center.dx - _kArrowHalfWidth, arrowBase)
+    ..lineTo(center.dx + _kArrowHalfWidth, arrowBase)
+    ..lineTo(center.dx, pivotDy)
+    ..close();
+
+  // Scale animation from arrow-tip pivot; all shape ops in one cascade.
+  canvas
+    ..save()
+    ..translate(center.dx, pivotDy)
+    ..scale(scale, scale)
+    ..translate(-center.dx, -pivotDy)
+    ..drawRRect(pillRect, paint)
+    ..drawPath(arrowPath, paint);
+
+  // labelPainter.paint is on a different receiver — cascade resumes after.
+  labelPainter.paint(
+    canvas,
+    Offset(center.dx - textW / 2, pillTop + _kTooltipPaddingV),
+  );
+
+  canvas.restore();
+}
+
+/// Single-thumb value indicator: dark pill + 16×8 dp downward arrow.
+class _BTValueIndicatorShape extends SliderComponentShape {
+  const _BTValueIndicatorShape();
+
+  @override
+  Size getPreferredSize(
+    bool isEnabled,
+    bool isDiscrete, {
+    TextPainter? labelPainter,
+    double? textScaleFactor,
+  }) {
+    final w = (labelPainter?.width ?? 0) + _kTooltipPaddingH * 2;
+    final h = (labelPainter?.height ?? 0)
+        + _kTooltipPaddingV * 2
+        + _kArrowHeight
+        + _kArrowGap;
+    return Size(w, h);
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final scale = activationAnimation.value;
+    if (scale == 0.0) return;
+    _paintBTTooltip(
+      context.canvas,
+      center,
+      labelPainter: labelPainter,
+      scale: scale,
+    );
+  }
+}
+
+/// Range value indicator — same visual as [_BTValueIndicatorShape].
+class _BTRangeValueIndicatorShape extends RangeSliderValueIndicatorShape {
+  const _BTRangeValueIndicatorShape();
+
+  @override
+  Size getPreferredSize(
+    bool isEnabled,
+    bool isDiscrete, {
+    required TextPainter labelPainter,
+    required double textScaleFactor,
+  }) {
+    final w = labelPainter.width + _kTooltipPaddingH * 2;
+    final h = labelPainter.height
+        + _kTooltipPaddingV * 2
+        + _kArrowHeight
+        + _kArrowGap;
+    return Size(w, h);
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    bool isDiscrete = false,
+    bool isOnTop = false,
+    TextDirection textDirection = TextDirection.ltr,
+    double textScaleFactor = 1,
+    Size sizeWithOverflow = Size.zero,
+    Thumb thumb = Thumb.start,
+    double value = 0,
+    double? openIndicatorOffset,
+  }) {
+    final scale = activationAnimation.value;
+    if (scale == 0.0) return;
+    _paintBTTooltip(
+      context.canvas,
+      center,
+      labelPainter: labelPainter,
+      scale: scale,
+    );
+  }
+}
+
 // ── Widget ───────────────────────────────────────────────────────────────
 
 class BTSlider extends StatefulWidget {
@@ -244,7 +401,7 @@ class _BTSliderState extends State<BTSlider> {
       thumbColor:         active,
       // No press ripple — Figma has no overlay on thumb
       overlayColor:       Colors.transparent,
-      valueIndicatorColor: const Color(0xFF292F37),
+      // Text style for the custom value-indicator labelPainter
       valueIndicatorTextStyle: const TextStyle(
         color: Colors.white,
         fontSize: 14,
@@ -255,6 +412,7 @@ class _BTSliderState extends State<BTSlider> {
           : ShowValueIndicator.onlyForContinuous,
       trackHeight: 4,
       thumbShape: const _BTThumbShape(),
+      valueIndicatorShape: const _BTValueIndicatorShape(),
     );
   }
 
@@ -268,7 +426,7 @@ class _BTSliderState extends State<BTSlider> {
         data: sliderTh.copyWith(
           rangeThumbShape: const _BTRangeThumbShape(),
           rangeValueIndicatorShape:
-              const PaddleRangeSliderValueIndicatorShape(),
+              const _BTRangeValueIndicatorShape(),
         ),
         child: RangeSlider(
           values: RangeValues(_currentStart, _currentEnd),
