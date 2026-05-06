@@ -1,0 +1,25 @@
+schemaVersion: 1
+name: BTSeparator
+category: atoms
+figmaNodeId: '194:756'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=194-756
+description: >
+  A 1px visual divider line. Renders horizontal (full-width) or vertical
+  (full-height) using the border.primary token.
+props:
+  - name: orientation
+    type: BTSeparatorOrientation
+    default: horizontal
+    description: Direction of the divider line.
+  - name: className
+    type: string
+    required: false
+    description: Additional CSS class names.
+enums:
+  - name: BTSeparatorOrientation
+    values: [horizontal, vertical]
+variants:
+  - name: Horizontal
+    description: Full-width 1px horizontal line (default).
+  - name: Vertical
+    description: Full-height 1px vertical line.

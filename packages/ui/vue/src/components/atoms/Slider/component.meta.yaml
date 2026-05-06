@@ -1,0 +1,61 @@
+schemaVersion: 1
+name: BTSlider
+category: atoms
+figmaNodeId: '434:7617'
+figmaUrl: https://www.figma.com/design/btech/?node-id=434-7617
+description: >
+  Interactive range slider atom. Supports three layout types (default, range,
+  vertical) and three color variants (primary, secondary, destructive).
+  Single-thumb and dual-thumb (range) modes supported.
+props:
+  - name: type
+    type: BTSliderType
+    default: "'default'"
+    description: Layout type — horizontal single, horizontal dual, or vertical
+  - name: variant
+    type: BTSliderVariant
+    default: "'primary'"
+    description: Color variant for active track and thumb
+  - name: value
+    type: number
+    required: false
+    description: Controlled value for default/vertical types (v-model:value)
+  - name: startValue
+    type: number
+    required: false
+    description: Controlled start value for range type (v-model:startValue)
+  - name: endValue
+    type: number
+    required: false
+    description: Controlled end value for range type (v-model:endValue)
+  - name: min
+    type: number
+    default: 0
+  - name: max
+    type: number
+    default: 100
+  - name: step
+    type: number
+    default: 1
+  - name: showTooltip
+    type: boolean
+    default: true
+    description: Show value tooltip above (or beside for vertical) the thumb
+  - name: disabled
+    type: boolean
+    default: false
+  - name: className
+    type: string
+    required: false
+enums:
+  - name: BTSliderType
+    values: [default, range, vertical]
+  - name: BTSliderVariant
+    values: [primary, secondary, destructive]
+variants:
+  - name: default
+    description: Horizontal slider with single thumb
+  - name: range
+    description: Horizontal slider with two thumbs (start + end)
+  - name: vertical
+    description: Vertical slider with single thumb
