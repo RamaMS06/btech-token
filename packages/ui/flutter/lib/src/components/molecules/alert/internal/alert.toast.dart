@@ -17,6 +17,7 @@ class BTAlertToast extends StatefulWidget {
     this.actionLabel,
     this.dismissible = true,
     this.duration = const Duration(seconds: 5),
+    this.bottomSpacing = 72,
     this.onAction,
     this.onLink,
     super.key,
@@ -29,6 +30,10 @@ class BTAlertToast extends StatefulWidget {
   final String? actionLabel;
   final bool dismissible;
   final Duration duration;
+
+  /// Gap between the bottom of the screen and the alert widget.
+  final double bottomSpacing;
+
   final VoidCallback? onAction;
   final VoidCallback? onLink;
   final VoidCallback onClose;
@@ -80,7 +85,7 @@ class _BTAlertToastState extends State<BTAlertToast>
     final r = context.btechRadius;
 
     return Positioned(
-      bottom: 96,
+      bottom: widget.bottomSpacing,
       right: 24,
       child: FadeTransition(
         opacity: _fade,

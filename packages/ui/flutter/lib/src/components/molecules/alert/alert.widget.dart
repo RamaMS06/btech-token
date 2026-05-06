@@ -82,7 +82,20 @@ class BTAlert extends StatelessWidget {
 
   // ── Programmatic API ────────────────────────────────────────────────────────
 
+  // Only one toast at a time — dismiss previous before showing a new one.
+  static OverlayEntry? _activeEntry;
+
   /// Show a toast-style alert overlaid at the bottom-right of the screen.
+  ///
+  /// Only one toast is visible at a time — calling [show] while another toast
+  /// is visible immediately replaces it.
+  ///
+  /// The toast renders on the root overlay (`rootOverlay: true`) so it always
+  /// sits above bottom sheets, dialogs, and modals.
+  ///
+  /// [bottomSpacing] controls the gap between the bottom of the screen and the
+  /// alert (default 72). Increase this to account for navigation bars or a
+  /// floating action button.
   ///
   /// Returns an [OverlayEntry] that can be manually removed if needed.
   ///
@@ -92,6 +105,7 @@ class BTAlert extends StatelessWidget {
   ///   variant: BTAlertVariant.success,
   ///   label: 'Saved successfully',
   ///   duration: Duration(seconds: 4),
+  ///   bottomSpacing: 100,
   /// );
   /// ```
   static OverlayEntry show(
@@ -103,9 +117,14 @@ class BTAlert extends StatelessWidget {
     String? actionLabel,
     bool dismissible = true,
     Duration duration = const Duration(seconds: 5),
+    double bottomSpacing = 72,
     VoidCallback? onAction,
     VoidCallback? onLink,
   }) {
+    // Dismiss any currently visible toast immediately (no reverse animation).
+    _activeEntry?.remove();
+    _activeEntry = null;
+
     late final OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => BTAlertToast(
@@ -116,12 +135,19 @@ class BTAlert extends StatelessWidget {
         actionLabel: actionLabel,
         dismissible: dismissible,
         duration: duration,
+        bottomSpacing: bottomSpacing,
         onAction: onAction,
         onLink: onLink,
-        onClose: () => entry.remove(),
+        onClose: () {
+          entry.remove();
+          if (identical(_activeEntry, entry)) _activeEntry = null;
+        },
       ),
     );
-    Overlay.of(context).insert(entry);
+
+    // rootOverlay: true — inserts above all routes (bottom sheets, dialogs, modals).
+    Overlay.of(context, rootOverlay: true).insert(entry);
+    _activeEntry = entry;
     return entry;
   }
 
