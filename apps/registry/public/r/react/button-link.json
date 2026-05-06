@@ -1,0 +1,36 @@
+{
+  "$schema": "https://btech-registry.buma.dev/schema/registry-item.json",
+  "name": "button-link",
+  "type": "registry:ui",
+  "title": "BTButtonLink",
+  "description": "Inline hyperlink-style action atom. Text label with optional icon props. Hover → underline + bold. Active → dims to neutral. Disabled → text.disabled.",
+  "framework": "react",
+  "category": "atoms",
+  "figmaUrl": "https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=480-3197",
+  "figmaNodeId": "480:3197",
+  "dependencies": [
+    "@btech/tokens"
+  ],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "BTButtonLink.css",
+      "target": "@ui/BTButtonLink.css",
+      "type": "registry:ui",
+      "content": "/* BTButtonLink styles — Figma 480:3197.\n   All colours via @btech/tokens CSS vars — no hex fallbacks. */\n\n.bt-button-link {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  padding: 0;\n  background: none;\n  border: none;\n  font-family: var(--typography-font-family-sans);\n  font-size: 14px;\n  font-weight: 500;\n  line-height: 16px;\n  letter-spacing: 0;\n  text-decoration: none;\n  white-space: nowrap;\n  cursor: pointer;\n  user-select: none;\n  outline: none;\n  transition: color 0.1s, font-weight 0s;\n}\n\n.bt-button-link:focus-visible {\n  outline: 2px solid var(--color-brand-primary);\n  outline-offset: 2px;\n  border-radius: 2px;\n}\n\n/* ── Hover shared — bold + underline on label only ──\n   text-decoration on a flex container only underlines text runs, not\n   icon children, causing misalignment.  Scope it to the label span. */\n.bt-button-link:hover:not(:disabled) {\n  font-weight: 700;\n}\n.bt-button-link:hover:not(:disabled) .bt-button-link__label {\n  text-decoration: underline;\n}\n\n/* ── Primary ── */\n.bt-button-link--primary             { color: var(--color-brand-primary); }\n.bt-button-link--primary:hover:not(:disabled) { color: var(--color-brand-primary-bold); }\n.bt-button-link--primary:active:not(:disabled) { color: var(--text-secondary); font-weight: 500; }\n.bt-button-link--primary:disabled    { color: var(--text-disabled); cursor: not-allowed; }\n\n/* ── Secondary ── */\n.bt-button-link--secondary           { color: var(--text-secondary); }\n.bt-button-link--secondary:hover:not(:disabled) { color: var(--text-secondary); }\n.bt-button-link--secondary:active:not(:disabled) { color: var(--text-primary); font-weight: 500; }\n.bt-button-link--secondary:disabled  { color: var(--text-disabled); cursor: not-allowed; }\n\n/* ── Tertiary ── */\n.bt-button-link--tertiary            { color: var(--text-primary); }\n.bt-button-link--tertiary:hover:not(:disabled) { color: var(--text-primary); }\n.bt-button-link--tertiary:active:not(:disabled) { color: var(--text-secondary); font-weight: 500; }\n.bt-button-link--tertiary:disabled   { color: var(--text-disabled); cursor: not-allowed; }\n\n/* ── Invert ── */\n.bt-button-link--invert              { color: var(--text-inverse); }\n.bt-button-link--invert:hover:not(:disabled) { color: var(--text-inverse); }\n.bt-button-link--invert:active:not(:disabled) { color: var(--text-tertiary); font-weight: 500; }\n.bt-button-link--invert:disabled     { color: var(--text-disabled); cursor: not-allowed; }\n\n/* ── Custom ── */\n.bt-button-link--custom              { color: var(--color-brand-secondary); }\n.bt-button-link--custom:hover:not(:disabled) { color: var(--color-brand-secondary-bold); }\n.bt-button-link--custom:active:not(:disabled) { color: var(--text-secondary); font-weight: 500; }\n.bt-button-link--custom:disabled     { color: var(--text-disabled); cursor: not-allowed; }\n"
+    },
+    {
+      "path": "BTButtonLink.tsx",
+      "target": "@ui/BTButtonLink.tsx",
+      "type": "registry:ui",
+      "content": "/**\n * BTButtonLink — inline hyperlink-style action atom.\n * Figma source: node 480:3197.\n *\n * @example\n * ```tsx\n * // Primary (default)\n * <BTButtonLink label=\"View details\" onClick={goToDetails} />\n *\n * // With left icon\n * <BTButtonLink\n *   label=\"Cancel\"\n *   variant=\"secondary\"\n *   leftIcon={<CloseIcon />}\n *   disabled={loading}\n *   onClick={handleCancel}\n * />\n *\n * // Invert — for dark surfaces\n * <BTButtonLink label=\"Learn more\" variant=\"invert\" onClick={openUrl} />\n * ```\n */\nimport './BTButtonLink.css';\nimport type { BTButtonLinkProps } from './BTButtonLink.types';\n\nexport function BTButtonLink({\n  label,\n  variant = 'primary',\n  leftIcon,\n  rightIcon,\n  disabled,\n  className,\n  ...rest\n}: BTButtonLinkProps) {\n  return (\n    <button\n      type=\"button\"\n      className={[\n        'bt-button-link',\n        `bt-button-link--${variant}`,\n        className,\n      ]\n        .filter(Boolean)\n        .join(' ')}\n      disabled={disabled}\n      data-testid=\"bt-button-link\"\n      {...rest}\n    >\n      {leftIcon}\n      <span className=\"bt-button-link__label\">{label}</span>\n      {rightIcon}\n    </button>\n  );\n}\n\nBTButtonLink.displayName = 'BTButtonLink';\n"
+    },
+    {
+      "path": "BTButtonLink.types.ts",
+      "target": "@ui/BTButtonLink.types.ts",
+      "type": "registry:ui",
+      "content": "// BTButtonLink types — Figma source: node 480:3197.\n\n/** Visual style of BTButtonLink. */\nexport type BTButtonLinkVariant =\n  | 'primary'    // brand.primary — default interactive link\n  | 'secondary'  // text.secondary — subdued\n  | 'tertiary'   // text.primary — standard text colour\n  | 'invert'     // text.inverse — for dark / coloured surfaces\n  | 'custom';    // brand.secondary — amber\n\nexport interface BTButtonLinkProps\n  extends React.ButtonHTMLAttributes<HTMLButtonElement> {\n  /** Text shown in the link. */\n  label: string;\n  /** Visual style. @default 'primary' */\n  variant?: BTButtonLinkVariant;\n  /** 16px icon rendered before the label. */\n  leftIcon?: React.ReactNode;\n  /** 16px icon rendered after the label. */\n  rightIcon?: React.ReactNode;\n}\n"
+    }
+  ]
+}

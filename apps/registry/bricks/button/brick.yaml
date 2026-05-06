@@ -1,0 +1,14 @@
+name: btech_button
+description: "BTButton — interactive action atom for btech Design System. 5 variants (primary, secondary, destructive, outline, ghost), 2 sizes, icon slots."
+version: 0.1.0+1
+environment:
+  mason: ">=0.1.0-dev.52 <0.1.0"
+repository: https://github.com/buma/btech-ds
+issues: https://github.com/buma/btech-ds/issues
+
+vars:
+  output_dir:
+    type: string
+    description: "Directory to generate the widget in (relative to lib/)"
+    default: "widgets/btech/button"
+    prompt: "Where should the button widget be created? (relative to lib/)"

@@ -27,7 +27,11 @@
     "showcase": "pnpm --filter @btech/ui-showcase dev",
     "showcase:vue": "pnpm --filter @btech/ui-showcase-vue dev",
     "showcase:flutter": "cd apps/ui-showcase-flutter && flutter run -d web-server",
-    "convert-vue-to-react": "node tools/vue-to-react/dist/cli.js"
+    "convert-vue-to-react": "node tools/vue-to-react/dist/cli.js",
+    "registry:build": "pnpm --filter @btech/registry build",
+    "registry:dev": "pnpm --filter @btech/registry dev",
+    "cli:build": "pnpm --filter @btech/cli build",
+    "cli:dev": "pnpm --filter @btech/cli dev"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

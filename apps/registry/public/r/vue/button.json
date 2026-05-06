@@ -1,0 +1,36 @@
+{
+  "$schema": "https://btech-registry.buma.dev/schema/registry-item.json",
+  "name": "button",
+  "type": "registry:ui",
+  "title": "BTButton",
+  "description": "Interactive action button with 5 variants and 2 sizes. Supports left/right icon slots and icon-only mode.",
+  "framework": "vue",
+  "category": "atoms",
+  "figmaUrl": "https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/?node-id=114-2645",
+  "figmaNodeId": "114:2645",
+  "dependencies": [
+    "@btech/tokens"
+  ],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "BTButton.css",
+      "target": "@ui/BTButton.css",
+      "type": "registry:ui",
+      "content": "/* BTButton styles — Figma 114:2645.\n   All colors via @btech/tokens CSS vars — no hex fallbacks. */\n\n.bt-button {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  gap: 4px;\n  padding: 12px 16px;\n  border-radius: var(--radius-sm);\n  border: 1px solid transparent;\n  font-family: var(--typography-font-family-sans);\n  font-size: 12px;\n  font-weight: 500;\n  line-height: 16px;\n  letter-spacing: 0;\n  white-space: nowrap;\n  cursor: pointer;\n  transition: background 0.15s, border-color 0.15s, box-shadow 0.1s;\n  user-select: none;\n  outline: none;\n}\n\n.bt-button:focus-visible {\n  outline: 2px solid var(--color-brand-primary);\n  outline-offset: 2px;\n}\n\n/* ── Small ── */\n.bt-button--small {\n  gap: 2px;\n  padding: 8px;\n}\n\n/* ── Icon only — square ── */\n.bt-button--icon-only                    { padding: 12px; }\n.bt-button--icon-only.bt-button--small  { padding: 8px; }\n\n.bt-button__label { flex-shrink: 0; }\n\n/* ── Primary ── */\n.bt-button--primary {\n  background: var(--color-brand-primary);\n  color: var(--text-inverse);\n}\n.bt-button--primary:hover:not(:disabled) {\n  background: var(--color-brand-primary-bold);\n}\n.bt-button--primary:active:not(:disabled) {\n  background: var(--color-brand-primary-bold);\n  box-shadow: inset 0 4px 4px rgba(0, 0, 0, 0.25);\n}\n.bt-button--primary:disabled {\n  background: var(--bg-subtlest);\n  color: var(--text-inverse);\n  cursor: not-allowed;\n}\n\n/* ── Secondary ── */\n.bt-button--secondary {\n  background: var(--bg-secondary);\n  color: var(--text-primary);\n}\n.bt-button--secondary:hover:not(:disabled) {\n  background: var(--bg-subtler);\n}\n.bt-button--secondary:active:not(:disabled) {\n  background: var(--bg-subtlest);\n  box-shadow: inset 0 4px 4px rgba(58, 58, 58, 0.25);\n}\n.bt-button--secondary:disabled {\n  background: var(--bg-subtle);\n  color: var(--bg-subtlest);\n  cursor: not-allowed;\n}\n\n/* ── Destructive ── */\n.bt-button--destructive {\n  background: var(--color-ext-error);\n  color: var(--text-inverse);\n}\n.bt-button--destructive:hover:not(:disabled) {\n  background: var(--color-ext-error-bold);\n}\n.bt-button--destructive:active:not(:disabled) {\n  background: var(--color-ext-error-bold);\n  box-shadow: inset 0 4px 4px rgba(0, 0, 0, 0.25);\n}\n.bt-button--destructive:disabled {\n  background: var(--bg-subtlest);\n  color: var(--text-inverse);\n  cursor: not-allowed;\n}\n\n/* ── Outline ── */\n.bt-button--outline {\n  background: transparent;\n  color: var(--text-primary);\n  border-color: var(--border-primary);\n}\n.bt-button--outline:hover:not(:disabled) {\n  background: var(--bg-subtle);\n}\n.bt-button--outline:active:not(:disabled) {\n  background: var(--bg-subtler);\n  box-shadow: inset 0 4px 4px rgba(0, 0, 0, 0.25);\n}\n.bt-button--outline:disabled {\n  color: var(--bg-subtlest);\n  border-color: var(--bg-subtlest);\n  cursor: not-allowed;\n}\n\n/* ── Ghost ── */\n.bt-button--ghost {\n  background: transparent;\n  color: var(--text-primary);\n}\n.bt-button--ghost:hover:not(:disabled) {\n  background: var(--bg-subtle);\n}\n.bt-button--ghost:active:not(:disabled) {\n  background: var(--bg-subtler);\n  box-shadow: inset 0 4px 4px rgba(0, 0, 0, 0.25);\n}\n.bt-button--ghost:disabled {\n  color: var(--bg-subtlest);\n  cursor: not-allowed;\n}\n"
+    },
+    {
+      "path": "BTButton.types.ts",
+      "target": "@ui/BTButton.types.ts",
+      "type": "registry:ui",
+      "content": "export type BTButtonVariant =\n  | 'primary'\n  | 'secondary'\n  | 'destructive'\n  | 'outline'\n  | 'ghost';\n\nexport type BTButtonSize = 'default' | 'small';\n\nexport interface BTButtonProps {\n  /** Visual style — default: 'primary'. */\n  variant?: BTButtonVariant;\n  /** Padding scale — 'default' (12×16 px) or 'small' (8 px all sides). */\n  size?: BTButtonSize;\n  /** Disables interaction and applies disabled styling. */\n  disabled?: boolean;\n  /** Renders only the default slot (icon) without a label — square padding. */\n  iconOnly?: boolean;\n  /** Text label shown inside the button. */\n  label?: string;\n}\n"
+    },
+    {
+      "path": "BTButton.vue",
+      "target": "@ui/BTButton.vue",
+      "type": "registry:ui",
+      "content": "<script setup lang=\"ts\">\n/**\n * BTButton — interactive action atom.\n * Figma source: node 114:2645.\n * All visual values come from Figma. Token CSS vars from @btech/tokens\n *\n * @example Primary (default)\n * <BTButton label=\"Save\" />\n *\n * @example With left icon\n * <BTButton label=\"Upload\" variant=\"secondary\">\n *   <template #leftIcon><UploadIcon /></template>\n * </BTButton>\n *\n * @example Icon only\n * <BTButton :icon-only=\"true\" variant=\"ghost\">\n *   <CloseIcon />\n * </BTButton>\n *\n * @example Disabled\n * <BTButton label=\"Submit\" :disabled=\"true\" />\n */\nimport { computed } from 'vue'\nimport type { BTButtonProps } from './BTButton.types'\nimport './BTButton.css'\n\nconst props = withDefaults(defineProps<BTButtonProps>(), {\n  variant: 'primary',\n  size: 'default',\n  disabled: false,\n  iconOnly: false,\n  label: '',\n})\n\nconst btnClass = computed(() =>\n  [\n    'bt-button',\n    `bt-button--${props.variant}`,\n    props.size === 'small' ? 'bt-button--small' : '',\n    props.iconOnly ? 'bt-button--icon-only' : '',\n  ]\n    .filter(Boolean)\n    .join(' '),\n)\n</script>\n\n<template>\n  <button\n    :class=\"btnClass\"\n    :disabled=\"disabled\"\n    data-testid=\"bt-button\"\n  >\n    <!-- Icon-only: renders default slot as the single icon -->\n    <slot v-if=\"iconOnly\" />\n\n    <!-- Regular: optional left icon · label · optional right icon -->\n    <template v-else>\n      <slot name=\"leftIcon\" />\n      <span v-if=\"label\" class=\"bt-button__label\">{{ label }}</span>\n      <slot name=\"rightIcon\" />\n    </template>\n  </button>\n</template>\n"
+    }
+  ]
+}

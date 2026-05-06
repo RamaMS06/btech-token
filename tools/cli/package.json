@@ -1,0 +1,46 @@
+{
+  "name": "@btech/cli",
+  "version": "0.1.0",
+  "description": "shadcn-style CLI to add btech UI components directly into your project",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "btech": "./dist/cli.js"
+  },
+  "main": "./dist/cli.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/cli.ts --format esm --target node20 --clean",
+    "dev": "tsup src/cli.ts --format esm --target node20 --watch",
+    "typecheck": "tsc --noEmit",
+    "registry:build": "pnpm --filter @btech/registry build",
+    "registry:dev": "pnpm --filter @btech/registry dev"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.9.0",
+    "commander": "^12.1.0",
+    "cosmiconfig": "^9.0.0",
+    "diff": "^7.0.0",
+    "execa": "^9.5.0",
+    "fs-extra": "^11.2.0",
+    "node-fetch": "^3.3.2",
+    "ora": "^8.1.1",
+    "picocolors": "^1.1.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/diff": "^7.0.1",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.17.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://buma.pkgs.visualstudio.com/_packaging/btech/npm/registry/"
+  }
+}

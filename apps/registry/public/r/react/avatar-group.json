@@ -1,0 +1,30 @@
+{
+  "$schema": "https://btech-registry.buma.dev/schema/registry-item.json",
+  "name": "avatar-group",
+  "type": "registry:ui",
+  "title": "BTAvatarGroup",
+  "description": "Stacked group of BTAvatar instances with horizontal negative-margin overlap. Renders a \"+N\" overflow counter when items exceed `max`.",
+  "framework": "react",
+  "category": "organisms",
+  "figmaUrl": "https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=504-705",
+  "figmaNodeId": "504:705",
+  "dependencies": [
+    "@btech/tokens"
+  ],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "BTAvatarGroup.tsx",
+      "target": "@ui/BTAvatarGroup.tsx",
+      "type": "registry:ui",
+      "content": "/**\n * BTAvatarGroup — stacked group of avatars with overflow counter.\n * Sliced from Figma `Avatar Group` (node 504:705). Mirrors\n * @btech/ui-vue + btech_ui (Flutter) one-to-one.\n *\n * Stacking offsets per Figma 504:705 (negative left margin per size):\n *   xs(24)→-8, sm(32)→-10, md(40)→-12, lg(48)→-16, xl(64)→-20, 2xl(96)→-32\n *\n * ## Usage:\n * ```tsx\n * <BTAvatarGroup\n *   items={[\n *     { name: 'Person 1', imageUrl: '...' },\n *     { name: 'JD' },\n *     { name: 'AB', color: 'pink' },\n *     { name: 'XY' },\n *     { name: 'ZZ' },\n *   ]}\n *   max={3}\n *   size=\"md\"\n * />\n * // Renders 3 avatars + \"+2\" overflow counter\n * ```\n */\nimport * as React from 'react';\nimport { BTAvatar } from '../../molecules/Avatar/BTAvatar.js';\nimport type { BTAvatarGroupProps } from './BTAvatarGroup.types.js';\n// Import shared CSS via Avatar's stylesheet (BTAvatarGroup classes co-located)\nimport '../../molecules/Avatar/BTAvatar.css';\n\nconst cn = (...parts: Array<string | false | null | undefined>): string =>\n  parts.filter(Boolean).join(' ');\n\nexport const BTAvatarGroup: React.FC<BTAvatarGroupProps> = ({\n  items,\n  max = 3,\n  customOverflowNumber,\n  size = 'md',\n  isLoading = false,\n  className,\n}) => {\n  const visible = items.slice(0, max);\n  const overflowCount =\n    customOverflowNumber !== undefined\n      ? customOverflowNumber\n      : Math.max(0, items.length - max);\n  const showOverflow = overflowCount > 0;\n\n  const groupClasses = cn(\n    'btech-avatar-group',\n    `btech-avatar-group--${size}`,\n    className,\n  );\n\n  return (\n    <div data-slot=\"avatar-group\" className={groupClasses} role=\"group\" aria-label=\"Avatar group\">\n      {visible.map((item, idx) => (\n        <BTAvatar\n          key={idx}\n          item={item}\n          size={size}\n          isLoading={isLoading}\n          className=\"btech-avatar-group__item\"\n        />\n      ))}\n\n      {showOverflow && (\n        <div\n          data-slot=\"avatar-group-count\"\n          className={cn('btech-avatar-group__overflow', 'btech-avatar', `btech-avatar--${size}`)}\n          role=\"img\"\n          aria-label={`${overflowCount} more avatars`}\n        >\n          <span className=\"btech-avatar__count\">+{overflowCount}</span>\n        </div>\n      )}\n    </div>\n  );\n};\n\nBTAvatarGroup.displayName = 'BTAvatarGroup';\n"
+    },
+    {
+      "path": "BTAvatarGroup.types.ts",
+      "target": "@ui/BTAvatarGroup.types.ts",
+      "type": "registry:ui",
+      "content": "/**\n * BTAvatarGroup — public API types.\n *\n * Sliced from Figma `Avatar Group` (node 504:705). Stacks BTAvatar\n * instances horizontally with negative-margin overlap. Renders an\n * overflow counter (\"+N\") when items.length exceeds `max`.\n */\nimport type {\n  BTAvatarItem,\n  BTAvatarSize,\n} from '../../molecules/Avatar/BTAvatar.types.js';\n\nexport interface BTAvatarGroupProps {\n  /** List of avatars to stack. Order = render order (left to right). */\n  items: BTAvatarItem[];\n  /** Maximum visible avatars before overflow counter appears. Defaults to `3`. */\n  max?: number;\n  /** Override the overflow number display (e.g. show \"+99\"). */\n  customOverflowNumber?: number;\n  /** Size applied uniformly to all avatars + overflow. Defaults to `md`. */\n  size?: BTAvatarSize;\n  /** When true, all positions render as skeleton placeholders. */\n  isLoading?: boolean;\n  /** Pass-through className for layout overrides. */\n  className?: string;\n}\n"
+    }
+  ]
+}

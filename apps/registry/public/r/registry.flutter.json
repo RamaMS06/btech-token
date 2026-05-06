@@ -1,0 +1,103 @@
+{
+  "$schema": "https://btech-registry.buma.dev/schema/registry.json",
+  "framework": "flutter",
+  "version": "0.1.0",
+  "items": [
+    {
+      "name": "badge",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTBadge",
+      "description": "Status label pill. Communicates the state or category of an entity (approved, pending, draft, etc.) via a colored pill with optional left/right icon.",
+      "url": "/r/flutter/badge.json"
+    },
+    {
+      "name": "button",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTButton",
+      "description": "Interactive action button with 5 variants and 2 sizes. Supports left/right icon slots and icon-only mode.",
+      "url": "/r/flutter/button.json"
+    },
+    {
+      "name": "button-link",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTButtonLink",
+      "description": "Inline hyperlink-style action atom. Renders a text label with optional leading/trailing 16px icons. Hover shows underline + bold weight. Press dims to a neutral colour. Disabled greys out with text.disabled.",
+      "url": "/r/flutter/button-link.json"
+    },
+    {
+      "name": "checkbox",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTCheckbox",
+      "description": "Checkbox atom with 7 states: uncheck, check, indeterminate, disable-uncheck, disable-check, disable-indeterminate, and error. Supports optional label and subtext. The widget is stateless — callers own checked/indeterminate values.",
+      "url": "/r/flutter/checkbox.json"
+    },
+    {
+      "name": "separator",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTSeparator",
+      "description": "A 1px visual divider line. Renders horizontal (full-width) or vertical (full-height) using the border.primary token.",
+      "url": "/r/flutter/separator.json"
+    },
+    {
+      "name": "slider",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTSlider",
+      "description": "Interactive range slider atom. Supports three layout types (defaults, range, vertical) and three color variants (primary, secondary, destructive). Uses Flutter's native Slider/RangeSlider with SliderTheme overrides.",
+      "url": "/r/flutter/slider.json"
+    },
+    {
+      "name": "tooltip",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTTooltip",
+      "description": "Hover / tap tooltip that wraps a trigger widget and displays a dark-background floating balloon with a rounded-tip arrow caret. Supports plain text or rich widget content via the content/children slot.",
+      "url": "/r/flutter/tooltip.json"
+    },
+    {
+      "name": "alert",
+      "type": "registry:ui",
+      "category": "molecules",
+      "title": "BTAlert",
+      "description": "Contextual feedback banner with icon, label, optional description, optional action button/link, and optional dismiss button.",
+      "url": "/r/flutter/alert.json"
+    },
+    {
+      "name": "avatar",
+      "type": "registry:ui",
+      "category": "molecules",
+      "title": "BTAvatar",
+      "description": "Circular badge displaying a user's profile image or auto-derived initials. Supports skeleton loading state. Used standalone or inside BTAvatarGroup (organism) for stacked group displays.",
+      "url": "/r/flutter/avatar.json"
+    },
+    {
+      "name": "tabs",
+      "type": "registry:ui",
+      "category": "molecules",
+      "title": "BTTabs",
+      "description": "Tab strip molecule with two variants: segmented (pill tray) and line (underline). Controlled widget — caller manages activeIndex state. Supports optional leading/trailing icon builders per tab index.",
+      "url": "/r/flutter/tabs.json"
+    },
+    {
+      "name": "tooltip-step",
+      "type": "registry:ui",
+      "category": "molecules",
+      "title": "BTTooltipStep",
+      "description": "Coachmark / onboarding step balloon with navigation buttons. Standalone and presentational — positioning relative to the target element is the caller's responsibility (Flutter: Positioned + Stack; web: absolute/fixed container).",
+      "url": "/r/flutter/tooltip-step.json"
+    },
+    {
+      "name": "avatar-group",
+      "type": "registry:ui",
+      "category": "organisms",
+      "title": "BTAvatarGroup",
+      "description": "Stacked group of BTAvatar widgets with horizontal negative-margin overlap. Renders a \"+N\" overflow counter when items exceed `max`. Stacking offsets match Figma 504:705 specs.",
+      "url": "/r/flutter/avatar-group.json"
+    }
+  ]
+}

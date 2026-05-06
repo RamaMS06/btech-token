@@ -1,0 +1,28 @@
+{
+  "$schema": "https://btech-registry.buma.dev/schema/registry-item.json",
+  "name": "avatar-group",
+  "type": "registry:ui",
+  "title": "BTAvatarGroup",
+  "description": "Stacked group of BTAvatar widgets with horizontal negative-margin overlap. Renders a \"+N\" overflow counter when items exceed `max`. Stacking offsets match Figma 504:705 specs.",
+  "framework": "flutter",
+  "category": "organisms",
+  "figmaUrl": "https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=504-705",
+  "figmaNodeId": "504:705",
+  "dependencies": [],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "avatar_group.dart",
+      "target": "@flutterBase/avatar-group/avatar_group.dart",
+      "type": "registry:ui",
+      "content": "// Public barrel for the BTAvatarGroup organism.\nexport 'avatar_group.widget.dart';\n"
+    },
+    {
+      "path": "avatar_group.widget.dart",
+      "target": "@flutterBase/avatar-group/avatar_group.widget.dart",
+      "type": "registry:ui",
+      "content": "/// BTAvatarGroup — stacked group of avatars with overflow counter.\n///\n/// Sliced from Figma `Avatar Group` (node 504:705). Stacks BTAvatar\n/// instances horizontally with negative-margin overlap. Renders an\n/// overflow counter (\"+N\") when items.length exceeds [max].\n///\n/// Stacking offsets per Figma 504:705 (negative left margin per size):\n///   xs(24)  → -8 px       lg(48)  → -16 px\n///   sm(32)  → -10 px      xl(64)  → -20 px\n///   md(40)  → -12 px      xxl(96) → -32 px\n///\n/// ## Cross-framework parity:\n///   - Vue:    <BTAvatarGroup :items=\"[...]\" :max=\"3\" size=\"md\" />\n///   - React:  <BTAvatarGroup items={[...]} max={3} size=\"md\" />\n///   - Flutter: BTAvatarGroup(items: [...], max: 3, size: BTAvatarSize.md)\n///\n/// ## Usage:\n/// ```dart\n/// const BTAvatarGroup(\n///   items: [\n///     BTAvatarItem(name: 'Person 1', imageUrl: 'https://...'),\n///     BTAvatarItem(name: 'JD'),\n///     BTAvatarItem(name: 'AB', color: BTAvatarColor.pink),\n///     BTAvatarItem(name: 'XY'),\n///     BTAvatarItem(name: 'ZZ'),\n///   ],\n///   max: 3,\n///   size: BTAvatarSize.md,\n/// );\n/// // Renders 3 avatars + \"+2\" overflow counter\n/// ```\nlibrary;\n\nimport 'package:btech_tokens/btech_tokens.dart';\nimport 'package:btech_ui/src/components/molecules/avatar/avatar.dart';\nimport 'package:btech_ui/src/components/molecules/avatar/internal/avatar.constants.dart';\nimport 'package:flutter/material.dart';\n\nclass BTAvatarGroup extends StatelessWidget {\n  const BTAvatarGroup({\n    required this.items,\n    this.max = 3,\n    this.customOverflowNumber,\n    this.size = BTAvatarSize.md,\n    this.isLoading = false,\n    super.key,\n  });\n\n  /// List of avatars to stack. Order = render order (left to right).\n  final List<BTAvatarItem> items;\n\n  /// Maximum visible avatars before overflow counter appears.\n  final int max;\n\n  /// Override the overflow number display (e.g. force \"+99\" instead).\n  final int? customOverflowNumber;\n\n  /// Size applied uniformly to all avatars + overflow counter.\n  final BTAvatarSize size;\n\n  /// When true, all positions render as skeleton placeholders.\n  final bool isLoading;\n\n  @override\n  Widget build(BuildContext context) {\n    final visible = items.length > max ? items.sublist(0, max) : items;\n    final overflowCount =\n        customOverflowNumber ?? (items.length > max ? items.length - max : 0);\n    final showOverflow = overflowCount > 0;\n\n    final pxSize = avatarPx[size]!;\n    final offset = stackOffsetFor(size);\n    // Step = how far each new item shifts right. Total width =\n    // step * (totalCount - 1) + pxSize.\n    final step = pxSize - offset;\n    final totalCount = visible.length + (showOverflow ? 1 : 0);\n    final stackWidth = totalCount > 0 ? step * (totalCount - 1) + pxSize : 0.0;\n\n    // Stack with positive `Padding(left: i * step)` per buma-ui pattern.\n    // Stack overlaps children naturally — Flutter's Padding can't take\n    // negative values, but positive padding inside a Stack achieves the\n    // same visual offset.\n    return SizedBox(\n      width: stackWidth,\n      height: pxSize,\n      child: Stack(\n        children: [\n          for (var i = 0; i < visible.length; i++)\n            Padding(\n              padding: EdgeInsets.only(left: i * step),\n              child: BTAvatar(\n                item: visible[i],\n                size: size,\n                isLoading: isLoading,\n              ),\n            ),\n          if (showOverflow)\n            Padding(\n              padding: EdgeInsets.only(left: visible.length * step),\n              child: _OverflowCounter(count: overflowCount, size: size),\n            ),\n        ],\n      ),\n    );\n  }\n}\n\n/// Internal \"+N\" counter — neutral subtler bg per Figma \"Number\" color variant.\nclass _OverflowCounter extends StatelessWidget {\n  const _OverflowCounter({\n    required this.count,\n    required this.size,\n  });\n\n  final int count;\n  final BTAvatarSize size;\n\n  @override\n  Widget build(BuildContext context) {\n    final pxSize = avatarPx[size]!;\n    return Container(\n      width: pxSize,\n      height: pxSize,\n      alignment: Alignment.center,\n      decoration: BoxDecoration(\n        color: context.btechColor.bg.subtler,\n        shape: BoxShape.circle,\n      ),\n      child: Text(\n        '+$count',\n        style: TextStyle(\n          color: context.btechColor.text.secondary,\n          fontSize: fontSizeFor(size),\n          fontWeight: FontWeight.w500,\n          fontFamily: BTechTypography.fontFamily,\n          height: 1,\n        ),\n      ),\n    );\n  }\n}\n"
+    }
+  ]
+}

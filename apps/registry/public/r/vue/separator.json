@@ -1,0 +1,36 @@
+{
+  "$schema": "https://btech-registry.buma.dev/schema/registry-item.json",
+  "name": "separator",
+  "type": "registry:ui",
+  "title": "BTSeparator",
+  "description": "A 1px visual divider line. Renders horizontal (full-width) or vertical (full-height) using the border.primary token.",
+  "framework": "vue",
+  "category": "atoms",
+  "figmaUrl": "https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=194-756",
+  "figmaNodeId": "194:756",
+  "dependencies": [
+    "@btech/tokens"
+  ],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "BTSeparator.css",
+      "target": "@ui/BTSeparator.css",
+      "type": "registry:ui",
+      "content": "/* BTSeparator — visual divider atom (Figma 194:756)\n *\n * Single-token component: uses only border.primary (1px line).\n * Orientation: horizontal (default, full-width) | vertical (full-height).\n *\n * Usage:\n *   Horizontal: place inside a flex-col container — stretches to parent width.\n *   Vertical:   place inside a flex-row container — stretches to parent height.\n */\n\n.bt-separator {\n  flex-shrink: 0;\n  background: var(--border-primary);\n  border: none;\n}\n\n/* ── Horizontal ─────────────────────────────────────────────────────────── */\n\n.bt-separator--horizontal {\n  width: 100%;\n  height: 1px;\n}\n\n/* ── Vertical ───────────────────────────────────────────────────────────── */\n\n.bt-separator--vertical {\n  width: 1px;\n  height: 100%;\n}\n"
+    },
+    {
+      "path": "BTSeparator.types.ts",
+      "target": "@ui/BTSeparator.types.ts",
+      "type": "registry:ui",
+      "content": "// BTSeparator types — Figma source: node 194:756.\n\n/** Orientation of the separator line. */\nexport type BTSeparatorOrientation = 'horizontal' | 'vertical';\n\nexport interface BTSeparatorProps {\n  /**\n   * Direction of the divider line.\n   * @default 'horizontal'\n   */\n  orientation?: BTSeparatorOrientation;\n  /** Additional CSS class names. */\n  className?: string;\n}\n"
+    },
+    {
+      "path": "BTSeparator.vue",
+      "target": "@ui/BTSeparator.vue",
+      "type": "registry:ui",
+      "content": "<!-- BTSeparator — visual divider atom (Figma 194:756).\n *\n * Renders a 1px line using border.primary token.\n * Orientation: 'horizontal' (default) | 'vertical'.\n *\n * Example:\n * ```vue\n * <!-- Horizontal (default) — inside a flex-col container -->\n * <BTSeparator />\n *\n * <!-- Vertical — inside a flex-row container with defined height -->\n * <BTSeparator orientation=\"vertical\" />\n * ```\n-->\n<script setup lang=\"ts\">\nimport './BTSeparator.css';\nimport type { BTSeparatorProps } from './BTSeparator.types';\n\nwithDefaults(defineProps<BTSeparatorProps>(), {\n  orientation: 'horizontal',\n});\n</script>\n\n<template>\n  <div\n    role=\"separator\"\n    :aria-orientation=\"orientation\"\n    :class=\"['bt-separator', `bt-separator--${orientation}`]\"\n  />\n</template>\n"
+    }
+  ]
+}

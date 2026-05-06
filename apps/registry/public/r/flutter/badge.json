@@ -1,0 +1,34 @@
+{
+  "$schema": "https://btech-registry.buma.dev/schema/registry-item.json",
+  "name": "badge",
+  "type": "registry:ui",
+  "title": "BTBadge",
+  "description": "Status label pill. Communicates the state or category of an entity (approved, pending, draft, etc.) via a colored pill with optional left/right icon.",
+  "framework": "flutter",
+  "category": "atoms",
+  "figmaUrl": "https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=72-1516",
+  "figmaNodeId": "72:1516",
+  "dependencies": [],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "badge.dart",
+      "target": "@flutterBase/badge/badge.dart",
+      "type": "registry:ui",
+      "content": "/// BTBadge — status label atom (Figma 72:1516).\nlibrary;\n\nexport 'badge.types.dart';\nexport 'badge.widget.dart';\n"
+    },
+    {
+      "path": "badge.types.dart",
+      "target": "@flutterBase/badge/badge.types.dart",
+      "type": "registry:ui",
+      "content": "/// BTBadge variant — maps Figma node 72:1516 variant property.\n///\n/// Each value carries its own color palette (background + text).\n/// See [BTBadge] for the full rendering contract.\nenum BTBadgeVariant {\n  /// Green — success state (e.g. approved, completed).\n  success,\n\n  /// Yellow — waiting/pending state (e.g. in review).\n  waiting,\n\n  /// Neutral grey — no particular status significance.\n  neutral,\n\n  /// Blue — draft or informational state.\n  draft,\n\n  /// Red — rejected or error state.\n  reject,\n\n  /// Amber — brand secondary / custom accent.\n  custom,\n}\n"
+    },
+    {
+      "path": "badge.widget.dart",
+      "target": "@flutterBase/badge/badge.widget.dart",
+      "type": "registry:ui",
+      "content": "/// BTBadge — status label atom.\n///\n/// Sliced from Figma `Badge` (node 72:1516). Displays a pill-shaped label\n/// that communicates an entity's status or category.\n///\n/// ## Variant precedence:\n/// - [variant] drives the color palette.\n/// - [reverseColors] inverts background and text: solid bg + white text.\n///\n/// ## Usage:\n/// ```dart\n/// // Normal\n/// BTBadge(label: 'Approved', variant: BTBadgeVariant.success)\n///\n/// // With left icon\n/// BTBadge(\n///   label: 'Waiting',\n///   variant: BTBadgeVariant.waiting,\n///   leftIcon: const Icon(Icons.hourglass_empty, size: 16),\n/// )\n///\n/// // Reverse (solid bg)\n/// BTBadge(\n///   label: 'Rejected',\n///   variant: BTBadgeVariant.reject,\n///   reverseColors: true,\n/// )\n/// ```\nlibrary;\n\nimport 'package:btech_tokens/btech_tokens.dart';\nimport 'package:btech_ui/src/components/atoms/badge/badge.types.dart';\nimport 'package:flutter/material.dart';\n\n/// Status label pill. See file header for usage examples.\nclass BTBadge extends StatelessWidget {\n  const BTBadge({\n    required this.label,\n    this.variant = BTBadgeVariant.success,\n    this.reverseColors = false,\n    this.leftIcon,\n    this.rightIcon,\n    super.key,\n  });\n\n  /// Text shown inside the badge.\n  final String label;\n\n  /// Color palette — see [BTBadgeVariant].\n  final BTBadgeVariant variant;\n\n  /// When `true`, swaps to solid background + white text.\n  final bool reverseColors;\n\n  /// Optional widget rendered to the left of [label] (16×16 recommended).\n  final Widget? leftIcon;\n\n  /// Optional widget rendered to the right of [label] (16×16 recommended).\n  final Widget? rightIcon;\n\n  @override\n  Widget build(BuildContext context) {\n    // Figma node 72:1516 — all colors map to btech semantic tokens.\n    final colors = context.btechColor;\n    final (Color bg, Color fg) = switch ((variant, reverseColors)) {\n      (BTBadgeVariant.success, false) => (\n          colors.ext.successSubtler,\n          colors.ext.successBold,\n        ),\n      (BTBadgeVariant.success, true) => (\n          colors.ext.success,\n          colors.text.inverse,\n        ),\n      (BTBadgeVariant.waiting, false) => (\n          colors.ext.warningSubtler,\n          colors.ext.warningBold,\n        ),\n      (BTBadgeVariant.waiting, true) => (\n          colors.ext.warning,\n          colors.text.inverse,\n        ),\n      (BTBadgeVariant.neutral, false) => (\n          colors.bg.secondary,\n          colors.text.primary,\n        ),\n      (BTBadgeVariant.neutral, true) => (\n          colors.bg.tertiary,\n          colors.text.inverse,\n        ),\n      (BTBadgeVariant.draft, false) => (\n          colors.ext.infoSubtler,\n          colors.ext.infoBold,\n        ),\n      (BTBadgeVariant.draft, true) => (\n          colors.ext.info,\n          colors.text.inverse,\n        ),\n      (BTBadgeVariant.reject, false) => (\n          colors.ext.errorSubtler,\n          colors.ext.errorBold,\n        ),\n      (BTBadgeVariant.reject, true) => (\n          colors.ext.error,\n          colors.text.inverse,\n        ),\n      (BTBadgeVariant.custom, false) => (\n          colors.brand.secondarySubtle,\n          colors.brand.secondaryBold,\n        ),\n      (BTBadgeVariant.custom, true) => (\n          colors.brand.secondary,\n          colors.text.inverse,\n        ),\n    };\n\n    return Container(\n      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),\n      decoration: BoxDecoration(\n        color: bg,\n        borderRadius: BorderRadius.circular(9999),\n      ),\n      child: Row(\n        mainAxisSize: MainAxisSize.min,\n        children: [\n          if (leftIcon != null) ...[\n            IconTheme(\n              data: IconThemeData(size: 16, color: fg),\n              child: leftIcon!,\n            ),\n            const SizedBox(width: 4),\n          ],\n          Text(\n            label,\n            style: TextStyle(\n              color: fg,\n              fontSize: 12,\n              fontWeight: FontWeight.w500,\n              fontFamily: BTechTypography.fontFamily,\n              height: 16 / 12,\n              letterSpacing: 0,\n            ),\n          ),\n          if (rightIcon != null) ...[\n            const SizedBox(width: 4),\n            IconTheme(\n              data: IconThemeData(size: 16, color: fg),\n              child: rightIcon!,\n            ),\n          ],\n        ],\n      ),\n    );\n  }\n}\n"
+    }
+  ]
+}

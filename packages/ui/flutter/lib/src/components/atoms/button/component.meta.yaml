@@ -1,0 +1,24 @@
+schemaVersion: 1
+name: BTButton
+category: atoms
+figmaNodeId: '114:2645'
+figmaUrl: https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/?node-id=114-2645
+description: >
+  Interactive action button with 5 variants and 2 sizes. Supports
+  left/right icon slots and icon-only mode.
+props:
+  - { name: variant, type: BTButtonVariant, default: primary }
+  - { name: size, type: BTButtonSize, default: default }
+  - { name: disabled, type: boolean, default: 'false' }
+  - { name: iconOnly, type: boolean, default: 'false' }
+  - { name: label, type: 'string?', required: false }
+enums:
+  - { name: BTButtonVariant, values: [primary, secondary, destructive, outline, ghost] }
+  - { name: BTButtonSize, values: [default, small] }
+slots:
+  - { name: leftIcon, description: 'Icon rendered to the left of the label.' }
+  - { name: rightIcon, description: 'Icon rendered to the right of the label.' }
+  - { name: default, description: 'Used for icon-only mode.' }
+dependencies:
+  - '@btech/tokens'
+registryDependencies: []

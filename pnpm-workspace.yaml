@@ -7,3 +7,4 @@ packages:
   - 'btech-token-studio'
   - 'tools/mcp-design-system'
   - 'tools/vue-to-react'
+  - 'tools/cli'

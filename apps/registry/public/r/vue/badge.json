@@ -1,0 +1,36 @@
+{
+  "$schema": "https://btech-registry.buma.dev/schema/registry-item.json",
+  "name": "badge",
+  "type": "registry:ui",
+  "title": "BTBadge",
+  "description": "Status label pill. Displays variant-colored pill with optional left/right icon slots.",
+  "framework": "vue",
+  "category": "atoms",
+  "figmaUrl": "https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=72-1516",
+  "figmaNodeId": "72:1516",
+  "dependencies": [
+    "@btech/tokens"
+  ],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "BTBadge.css",
+      "target": "@ui/BTBadge.css",
+      "type": "registry:ui",
+      "content": "/* BTBadge styles — Figma 72:1516.\n   All colours via @btech/tokens CSS vars — no hex fallbacks. */\n\n.bt-badge {\n  display: inline-flex;\n  align-items: center;\n  gap: 4px;\n  padding: 2px 8px;\n  border-radius: var(--radius-rd);\n  font-family: var(--typography-font-family-sans);\n  font-size: var(--typography-font-size-xs);\n  font-weight: 500;\n  line-height: var(--typography-line-height-xs);\n  letter-spacing: 0;\n  white-space: nowrap;\n}\n\n/* ── Normal mode ── */\n.bt-badge--success { background: var(--color-ext-success-subtler); color: var(--color-ext-success-bold); }\n.bt-badge--waiting { background: var(--color-ext-warning-subtler); color: var(--color-ext-warning-bold); }\n.bt-badge--neutral { background: var(--bg-secondary);              color: var(--text-primary); }\n.bt-badge--draft   { background: var(--color-ext-info-subtler);    color: var(--color-ext-info-bold); }\n.bt-badge--reject  { background: var(--color-ext-error-subtler);   color: var(--color-ext-error-bold); }\n.bt-badge--custom  { background: var(--color-brand-secondary-subtle); color: var(--color-brand-secondary-bold); }\n\n/* ── Reverse mode — solid bg + inverse text ── */\n.bt-badge--success.bt-badge--reverse { background: var(--color-ext-success); color: var(--text-inverse); }\n.bt-badge--waiting.bt-badge--reverse { background: var(--color-ext-warning); color: var(--text-inverse); }\n.bt-badge--neutral.bt-badge--reverse { background: var(--bg-tertiary);       color: var(--text-inverse); }\n.bt-badge--draft.bt-badge--reverse   { background: var(--color-ext-info);    color: var(--text-inverse); }\n.bt-badge--reject.bt-badge--reverse  { background: var(--color-ext-error);   color: var(--text-inverse); }\n.bt-badge--custom.bt-badge--reverse  { background: var(--color-brand-secondary); color: var(--text-inverse); }\n\n.bt-badge__label {\n  flex-shrink: 0;\n}\n"
+    },
+    {
+      "path": "BTBadge.types.ts",
+      "target": "@ui/BTBadge.types.ts",
+      "type": "registry:ui",
+      "content": "/**\n * Props for BTBadge.\n *\n * @example\n * <BTBadge label=\"Approved\" variant=\"success\" />\n * <BTBadge label=\"Draft\" variant=\"draft\" :reverseColors=\"true\" />\n */\nexport interface BTBadgeProps {\n  /** Text displayed inside the badge. @default 'Badge' */\n  label?: string\n  /**\n   * Color palette variant. @default 'success'\n   * success | waiting | neutral | draft | reject | custom\n   */\n  variant?: 'success' | 'waiting' | 'neutral' | 'draft' | 'reject' | 'custom'\n  /** When true: solid background + white text. @default false */\n  reverseColors?: boolean\n}\n"
+    },
+    {
+      "path": "BTBadge.vue",
+      "target": "@ui/BTBadge.vue",
+      "type": "registry:ui",
+      "content": "<!-- BTBadge — status label atom.\n     Figma source: node 72:1516.\n     All visual values come from Figma. Reference repo (buma-ui Vue) used for\n     code pattern (withDefaults, script setup, named slots) only.\n-->\n<script setup lang=\"ts\">\nimport { computed } from 'vue';\nimport './BTBadge.css';\nimport type { BTBadgeProps } from './BTBadge.types';\n\nconst props = withDefaults(defineProps<BTBadgeProps>(), {\n  label: 'Badge',\n  variant: 'success',\n  reverseColors: false,\n});\n\nconst badgeClass = computed(() =>\n  [\n    'bt-badge',\n    `bt-badge--${props.variant}`,\n    props.reverseColors ? 'bt-badge--reverse' : '',\n  ]\n    .filter(Boolean)\n    .join(' '),\n);\n</script>\n\n<template>\n  <span :class=\"badgeClass\" data-testid=\"bt-badge\">\n    <slot name=\"leftIcon\" />\n    <span class=\"bt-badge__label\">{{ label }}</span>\n    <slot name=\"rightIcon\" />\n  </span>\n</template>\n"
+    }
+  ]
+}

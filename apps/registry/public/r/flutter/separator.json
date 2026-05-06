@@ -1,0 +1,34 @@
+{
+  "$schema": "https://btech-registry.buma.dev/schema/registry-item.json",
+  "name": "separator",
+  "type": "registry:ui",
+  "title": "BTSeparator",
+  "description": "A 1px visual divider line. Renders horizontal (full-width) or vertical (full-height) using the border.primary token.",
+  "framework": "flutter",
+  "category": "atoms",
+  "figmaUrl": "https://www.figma.com/design/WANr9drWYNYbMPuT2sMeHi/Btech---Design-System?node-id=194-756",
+  "figmaNodeId": "194:756",
+  "dependencies": [],
+  "devDependencies": [],
+  "registryDependencies": [],
+  "files": [
+    {
+      "path": "separator.dart",
+      "target": "@flutterBase/separator/separator.dart",
+      "type": "registry:ui",
+      "content": "export 'separator.types.dart';\nexport 'separator.widget.dart';\n"
+    },
+    {
+      "path": "separator.types.dart",
+      "target": "@flutterBase/separator/separator.types.dart",
+      "type": "registry:ui",
+      "content": "/// Orientation of the [BTSeparator] line.\nenum BTSeparatorOrientation {\n  /// Full-width 1px horizontal line (default).\n  horizontal,\n\n  /// Full-height 1px vertical line.\n  vertical,\n}\n"
+    },
+    {
+      "path": "separator.widget.dart",
+      "target": "@flutterBase/separator/separator.widget.dart",
+      "type": "registry:ui",
+      "content": "import 'package:btech_tokens/btech_tokens.dart';\nimport 'package:btech_ui/src/components/atoms/separator/separator.types.dart';\nimport 'package:flutter/material.dart';\n\n/// BTSeparator — visual divider atom (Figma 194:756).\n///\n/// Renders a 1px line using [context.btechColor.border.primary].\n/// Place inside a flex container — stretches to fill the cross axis.\n///\n/// Example:\n/// ```dart\n/// // Horizontal (default) — inside a Column\n/// Column(\n///   children: [\n///     SomeWidget(),\n///     const BTSeparator(),\n///     AnotherWidget(),\n///   ],\n/// )\n///\n/// // Vertical — inside a Row with bounded height\n/// SizedBox(\n///   height: 24,\n///   child: Row(\n///     children: [\n///       LabelA(),\n///       const BTSeparator(orientation: BTSeparatorOrientation.vertical),\n///       LabelB(),\n///     ],\n///   ),\n/// )\n/// ```\nclass BTSeparator extends StatelessWidget {\n  const BTSeparator({\n    this.orientation = BTSeparatorOrientation.horizontal,\n    super.key,\n  });\n\n  /// Direction of the divider line.\n  final BTSeparatorOrientation orientation;\n\n  @override\n  Widget build(BuildContext context) {\n    final color = context.btechColor.border.primary;\n    final isHorizontal = orientation == BTSeparatorOrientation.horizontal;\n\n    return Container(\n      width: isHorizontal ? double.infinity : 1,\n      height: isHorizontal ? 1 : double.infinity,\n      color: color,\n    );\n  }\n}\n"
+    }
+  ]
+}

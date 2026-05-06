@@ -1,0 +1,127 @@
+{
+  "$schema": "https://btech-registry.buma.dev/schema/registry.json",
+  "framework": "react",
+  "version": "0.1.0",
+  "items": [
+    {
+      "name": "badge",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTBadge",
+      "description": "Status label pill. Communicates entity state/category via a colored pill with optional left/right icon. Generated from BTBadge.vue via vue-to-react converter pattern.",
+      "url": "/r/react/badge.json"
+    },
+    {
+      "name": "button",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTButton",
+      "description": "Interactive action button with 5 variants and 2 sizes. Supports left/right icon slots and icon-only mode.",
+      "url": "/r/react/button.json"
+    },
+    {
+      "name": "button-link",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTButtonLink",
+      "description": "Inline hyperlink-style action atom. Text label with optional icon props. Hover → underline + bold. Active → dims to neutral. Disabled → text.disabled.",
+      "url": "/r/react/button-link.json"
+    },
+    {
+      "name": "checkbox",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTCheckbox",
+      "description": "Checkbox atom with 7 states: uncheck, check, indeterminate, disable-uncheck, disable-check, disable-indeterminate, and error. Supports optional label and subtext. Fully accessible via native input with transparent overlay pattern.",
+      "url": "/r/react/checkbox.json"
+    },
+    {
+      "name": "hint",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTHint",
+      "description": "Notification indicator atom. Renders as a solid red dot (no count) or a red pill/circle containing a count value. Numbers > 99 are displayed as \"99+\". Three sizes: lg (dot 16px / badge 24px), md (dot 10px / badge 16px), sm (dot 8px / badge 16px with smaller font).",
+      "url": "/r/react/hint.json"
+    },
+    {
+      "name": "radio-button",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTRadioButton",
+      "description": "Radio button atom with 5 states: default, active, disable, disable-active, and error. Supports optional label and subtext. Uses native <input type=\"radio\"> with transparent overlay for full accessibility. Use multiple BTRadioButton with the same v-model to build a radio group.",
+      "url": "/r/react/radio-button.json"
+    },
+    {
+      "name": "separator",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTSeparator",
+      "description": "A 1px visual divider line. Renders horizontal (full-width) or vertical (full-height) using the border.primary token.",
+      "url": "/r/react/separator.json"
+    },
+    {
+      "name": "slider",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTSlider",
+      "description": "Interactive range slider atom. Supports three layout types (default, range, vertical) and three color variants (primary, secondary, destructive). Single-thumb and dual-thumb (range) modes supported.",
+      "url": "/r/react/slider.json"
+    },
+    {
+      "name": "tooltip",
+      "type": "registry:ui",
+      "category": "atoms",
+      "title": "BTTooltip",
+      "description": "Hover / focus tooltip wrapping a trigger element. Renders a dark-background balloon via Teleport/portal with a rounded-tip arrow caret. Supports plain text or rich content slot.",
+      "url": "/r/react/tooltip.json"
+    },
+    {
+      "name": "alert",
+      "type": "registry:ui",
+      "category": "molecules",
+      "title": "BTAlert",
+      "description": "Contextual feedback banner with icon, label, optional description, optional action button/link, and optional dismiss button.",
+      "url": "/r/react/alert.json"
+    },
+    {
+      "name": "avatar",
+      "type": "registry:ui",
+      "category": "molecules",
+      "title": "BTAvatar",
+      "description": "Circular badge displaying a user's profile image or auto-derived initials. Supports skeleton loading state. Used standalone or inside BTAvatarGroup (organism) for stacked group displays.",
+      "url": "/r/react/avatar.json"
+    },
+    {
+      "name": "tabs",
+      "type": "registry:ui",
+      "category": "molecules",
+      "title": "BTTabs",
+      "description": "Tab strip molecule with two variants: 'segmented' (pill tray with primary fill on active) and 'line' (flat row with primary underline on active). Controlled via activeIndex + onActiveIndexChange. Supports optional leading/trailing icon render props per tab index.",
+      "url": "/r/react/tabs.json"
+    },
+    {
+      "name": "tooltip-step",
+      "type": "registry:ui",
+      "category": "molecules",
+      "title": "BTTooltipStep",
+      "description": "Coachmark / onboarding step balloon with navigation buttons. Standalone and presentational — positioning is the caller's responsibility.",
+      "url": "/r/react/tooltip-step.json"
+    },
+    {
+      "name": "avatar-group",
+      "type": "registry:ui",
+      "category": "organisms",
+      "title": "BTAvatarGroup",
+      "description": "Stacked group of BTAvatar instances with horizontal negative-margin overlap. Renders a \"+N\" overflow counter when items exceed `max`.",
+      "url": "/r/react/avatar-group.json"
+    },
+    {
+      "name": "modal",
+      "type": "registry:ui",
+      "category": "organisms",
+      "title": "BTModal",
+      "description": "Centred modal dialog with header (title + optional subtext + optional close button), optional content slot, and optional footer with checkbox plus secondary/primary action buttons. Backdrop click dismisses when `dismissable` is true. Three width presets: sm (500px), md (720px), lg (1042px).",
+      "url": "/r/react/modal.json"
+    }
+  ]
+}
